@@ -33,6 +33,25 @@ from scrutator.dream.models import (
     EdgeCreate,
     EdgeInfo,
 )
+from scrutator.memory.models import (
+    MemoryBulkRequest,
+    MemoryBulkResponse,
+    MemoryIndexResponse,
+    MemoryRecallRequest,
+    MemoryRecallResponse,
+    MemoryRecord,
+    MemoryStats,
+)
+from scrutator.memory.service import (
+    bulk_index as memory_bulk_index,
+)
+from scrutator.memory.service import (
+    get_memory_stats,
+    index_memory,
+)
+from scrutator.memory.service import (
+    recall as memory_recall,
+)
 from scrutator.search.indexer import index_document
 from scrutator.search.searcher import search
 
@@ -101,6 +120,7 @@ async def search_endpoint(request: SearchRequest) -> SearchResponse:
             query=request.query,
             namespace=request.namespace,
             project=request.project,
+            source_type=request.source_type,
             limit=request.limit,
             min_score=request.min_score,
             include_content=request.include_content,
@@ -178,3 +198,56 @@ async def delete_edges(created_by: str, namespace: str | None = None) -> dict:
         return {"deleted": count}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Edge deletion failed: {e}") from e
+
+
+# ── Memory endpoints ───────────────────────────────────────────────
+
+
+@app.post("/v1/memories", response_model=MemoryIndexResponse)
+async def create_memory(record: MemoryRecord) -> MemoryIndexResponse:
+    try:
+        return await index_memory(record)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Memory index failed: {e}") from e
+
+
+@app.post("/v1/memories/bulk", response_model=MemoryBulkResponse)
+async def create_memories_bulk(request: MemoryBulkRequest) -> MemoryBulkResponse:
+    try:
+        return await memory_bulk_index(request.memories)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Bulk memory index failed: {e}") from e
+
+
+@app.post("/v1/memories/recall", response_model=MemoryRecallResponse)
+async def recall_memories(request: MemoryRecallRequest) -> MemoryRecallResponse:
+    try:
+        return await memory_recall(request)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Memory recall failed: {e}") from e
+
+
+@app.get("/v1/memories/stats", response_model=MemoryStats)
+async def memory_stats_endpoint() -> MemoryStats:
+    try:
+        return await get_memory_stats()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Memory stats failed: {e}") from e
+
+
+@app.delete("/v1/memories")
+async def delete_memories(actor: str, namespace: str | None = None) -> dict:
+    from scrutator.db.repository import delete_memories_by_actor
+
+    try:
+        namespace_id = None
+        if namespace:
+            namespaces = await get_namespaces()
+            for ns in namespaces:
+                if ns.name == namespace:
+                    namespace_id = ns.id
+                    break
+        count = await delete_memories_by_actor(actor, namespace_id)
+        return {"deleted": count}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Memory deletion failed: {e}") from e

@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     dream_max_results: int = 50
     dream_analysis_timeout_ms: int = 30000
 
+    memory_default_importance: float = 0.5
+    memory_decay_days: int = 180
+    memory_max_bulk_size: int = 100
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 

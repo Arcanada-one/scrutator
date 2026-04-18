@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from scrutator.db.connection import get_pool
 from scrutator.db.models import NamespaceInfo, NamespaceStats, SearchResult
+
+if TYPE_CHECKING:
+    from scrutator.memory.models import MemoryStats
 
 
 async def upsert_namespace(name: str, description: str | None = None) -> int:
@@ -421,3 +424,193 @@ async def get_stats() -> dict[str, Any]:
             for r in ns_rows
         ],
     }
+
+
+async def search_with_filters(
+    query_text: str,
+    namespace_id: int | None = None,
+    source_type: str | None = None,
+    actor: str | None = None,
+    memory_type: str | None = None,
+    include_expired: bool = False,
+    importance_boost: bool = False,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    """Hybrid search with additional metadata filters for memory recall."""
+    from scrutator.search.embedder import embed_single
+
+    query_embedding = await embed_single(query_text)
+    vector = np.array(query_embedding, dtype=np.float32)
+    fetch_limit = limit * 3
+
+    # Build dynamic WHERE clauses
+    conditions: list[str] = []
+    params: list[Any] = [vector, namespace_id, fetch_limit, query_text, limit]
+    param_idx = 6  # next parameter index ($6, $7, ...)
+
+    if source_type:
+        conditions.append(f"c.source_type = ${param_idx}")
+        params.append(source_type)
+        param_idx += 1
+
+    if actor:
+        conditions.append(f"c.metadata->>'actor' = ${param_idx}")
+        params.append(actor)
+        param_idx += 1
+
+    if memory_type:
+        conditions.append(f"c.metadata->>'memory_type' = ${param_idx}")
+        params.append(memory_type)
+        param_idx += 1
+
+    if not include_expired:
+        conditions.append("(c.metadata->>'valid_until' IS NULL OR c.metadata->>'valid_until' > NOW()::text)")
+
+    extra_where = ""
+    if conditions:
+        extra_where = " AND " + " AND ".join(conditions)
+
+    boost_expr = "r.rrf_score"
+    if importance_boost:
+        boost_expr = "r.rrf_score * COALESCE((c.metadata->>'importance')::real, 0.5)"
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            WITH semantic AS (
+                SELECT c.id, ROW_NUMBER() OVER (
+                    ORDER BY c.embedding_dense <=> $1
+                ) AS rank
+                FROM chunks c
+                WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                  AND c.embedding_dense IS NOT NULL
+                  {extra_where}
+                ORDER BY c.embedding_dense <=> $1
+                LIMIT $3
+            ),
+            fulltext AS (
+                SELECT c.id, ROW_NUMBER() OVER (
+                    ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
+                           + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
+                ) AS rank
+                FROM chunks c
+                WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                  AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
+                       OR c.textsearch_en @@ plainto_tsquery('english', $4))
+                  {extra_where}
+                LIMIT $3
+            ),
+            ranked AS (
+                SELECT
+                    COALESCE(s.id, f.id) AS chunk_id,
+                    COALESCE(1.0 / (60 + s.rank), 0.0)
+                        + COALESCE(1.0 / (60 + f.rank), 0.0) AS rrf_score
+                FROM semantic s
+                FULL OUTER JOIN fulltext f ON s.id = f.id
+                ORDER BY rrf_score DESC
+                LIMIT $5
+            )
+            SELECT
+                r.chunk_id, {boost_expr} AS score,
+                c.content, c.source_path, c.source_type, c.chunk_index,
+                c.metadata, c.created_at::text,
+                n.name AS namespace_name,
+                p.name AS project_name
+            FROM ranked r
+            JOIN chunks c ON c.id = r.chunk_id
+            JOIN namespaces n ON n.id = c.namespace_id
+            LEFT JOIN projects p ON p.id = c.project_id
+            ORDER BY score DESC
+            """,
+            *params,
+        )
+
+    results = []
+    for row in rows:
+        meta = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else dict(row["metadata"] or {})
+        results.append(
+            {
+                "chunk_id": str(row["chunk_id"]),
+                "content": row["content"],
+                "source_path": row["source_path"],
+                "source_type": row["source_type"],
+                "chunk_index": row["chunk_index"],
+                "score": float(row["score"]),
+                "namespace": row["namespace_name"],
+                "project": row["project_name"],
+                "metadata": meta,
+                "created_at": row["created_at"],
+            }
+        )
+    return results
+
+
+async def delete_memories_by_actor(actor: str, namespace_id: int | None = None) -> int:
+    """Delete memory chunks by actor. Optional namespace filter."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if namespace_id is not None:
+            result = await conn.execute(
+                """
+                DELETE FROM chunks
+                WHERE source_type = 'memory'
+                  AND metadata->>'actor' = $1
+                  AND namespace_id = $2
+                """,
+                actor,
+                namespace_id,
+            )
+        else:
+            result = await conn.execute(
+                """
+                DELETE FROM chunks
+                WHERE source_type = 'memory'
+                  AND metadata->>'actor' = $1
+                """,
+                actor,
+            )
+        return int(result.split()[-1])
+
+
+async def memory_stats() -> MemoryStats:
+    """Get memory statistics grouped by namespace, actor, type."""
+    from scrutator.memory.models import MemoryStats
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        total = await conn.fetchval("SELECT COUNT(*)::int FROM chunks WHERE source_type = 'memory'")
+
+        ns_rows = await conn.fetch(
+            """
+            SELECT n.name, COUNT(*)::int AS cnt
+            FROM chunks c JOIN namespaces n ON n.id = c.namespace_id
+            WHERE c.source_type = 'memory'
+            GROUP BY n.name ORDER BY cnt DESC
+            """
+        )
+
+        actor_rows = await conn.fetch(
+            """
+            SELECT c.metadata->>'actor' AS actor, COUNT(*)::int AS cnt
+            FROM chunks c
+            WHERE c.source_type = 'memory' AND c.metadata->>'actor' IS NOT NULL
+            GROUP BY actor ORDER BY cnt DESC
+            """
+        )
+
+        type_rows = await conn.fetch(
+            """
+            SELECT c.metadata->>'memory_type' AS mtype, COUNT(*)::int AS cnt
+            FROM chunks c
+            WHERE c.source_type = 'memory' AND c.metadata->>'memory_type' IS NOT NULL
+            GROUP BY mtype ORDER BY cnt DESC
+            """
+        )
+
+    return MemoryStats(
+        total_memories=total or 0,
+        by_namespace={r["name"]: r["cnt"] for r in ns_rows},
+        by_actor={r["actor"]: r["cnt"] for r in actor_rows},
+        by_type={r["mtype"]: r["cnt"] for r in type_rows},
+    )

@@ -78,6 +78,7 @@ class SearchRequest(BaseModel):
     query: str
     namespace: str | None = None
     project: str | None = None
+    source_type: str | None = None
     limit: int = 10
     min_score: float = 0.0
     include_content: bool = True
