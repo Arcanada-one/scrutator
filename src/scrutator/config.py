@@ -12,7 +12,12 @@ class Settings(BaseSettings):
 
     embedding_api_url: str = "http://localhost:8300"
 
-    database_url: str = "postgresql+asyncpg://scrutator:scrutator@localhost:5432/scrutator"
+    database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"
+    database_pool_min: int = 2
+    database_pool_max: int = 10
+
+    search_limit_default: int = 10
+    search_timeout_ms: int = 5000
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 
