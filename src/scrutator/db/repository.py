@@ -97,6 +97,39 @@ async def insert_chunks(
     return inserted
 
 
+async def insert_sparse_vectors(chunk_ids: list[str], sparse_weights: list[dict[str, float]]) -> int:
+    """Insert sparse vectors for chunks. ON CONFLICT → update. Returns count."""
+    if not chunk_ids:
+        return 0
+    pool = await get_pool()
+    inserted = 0
+    async with pool.acquire() as conn:
+        for chunk_id, weights in zip(chunk_ids, sparse_weights, strict=True):
+            await conn.execute(
+                """
+                INSERT INTO sparse_vectors (chunk_id, token_weights)
+                VALUES ($1::uuid, $2::jsonb)
+                ON CONFLICT (chunk_id)
+                DO UPDATE SET token_weights = EXCLUDED.token_weights
+                """,
+                chunk_id,
+                json.dumps(weights),
+            )
+            inserted += 1
+    return inserted
+
+
+async def get_chunk_ids_by_source(source_path: str) -> list[str]:
+    """Get chunk IDs for a source path, ordered by chunk_index."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id::text AS chunk_id FROM chunks WHERE source_path = $1 ORDER BY chunk_index",
+            source_path,
+        )
+    return [row["chunk_id"] for row in rows]
+
+
 async def delete_by_source(source_path: str) -> int:
     """Delete all chunks for a given source path. Returns deleted count."""
     pool = await get_pool()
@@ -110,63 +143,141 @@ async def hybrid_search(
     query_text: str,
     namespace_id: int | None = None,
     limit: int = 10,
+    query_sparse: dict[str, float] | None = None,
 ) -> list[SearchResult]:
-    """Hybrid search: dense cosine + FTS with RRF ranking."""
+    """Hybrid search: dense cosine + sparse lexical + FTS with RRF ranking.
+
+    When query_sparse is provided, uses 3-way RRF (dense + sparse + FTS).
+    Otherwise falls back to 2-way RRF (dense + FTS).
+    """
     pool = await get_pool()
     vector = np.array(query_embedding, dtype=np.float32)
     fetch_limit = limit * 3
 
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            WITH semantic AS (
-                SELECT c.id, ROW_NUMBER() OVER (
+    if query_sparse:
+        # 3-way RRF: dense + sparse + FTS
+        sparse_json = json.dumps(query_sparse)
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                WITH semantic AS (
+                    SELECT c.id, ROW_NUMBER() OVER (
+                        ORDER BY c.embedding_dense <=> $1
+                    ) AS rank
+                    FROM chunks c
+                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                      AND c.embedding_dense IS NOT NULL
                     ORDER BY c.embedding_dense <=> $1
-                ) AS rank
-                FROM chunks c
-                WHERE ($2::int IS NULL OR c.namespace_id = $2)
-                  AND c.embedding_dense IS NOT NULL
-                ORDER BY c.embedding_dense <=> $1
-                LIMIT $3
-            ),
-            fulltext AS (
-                SELECT c.id, ROW_NUMBER() OVER (
-                    ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                           + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
-                ) AS rank
-                FROM chunks c
-                WHERE ($2::int IS NULL OR c.namespace_id = $2)
-                  AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
-                       OR c.textsearch_en @@ plainto_tsquery('english', $4))
-                LIMIT $3
-            ),
-            ranked AS (
+                    LIMIT $3
+                ),
+                fulltext AS (
+                    SELECT c.id, ROW_NUMBER() OVER (
+                        ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
+                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
+                    ) AS rank
+                    FROM chunks c
+                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                      AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
+                           OR c.textsearch_en @@ plainto_tsquery('english', $4))
+                    LIMIT $3
+                ),
+                sparse_match AS (
+                    SELECT sv.chunk_id AS id, ROW_NUMBER() OVER (
+                        ORDER BY (
+                            SELECT SUM(
+                                COALESCE((sv.token_weights->>key)::real, 0) * value::real
+                            )
+                            FROM jsonb_each_text($6::jsonb) AS q(key, value)
+                        ) DESC
+                    ) AS rank
+                    FROM sparse_vectors sv
+                    JOIN chunks c ON c.id = sv.chunk_id
+                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    LIMIT $3
+                ),
+                ranked AS (
+                    SELECT
+                        COALESCE(s.id, COALESCE(f.id, sp.id)) AS chunk_id,
+                        COALESCE(1.0 / (60 + s.rank), 0.0)
+                            + COALESCE(1.0 / (60 + f.rank), 0.0)
+                            + COALESCE(1.0 / (60 + sp.rank), 0.0) AS rrf_score
+                    FROM semantic s
+                    FULL OUTER JOIN fulltext f ON s.id = f.id
+                    FULL OUTER JOIN sparse_match sp ON COALESCE(s.id, f.id) = sp.id
+                    ORDER BY rrf_score DESC
+                    LIMIT $5
+                )
                 SELECT
-                    COALESCE(s.id, f.id) AS chunk_id,
-                    COALESCE(1.0 / (60 + s.rank), 0.0)
-                        + COALESCE(1.0 / (60 + f.rank), 0.0) AS rrf_score
-                FROM semantic s
-                FULL OUTER JOIN fulltext f ON s.id = f.id
-                ORDER BY rrf_score DESC
-                LIMIT $5
+                    r.chunk_id, r.rrf_score,
+                    c.content, c.source_path, c.source_type, c.chunk_index,
+                    c.metadata, n.name AS namespace_name,
+                    p.name AS project_name
+                FROM ranked r
+                JOIN chunks c ON c.id = r.chunk_id
+                JOIN namespaces n ON n.id = c.namespace_id
+                LEFT JOIN projects p ON p.id = c.project_id
+                ORDER BY r.rrf_score DESC
+                """,
+                vector,
+                namespace_id,
+                fetch_limit,
+                query_text,
+                limit,
+                sparse_json,
             )
-            SELECT
-                r.chunk_id, r.rrf_score,
-                c.content, c.source_path, c.source_type, c.chunk_index,
-                c.metadata, n.name AS namespace_name,
-                p.name AS project_name
-            FROM ranked r
-            JOIN chunks c ON c.id = r.chunk_id
-            JOIN namespaces n ON n.id = c.namespace_id
-            LEFT JOIN projects p ON p.id = c.project_id
-            ORDER BY r.rrf_score DESC
-            """,
-            vector,
-            namespace_id,
-            fetch_limit,
-            query_text,
-            limit,
-        )
+    else:
+        # 2-way RRF: dense + FTS (backward-compatible)
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                WITH semantic AS (
+                    SELECT c.id, ROW_NUMBER() OVER (
+                        ORDER BY c.embedding_dense <=> $1
+                    ) AS rank
+                    FROM chunks c
+                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                      AND c.embedding_dense IS NOT NULL
+                    ORDER BY c.embedding_dense <=> $1
+                    LIMIT $3
+                ),
+                fulltext AS (
+                    SELECT c.id, ROW_NUMBER() OVER (
+                        ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
+                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
+                    ) AS rank
+                    FROM chunks c
+                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                      AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
+                           OR c.textsearch_en @@ plainto_tsquery('english', $4))
+                    LIMIT $3
+                ),
+                ranked AS (
+                    SELECT
+                        COALESCE(s.id, f.id) AS chunk_id,
+                        COALESCE(1.0 / (60 + s.rank), 0.0)
+                            + COALESCE(1.0 / (60 + f.rank), 0.0) AS rrf_score
+                    FROM semantic s
+                    FULL OUTER JOIN fulltext f ON s.id = f.id
+                    ORDER BY rrf_score DESC
+                    LIMIT $5
+                )
+                SELECT
+                    r.chunk_id, r.rrf_score,
+                    c.content, c.source_path, c.source_type, c.chunk_index,
+                    c.metadata, n.name AS namespace_name,
+                    p.name AS project_name
+                FROM ranked r
+                JOIN chunks c ON c.id = r.chunk_id
+                JOIN namespaces n ON n.id = c.namespace_id
+                LEFT JOIN projects p ON p.id = c.project_id
+                ORDER BY r.rrf_score DESC
+                """,
+                vector,
+                namespace_id,
+                fetch_limit,
+                query_text,
+                limit,
+            )
 
     results = []
     for row in rows:

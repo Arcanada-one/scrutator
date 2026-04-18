@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from scrutator.chunker.engine import chunk_document
 from scrutator.db.models import IndexResponse
-from scrutator.db.repository import delete_by_source, insert_chunks, upsert_namespace, upsert_project
-from scrutator.search.embedder import embed_texts
+from scrutator.db.repository import (
+    delete_by_source,
+    get_chunk_ids_by_source,
+    insert_chunks,
+    insert_sparse_vectors,
+    upsert_namespace,
+    upsert_project,
+)
+from scrutator.search.embedder import embed_sparse, embed_texts
 
 
 async def index_document(
@@ -63,6 +70,15 @@ async def index_document(
     ]
 
     inserted = await insert_chunks(chunk_dicts, embeddings, namespace_id, project_id)
+
+    # 6. Get sparse embeddings and store them
+    try:
+        sparse_weights = await embed_sparse(texts)
+        chunk_ids = await get_chunk_ids_by_source(source_path)
+        if chunk_ids and sparse_weights:
+            await insert_sparse_vectors(chunk_ids, sparse_weights)
+    except Exception:
+        pass  # Sparse indexing is best-effort; dense + FTS still work
 
     return IndexResponse(
         chunks_indexed=inserted,

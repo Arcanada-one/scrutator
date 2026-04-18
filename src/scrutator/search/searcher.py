@@ -6,7 +6,7 @@ import time
 
 from scrutator.db.models import SearchResponse, SearchResult
 from scrutator.db.repository import hybrid_search, search_with_filters, upsert_namespace
-from scrutator.search.embedder import embed_single
+from scrutator.search.embedder import embed_single, embed_sparse
 
 
 async def search(
@@ -50,13 +50,19 @@ async def search(
             for r in raw
         ]
     else:
-        # Standard hybrid search (backward-compatible)
+        # Hybrid search: dense + sparse + FTS
         query_embedding = await embed_single(query)
+        try:
+            sparse_results = await embed_sparse([query])
+            query_sparse = sparse_results[0] if sparse_results else None
+        except Exception:
+            query_sparse = None  # Fallback to 2-way RRF if sparse fails
         results = await hybrid_search(
             query_embedding=query_embedding,
             query_text=query,
             namespace_id=namespace_id,
             limit=limit,
+            query_sparse=query_sparse,
         )
 
     # Apply filters
