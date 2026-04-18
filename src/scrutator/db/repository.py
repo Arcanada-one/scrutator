@@ -185,6 +185,195 @@ async def hybrid_search(
     return results
 
 
+async def insert_edges(edges: list[dict[str, Any]]) -> int:
+    """Batch insert graph edges. ON CONFLICT → update weight. Returns count."""
+    if not edges:
+        return 0
+    pool = await get_pool()
+    inserted = 0
+    async with pool.acquire() as conn:
+        for edge in edges:
+            await conn.execute(
+                """
+                INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight, created_by)
+                VALUES ($1::uuid, $2::uuid, $3, $4, $5)
+                ON CONFLICT (source_chunk_id, target_chunk_id, edge_type)
+                DO UPDATE SET weight = EXCLUDED.weight
+                """,
+                edge["source_chunk_id"],
+                edge["target_chunk_id"],
+                edge["edge_type"],
+                edge.get("weight", 1.0),
+                edge.get("created_by", "dreamer"),
+            )
+            inserted += 1
+    return inserted
+
+
+async def get_edges_for_chunk(chunk_id: str) -> list[dict[str, Any]]:
+    """Get all edges (inbound + outbound) for a chunk."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, source_chunk_id::text, target_chunk_id::text,
+                   edge_type, weight, created_by, created_at::text
+            FROM graph_edges
+            WHERE source_chunk_id = $1::uuid OR target_chunk_id = $1::uuid
+            ORDER BY created_at DESC
+            """,
+            chunk_id,
+        )
+    return [dict(r) for r in rows]
+
+
+async def delete_edges_by_creator(created_by: str, namespace_id: int | None = None) -> int:
+    """Delete edges created by a specific agent. Optional namespace filter."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if namespace_id is not None:
+            result = await conn.execute(
+                """
+                DELETE FROM graph_edges g
+                USING chunks c
+                WHERE g.source_chunk_id = c.id
+                  AND g.created_by = $1
+                  AND c.namespace_id = $2
+                """,
+                created_by,
+                namespace_id,
+            )
+        else:
+            result = await conn.execute(
+                "DELETE FROM graph_edges WHERE created_by = $1",
+                created_by,
+            )
+        return int(result.split()[-1])
+
+
+async def find_similar_pairs(namespace_id: int, threshold: float = 0.92, limit: int = 50) -> list[dict[str, Any]]:
+    """Find chunk pairs with cosine similarity > threshold within a namespace."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT
+                a.id::text AS chunk_id_a,
+                b.id::text AS chunk_id_b,
+                1 - (a.embedding_dense <=> b.embedding_dense) AS similarity,
+                a.source_path AS source_path_a,
+                b.source_path AS source_path_b,
+                LEFT(a.content, 200) AS content_a,
+                LEFT(b.content, 200) AS content_b
+            FROM chunks a
+            JOIN chunks b ON a.id < b.id
+                AND a.namespace_id = b.namespace_id
+                AND a.source_path != b.source_path
+            WHERE a.namespace_id = $1
+              AND a.embedding_dense IS NOT NULL
+              AND b.embedding_dense IS NOT NULL
+              AND 1 - (a.embedding_dense <=> b.embedding_dense) > $2
+            ORDER BY similarity DESC
+            LIMIT $3
+            """,
+            namespace_id,
+            threshold,
+            limit,
+        )
+    return [dict(r) for r in rows]
+
+
+async def get_orphan_chunks(namespace_id: int, limit: int = 50) -> list[dict[str, Any]]:
+    """Find chunks with zero graph edges."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT
+                c.id::text AS chunk_id,
+                c.source_path,
+                0 AS edge_count,
+                c.created_at::text
+            FROM chunks c
+            LEFT JOIN graph_edges g_out ON g_out.source_chunk_id = c.id
+            LEFT JOIN graph_edges g_in ON g_in.target_chunk_id = c.id
+            WHERE c.namespace_id = $1
+              AND g_out.id IS NULL
+              AND g_in.id IS NULL
+            ORDER BY c.created_at ASC
+            LIMIT $2
+            """,
+            namespace_id,
+            limit,
+        )
+    return [dict(r) for r in rows]
+
+
+async def find_stale_chunks(namespace_id: int, stale_days: int = 90, limit: int = 50) -> list[dict[str, Any]]:
+    """Find chunks not updated in stale_days days."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT
+                c.id::text AS chunk_id,
+                c.source_path,
+                EXTRACT(DAY FROM NOW() - c.updated_at)::int AS days_since_update,
+                COUNT(g.id)::int AS edge_count
+            FROM chunks c
+            LEFT JOIN graph_edges g ON g.source_chunk_id = c.id OR g.target_chunk_id = c.id
+            WHERE c.namespace_id = $1
+              AND c.updated_at < NOW() - MAKE_INTERVAL(days => $2)
+            GROUP BY c.id, c.source_path, c.updated_at
+            ORDER BY c.updated_at ASC
+            LIMIT $3
+            """,
+            namespace_id,
+            stale_days,
+            limit,
+        )
+    return [dict(r) for r in rows]
+
+
+async def get_edge_stats(namespace_id: int | None = None) -> dict[str, Any]:
+    """Edge statistics: total count, breakdown by type."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if namespace_id is not None:
+            total = await conn.fetchval(
+                """
+                SELECT COUNT(*)::int FROM graph_edges g
+                JOIN chunks c ON g.source_chunk_id = c.id
+                WHERE c.namespace_id = $1
+                """,
+                namespace_id,
+            )
+            by_type = await conn.fetch(
+                """
+                SELECT g.edge_type, COUNT(*)::int AS count,
+                       AVG(g.weight)::real AS avg_weight
+                FROM graph_edges g
+                JOIN chunks c ON g.source_chunk_id = c.id
+                WHERE c.namespace_id = $1
+                GROUP BY g.edge_type ORDER BY count DESC
+                """,
+                namespace_id,
+            )
+        else:
+            total = await conn.fetchval("SELECT COUNT(*)::int FROM graph_edges")
+            by_type = await conn.fetch(
+                """
+                SELECT edge_type, COUNT(*)::int AS count,
+                       AVG(weight)::real AS avg_weight
+                FROM graph_edges GROUP BY edge_type ORDER BY count DESC
+                """
+            )
+    return {
+        "total_edges": total or 0,
+        "by_type": [dict(r) for r in by_type],
+    }
+
+
 async def get_namespaces() -> list[NamespaceInfo]:
     """List all namespaces with chunk counts."""
     pool = await get_pool()

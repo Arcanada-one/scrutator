@@ -18,7 +18,21 @@ from scrutator.db.models import (
     SearchRequest,
     SearchResponse,
 )
-from scrutator.db.repository import get_namespaces, get_stats, upsert_namespace
+from scrutator.db.repository import (
+    delete_edges_by_creator,
+    get_edges_for_chunk,
+    get_namespaces,
+    get_stats,
+    insert_edges,
+    upsert_namespace,
+)
+from scrutator.dream.analyzer import analyze as dream_analyze
+from scrutator.dream.models import (
+    DreamAnalysisRequest,
+    DreamAnalysisResult,
+    EdgeCreate,
+    EdgeInfo,
+)
 from scrutator.search.indexer import index_document
 from scrutator.search.searcher import search
 
@@ -119,3 +133,48 @@ async def stats_endpoint() -> IndexStats:
         return IndexStats(**data)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to get stats: {e}") from e
+
+
+# ── Dream endpoints ─────────────────────────────────────────────────
+
+
+@app.post("/v1/dream/analyze", response_model=DreamAnalysisResult)
+async def dream_analyze_endpoint(request: DreamAnalysisRequest) -> DreamAnalysisResult:
+    try:
+        return await dream_analyze(request)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Dream analysis failed: {e}") from e
+
+
+@app.post("/v1/edges")
+async def create_edges(edges: list[EdgeCreate]) -> dict:
+    try:
+        count = await insert_edges([e.model_dump() for e in edges])
+        return {"created": count}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Edge creation failed: {e}") from e
+
+
+@app.get("/v1/edges/{chunk_id}", response_model=list[EdgeInfo])
+async def get_edges(chunk_id: str) -> list[EdgeInfo]:
+    try:
+        rows = await get_edges_for_chunk(chunk_id)
+        return [EdgeInfo(**r) for r in rows]
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Failed to get edges: {e}") from e
+
+
+@app.delete("/v1/edges")
+async def delete_edges(created_by: str, namespace: str | None = None) -> dict:
+    try:
+        namespace_id = None
+        if namespace:
+            namespaces = await get_namespaces()
+            for ns in namespaces:
+                if ns.name == namespace:
+                    namespace_id = ns.id
+                    break
+        count = await delete_edges_by_creator(created_by, namespace_id)
+        return {"deleted": count}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Edge deletion failed: {e}") from e

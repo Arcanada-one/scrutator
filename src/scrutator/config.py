@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     search_limit_default: int = 10
     search_timeout_ms: int = 5000
 
+    dream_dedup_threshold: float = 0.92
+    dream_crossref_threshold: float = 0.7
+    dream_stale_days: int = 90
+    dream_max_results: int = 50
+    dream_analysis_timeout_ms: int = 30000
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 
