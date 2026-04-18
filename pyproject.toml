@@ -1,0 +1,44 @@
+[project]
+name = "scrutator"
+version = "0.1.0"
+description = "Knowledge Retrieval & Meaning Engine for the Arcanada Ecosystem"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pavel Valentov" },
+]
+keywords = ["search", "retrieval", "embeddings", "rag", "hybrid-search"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic-settings>=2.7",
+    "asyncpg>=0.30",
+    "pgvector>=0.3",
+    "httpx>=0.28",
+]
+
+[project.urls]
+Homepage = "https://arcanada.one"
+Repository = "https://github.com/Arcanada-one/scrutator"
+Documentation = "https://github.com/Arcanada-one/scrutator/tree/main/docs"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["scrutator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
