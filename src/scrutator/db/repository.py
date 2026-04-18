@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from scrutator.db.connection import get_pool
-from scrutator.db.models import NamespaceInfo, NamespaceStats, SearchResult
+from scrutator.db.models import ChunkLookupResult, NamespaceInfo, NamespaceStats, SearchResult
 
 if TYPE_CHECKING:
     from scrutator.memory.models import MemoryStats
@@ -424,6 +424,52 @@ async def get_stats() -> dict[str, Any]:
             for r in ns_rows
         ],
     }
+
+
+async def get_chunks_by_source_path(
+    source_path: str,
+    namespace_id: int | None = None,
+) -> list[ChunkLookupResult]:
+    """Lookup chunks by source_path. Returns chunk info ordered by chunk_index."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if namespace_id is not None:
+            rows = await conn.fetch(
+                """
+                SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
+                       LEFT(content, 200) AS content_preview, metadata
+                FROM chunks
+                WHERE source_path = $1 AND namespace_id = $2
+                ORDER BY chunk_index
+                """,
+                source_path,
+                namespace_id,
+            )
+        else:
+            rows = await conn.fetch(
+                """
+                SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
+                       LEFT(content, 200) AS content_preview, metadata
+                FROM chunks
+                WHERE source_path = $1
+                ORDER BY chunk_index
+                """,
+                source_path,
+            )
+    results = []
+    for row in rows:
+        meta = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else dict(row["metadata"] or {})
+        results.append(
+            ChunkLookupResult(
+                chunk_id=row["chunk_id"],
+                chunk_index=row["chunk_index"],
+                source_path=row["source_path"],
+                source_type=row["source_type"],
+                content_preview=row["content_preview"] or "",
+                metadata=meta,
+            )
+        )
+    return results
 
 
 async def search_with_filters(

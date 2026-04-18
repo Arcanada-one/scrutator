@@ -105,6 +105,39 @@ class EdgeCreate(BaseModel):
         return v.strip()
 
 
+class EdgeCreateByPath(BaseModel):
+    """Request to create a graph edge using source_paths instead of chunk UUIDs."""
+
+    source_path: str
+    target_path: str
+    edge_type: str
+    weight: float = 1.0
+    created_by: str = "dreamer"
+    source_chunk_index: int = 0
+    target_chunk_index: int = 0
+
+    @field_validator("edge_type")
+    @classmethod
+    def edge_type_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("edge_type must not be empty")
+        return v.strip()
+
+    @field_validator("source_path", "target_path")
+    @classmethod
+    def path_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("path must not be empty")
+        return v.strip()
+
+
+class EdgeCreateByPathResponse(BaseModel):
+    """Response for edge creation by path."""
+
+    created: int
+    not_found: list[str]
+
+
 class EdgeInfo(BaseModel):
     """Graph edge with full info."""
 

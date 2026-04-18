@@ -10,6 +10,7 @@ from scrutator.chunker.models import ChunkRequest, ChunkResponse
 from scrutator.config import settings
 from scrutator.db.connection import apply_schema, close_pool, get_pool
 from scrutator.db.models import (
+    ChunkLookupResult,
     IndexRequest,
     IndexResponse,
     IndexStats,
@@ -20,6 +21,7 @@ from scrutator.db.models import (
 )
 from scrutator.db.repository import (
     delete_edges_by_creator,
+    get_chunks_by_source_path,
     get_edges_for_chunk,
     get_namespaces,
     get_stats,
@@ -27,10 +29,13 @@ from scrutator.db.repository import (
     upsert_namespace,
 )
 from scrutator.dream.analyzer import analyze as dream_analyze
+from scrutator.dream.edges import create_edges_by_path
 from scrutator.dream.models import (
     DreamAnalysisRequest,
     DreamAnalysisResult,
     EdgeCreate,
+    EdgeCreateByPath,
+    EdgeCreateByPathResponse,
     EdgeInfo,
 )
 from scrutator.memory.models import (
@@ -129,6 +134,21 @@ async def search_endpoint(request: SearchRequest) -> SearchResponse:
         raise HTTPException(status_code=503, detail=f"Search failed: {e}") from e
 
 
+@app.get("/v1/chunks", response_model=list[ChunkLookupResult])
+async def get_chunks(source_path: str, namespace: str | None = None) -> list[ChunkLookupResult]:
+    try:
+        namespace_id = None
+        if namespace:
+            namespaces = await get_namespaces()
+            for ns in namespaces:
+                if ns.name == namespace:
+                    namespace_id = ns.id
+                    break
+        return await get_chunks_by_source_path(source_path, namespace_id)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Chunk lookup failed: {e}") from e
+
+
 @app.post("/v1/namespaces", response_model=NamespaceInfo)
 async def create_namespace(request: NamespaceCreate) -> NamespaceInfo:
     try:
@@ -198,6 +218,14 @@ async def delete_edges(created_by: str, namespace: str | None = None) -> dict:
         return {"deleted": count}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Edge deletion failed: {e}") from e
+
+
+@app.post("/v1/edges/by-path", response_model=EdgeCreateByPathResponse)
+async def create_edges_by_path_endpoint(edges: list[EdgeCreateByPath]) -> EdgeCreateByPathResponse:
+    try:
+        return await create_edges_by_path(edges)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Edge creation by path failed: {e}") from e
 
 
 # ── Memory endpoints ───────────────────────────────────────────────

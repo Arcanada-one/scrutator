@@ -98,6 +98,17 @@ class SearchRequest(BaseModel):
         return min(v, _MAX_SEARCH_LIMIT)
 
 
+class ChunkLookupResult(BaseModel):
+    """Result of chunk lookup by source_path."""
+
+    chunk_id: str
+    chunk_index: int
+    source_path: str
+    source_type: str
+    content_preview: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class SearchResult(BaseModel):
     """A single search result with source attribution."""
 
