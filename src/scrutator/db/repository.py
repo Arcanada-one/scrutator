@@ -730,6 +730,391 @@ async def delete_memories_by_actor(actor: str, namespace_id: int | None = None) 
         return int(result.split()[-1])
 
 
+async def upsert_entity(
+    namespace_id: int,
+    name: str,
+    entity_type: str,
+    description: str | None = None,
+    properties: dict | None = None,
+    source_chunk_id: str | None = None,
+) -> str:
+    """Upsert a named entity. Returns entity UUID."""
+    pool = await get_pool()
+    props_json = json.dumps(properties or {})
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO entities (namespace_id, name, entity_type, description, properties, source_chunk_id)
+            VALUES ($1, $2, $3, $4, $5::jsonb, $6::uuid)
+            ON CONFLICT (namespace_id, name, entity_type)
+            DO UPDATE SET
+                description = COALESCE(EXCLUDED.description, entities.description),
+                properties = entities.properties || EXCLUDED.properties,
+                updated_at = NOW()
+            RETURNING id::text
+            """,
+            namespace_id,
+            name,
+            entity_type,
+            description,
+            props_json,
+            source_chunk_id,
+        )
+        return row["id"]
+
+
+async def upsert_entity_edge(
+    source_entity_id: str,
+    target_entity_id: str,
+    relation: str,
+    weight: float = 1.0,
+    source_chunk_id: str | None = None,
+) -> int:
+    """Upsert an entity-to-entity edge. Returns edge id."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO entity_edges (source_entity_id, target_entity_id, relation, weight, source_chunk_id)
+            VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid)
+            ON CONFLICT (source_entity_id, target_entity_id, relation)
+            DO UPDATE SET weight = EXCLUDED.weight
+            RETURNING id
+            """,
+            source_entity_id,
+            target_entity_id,
+            relation,
+            weight,
+            source_chunk_id,
+        )
+        return row["id"]
+
+
+async def get_entities_for_chunks(chunk_ids: list[str]) -> dict[str, list[dict]]:
+    """Get entities linked to given chunks. Returns {chunk_id: [entity_dict, ...]}."""
+    if not chunk_ids:
+        return {}
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT e.source_chunk_id::text AS chunk_id,
+                   e.name, e.entity_type, e.description,
+                   e.properties
+            FROM entities e
+            WHERE e.source_chunk_id = ANY($1::uuid[])
+            ORDER BY e.name
+            """,
+            chunk_ids,
+        )
+    result: dict[str, list[dict]] = {}
+    for row in rows:
+        cid = row["chunk_id"]
+        props = json.loads(row["properties"]) if isinstance(row["properties"], str) else dict(row["properties"] or {})
+        entry = {
+            "name": row["name"],
+            "entity_type": row["entity_type"],
+            "description": row["description"],
+            "properties": props,
+        }
+        result.setdefault(cid, []).append(entry)
+    return result
+
+
+async def get_entity_edges_for_chunks(chunk_ids: list[str]) -> dict[str, list[dict]]:
+    """Get entity edges linked to given chunks. Returns {chunk_id: [edge_dict, ...]}."""
+    if not chunk_ids:
+        return {}
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT ee.source_chunk_id::text AS chunk_id,
+                   src.name AS source_name,
+                   tgt.name AS target_name,
+                   ee.relation, ee.weight
+            FROM entity_edges ee
+            JOIN entities src ON src.id = ee.source_entity_id
+            JOIN entities tgt ON tgt.id = ee.target_entity_id
+            WHERE ee.source_chunk_id = ANY($1::uuid[])
+            ORDER BY ee.created_at
+            """,
+            chunk_ids,
+        )
+    result: dict[str, list[dict]] = {}
+    for row in rows:
+        cid = row["chunk_id"]
+        entry = {
+            "source_name": row["source_name"],
+            "target_name": row["target_name"],
+            "relation": row["relation"],
+            "weight": float(row["weight"]),
+        }
+        result.setdefault(cid, []).append(entry)
+    return result
+
+
+async def get_entity_by_name(namespace_id: int, name: str, entity_type: str) -> str | None:
+    """Look up entity UUID by name+type. Returns None if not found."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT id::text FROM entities WHERE namespace_id = $1 AND name = $2 AND entity_type = $3",
+            namespace_id,
+            name,
+            entity_type,
+        )
+    return row["id"] if row else None
+
+
+async def create_ltm_job(namespace_id: int, source_path: str) -> str:
+    """Create a new LTM ingest job. Returns job UUID."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO ltm_jobs (namespace_id, source_path, status)
+            VALUES ($1, $2, 'pending')
+            RETURNING id::text
+            """,
+            namespace_id,
+            source_path,
+        )
+        return row["id"]
+
+
+async def update_ltm_job(
+    job_id: str,
+    status: str | None = None,
+    current_step: str | None = None,
+    total_chunks: int | None = None,
+    processed_chunks: int | None = None,
+    error: str | None = None,
+) -> None:
+    """Update LTM job state."""
+    pool = await get_pool()
+    sets: list[str] = ["updated_at = NOW()"]
+    params: list[Any] = []
+    idx = 2  # $1 is job_id
+
+    if status is not None:
+        sets.append(f"status = ${idx}")
+        params.append(status)
+        idx += 1
+    if current_step is not None:
+        sets.append(f"current_step = ${idx}")
+        params.append(current_step)
+        idx += 1
+    if total_chunks is not None:
+        sets.append(f"total_chunks = ${idx}")
+        params.append(total_chunks)
+        idx += 1
+    if processed_chunks is not None:
+        sets.append(f"processed_chunks = ${idx}")
+        params.append(processed_chunks)
+        idx += 1
+    if error is not None:
+        sets.append(f"error = ${idx}")
+        params.append(error)
+        idx += 1
+
+    async with pool.acquire() as conn:
+        await conn.execute(
+            f"UPDATE ltm_jobs SET {', '.join(sets)} WHERE id = $1::uuid",
+            job_id,
+            *params,
+        )
+
+
+async def get_ltm_job(job_id: str) -> dict[str, Any] | None:
+    """Get LTM job by id."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT id::text, namespace_id, source_path, status, current_step,
+                   total_chunks, processed_chunks, error,
+                   created_at::text, updated_at::text
+            FROM ltm_jobs WHERE id = $1::uuid
+            """,
+            job_id,
+        )
+    return dict(row) if row else None
+
+
+async def list_entities(namespace_id: int, limit: int = 100) -> list[dict[str, Any]]:
+    """List entities in a namespace with edge counts."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT e.id::text, e.name, e.entity_type, e.description,
+                   e.properties, e.created_at::text,
+                   (SELECT COUNT(*)::int FROM entity_edges ee
+                    WHERE ee.source_entity_id = e.id OR ee.target_entity_id = e.id) AS edge_count
+            FROM entities e
+            WHERE e.namespace_id = $1
+            ORDER BY e.name
+            LIMIT $2
+            """,
+            namespace_id,
+            limit,
+        )
+    results = []
+    for r in rows:
+        props = json.loads(r["properties"]) if isinstance(r["properties"], str) else dict(r["properties"] or {})
+        results.append(
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "entity_type": r["entity_type"],
+                "description": r["description"],
+                "properties": props,
+                "edge_count": r["edge_count"],
+                "created_at": r["created_at"],
+            }
+        )
+    return results
+
+
+async def get_entity_graph(namespace_id: int, entity_name: str | None = None) -> tuple[list[dict], list[dict]]:
+    """Get entity graph as (nodes, edges). If entity_name given, return 1-hop neighborhood."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if entity_name:
+            # 1-hop: the entity + its direct neighbors
+            rows_edges = await conn.fetch(
+                """
+                SELECT src.name AS source_name, src.entity_type AS source_type,
+                       tgt.name AS target_name, tgt.entity_type AS target_type,
+                       ee.relation, ee.weight
+                FROM entity_edges ee
+                JOIN entities src ON src.id = ee.source_entity_id
+                JOIN entities tgt ON tgt.id = ee.target_entity_id
+                WHERE src.namespace_id = $1
+                  AND (src.name = $2 OR tgt.name = $2)
+                ORDER BY ee.created_at
+                LIMIT 200
+                """,
+                namespace_id,
+                entity_name,
+            )
+        else:
+            rows_edges = await conn.fetch(
+                """
+                SELECT src.name AS source_name, src.entity_type AS source_type,
+                       tgt.name AS target_name, tgt.entity_type AS target_type,
+                       ee.relation, ee.weight
+                FROM entity_edges ee
+                JOIN entities src ON src.id = ee.source_entity_id
+                JOIN entities tgt ON tgt.id = ee.target_entity_id
+                WHERE src.namespace_id = $1
+                ORDER BY ee.created_at
+                LIMIT 500
+                """,
+                namespace_id,
+            )
+
+    # Build unique nodes from edges
+    node_set: dict[str, dict] = {}
+    edges: list[dict] = []
+    for r in rows_edges:
+        node_set[r["source_name"]] = {"name": r["source_name"], "type": r["source_type"]}
+        node_set[r["target_name"]] = {"name": r["target_name"], "type": r["target_type"]}
+        edges.append(
+            {
+                "source": r["source_name"],
+                "target": r["target_name"],
+                "relation": r["relation"],
+                "weight": float(r["weight"]),
+            }
+        )
+
+    return list(node_set.values()), edges
+
+
+async def get_entity_names_for_namespace(namespace_id: int) -> list[str]:
+    """Get all unique entity names in a namespace."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT DISTINCT name FROM entities WHERE namespace_id = $1 ORDER BY name",
+            namespace_id,
+        )
+    return [row["name"] for row in rows]
+
+
+async def _repoint_and_delete_alias(conn: Any, canonical_id: str, alias_id: str) -> None:
+    """Repoint edges from alias to canonical, then delete alias entity."""
+    # Repoint source edges (skip if would create duplicate)
+    await conn.execute(
+        """
+        UPDATE entity_edges SET source_entity_id = $1::uuid
+        WHERE source_entity_id = $2::uuid
+        AND NOT EXISTS (
+            SELECT 1 FROM entity_edges e2
+            WHERE e2.source_entity_id = $1::uuid
+              AND e2.target_entity_id = entity_edges.target_entity_id
+              AND e2.relation = entity_edges.relation
+        )
+        """,
+        canonical_id,
+        alias_id,
+    )
+    # Repoint target edges
+    await conn.execute(
+        """
+        UPDATE entity_edges SET target_entity_id = $1::uuid
+        WHERE target_entity_id = $2::uuid
+        AND NOT EXISTS (
+            SELECT 1 FROM entity_edges e2
+            WHERE e2.target_entity_id = $1::uuid
+              AND e2.source_entity_id = entity_edges.source_entity_id
+              AND e2.relation = entity_edges.relation
+        )
+        """,
+        canonical_id,
+        alias_id,
+    )
+    # Delete orphaned edges + alias entity
+    await conn.execute(
+        "DELETE FROM entity_edges WHERE source_entity_id = $1::uuid OR target_entity_id = $1::uuid",
+        alias_id,
+    )
+    await conn.execute("DELETE FROM entities WHERE id = $1::uuid", alias_id)
+
+
+async def merge_entity_aliases(namespace_id: int, canonical: str, aliases: list[str]) -> int:
+    """Merge alias entities into canonical. Returns merged count."""
+    if not aliases:
+        return 0
+    pool = await get_pool()
+    merged = 0
+    async with pool.acquire() as conn:
+        canonical_row = await conn.fetchrow(
+            "SELECT id::text FROM entities WHERE namespace_id = $1 AND name = $2 LIMIT 1",
+            namespace_id,
+            canonical,
+        )
+        if not canonical_row:
+            return 0
+        canonical_id = canonical_row["id"]
+
+        for alias in aliases:
+            if alias == canonical:
+                continue
+            alias_rows = await conn.fetch(
+                "SELECT id::text FROM entities WHERE namespace_id = $1 AND name = $2",
+                namespace_id,
+                alias,
+            )
+            for alias_row in alias_rows:
+                await _repoint_and_delete_alias(conn, canonical_id, alias_row["id"])
+                merged += 1
+
+    return merged
+
+
 async def memory_stats() -> MemoryStats:
     """Get memory statistics grouped by namespace, actor, type."""
     from scrutator.memory.models import MemoryStats

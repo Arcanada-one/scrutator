@@ -79,3 +79,50 @@ CREATE TABLE IF NOT EXISTS graph_edges (
 CREATE INDEX IF NOT EXISTS idx_edges_source ON graph_edges(source_chunk_id);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON graph_edges(target_chunk_id);
 CREATE INDEX IF NOT EXISTS idx_edges_type ON graph_edges(edge_type);
+
+-- LTM: Named entities (knowledge graph nodes)
+CREATE TABLE IF NOT EXISTS entities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    namespace_id INT REFERENCES namespaces(id) NOT NULL,
+    name TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    description TEXT,
+    properties JSONB DEFAULT '{}',
+    source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(namespace_id, name, entity_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_entities_namespace ON entities(namespace_id);
+CREATE INDEX IF NOT EXISTS idx_entities_name ON entities USING gin(to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
+
+-- LTM: Entity-to-entity relationships
+CREATE TABLE IF NOT EXISTS entity_edges (
+    id SERIAL PRIMARY KEY,
+    source_entity_id UUID REFERENCES entities(id) ON DELETE CASCADE,
+    target_entity_id UUID REFERENCES entities(id) ON DELETE CASCADE,
+    relation TEXT NOT NULL,
+    weight REAL DEFAULT 1.0,
+    source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(source_entity_id, target_entity_id, relation)
+);
+
+CREATE INDEX IF NOT EXISTS idx_entity_edges_source ON entity_edges(source_entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_edges_target ON entity_edges(target_entity_id);
+
+-- LTM: Pipeline job state (resume on failure)
+CREATE TABLE IF NOT EXISTS ltm_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    namespace_id INT REFERENCES namespaces(id) NOT NULL,
+    source_path TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    current_step TEXT,
+    total_chunks INT DEFAULT 0,
+    processed_chunks INT DEFAULT 0,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);

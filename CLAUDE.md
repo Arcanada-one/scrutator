@@ -86,8 +86,66 @@ scripts/           — deploy, utility scripts
 
 - **LTM** (Long Term Memory) — Scrutator is the retrieval backend
 - **Agent Dreamer** (AGENT-0001) — Dreaming module, pluggable analyzers
-- **Model Connector** (CONN-*) — LLM for query understanding
-- **Embedding API** (INFRA-0020) — Scrutator owns and extends this
+- **Model Connector** (CONN-*) — Unified API for AI CLI agents. LIVE at `https://connector.arcanada.one`, port 3900. Bearer auth. Embedding connector: `POST /execute` with `{"connector":"embedding","prompt":"...","extra":{"embeddingType":"dense|sparse|colbert"}}`. Used by Scrutator for hybrid search (dense+sparse+ColBERT via BGE-M3).
+- **Embedding API** (INFRA-0020) — Scrutator owns and extends this (BGE-M3 on arcana-db:8300, accessed via Model Connector)
+
+## Model Connector Integration
+
+Production API for LLM and embedding access. Use this instead of direct CLI calls or raw HTTP to arcana-db.
+
+**Base URL:** `https://connector.arcanada.one`
+**Auth:** `Authorization: Bearer <API_KEY>` (bcrypt-hashed keys in `ApiKey` table on arcana-db)
+
+### Embedding (primary use case for Scrutator)
+
+```bash
+# Dense embeddings (1024-dim, for similarity search)
+curl -X POST https://connector.arcanada.one/execute \
+  -H "Authorization: Bearer $MC_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"connector":"embedding","prompt":"your text here"}'
+
+# Sparse embeddings (BM25-style token weights, for lexical matching)
+curl -X POST https://connector.arcanada.one/execute \
+  -H "Authorization: Bearer $MC_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"connector":"embedding","prompt":"your text","extra":{"embeddingType":"sparse"}}'
+
+# ColBERT multi-vector (token-level 1024-dim vectors, for late interaction)
+curl -X POST https://connector.arcanada.one/execute \
+  -H "Authorization: Bearer $MC_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"connector":"embedding","prompt":"your text","extra":{"embeddingType":"colbert"}}'
+```
+
+### LLM access (for query understanding, summarization)
+
+```bash
+# Claude Code (fastest for short tasks)
+curl -X POST https://connector.arcanada.one/connectors/claude-code/execute \
+  -H "Authorization: Bearer $MC_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Rephrase this search query for better retrieval: ...","model":"haiku","maxTurns":1}'
+
+# Gemini (free tier, good for bulk)
+curl -X POST https://connector.arcanada.one/connectors/gemini/execute \
+  -H "Authorization: Bearer $MC_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"...","model":"gemini-2.5-flash"}'
+```
+
+### Response format
+
+All connectors return: `{id, connector, model, result, usage: {inputTokens, outputTokens, costUsd}, latencyMs, status}`.
+Embedding `result` is a JSON string — parse it to get the vector array.
+
+## CI/CD
+
+- **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest
+- **Deploy:** SSH to arcana-db, `docker compose up -d --build` (planned)
+- **Шаблон:** `Areas/Infrastructure/CI-Runners.md` § 10.2 (Python/FastAPI)
+- **Post-deploy:** health check (`curl -fsS http://localhost:8310/health`), Ops Bot notification on failure
+- **Convention:** см. root `CLAUDE.md` § CI/CD Convention
 
 ## Key Commands
 

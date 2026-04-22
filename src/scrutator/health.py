@@ -75,6 +75,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
 
+# LTM router
+from scrutator.ltm.router import router as ltm_router  # noqa: E402
+
+app.include_router(ltm_router)
+
 
 @app.get("/health")
 async def health() -> dict:

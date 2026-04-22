@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     memory_decay_days: int = 180
     memory_max_bulk_size: int = 100
 
+    ltm_connector: str = "cursor"
+    ltm_model: str = "auto"
+    ltm_mc_url: str = "http://100.121.155.54:3900"
+    ltm_mc_api_key: str = ""
+    ltm_max_entities_per_chunk: int = 10
+    ltm_dedup_similarity: float = 0.85
+    ltm_rerank_top_n: int = 5
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 
