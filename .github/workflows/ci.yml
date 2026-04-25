@@ -1,4 +1,4 @@
-name: CI
+name: CI & Deploy
 
 on:
   push:
@@ -31,3 +31,33 @@ jobs:
         run: pytest tests/ -v
         env:
           PYTHONPATH: src
+
+  deploy:
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-scrutator
+      cancel-in-progress: false
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /srv/apps/scrutator
+            git pull --ff-only origin main
+            docker compose up -d --build
+            sleep 10
+            curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
+
+      - name: Notify Ops Bot on failure
+        if: failure()
+        run: |
+          curl -fsS -X POST https://ops.arcanada.one/events \
+            -H "Authorization: Bearer ${{ secrets.OPSBOT_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"category":"fatal","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'

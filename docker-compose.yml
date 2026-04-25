@@ -1,0 +1,16 @@
+services:
+  scrutator:
+    build: .
+    network_mode: host
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - scrutator-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8310/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  scrutator-logs:
