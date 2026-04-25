@@ -231,8 +231,9 @@ class TestEmbedder:
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
 
-        with patch("scrutator.search.embedder.get_client", return_value=mock_client), pytest.raises(
-            EmbeddingError, match="500"
+        with (
+            patch("scrutator.search.embedder.get_client", return_value=mock_client),
+            pytest.raises(EmbeddingError, match="500"),
         ):
             await embed_texts(["test"])
 
