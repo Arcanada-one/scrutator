@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     debug: bool = False
 
     embedding_api_url: str = "http://localhost:8300"
+    embedding_timeout: float = 30.0
+    embedding_max_retries: int = 3
 
     database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"
     database_pool_min: int = 2

@@ -1,5 +1,6 @@
 """Health check endpoint + API routers — minimal FastAPI app."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -57,8 +58,11 @@ from scrutator.memory.service import (
 from scrutator.memory.service import (
     recall as memory_recall,
 )
+from scrutator.search.embedder import close_client as close_embedding_client
 from scrutator.search.indexer import index_document
 from scrutator.search.searcher import search
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -70,6 +74,7 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass  # DB optional — chunking works without it
     yield
+    await close_embedding_client()
     await close_pool()
 
 
@@ -120,7 +125,8 @@ async def index_endpoint(request: IndexRequest) -> IndexResponse:
             overlap_tokens=request.overlap_tokens,
         )
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Index failed: {e}") from e
+        logger.exception("Index failed for %s", request.source_path)
+        raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
 
 
 @app.post("/v1/search", response_model=SearchResponse)

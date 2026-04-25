@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from scrutator.chunker.engine import chunk_document
 from scrutator.db.models import IndexResponse
 from scrutator.db.repository import (
@@ -13,6 +15,8 @@ from scrutator.db.repository import (
     upsert_project,
 )
 from scrutator.search.embedder import embed_sparse, embed_texts
+
+logger = logging.getLogger(__name__)
 
 
 async def index_document(
@@ -78,7 +82,7 @@ async def index_document(
         if chunk_ids and sparse_weights:
             await insert_sparse_vectors(chunk_ids, sparse_weights)
     except Exception:
-        pass  # Sparse indexing is best-effort; dense + FTS still work
+        logger.warning("Sparse indexing failed for %s", source_path, exc_info=True)
 
     return IndexResponse(
         chunks_indexed=inserted,

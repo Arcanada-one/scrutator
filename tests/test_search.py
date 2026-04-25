@@ -205,13 +205,10 @@ class TestEmbedder:
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": [{"embedding": [0.1] * 1024}, {"embedding": [0.2] * 1024}]}
 
-        with patch("scrutator.search.embedder.httpx.AsyncClient") as mock_client:
-            mock_instance = AsyncMock()
-            mock_instance.post.return_value = mock_response
-            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
-            mock_instance.__aexit__ = AsyncMock(return_value=False)
-            mock_client.return_value = mock_instance
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_response
 
+        with patch("scrutator.search.embedder.get_client", return_value=mock_client):
             results = await embed_texts(["hello", "world"])
             assert len(results) == 2
             assert len(results[0]) == 1024
@@ -231,13 +228,10 @@ class TestEmbedder:
         mock_response.status_code = 500
         mock_response.text = "Internal Server Error"
 
-        with patch("scrutator.search.embedder.httpx.AsyncClient") as mock_client:
-            mock_instance = AsyncMock()
-            mock_instance.post.return_value = mock_response
-            mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
-            mock_instance.__aexit__ = AsyncMock(return_value=False)
-            mock_client.return_value = mock_instance
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_response
 
+        with patch("scrutator.search.embedder.get_client", return_value=mock_client):
             with pytest.raises(EmbeddingError, match="500"):
                 await embed_texts(["test"])
 
