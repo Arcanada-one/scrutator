@@ -46,6 +46,7 @@ Scrutator provides unified search, retrieval, and meaning extraction across all 
 - **Vector store:** PostgreSQL + pgvector (HNSW indexes)
 - **Full-text search:** PostgreSQL FTS (tsvector, dual-language: russian + english)
 - **Hybrid ranking:** Reciprocal Rank Fusion (RRF, k=60)
+- **Temporal layer (LTM-0012):** `entity_events` table + `btree_gist` GiST range index for `as_of` / `time_range` filtering; hybrid date extraction (regex Layer 1 → LLM Layer 2 fallback gated by time-cue keywords); auto-invalidate via Graphiti-style `superseded_by`.
 - **Settings:** pydantic-settings
 - **Linting:** ruff (line-length=120, target=py312)
 - **Testing:** pytest + pytest-asyncio

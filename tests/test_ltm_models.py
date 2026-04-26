@@ -1,11 +1,15 @@
 """Tests for LTM pydantic models."""
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from pydantic import ValidationError
 
 from scrutator.ltm.models import (
     Entity,
     EntityEdge,
+    EntityEvent,
+    EventType,
     IngestRequest,
     IngestResponse,
     JobStatus,
@@ -134,3 +138,103 @@ class TestRecallResponse:
             search_time_ms=12.5,
         )
         assert resp.total == 0
+
+
+class TestRecallRequestTemporal:
+    def test_defaults_backward_compatible(self):
+        req = RecallRequest(query="x")
+        assert req.as_of is None
+        assert req.time_range is None
+        assert req.temporal_boost == 0.3
+
+    def test_as_of_accepts_iso(self):
+        req = RecallRequest(query="x", as_of="2026-04-26T10:00:00+00:00")
+        assert req.as_of == datetime(2026, 4, 26, 10, 0, tzinfo=UTC)
+
+    def test_time_range_ordered(self):
+        t1 = datetime(2026, 4, 1, tzinfo=UTC)
+        t2 = datetime(2026, 4, 30, tzinfo=UTC)
+        req = RecallRequest(query="x", time_range=(t1, t2))
+        assert req.time_range == (t1, t2)
+
+    def test_time_range_inverted_rejected(self):
+        t1 = datetime(2026, 4, 30, tzinfo=UTC)
+        t2 = datetime(2026, 4, 1, tzinfo=UTC)
+        with pytest.raises(ValidationError, match="start must be before end"):
+            RecallRequest(query="x", time_range=(t1, t2))
+
+    def test_boost_out_of_range(self):
+        with pytest.raises(ValidationError, match=r"\[0\.0, 1\.0\]"):
+            RecallRequest(query="x", temporal_boost=1.5)
+        with pytest.raises(ValidationError, match=r"\[0\.0, 1\.0\]"):
+            RecallRequest(query="x", temporal_boost=-0.1)
+
+
+class TestEntityEvent:
+    def test_minimal_with_when_t(self):
+        e = EntityEvent(
+            entity_name="TUNE-0003",
+            event_type=EventType.ARCHIVED,
+            when_t=datetime(2026, 4, 16, tzinfo=UTC),
+        )
+        assert e.entity_name == "TUNE-0003"
+        assert e.valid_from is None
+
+    def test_minimal_with_valid_from(self):
+        e = EntityEvent(
+            entity_name="X",
+            event_type="released",
+            valid_from=datetime(2026, 1, 1, tzinfo=UTC),
+        )
+        assert e.when_t is None
+
+    def test_no_timestamp_rejected(self):
+        with pytest.raises(ValidationError, match="at least one of when_t"):
+            EntityEvent(entity_name="X", event_type="archived")
+
+    def test_valid_period_inverted_rejected(self):
+        with pytest.raises(ValidationError, match="valid_from must be before valid_to"):
+            EntityEvent(
+                entity_name="X",
+                event_type="archived",
+                valid_from=datetime(2026, 4, 1, tzinfo=UTC),
+                valid_to=datetime(2026, 3, 1, tzinfo=UTC),
+            )
+
+    def test_empty_entity_name_rejected(self):
+        with pytest.raises(ValidationError, match="must not be empty"):
+            EntityEvent(
+                entity_name="  ",
+                event_type="archived",
+                when_t=datetime(2026, 4, 16, tzinfo=UTC),
+            )
+
+    def test_description_truncated(self):
+        long_desc = "x" * 600
+        e = EntityEvent(
+            entity_name="X",
+            event_type="archived",
+            when_t=datetime(2026, 4, 16, tzinfo=UTC),
+            description=long_desc,
+        )
+        assert len(e.description) == 500
+
+    def test_event_type_freeform(self):
+        # Allow extras (LLM may emit unknown types) — pipeline filters
+        e = EntityEvent(
+            entity_name="X",
+            event_type="custom_unknown",
+            when_t=datetime(2026, 4, 16, tzinfo=UTC),
+        )
+        assert e.event_type == "custom_unknown"
+
+    def test_zero_length_valid_period_rejected(self):
+        t = datetime(2026, 4, 16, tzinfo=UTC)
+        with pytest.raises(ValidationError, match="valid_from must be before valid_to"):
+            EntityEvent(entity_name="X", event_type="archived", valid_from=t, valid_to=t)
+
+    def test_microsecond_valid_period_ok(self):
+        t1 = datetime(2026, 4, 16, tzinfo=UTC)
+        t2 = t1 + timedelta(microseconds=1)
+        e = EntityEvent(entity_name="X", event_type="archived", valid_from=t1, valid_to=t2)
+        assert e.valid_to > e.valid_from

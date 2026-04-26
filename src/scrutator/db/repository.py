@@ -1115,6 +1115,233 @@ async def merge_entity_aliases(namespace_id: int, canonical: str, aliases: list[
     return merged
 
 
+async def upsert_entity_event(
+    namespace_id: int,
+    entity_id: str,
+    event_type: str,
+    when_t: Any | None = None,
+    valid_from: Any | None = None,
+    valid_to: Any | None = None,
+    description: str | None = None,
+    properties: dict | None = None,
+    source_chunk_id: str | None = None,
+) -> str:
+    """Upsert a temporal event. ON CONFLICT (namespace,entity,type,when_t) → update.
+    Returns event UUID."""
+    pool = await get_pool()
+    props_json = json.dumps(properties or {})
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO entity_events
+                (namespace_id, entity_id, event_type, when_t, valid_from, valid_to,
+                 description, properties, source_chunk_id)
+            VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8::jsonb, $9::uuid)
+            ON CONFLICT (namespace_id, entity_id, event_type, when_t)
+            DO UPDATE SET
+                valid_from = COALESCE(EXCLUDED.valid_from, entity_events.valid_from),
+                valid_to = COALESCE(EXCLUDED.valid_to, entity_events.valid_to),
+                description = COALESCE(EXCLUDED.description, entity_events.description),
+                properties = entity_events.properties || EXCLUDED.properties
+            RETURNING id::text
+            """,
+            namespace_id,
+            entity_id,
+            event_type,
+            when_t,
+            valid_from,
+            valid_to,
+            description,
+            props_json,
+            source_chunk_id,
+        )
+        return row["id"]
+
+
+async def find_overlapping_events(
+    namespace_id: int,
+    entity_id: str,
+    event_type: str,
+    valid_from: Any,
+    exclude_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return prior open events for (entity,type) whose interval overlaps the new
+    valid_from. Used by auto-invalidate logic."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id::text, valid_from, valid_to, when_t
+            FROM entity_events
+            WHERE namespace_id = $1
+              AND entity_id = $2::uuid
+              AND event_type = $3
+              AND ($5::uuid IS NULL OR id <> $5::uuid)
+              AND valid_from IS NOT NULL
+              AND valid_from < $4
+              AND (valid_to IS NULL OR valid_to > $4)
+            ORDER BY valid_from ASC
+            """,
+            namespace_id,
+            entity_id,
+            event_type,
+            valid_from,
+            exclude_id,
+        )
+    return [dict(r) for r in rows]
+
+
+async def supersede_event(event_id: str, valid_to: Any, superseded_by: str) -> None:
+    """Close an event's validity period and mark it superseded."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE entity_events
+            SET valid_to = $2, superseded_by = $3::uuid
+            WHERE id = $1::uuid AND valid_to IS NULL
+            """,
+            event_id,
+            valid_to,
+            superseded_by,
+        )
+
+
+async def get_events_for_entity(
+    namespace_id: int,
+    entity_name: str,
+    include_superseded: bool = False,
+) -> list[dict[str, Any]]:
+    """List events for an entity (by name) within a namespace."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT ee.id::text, ee.event_type,
+                   ee.when_t::text AS when_t, ee.valid_from::text AS valid_from,
+                   ee.valid_to::text AS valid_to,
+                   ee.description, ee.properties,
+                   ee.source_chunk_id::text AS source_chunk_id,
+                   ee.superseded_by::text AS superseded_by
+            FROM entity_events ee
+            JOIN entities e ON e.id = ee.entity_id
+            WHERE e.namespace_id = $1
+              AND e.name = $2
+              AND ($3::bool OR ee.superseded_by IS NULL)
+            ORDER BY ee.when_t NULLS LAST, ee.valid_from NULLS LAST
+            """,
+            namespace_id,
+            entity_name,
+            include_superseded,
+        )
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        props = json.loads(r["properties"]) if isinstance(r["properties"], str) else dict(r["properties"] or {})
+        out.append(
+            {
+                "id": r["id"],
+                "event_type": r["event_type"],
+                "when_t": r["when_t"],
+                "valid_from": r["valid_from"],
+                "valid_to": r["valid_to"],
+                "description": r["description"],
+                "properties": props,
+                "source_chunk_id": r["source_chunk_id"],
+                "superseded_by": r["superseded_by"],
+            }
+        )
+    return out
+
+
+async def get_chunk_events_summary(chunk_ids: list[str]) -> dict[str, list[dict]]:
+    """Return events linked to each chunk_id (used for recall enrichment)."""
+    if not chunk_ids:
+        return {}
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT ee.source_chunk_id::text AS chunk_id,
+                   ee.event_type,
+                   ee.when_t,
+                   ee.valid_from,
+                   ee.valid_to,
+                   e.name AS entity_name
+            FROM entity_events ee
+            JOIN entities e ON e.id = ee.entity_id
+            WHERE ee.source_chunk_id = ANY($1::uuid[])
+              AND ee.superseded_by IS NULL
+            """,
+            chunk_ids,
+        )
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        out.setdefault(r["chunk_id"], []).append(
+            {
+                "entity_name": r["entity_name"],
+                "event_type": r["event_type"],
+                "when_t": r["when_t"],
+                "valid_from": r["valid_from"],
+                "valid_to": r["valid_to"],
+            }
+        )
+    return out
+
+
+async def filter_chunks_by_temporal(
+    chunk_ids: list[str],
+    as_of: Any | None = None,
+    time_range: tuple[Any, Any] | None = None,
+) -> list[str]:
+    """Apply temporal filter — return subset of chunk_ids whose events match.
+    Chunks with NO events pass through (treated as timeless / always valid)."""
+    if not chunk_ids:
+        return []
+    if as_of is None and time_range is None:
+        return chunk_ids
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        if as_of is not None:
+            rows = await conn.fetch(
+                """
+                WITH input(chunk_id) AS (SELECT unnest($1::uuid[]))
+                SELECT input.chunk_id::text AS cid
+                FROM input
+                LEFT JOIN entity_events ee ON ee.source_chunk_id = input.chunk_id
+                GROUP BY input.chunk_id
+                HAVING COUNT(ee.id) = 0
+                    OR BOOL_OR(
+                        ee.valid_from IS NOT NULL
+                        AND ee.valid_from <= $2
+                        AND (ee.valid_to IS NULL OR ee.valid_to > $2)
+                    )
+                """,
+                chunk_ids,
+                as_of,
+            )
+        else:
+            t1, t2 = time_range
+            rows = await conn.fetch(
+                """
+                WITH input(chunk_id) AS (SELECT unnest($1::uuid[]))
+                SELECT input.chunk_id::text AS cid
+                FROM input
+                LEFT JOIN entity_events ee ON ee.source_chunk_id = input.chunk_id
+                GROUP BY input.chunk_id
+                HAVING COUNT(ee.id) = 0
+                    OR BOOL_OR(
+                        ee.valid_from IS NOT NULL
+                        AND tstzrange(ee.valid_from, ee.valid_to, '[)')
+                            && tstzrange($2::timestamptz, $3::timestamptz, '[)')
+                    )
+                """,
+                chunk_ids,
+                t1,
+                t2,
+            )
+    return [r["cid"] for r in rows]
+
+
 async def memory_stats() -> MemoryStats:
     """Get memory statistics grouped by namespace, actor, type."""
     from scrutator.memory.models import MemoryStats

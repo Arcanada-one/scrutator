@@ -155,21 +155,38 @@ def _dicts_to_recall_results(dicts: list[dict]) -> list[RecallResult]:
 
 @router.post("/recall", response_model=RecallResponse)
 async def recall(req: RecallRequest) -> RecallResponse:
-    """Recall memories with entity enrichment."""
+    """Recall memories with entity enrichment + optional temporal filter."""
     start = time.monotonic()
 
-    search_response = await search(query=req.query, namespace=req.namespace, limit=req.limit, min_score=req.min_score)
+    # Fetch a wider candidate pool when temporal filter is active to keep `limit` results
+    fetch_limit = req.limit * 3 if (req.as_of or req.time_range) else req.limit
+    search_response = await search(query=req.query, namespace=req.namespace, limit=fetch_limit, min_score=req.min_score)
     results_dicts = _search_results_to_dicts(search_response.results)
 
+    namespace_id = await repository.upsert_namespace(req.namespace) if req.namespace else None
+    llm = _create_llm_client()
+    pipeline = RecallPipeline(llm=llm, namespace=req.namespace or "arcanada", namespace_id=namespace_id or 0)
+
+    # LTM-0012 — temporal pre-filter (before entity enrichment to save work)
+    if req.as_of is not None or req.time_range is not None:
+        results_dicts = await pipeline.filter_temporal(
+            results=results_dicts, as_of=req.as_of, time_range=req.time_range
+        )
+
     if req.expand_entities and results_dicts:
-        namespace_id = await repository.upsert_namespace(req.namespace) if req.namespace else None
-        llm = _create_llm_client()
-        pipeline = RecallPipeline(llm=llm, namespace=req.namespace or "arcanada", namespace_id=namespace_id or 0)
         enriched = await pipeline.enrich_with_entities(results_dicts)
+        # Optional temporal boost in rerank (LTM-0012)
+        if req.temporal_boost > 0.0:
+            chunk_ids = [r.chunk_id for r in enriched]
+            events_by_chunk = await repository.get_chunk_events_summary(chunk_ids)
+            enriched = pipeline.apply_temporal_boost(
+                enriched, events_by_chunk=events_by_chunk, boost=req.temporal_boost
+            )
         enriched = await pipeline.rerank(query=req.query, results=enriched)
     else:
         enriched = _dicts_to_recall_results(results_dicts)
 
+    enriched = enriched[: req.limit]
     elapsed = (time.monotonic() - start) * 1000
     return RecallResponse(results=enriched, total=len(enriched), query=req.query, search_time_ms=round(elapsed, 2))
 
@@ -188,3 +205,19 @@ async def get_graph(namespace: str = "arcanada", entity_name: str | None = None)
     namespace_id = await repository.upsert_namespace(namespace)
     nodes, edges = await repository.get_entity_graph(namespace_id, entity_name)
     return {"nodes": nodes, "edges": edges, "namespace": namespace}
+
+
+@router.get("/events")
+async def list_events(
+    entity: str,
+    namespace: str = "arcanada",
+    include_superseded: bool = False,
+) -> dict:
+    """LTM-0012 — list temporal events for an entity in a namespace."""
+    namespace_id = await repository.upsert_namespace(namespace)
+    events = await repository.get_events_for_entity(
+        namespace_id=namespace_id,
+        entity_name=entity,
+        include_superseded=include_superseded,
+    )
+    return {"events": events, "total": len(events), "entity": entity, "namespace": namespace}

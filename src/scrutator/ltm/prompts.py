@@ -74,3 +74,35 @@ def format_rerank(query: str, candidates: list[dict]) -> tuple[str, str]:
         lines.append(f"ID: {c['chunk_id']}\nContent: {c['content'][:200]}\nEntities: {entities_str}\n")
     user = RERANK_USER.format(query=query, candidates="\n".join(lines))
     return RERANK_SYSTEM, user
+
+
+# LTM-0012 — temporal event extraction (LLM Layer 2 fallback)
+EVENT_EXTRACTION_SYSTEM = (
+    "You are a temporal fact extractor.\n"
+    "Given a text chunk and a list of known entities, return events with timestamps.\n"
+    "Return ONLY a JSON array, no other text. Empty array [] when there are no events.\n"
+    "Each event:\n"
+    '  {"entity_name": "<must match a known entity>",\n'
+    '   "event_type": "<short>",\n'
+    '   "when": "ISO-8601 date or null",\n'
+    '   "valid_from": "ISO-8601 date or null",\n'
+    '   "valid_to": "ISO-8601 date or null",\n'
+    '   "description": "<10-word summary>"}\n'
+    "Allowed event_type values: archived, created, completed, started, released, "
+    "deployed, updated, deprecated, superseded.\n"
+    "Use ISO-8601 date format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ). "
+    "Use null when unknown — do not invent dates."
+)
+
+EVENT_EXTRACTION_USER = """Known entities:
+{entity_list}
+
+Text:
+\"\"\"{content}\"\"\""""
+
+
+def format_event_extraction(content: str, entity_names: list[str]) -> tuple[str, str]:
+    """Return (system, user) prompts for temporal event extraction (LTM-0012)."""
+    entity_list = "\n".join(f"- {n}" for n in entity_names) if entity_names else "- (none)"
+    user = EVENT_EXTRACTION_USER.format(entity_list=entity_list, content=content[:4000])
+    return EVENT_EXTRACTION_SYSTEM, user

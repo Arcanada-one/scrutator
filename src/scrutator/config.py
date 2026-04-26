@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     app_name: str = "Scrutator"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
     host: str = "0.0.0.0"
     port: int = 8310
     debug: bool = False
@@ -31,13 +31,19 @@ class Settings(BaseSettings):
     memory_decay_days: int = 180
     memory_max_bulk_size: int = 100
 
-    ltm_connector: str = "cursor"
-    ltm_model: str = "auto"
+    ltm_connector: str = "openrouter"
+    ltm_model: str = "google/gemini-2.5-flash"
     ltm_mc_url: str = "http://100.121.155.54:3900"
     ltm_mc_api_key: str = ""
     ltm_max_entities_per_chunk: int = 10
     ltm_dedup_similarity: float = 0.85
     ltm_rerank_top_n: int = 5
+
+    # LTM-0012 temporal layer
+    ltm_temporal_enabled: bool = True
+    ltm_auto_invalidate: bool = True
+    ltm_temporal_boost: float = 0.3
+    ltm_max_events_per_chunk: int = 10
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 
