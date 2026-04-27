@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     ltm_reflect_budget_req_count: int = 100
     ltm_reflect_max_depth: int = 1
     ltm_recall_include_meta_facts: bool = False
-    ltm_recall_meta_fact_score_factor: float = 0.7
+    ltm_recall_meta_fact_score_factor: float = 0.5
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 
