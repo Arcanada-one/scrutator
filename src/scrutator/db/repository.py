@@ -1342,6 +1342,258 @@ async def filter_chunks_by_temporal(
     return [r["cid"] for r in rows]
 
 
+# ---- LTM-0013: Reflect layer --------------------------------------------------
+
+
+async def create_reflect_run(namespace_id: int, model_used: str) -> str:
+    """Open a new reflect_runs row in 'running' state. Returns run UUID."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO reflect_runs (namespace_id, model_used, status)
+            VALUES ($1, $2, 'running')
+            RETURNING id::text
+            """,
+            namespace_id,
+            model_used,
+        )
+        return row["id"]
+
+
+async def finalize_reflect_run(
+    run_id: str,
+    status: str,
+    chunks_scanned: int,
+    meta_facts_created: int,
+    cost_usd: float,
+    req_count: int,
+    abort_reason: str | None,
+) -> None:
+    """Close the run with final counters."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE reflect_runs
+            SET status = $2,
+                chunks_scanned = $3,
+                meta_facts_created = $4,
+                cost_usd = $5,
+                req_count = $6,
+                abort_reason = $7,
+                finished_at = NOW()
+            WHERE id = $1::uuid
+            """,
+            run_id,
+            status,
+            chunks_scanned,
+            meta_facts_created,
+            cost_usd,
+            req_count,
+            abort_reason,
+        )
+
+
+async def fetch_chunks_for_reflect(
+    namespace_id: int,
+    since: Any | None,
+    limit: int,
+) -> dict[str, list[dict]]:
+    """Return chunks grouped by primary linked entity name.
+
+    Skips chunks without any linked entity (silent skip — see Fork A condition).
+    Each group: [{chunk_id, content, entity_id}, ...].
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT c.id::text AS chunk_id,
+                   c.content,
+                   e.id::text AS entity_id,
+                   e.name AS entity_name,
+                   c.indexed_at
+            FROM chunks c
+            JOIN entities e
+              ON e.source_chunk_id = c.id
+             AND e.namespace_id = c.namespace_id
+            WHERE c.namespace_id = $1
+              AND ($2::timestamptz IS NULL OR c.indexed_at >= $2)
+            ORDER BY c.indexed_at DESC, c.id
+            LIMIT $3
+            """,
+            namespace_id,
+            since,
+            limit,
+        )
+    grouped: dict[str, list[dict]] = {}
+    seen_chunk_per_entity: dict[str, set[str]] = {}
+    for r in rows:
+        ename = r["entity_name"]
+        cid = r["chunk_id"]
+        seen = seen_chunk_per_entity.setdefault(ename, set())
+        if cid in seen:
+            continue
+        seen.add(cid)
+        grouped.setdefault(ename, []).append({"chunk_id": cid, "content": r["content"], "entity_id": r["entity_id"]})
+    return grouped
+
+
+async def insert_meta_fact(
+    namespace_id: int,
+    fact: Any,
+    embedding: list[float] | None,
+) -> str:
+    """Insert a meta_facts row. Returns its UUID."""
+    pool = await get_pool()
+    vector = np.array(embedding, dtype=np.float32) if embedding else None
+    props_json = json.dumps(fact.properties or {})
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO meta_facts (
+                namespace_id, fact_type, content, source_chunk_ids, entity_ids,
+                depth, model_used, reflect_run_id, embedding_dense, properties
+            )
+            VALUES ($1, $2, $3, $4::uuid[], $5::uuid[], $6, $7, $8::uuid, $9, $10::jsonb)
+            RETURNING id::text
+            """,
+            namespace_id,
+            str(fact.fact_type),
+            fact.content,
+            list(fact.source_chunk_ids),
+            list(fact.entity_ids),
+            fact.depth,
+            fact.model_used,
+            fact.reflect_run_id,
+            vector,
+            props_json,
+        )
+        return row["id"]
+
+
+async def list_meta_facts_by_namespace(
+    namespace_id: int,
+    fact_type: str | None,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """List meta-facts in a namespace, optionally filtered by fact_type."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id::text, fact_type, content,
+                   ARRAY(SELECT x::text FROM unnest(source_chunk_ids) AS x) AS source_chunk_ids,
+                   ARRAY(SELECT x::text FROM unnest(entity_ids) AS x) AS entity_ids,
+                   depth, derived_at::text, model_used,
+                   reflect_run_id::text, properties
+            FROM meta_facts
+            WHERE namespace_id = $1
+              AND ($2::text IS NULL OR fact_type = $2)
+            ORDER BY derived_at DESC
+            LIMIT $3
+            """,
+            namespace_id,
+            fact_type,
+            limit,
+        )
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        props = json.loads(r["properties"]) if isinstance(r["properties"], str) else dict(r["properties"] or {})
+        out.append(
+            {
+                "id": r["id"],
+                "fact_type": r["fact_type"],
+                "content": r["content"],
+                "source_chunk_ids": list(r["source_chunk_ids"] or []),
+                "entity_ids": list(r["entity_ids"] or []),
+                "depth": r["depth"],
+                "derived_at": r["derived_at"],
+                "model_used": r["model_used"],
+                "reflect_run_id": r["reflect_run_id"],
+                "properties": props,
+            }
+        )
+    return out
+
+
+async def get_meta_facts_for_chunks(chunk_ids: list[str]) -> dict[str, list[dict]]:
+    """Reverse lookup: chunk_id → meta-facts that reference it."""
+    if not chunk_ids:
+        return {}
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT mf.id::text, mf.fact_type, mf.content, mf.depth,
+                   ARRAY(SELECT x::text FROM unnest(mf.source_chunk_ids) AS x) AS source_chunk_ids,
+                   chunk_id::text AS for_chunk
+            FROM meta_facts mf, unnest(mf.source_chunk_ids) AS chunk_id
+            WHERE chunk_id = ANY($1::uuid[])
+            """,
+            chunk_ids,
+        )
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        out.setdefault(r["for_chunk"], []).append(
+            {
+                "id": r["id"],
+                "fact_type": r["fact_type"],
+                "content": r["content"],
+                "depth": r["depth"],
+                "source_chunk_ids": list(r["source_chunk_ids"] or []),
+            }
+        )
+    return out
+
+
+async def search_meta_facts(
+    namespace_id: int,
+    query_embedding: list[float],
+    limit: int,
+) -> list[dict[str, Any]]:
+    """HNSW search over meta_facts.embedding_dense — cosine similarity."""
+    if not query_embedding:
+        return []
+    pool = await get_pool()
+    vector = np.array(query_embedding, dtype=np.float32)
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id::text, fact_type, content,
+                   ARRAY(SELECT x::text FROM unnest(source_chunk_ids) AS x) AS source_chunk_ids,
+                   ARRAY(SELECT x::text FROM unnest(entity_ids) AS x) AS entity_ids,
+                   depth, derived_at::text, model_used,
+                   reflect_run_id::text,
+                   1 - (embedding_dense <=> $2) AS score
+            FROM meta_facts
+            WHERE namespace_id = $1
+              AND embedding_dense IS NOT NULL
+            ORDER BY embedding_dense <=> $2
+            LIMIT $3
+            """,
+            namespace_id,
+            vector,
+            limit,
+        )
+    return [
+        {
+            "id": r["id"],
+            "fact_type": r["fact_type"],
+            "content": r["content"],
+            "source_chunk_ids": list(r["source_chunk_ids"] or []),
+            "entity_ids": list(r["entity_ids"] or []),
+            "depth": r["depth"],
+            "derived_at": r["derived_at"],
+            "model_used": r["model_used"],
+            "reflect_run_id": r["reflect_run_id"],
+            "score": float(r["score"]),
+        }
+        for r in rows
+    ]
+
+
 async def memory_stats() -> MemoryStats:
     """Get memory statistics grouped by namespace, actor, type."""
     from scrutator.memory.models import MemoryStats

@@ -223,3 +223,113 @@ class EntityEvent(BaseModel):
         if self.valid_from is not None and self.valid_to is not None and self.valid_from >= self.valid_to:
             raise ValueError("valid_from must be before valid_to")
         return self
+
+
+# ---- LTM-0013: Reflect layer ------------------------------------------------
+
+_MAX_META_FACT_CONTENT = 4000
+
+
+class FactType(StrEnum):
+    """Canonical meta-fact types — see reflect prompt schema."""
+
+    SUMMARY = "summary"
+    CONTRADICTION = "contradiction"
+    DERIVED_RELATION = "derived_relation"
+
+
+class MetaFact(BaseModel):
+    """LLM-derived meta-fact with provenance (LTM-0013)."""
+
+    id: str | None = None
+    namespace: str
+    fact_type: FactType
+    content: str
+    source_chunk_ids: list[str]
+    entity_ids: list[str] = Field(default_factory=list)
+    depth: int = 1
+    derived_at: datetime | None = None
+    model_used: str
+    reflect_run_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("namespace")
+    @classmethod
+    def namespace_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("namespace must not be empty")
+        return v.strip()
+
+    @field_validator("content")
+    @classmethod
+    def content_not_empty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("content must not be empty")
+        if len(v) > _MAX_META_FACT_CONTENT:
+            raise ValueError(f"content exceeds {_MAX_META_FACT_CONTENT} characters")
+        return v
+
+    @field_validator("source_chunk_ids")
+    @classmethod
+    def at_least_one_source(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("at least one source_chunk_id required")
+        return v
+
+    @field_validator("depth")
+    @classmethod
+    def depth_one_only(cls, v: int) -> int:
+        if v != 1:
+            raise ValueError("depth must equal 1 (no meta-of-meta)")
+        return v
+
+    @field_validator("model_used")
+    @classmethod
+    def model_used_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("model_used must not be empty")
+        return v.strip()
+
+
+class ReflectRequest(BaseModel):
+    """Request for POST /v1/ltm/reflect."""
+
+    namespace: str = "arcanada"
+    since: datetime | None = None
+    max_chunks: int | None = None
+    dry_run: bool = False
+
+    @field_validator("namespace")
+    @classmethod
+    def namespace_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("namespace must not be empty")
+        return v.strip()
+
+    @field_validator("max_chunks")
+    @classmethod
+    def max_chunks_positive(cls, v: int | None) -> int | None:
+        if v is not None and v < 1:
+            raise ValueError("max_chunks must be >= 1")
+        return v
+
+
+class ReflectRunSummary(BaseModel):
+    """Summary of a single reflect run — returned by POST /v1/ltm/reflect."""
+
+    run_id: str
+    status: str
+    chunks_scanned: int
+    meta_facts_created: int
+    cost_usd: float
+    req_count: int
+    abort_reason: str | None = None
+    duration_ms: float
+
+
+class ReflectResponse(BaseModel):
+    """Response for POST /v1/ltm/reflect."""
+
+    summary: ReflectRunSummary
+    preview: list[MetaFact] | None = None

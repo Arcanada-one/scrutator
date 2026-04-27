@@ -18,8 +18,11 @@ from scrutator.ltm.models import (
     RecallRequest,
     RecallResponse,
     RecallResult,
+    ReflectRequest,
+    ReflectResponse,
 )
 from scrutator.ltm.pipeline import IngestPipeline, RecallPipeline
+from scrutator.ltm.reflect import ReflectBudget, ReflectJob
 from scrutator.search.searcher import search
 
 log = logging.getLogger("scrutator.ltm.router")
@@ -182,6 +185,20 @@ async def recall(req: RecallRequest) -> RecallResponse:
             enriched = pipeline.apply_temporal_boost(
                 enriched, events_by_chunk=events_by_chunk, boost=req.temporal_boost
             )
+        # LTM-0013 — append meta-facts as synthetic candidates (gated by flag)
+        if settings.ltm_recall_include_meta_facts:
+            from scrutator.search.embedder import embed_single
+
+            try:
+                q_embedding = await embed_single(req.query)
+            except Exception:
+                log.exception("embed_single failed for recall meta-fact enrichment")
+                q_embedding = None
+            enriched = await pipeline.enrich_with_meta_facts(
+                enriched,
+                query_embedding=q_embedding,
+                score_factor=settings.ltm_recall_meta_fact_score_factor,
+            )
         enriched = await pipeline.rerank(query=req.query, results=enriched)
     else:
         enriched = _dicts_to_recall_results(results_dicts)
@@ -205,6 +222,51 @@ async def get_graph(namespace: str = "arcanada", entity_name: str | None = None)
     namespace_id = await repository.upsert_namespace(namespace)
     nodes, edges = await repository.get_entity_graph(namespace_id, entity_name)
     return {"nodes": nodes, "edges": edges, "namespace": namespace}
+
+
+@router.post("/reflect", response_model=ReflectResponse)
+async def reflect(req: ReflectRequest) -> ReflectResponse:
+    """LTM-0013 — manual trigger for one reflect run."""
+    if not settings.ltm_reflect_enabled:
+        raise HTTPException(status_code=503, detail="reflect disabled by config")
+    namespace_id = await repository.upsert_namespace(req.namespace)
+    llm = _create_llm_client()
+    budget = ReflectBudget(
+        max_usd=settings.ltm_reflect_budget_usd,
+        max_req=settings.ltm_reflect_budget_req_count,
+    )
+    job = ReflectJob(
+        llm=llm,
+        namespace=req.namespace,
+        namespace_id=namespace_id,
+        budget=budget,
+        max_meta_facts_per_group=settings.ltm_reflect_max_meta_facts_per_chunk,
+    )
+    summary, facts = await job.run(
+        since=req.since,
+        max_chunks=req.max_chunks,
+        dry_run=req.dry_run,
+    )
+    return ReflectResponse(
+        summary=summary,
+        preview=facts if req.dry_run else None,
+    )
+
+
+@router.get("/meta_facts")
+async def list_meta_facts(
+    namespace: str = "arcanada",
+    fact_type: str | None = None,
+    limit: int = 100,
+) -> dict:
+    """LTM-0013 — debug listing of meta-facts in a namespace."""
+    namespace_id = await repository.upsert_namespace(namespace)
+    facts = await repository.list_meta_facts_by_namespace(
+        namespace_id=namespace_id,
+        fact_type=fact_type,
+        limit=min(max(limit, 1), 500),
+    )
+    return {"meta_facts": facts, "total": len(facts), "namespace": namespace}
 
 
 @router.get("/events")

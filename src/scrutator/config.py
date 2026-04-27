@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     app_name: str = "Scrutator"
-    app_version: str = "0.2.0"
+    app_version: str = "0.3.0"
     host: str = "0.0.0.0"
     port: int = 8310
     debug: bool = False
@@ -44,6 +44,16 @@ class Settings(BaseSettings):
     ltm_auto_invalidate: bool = True
     ltm_temporal_boost: float = 0.3
     ltm_max_events_per_chunk: int = 10
+
+    # LTM-0013 reflect layer (R in TEMPR)
+    ltm_reflect_enabled: bool = True
+    ltm_reflect_max_chunks_per_run: int = 50
+    ltm_reflect_max_meta_facts_per_chunk: int = 5
+    ltm_reflect_budget_usd: float = 0.01
+    ltm_reflect_budget_req_count: int = 100
+    ltm_reflect_max_depth: int = 1
+    ltm_recall_include_meta_facts: bool = False
+    ltm_recall_meta_fact_score_factor: float = 0.7
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 

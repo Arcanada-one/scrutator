@@ -337,6 +337,51 @@ class RecallPipeline:
 
         return reranked
 
+    async def enrich_with_meta_facts(
+        self,
+        results: list[RecallResult],
+        query_embedding: list[float] | None = None,
+        score_factor: float = 0.7,
+        extra_limit: int = 5,
+    ) -> list[RecallResult]:
+        """LTM-0013 — append meta-facts as candidates with scaled score.
+
+        Each meta-fact becomes a synthetic RecallResult (`chunk_id` prefixed
+        with `meta:`). Rerank handles ordering. Gated by config flag.
+        """
+        if not settings.ltm_recall_include_meta_facts:
+            return results
+        if query_embedding is None:
+            return results
+        raw = await repository.search_meta_facts(
+            namespace_id=self.namespace_id,
+            query_embedding=query_embedding,
+            limit=extra_limit,
+        )
+        augmented = list(results)
+        for mf in raw:
+            base_score = float(mf.get("score", 0.0))
+            augmented.append(
+                RecallResult(
+                    chunk_id=f"meta:{mf['id']}",
+                    content=mf["content"],
+                    source_path=f"meta_fact/{mf['fact_type']}",
+                    score=base_score * score_factor,
+                    namespace=self.namespace,
+                    project=None,
+                    metadata={
+                        "meta_fact": True,
+                        "fact_type": mf["fact_type"],
+                        "source_chunk_ids": mf.get("source_chunk_ids", []),
+                        "reflect_run_id": mf.get("reflect_run_id"),
+                        "model_used": mf.get("model_used"),
+                    },
+                    entities=[],
+                    relations=[],
+                )
+            )
+        return augmented
+
     async def enrich_with_entities(self, search_results: list[dict]) -> list[RecallResult]:
         """Enrich search results with entity and edge context."""
         if not search_results:

@@ -10,13 +10,18 @@ from scrutator.ltm.models import (
     EntityEdge,
     EntityEvent,
     EventType,
+    FactType,
     IngestRequest,
     IngestResponse,
     JobStatus,
     LtmJob,
+    MetaFact,
     RecallRequest,
     RecallResponse,
     RecallResult,
+    ReflectRequest,
+    ReflectResponse,
+    ReflectRunSummary,
 )
 
 
@@ -238,3 +243,115 @@ class TestEntityEvent:
         t2 = t1 + timedelta(microseconds=1)
         e = EntityEvent(entity_name="X", event_type="archived", valid_from=t1, valid_to=t2)
         assert e.valid_to > e.valid_from
+
+
+class TestFactType:
+    def test_enum_values(self):
+        assert FactType.SUMMARY == "summary"
+        assert FactType.CONTRADICTION == "contradiction"
+        assert FactType.DERIVED_RELATION == "derived_relation"
+
+
+class TestMetaFact:
+    def _kwargs(self, **over):
+        base = dict(
+            namespace="arcanada",
+            fact_type=FactType.SUMMARY,
+            content="A meta-fact summary",
+            source_chunk_ids=["00000000-0000-0000-0000-000000000001"],
+            model_used="openrouter/gemini-2.5-flash",
+        )
+        base.update(over)
+        return base
+
+    def test_minimal_valid(self):
+        f = MetaFact(**self._kwargs())
+        assert f.depth == 1
+        assert f.entity_ids == []
+
+    def test_empty_namespace_rejected(self):
+        with pytest.raises(ValidationError, match="namespace must not be empty"):
+            MetaFact(**self._kwargs(namespace="  "))
+
+    def test_empty_content_rejected(self):
+        with pytest.raises(ValidationError, match="content must not be empty"):
+            MetaFact(**self._kwargs(content="  "))
+
+    def test_content_max_length(self):
+        with pytest.raises(ValidationError, match="exceeds"):
+            MetaFact(**self._kwargs(content="x" * 4001))
+
+    def test_no_sources_rejected(self):
+        with pytest.raises(ValidationError, match="at least one source_chunk_id"):
+            MetaFact(**self._kwargs(source_chunk_ids=[]))
+
+    def test_depth_two_rejected(self):
+        with pytest.raises(ValidationError, match="depth must equal 1"):
+            MetaFact(**self._kwargs(depth=2))
+
+    def test_depth_zero_rejected(self):
+        with pytest.raises(ValidationError, match="depth must equal 1"):
+            MetaFact(**self._kwargs(depth=0))
+
+    def test_empty_model_used_rejected(self):
+        with pytest.raises(ValidationError, match="model_used must not be empty"):
+            MetaFact(**self._kwargs(model_used="  "))
+
+
+class TestReflectRequest:
+    def test_defaults(self):
+        req = ReflectRequest()
+        assert req.namespace == "arcanada"
+        assert req.since is None
+        assert req.max_chunks is None
+        assert req.dry_run is False
+
+    def test_empty_namespace_rejected(self):
+        with pytest.raises(ValidationError, match="namespace must not be empty"):
+            ReflectRequest(namespace="")
+
+    def test_max_chunks_must_be_positive(self):
+        with pytest.raises(ValidationError, match="max_chunks must be >= 1"):
+            ReflectRequest(max_chunks=0)
+
+    def test_dry_run_flag(self):
+        req = ReflectRequest(dry_run=True)
+        assert req.dry_run is True
+
+
+class TestReflectRunSummary:
+    def test_creation(self):
+        s = ReflectRunSummary(
+            run_id="r-1",
+            status="done",
+            chunks_scanned=10,
+            meta_facts_created=3,
+            cost_usd=0.0,
+            req_count=2,
+            duration_ms=1234.5,
+        )
+        assert s.abort_reason is None
+        assert s.status == "done"
+
+
+class TestReflectResponse:
+    def test_with_preview(self):
+        summary = ReflectRunSummary(
+            run_id="r-1",
+            status="done",
+            chunks_scanned=2,
+            meta_facts_created=1,
+            cost_usd=0.0,
+            req_count=1,
+            duration_ms=100.0,
+        )
+        fact = MetaFact(
+            namespace="arcanada",
+            fact_type=FactType.SUMMARY,
+            content="Sample",
+            source_chunk_ids=["00000000-0000-0000-0000-000000000001"],
+            model_used="m",
+        )
+        resp = ReflectResponse(summary=summary, preview=[fact])
+        assert resp.preview is not None
+        assert len(resp.preview) == 1

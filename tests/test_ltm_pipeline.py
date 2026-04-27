@@ -211,3 +211,88 @@ class TestRerank:
         reranked = await recall.rerank(query="q", results=results)
         assert len(reranked) == 2
         assert reranked[0].chunk_id == "c1"  # unknown id skipped, c1 first
+
+
+class TestEnrichWithMetaFacts:
+    """LTM-0013 — meta-fact augmentation in recall."""
+
+    @pytest.mark.asyncio
+    async def test_returns_results_unchanged_when_flag_off(self, recall):
+        from scrutator.config import settings
+
+        original = settings.ltm_recall_include_meta_facts
+        settings.ltm_recall_include_meta_facts = False
+        try:
+            results = [
+                RecallResult(chunk_id="c1", content="a", source_path="a.md", score=0.9, namespace="test"),
+            ]
+            out = await recall.enrich_with_meta_facts(results, query_embedding=[0.0])
+            assert out is results  # short-circuit, same list
+        finally:
+            settings.ltm_recall_include_meta_facts = original
+
+    @pytest.mark.asyncio
+    async def test_no_embedding_short_circuits(self, recall):
+        from scrutator.config import settings
+
+        settings.ltm_recall_include_meta_facts = True
+        try:
+            results = [
+                RecallResult(chunk_id="c1", content="a", source_path="a.md", score=0.9, namespace="test"),
+            ]
+            out = await recall.enrich_with_meta_facts(results, query_embedding=None)
+            assert len(out) == 1
+            assert all(not r.metadata.get("meta_fact") for r in out)
+        finally:
+            settings.ltm_recall_include_meta_facts = False
+
+    @pytest.mark.asyncio
+    async def test_appends_meta_facts_with_score_factor(self, recall):
+        from scrutator.config import settings
+
+        settings.ltm_recall_include_meta_facts = True
+        try:
+            with patch("scrutator.ltm.pipeline.repository") as mock_repo:
+                mock_repo.search_meta_facts = AsyncMock(
+                    return_value=[
+                        {
+                            "id": "mf-1",
+                            "fact_type": "summary",
+                            "content": "synthetic meta",
+                            "score": 0.8,
+                            "source_chunk_ids": ["c1"],
+                            "reflect_run_id": "r-1",
+                            "model_used": "openrouter/gemini-2.5-flash",
+                        }
+                    ]
+                )
+                results = [
+                    RecallResult(chunk_id="c1", content="a", source_path="a.md", score=0.9, namespace="test"),
+                ]
+                out = await recall.enrich_with_meta_facts(results, query_embedding=[0.0] * 1024, score_factor=0.5)
+                assert len(out) == 2
+                assert out[1].chunk_id == "meta:mf-1"
+                assert out[1].metadata["meta_fact"] is True
+                assert out[1].metadata["fact_type"] == "summary"
+                assert out[1].score == pytest.approx(0.8 * 0.5)
+        finally:
+            settings.ltm_recall_include_meta_facts = False
+
+    @pytest.mark.asyncio
+    async def test_synthetic_chunk_id_preserved_through_rerank(self, recall, mock_llm):
+        # Rerank receives meta:mf-1 alongside c1 — must preserve the prefix
+        mock_llm.extract_json.return_value = ["meta:mf-1", "c1"]
+        results = [
+            RecallResult(chunk_id="c1", content="a", source_path="a.md", score=0.9, namespace="test"),
+            RecallResult(
+                chunk_id="meta:mf-1",
+                content="synthetic",
+                source_path="meta_fact/summary",
+                score=0.4,
+                namespace="test",
+                metadata={"meta_fact": True},
+            ),
+        ]
+        reranked = await recall.rerank(query="q", results=results)
+        assert reranked[0].chunk_id == "meta:mf-1"
+        assert reranked[0].metadata.get("meta_fact") is True

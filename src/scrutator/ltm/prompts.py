@@ -106,3 +106,40 @@ def format_event_extraction(content: str, entity_names: list[str]) -> tuple[str,
     entity_list = "\n".join(f"- {n}" for n in entity_names) if entity_names else "- (none)"
     user = EVENT_EXTRACTION_USER.format(entity_list=entity_list, content=content[:4000])
     return EVENT_EXTRACTION_SYSTEM, user
+
+
+# LTM-0013 — meta-fact reflection (R in TEMPR)
+
+REFLECT_SUMMARY_SYSTEM = (
+    "You are a knowledge graph reflection assistant.\n"
+    "Given a group of related text chunks, derive concise meta-facts:\n"
+    "  - SUMMARY: 1-3 sentence synthesis of the group's main claim.\n"
+    "  - CONTRADICTION: explicit conflict between two chunks (if any).\n"
+    "  - DERIVED_RELATION: relationship between entities not stated literally but implied.\n"
+    "Return ONLY a JSON array, no other text. Empty array [] when nothing useful emerges.\n"
+    "Each meta-fact:\n"
+    '  {{"fact_type": "summary|contradiction|derived_relation",\n'
+    '   "content": "<at most {max_chars} chars>",\n'
+    '   "source_chunk_indexes": [<integer indexes from the input list>],\n'
+    '   "entity_names": [<optional, only if explicitly mentioned>]}}\n'
+    "Maximum {max_facts} meta-facts per group. Skip generic / trivial summaries."
+)
+
+REFLECT_SUMMARY_USER = """Group entities: {entity_names}
+
+Source chunks (numbered):
+{chunks}"""
+
+
+def format_reflect_summary(
+    chunks: list[dict],
+    entity_names: list[str],
+    max_facts: int = 5,
+    max_chars: int = 800,
+) -> tuple[str, str]:
+    """Return (system, user) prompts for meta-fact derivation (LTM-0013)."""
+    system = REFLECT_SUMMARY_SYSTEM.format(max_facts=max_facts, max_chars=max_chars)
+    chunks_str = "\n".join(f"[{i}] {(c.get('content') or '')[:1500]}" for i, c in enumerate(chunks))
+    entity_list = ", ".join(entity_names) if entity_names else "(none)"
+    user = REFLECT_SUMMARY_USER.format(entity_names=entity_list, chunks=chunks_str)
+    return system, user

@@ -1,6 +1,6 @@
 [project]
 name = "scrutator"
-version = "0.2.0"
+version = "0.3.0"
 description = "Knowledge Retrieval & Meaning Engine for the Arcanada Ecosystem"
 readme = "README.md"
 license = "MIT"
