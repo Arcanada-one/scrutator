@@ -246,7 +246,15 @@ class MetaFact(BaseModel):
     fact_type: FactType
     content: str
     source_chunk_ids: list[str]
-    entity_ids: list[str] = Field(default_factory=list)
+    entity_ids: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Entity UUIDs anchoring this meta_fact. Populated when "
+            "ltm_reflect_grouping='entity' (LTM-0013); empty when "
+            "ltm_reflect_grouping='cosine' (LTM-0018, default). "
+            "Downstream consumers MUST handle the empty case."
+        ),
+    )
     depth: int = 1
     derived_at: datetime | None = None
     model_used: str

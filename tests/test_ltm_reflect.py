@@ -2,13 +2,23 @@
 
 from unittest.mock import AsyncMock, patch
 
+import numpy as np
 import pytest
 
+from scrutator.config import settings
 from scrutator.ltm.reflect import (
     ReflectBudget,
     ReflectBudgetExceeded,
     ReflectJob,
 )
+
+
+@pytest.fixture
+def entity_grouping(monkeypatch):
+    """Pin LTM-0013 entity-grouping path for legacy ReflectJob tests."""
+    monkeypatch.setattr(settings, "ltm_reflect_grouping", "entity")
+    yield
+
 
 # ---- ReflectBudget -----------------------------------------------------------
 
@@ -82,6 +92,7 @@ def _patch_repo(**overrides):
     return patch.multiple("scrutator.ltm.reflect.repository", **mocks), mocks
 
 
+@pytest.mark.usefixtures("entity_grouping")
 class TestReflectJob:
     async def test_empty_namespace_returns_zero_facts(self, job):
         ctx, _mocks = _patch_repo()
@@ -242,3 +253,86 @@ class TestReflectJob:
         assert facts == []
         assert summary.status == "done"  # per-group failure ≠ run failure
         assert summary.req_count == 1  # still charged the failed call
+
+
+class TestReflectCosineGrouping:
+    """LTM-0018 — cosine-grouping branch + integration."""
+
+    async def test_cosine_grouping_branch_calls_cosine_fetch(self, job, llm, monkeypatch):
+        """Default LTM-0018 path: grouping=cosine routes to fetch_chunks_for_reflect_cosine."""
+        monkeypatch.setattr(settings, "ltm_reflect_grouping", "cosine")
+        monkeypatch.setattr(settings, "ltm_reflect_cosine_threshold", 0.85)
+        cosine_mock = AsyncMock(return_value={})
+        ctx, _m = _patch_repo(fetch_chunks_for_reflect_cosine=cosine_mock)
+        with ctx:
+            summary, facts = await job.run(max_chunks=30)
+        cosine_mock.assert_awaited_once()
+        kwargs = cosine_mock.await_args.kwargs
+        assert kwargs["threshold"] == 0.85
+        assert kwargs["limit"] == 30
+        assert summary.status == "done"
+        assert facts == []
+
+    async def test_reflect_run_cosine_grouping_30_chunks(self, job, llm, monkeypatch):
+        monkeypatch.setattr(settings, "ltm_reflect_grouping", "cosine")
+        monkeypatch.setattr(settings, "ltm_reflect_cosine_threshold", 0.85)
+
+        # Synthesise 30 unit-norm vectors in 5 tight clusters of 6 each.
+        rng = np.random.default_rng(42)
+        cluster_centers = rng.normal(size=(5, 16)).astype(np.float32)
+        cluster_centers /= np.linalg.norm(cluster_centers, axis=1, keepdims=True)
+        rows: list[np.ndarray] = []
+        for c in cluster_centers:
+            for _ in range(6):
+                noise = rng.normal(scale=0.05, size=16).astype(np.float32)
+                v = c + noise
+                v /= np.linalg.norm(v)
+                rows.append(v)
+        vectors = np.stack(rows)
+
+        from scrutator.ltm.grouping import cluster_by_cosine
+
+        index_groups = cluster_by_cosine(vectors, 0.85)
+        assert len(index_groups) >= 5  # tight synthetic clusters → at least 5 groups
+
+        # Build the dict that fetch_chunks_for_reflect_cosine would return.
+        chunk_uuid = lambda i: f"00000000-0000-0000-0000-{i:012d}"  # noqa: E731
+        groups: dict[str, list[dict]] = {
+            f"cluster_{root}": [
+                {"chunk_id": chunk_uuid(i), "content": f"chunk-{i}", "entity_id": None} for i in indices
+            ]
+            for root, indices in index_groups.items()
+        }
+
+        # Mock LLM: 3 facts per group covering the first two source indexes.
+        async def fake_extract(_user, system=None):  # noqa: ARG001
+            return [
+                {
+                    "fact_type": "summary",
+                    "content": f"Synthetic meta-fact #{n}",
+                    "source_chunk_indexes": [0, 1],
+                }
+                for n in range(3)
+            ]
+
+        llm.extract_json.side_effect = fake_extract
+
+        ctx, mocks = _patch_repo(
+            fetch_chunks_for_reflect_cosine=AsyncMock(return_value=groups),
+        )
+        with (
+            ctx,
+            patch(
+                "scrutator.ltm.reflect._embed_for_meta_fact",
+                AsyncMock(return_value=[0.0] * 1024),
+            ),
+        ):
+            summary, facts = await job.run(max_chunks=30)
+
+        assert summary.status == "done"
+        assert summary.meta_facts_created >= 10  # AC-2 mirror
+        # Cosine path produces empty entity_ids — schema contract.
+        assert all(fact.entity_ids == [] for fact in facts)
+        # Source chunk IDs preserved from synthesised groups.
+        assert all(fact.source_chunk_ids for fact in facts)
+        mocks["insert_meta_fact"].assert_awaited()

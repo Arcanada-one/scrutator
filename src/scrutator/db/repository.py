@@ -1440,6 +1440,55 @@ async def fetch_chunks_for_reflect(
     return grouped
 
 
+async def fetch_chunks_for_reflect_cosine(
+    namespace_id: int,
+    since: Any | None,
+    limit: int,
+    threshold: float,
+) -> dict[str, list[dict]]:
+    """Return chunks clustered by dense-embedding cosine similarity (LTM-0018).
+
+    Skips chunks where ``embedding_dense IS NULL``. Cluster keys are stable
+    string tags ``"cluster_<root_index>"``; ``entity_id`` is ``None`` for every
+    member (cosine path produces ``MetaFact.entity_ids=[]``).
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT c.id::text AS chunk_id,
+                   c.content,
+                   c.embedding_dense
+            FROM chunks c
+            WHERE c.namespace_id = $1
+              AND c.embedding_dense IS NOT NULL
+              AND ($2::timestamptz IS NULL OR c.indexed_at >= $2)
+            ORDER BY c.id
+            LIMIT $3
+            """,
+            namespace_id,
+            since,
+            limit,
+        )
+    if len(rows) < 2:
+        return {}
+    from scrutator.ltm.grouping import cluster_by_cosine
+
+    vectors = np.asarray([list(r["embedding_dense"]) for r in rows], dtype=np.float32)
+    index_groups = cluster_by_cosine(vectors, threshold)
+    return {
+        f"cluster_{root}": [
+            {
+                "chunk_id": rows[i]["chunk_id"],
+                "content": rows[i]["content"],
+                "entity_id": None,
+            }
+            for i in indices
+        ]
+        for root, indices in index_groups.items()
+    }
+
+
 async def insert_meta_fact(
     namespace_id: int,
     fact: Any,

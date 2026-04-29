@@ -1,5 +1,7 @@
 """Application configuration via environment variables."""
 
+from typing import Literal
+
 from pydantic_settings import BaseSettings
 
 
@@ -54,6 +56,10 @@ class Settings(BaseSettings):
     ltm_reflect_max_depth: int = 1
     ltm_recall_include_meta_facts: bool = False
     ltm_recall_meta_fact_score_factor: float = 0.5
+
+    # LTM-0018 reflect grouping primitive
+    ltm_reflect_grouping: Literal["entity", "cosine"] = "cosine"
+    ltm_reflect_cosine_threshold: float = 0.85
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 

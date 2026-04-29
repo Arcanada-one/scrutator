@@ -90,11 +90,20 @@ class ReflectJob:
         abort_reason: str | None = None
         status = "done"
         try:
-            chunk_groups = await repository.fetch_chunks_for_reflect(
-                namespace_id=self.namespace_id,
-                since=since,
-                limit=max_chunks or settings.ltm_reflect_max_chunks_per_run,
-            )
+            limit = max_chunks or settings.ltm_reflect_max_chunks_per_run
+            if settings.ltm_reflect_grouping == "cosine":
+                chunk_groups = await repository.fetch_chunks_for_reflect_cosine(
+                    namespace_id=self.namespace_id,
+                    since=since,
+                    limit=limit,
+                    threshold=settings.ltm_reflect_cosine_threshold,
+                )
+            else:
+                chunk_groups = await repository.fetch_chunks_for_reflect(
+                    namespace_id=self.namespace_id,
+                    since=since,
+                    limit=limit,
+                )
             for entity_name, group in chunk_groups.items():
                 try:
                     self.budget.check()

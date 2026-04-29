@@ -68,6 +68,37 @@ curl "http://arcana-db:8310/v1/ltm/meta_facts?namespace=datarim-kb&fact_type=sum
 | `LTM_REFLECT_MAX_DEPTH` | `1` | DB-level + code invariant |
 | `LTM_RECALL_INCLUDE_META_FACTS` | `false` | Recall verification gate |
 | `LTM_RECALL_META_FACT_SCORE_FACTOR` | `0.7` | Score penalty on meta-facts |
+| `LTM_REFLECT_GROUPING` | `cosine` | Grouping primitive — `entity` (LTM-0013) or `cosine` (LTM-0018) |
+| `LTM_REFLECT_COSINE_THRESHOLD` | `0.85` | Cosine edge threshold for union-find clustering |
+
+## A2 Cosine Grouping (LTM-0018)
+
+Default grouping primitive since LTM-0018. Replaces single-entity-name JOIN of
+LTM-0013 with content-based clustering on dense BGE-M3 embeddings.
+
+**Algorithm** (`scrutator.ltm.grouping.cluster_by_cosine`):
+
+1. `SELECT id, content, embedding_dense FROM chunks WHERE embedding_dense IS NOT NULL ORDER BY id`.
+2. Build `sims = V @ V.T` (n × n cosine matrix; assumes unit-norm BGE-M3 vectors).
+3. Union-find over edges with `sims[i,j] ≥ threshold` (default `0.85`).
+4. Emit groups of size ≥ 2; singletons filtered.
+
+**Determinism:** stable cluster roots when caller passes `ORDER BY chunk_id` and
+numpy version is pinned (`requirements.txt`).
+
+**Resource bound:** O(n²) memory + time. Capped at
+`LTM_REFLECT_MAX_CHUNKS_PER_RUN=50` (≈ 200 KB / <2 ms per run). DoS-safe.
+
+**Schema contract — `meta_facts.entity_ids` MAY be empty.** Cosine-grouped
+meta-facts have `entity_ids = []` because cluster membership is not anchored to
+a specific entity. Downstream consumers MUST handle the empty case (do NOT
+filter via `WHERE entity_ids @> '{X}'`; query by `source_chunk_ids` instead).
+
+**Trust boundary:** clustering trusts pre-stored embeddings. Adversarial
+embeddings inserted via the ingest path could induce mega-clusters; embedding
+dimension validation (1024) at INSERT remains the boundary control.
+
+**Fallback to LTM-0013 entity grouping:** set `SCRUTATOR_LTM_REFLECT_GROUPING=entity`.
 
 ## Safety invariants
 
@@ -83,6 +114,8 @@ curl "http://arcana-db:8310/v1/ltm/meta_facts?namespace=datarim-kb&fact_type=sum
 | Layer | Command |
 |-------|---------|
 | Recall | `SCRUTATOR_LTM_RECALL_INCLUDE_META_FACTS=false` (default off) |
+| Grouping (LTM-0018) | `SCRUTATOR_LTM_REFLECT_GROUPING=entity` (revert to LTM-0013 entity-path) |
+| Threshold tightening | `SCRUTATOR_LTM_REFLECT_COSINE_THRESHOLD=0.95` (collapse to A1-floor behaviour) |
 | Reflect | `SCRUTATOR_LTM_REFLECT_ENABLED=false` → 503 |
 | Schema | `DROP TABLE meta_facts CASCADE; DROP TABLE reflect_runs CASCADE;` |
 | Code | `git revert <range>` and redeploy 0.2.0 container |
