@@ -9,6 +9,7 @@ from scrutator.ltm.models import EntityEvent
 from scrutator.ltm.temporal import (
     HAS_TIME_CUE,
     DateExtractor,
+    _resolve_entity,
     extract_regex_events,
     merge_overlapping_events,
 )
@@ -231,3 +232,43 @@ class TestMergeOverlapping:
         b = self._ev("Y", datetime(2026, 2, 1, tzinfo=UTC))
         out = merge_overlapping_events([a, b])
         assert all(e.valid_to is None for e in out)
+
+
+# ---------- LTM-0015: _resolve_entity priority ----------------------------
+
+
+class TestResolveEntityPriority:
+    """Task-id pattern `[A-Z]+-\\d{4}` MUST win over longer generic candidates."""
+
+    def test_task_id_beats_longer_generic(self):
+        text = "**Archived:** 2026-04-16 — TUNE-0003 closed by Datarim Framework Team"
+        candidates = ["Datarim Framework Team", "TUNE-0003"]
+        assert _resolve_entity(text, candidates) == "TUNE-0003"
+
+    def test_task_id_pattern_not_in_candidates_falls_back(self):
+        text = "TUNE-0003 work continues in the Datarim Framework"
+        candidates = ["Datarim Framework"]
+        assert _resolve_entity(text, candidates) == "Datarim Framework"
+
+    def test_no_task_id_preserves_longest_match(self):
+        text = "Scrutator query layer integrates with the embedding API."
+        candidates = ["Scrutator", "Scrutator query layer"]
+        assert _resolve_entity(text, candidates) == "Scrutator query layer"
+
+    def test_multiple_task_ids_returns_first_matching_candidate(self):
+        text = "TUNE-0003 superseded by INFRA-0009 last week."
+        candidates = ["Generic Name", "INFRA-0009", "TUNE-0003"]
+        result = _resolve_entity(text, candidates)
+        assert result in {"TUNE-0003", "INFRA-0009"}
+        assert result != "Generic Name"
+
+    def test_task_id_with_letters_and_digits(self):
+        text = "AGENT-0010 deployment notes"
+        candidates = ["deployment notes guide", "AGENT-0010"]
+        assert _resolve_entity(text, candidates) == "AGENT-0010"
+
+    def test_empty_candidates_returns_none(self):
+        assert _resolve_entity("TUNE-0003 was archived", []) is None
+
+    def test_no_match_returns_none(self):
+        assert _resolve_entity("plain text without entities", ["X", "Y"]) is None

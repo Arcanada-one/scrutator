@@ -45,6 +45,7 @@ _RE_LABELED = re.compile(
 _RE_ISO_TS = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?\b")
 _RE_ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 _RE_DOT_DATE = re.compile(r"\b(\d{2})\.(\d{2})\.(\d{4})\b")
+_RE_TASK_ID = re.compile(r"\b[A-Z]+-\d{4}\b")
 
 # Time-cue heuristic for triggering LLM Layer 2
 _RE_TIME_CUE = re.compile(
@@ -92,10 +93,19 @@ def _parse_dot_date(value: str) -> datetime | None:
 
 
 def _resolve_entity(text: str, candidates: list[str]) -> str | None:
-    """Find which known entity is mentioned in text. Returns None if none match."""
+    """Find which known entity is mentioned in text. Returns None if none match.
+
+    Priority (LTM-0015):
+      1. Task-id pattern `[A-Z]+-\\d{4}` (e.g., TUNE-0003) — most specific identifier.
+      2. Longer generic match (length DESC) — fallback for prose entities.
+    """
     if not candidates:
         return None
-    # Sorted by length DESC to prefer longer (more specific) matches
+    candidate_set = {c for c in candidates if c}
+    for m in _RE_TASK_ID.finditer(text or ""):
+        tid = m.group(0)
+        if tid in candidate_set:
+            return tid
     for name in sorted(candidates, key=len, reverse=True):
         if name and name in text:
             return name
