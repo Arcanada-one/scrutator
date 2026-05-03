@@ -75,9 +75,12 @@ scripts/           — deploy, utility scripts
 
 - **Server:** arcana-db (Tailscale mesh only, no public endpoints)
 - **Embedding API:** :8300 (existing, BAAI/bge-m3)
-- **Scrutator API:** :8310 (planned)
+- **Scrutator API:** :8310 (LIVE)
+- **Canonical deploy path:** `/srv/apps/scrutator` (owned `ci-runner`, CI-managed via GH self-hosted runner `arcana-db`). Per `Areas/Infrastructure/CI-Runners.md` § 4.
+- **LTM connector:** `openrouter` (Model Connector via Tailscale `100.121.155.54:3900`), model `google/gemini-2.5-flash`. Cursor/CLI connectors are documented broken for structured-output frameworks (LTM-0004 archive) — do not switch back.
 - **Database:** PostgreSQL on arcana-db (pgvector extension)
 - **Secrets:** HashiCorp Vault (INFRA-0014) or `.env` fallback
+- **Legacy:** `/opt/scrutator.disabled-INFRA-0042` — pre-migration deploy path (cursor connector, LTM-0018 cosine grouping). Kept for ~30 days then removable. Backup of pre-migration `.env`: `/opt/scrutator.disabled-INFRA-0042/.env.pre-INFRA-0042-backup`.
 
 ## Task Prefix
 
