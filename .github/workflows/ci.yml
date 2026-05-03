@@ -35,24 +35,19 @@ jobs:
   deploy:
     needs: lint-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, arcana-db, docker]
     concurrency:
       group: deploy-scrutator
       cancel-in-progress: false
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -e
-            cd /srv/apps/scrutator
-            git pull --ff-only origin main
-            docker compose up -d --build
-            sleep 10
-            curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
+      - name: Deploy
+        run: |
+          set -e
+          cd /srv/apps/scrutator
+          git pull --ff-only origin main
+          docker compose up -d --build
+          sleep 10
+          curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
 
       - name: Notify Ops Bot on failure
         if: failure()
