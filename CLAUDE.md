@@ -76,7 +76,7 @@ scripts/           — deploy, utility scripts
 - **Server:** arcana-db (Tailscale mesh only, no public endpoints)
 - **Embedding API:** :8300 (existing, BAAI/bge-m3)
 - **Scrutator API:** :8310 (LIVE)
-- **Canonical deploy path:** `/srv/apps/scrutator` (owned `ci-runner`, CI-managed via GH self-hosted runner `arcana-db`). Per `Areas/Infrastructure/CI-Runners.md` § 4.
+- **Canonical deploy path:** `/srv/apps/scrutator` (owned `ci-runner`, CI-managed via GH self-hosted runner `arcana-db`). Per `documentation/infrastructure/CI-Runners.md` § 4.
 - **LTM connector:** `openrouter` (Model Connector via Tailscale `100.121.155.54:3900`), model `google/gemini-2.5-flash`. Cursor/CLI connectors are documented broken for structured-output frameworks (LTM-0004 archive) — do not switch back.
 - **Database:** PostgreSQL on arcana-db (pgvector extension)
 - **Secrets:** HashiCorp Vault (INFRA-0014) or `.env` fallback
@@ -147,7 +147,7 @@ Embedding `result` is a JSON string — parse it to get the vector array.
 
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest
 - **Deploy:** SSH to arcana-db, `docker compose up -d --build` (planned)
-- **Шаблон:** `Areas/Infrastructure/CI-Runners.md` § 10.2 (Python/FastAPI)
+- **Шаблон:** `documentation/infrastructure/CI-Runners.md` § 10.2 (Python/FastAPI)
 - **Post-deploy:** health check (`curl -fsS http://localhost:8310/health`), Ops Bot notification on failure
 - **Convention:** см. root `CLAUDE.md` § CI/CD Convention
 
