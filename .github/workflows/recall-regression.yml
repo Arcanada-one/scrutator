@@ -1,0 +1,39 @@
+name: Recall@k Regression Gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}  # manual re-run / baseline refresh trigger
+
+jobs:
+  recall-gate:
+    runs-on: [self-hosted, linux, arcana-db, docker]
+    # Co-located with Scrutator on arcana-db (reaches :8310 on localhost / 100.70.137.104:8310).
+    # NOT ubuntu-latest: (a) Tailscale-only endpoint unreachable from hosted runners;
+    # (b) Arcanada org billing-blocked for hosted runners (cicd-convention VERD-0058).
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0 (pinned, matches ci.yml)
+        with:
+          python-version: "3.12"
+
+      - name: Run recall@k regression gate
+        run: |
+          # Gate mode: with-entities (--expand-entities).
+          # Rationale: production /v1/ltm/recall defaults to expand_entities=true; the gate
+          # must defend the production retrieval path.  Baseline (baseline.json) was seeded
+          # from the 2026-04-26 with-entities run; --run must produce the same mode so
+          # observed and baseline are always comparable (no mode-mismatch born-red gate).
+          python benchmark/recall-gate/recall_gate.py --run \
+            --harness "$HARNESS_PATH" \
+            --baseline benchmark/recall-gate/baseline.json \
+            --thresholds benchmark/recall-gate/thresholds.json
+        env:
+          # Harness lives in the synced ~/arcanada tree on arcana-db (Disk Arcana pull follower).
+          # The arcana-db self-hosted runner can read this path directly (no vendoring needed).
+          # If the synced tree is unavailable, vendor the harness under benchmark/recall-gate/vendor/
+          # and update this path accordingly. See benchmark/recall-gate/SOURCE.md for vendoring notes.
+          HARNESS_PATH: /home/ci-runner/arcanada/Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py
