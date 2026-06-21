@@ -124,3 +124,26 @@ async def embed_single(text: str) -> list[float]:
     """Get dense embedding for a single text."""
     results = await embed_texts([text])
     return results[0]
+
+
+@_with_retry
+async def embed_colbert(texts: list[str]) -> list[list[list[float]]]:
+    """Token-level ColBERT multi-vectors from the Embedding API.
+
+    Returns list (per text) of list (per token) of 1024-dim vectors.
+    Mirrors embed_sparse — same singleton client, same retry decorator.
+    Field: data[i].colbert_vecs (probe-confirmed 2026-06-22).
+    """
+    if not texts:
+        return []
+
+    client = await get_client()
+    response = await client.post(
+        f"{settings.embedding_api_url}/v1/embeddings/colbert",
+        json={"input": texts},
+    )
+    if response.status_code != 200:
+        raise EmbeddingError(f"ColBERT Embedding API returned {response.status_code}: {response.text}")
+
+    data = response.json()
+    return [item["colbert_vecs"] for item in data["data"]]

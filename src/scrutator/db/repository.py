@@ -144,15 +144,25 @@ async def hybrid_search(
     namespace_id: int | None = None,
     limit: int = 10,
     query_sparse: dict[str, float] | None = None,
+    fetch_multiplier: int = 3,
+    return_pool: bool = False,
 ) -> list[SearchResult]:
     """Hybrid search: dense cosine + sparse lexical + FTS with RRF ranking.
 
     When query_sparse is provided, uses 3-way RRF (dense + sparse + FTS).
     Otherwise falls back to 2-way RRF (dense + FTS).
+
+    SRCH-0029 M2 params:
+    - fetch_multiplier: candidate pre-fetch factor (default 3 = byte-identical to prior behaviour).
+      Set to settings.rerank_pool_multiplier when rerank_enabled=True (wider recall pool).
+    - return_pool: when True, the SQL final LIMIT returns fetch_limit rows (full pool for reranker).
+      When False (default), final LIMIT is `limit` (existing behaviour).
     """
     pool = await get_pool()
     vector = np.array(query_embedding, dtype=np.float32)
-    fetch_limit = limit * 3
+    fetch_limit = limit * fetch_multiplier
+    # SQL $5 target: full pool for reranker, or final limit otherwise
+    sql_final_limit = fetch_limit if return_pool else limit
 
     if query_sparse:
         # 3-way RRF: dense + sparse + FTS
@@ -222,7 +232,7 @@ async def hybrid_search(
                 namespace_id,
                 fetch_limit,
                 query_text,
-                limit,
+                sql_final_limit,
                 sparse_json,
             )
     else:
@@ -276,7 +286,7 @@ async def hybrid_search(
                 namespace_id,
                 fetch_limit,
                 query_text,
-                limit,
+                sql_final_limit,
             )
 
     results = []

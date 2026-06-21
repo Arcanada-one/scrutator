@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -109,6 +109,25 @@ class ChunkLookupResult(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class Citation(BaseModel):
+    """Per-chunk source attribution. FROZEN interface contract consumed by
+    ARCA-0180 (answer side). Version with `schema_version`; additive-only.
+
+    score_kind disambiguates the scale of relevance_score:
+    - 'rrf': RRF fused score (~[0, 0.05]); rerank_enabled=False
+    - 'colbert_rerank': ColBERT MaxSim score (unbounded above); rerank_enabled=True
+    """
+
+    schema_version: int = 1  # bump only on breaking shape change
+    chunk_id: str
+    source_path: str  # relative KB path, e.g. "concepts/architecture.md"
+    source_type: str  # "md" | "pdf" | "code"
+    chunk_index: int  # ordinal in source
+    heading_hierarchy: list[str] = Field(default_factory=list)
+    relevance_score: float  # score that produced the FINAL ordering
+    score_kind: Literal["rrf", "colbert_rerank"]  # which score relevance_score holds
+
+
 class SearchResult(BaseModel):
     """A single search result with source attribution."""
 
@@ -122,6 +141,7 @@ class SearchResult(BaseModel):
     project: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     heading_hierarchy: list[str] = Field(default_factory=list)
+    citation: Citation | None = None  # M1 (SRCH-0029): typed source attribution; None until populated by searcher
 
 
 class SearchResponse(BaseModel):
