@@ -1,0 +1,14 @@
+{
+  "schema": "scrutator-recall-gate/1",
+  "captured_at": "2026-04-26",
+  "namespace": "ltm-bench-datarim-kb",
+  "mode": "with-entities",
+  "expand_entities": true,
+  "query_count": 36,
+  "note": "Seeded from reports/v4/scrutator/2026-04-26.datarim-kb.with-entities.json (36-query run, expand_entities=true). Gate mode is with-entities because the production /v1/ltm/recall endpoint defaults to expand_entities=true (RecallRequest model default) — the gate must defend the production retrieval path. The CI workflow invokes the harness with --expand-entities so observed and baseline are always the same mode. Live endpoint returned HTTP 500 on 2026-06-21 (PostgreSQL connectivity issue, not a recall regression); recalibrate via --update-baseline after the first clean CI run on arcana-db.",
+  "by_class": {
+    "factual": 0.5,
+    "multi-hop": 0.4545,
+    "temporal": 0.6667
+  }
+}

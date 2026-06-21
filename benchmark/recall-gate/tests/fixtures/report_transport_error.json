@@ -1,0 +1,89 @@
+{
+  "framework": "scrutator",
+  "corpus": "datarim-kb",
+  "run_date": "2026-06-21",
+  "run_started_at": "2026-06-21T14:00:00.000Z",
+  "run_completed_at": "2026-06-21T14:01:00.000Z",
+  "llm_model": "cursor/auto (via MC)",
+  "mode": "with-entities",
+  "expand_entities": true,
+  "with_meta_facts": false,
+  "score_factor": null,
+  "per_query": [
+    {"query_id": "factual-001", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-002", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-003", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-004", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-005", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-006", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-007", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-008", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-011", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "factual-012", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-001", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-002", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-003", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-004", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-005", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-006", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-008", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-009", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-010", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-011", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "multi-hop-012", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-001", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-002", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-003", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-004", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-005", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-006", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-007", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-008", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-010", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-011", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-012", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-013", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-014", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-015", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"},
+    {"query_id": "temporal-016", "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0.0, "num_truth_sources": 1, "num_retrieved": 0, "hit_by": "none"}
+  ],
+  "aggregate_all": {
+    "count": 36,
+    "mean_recall_at_1": 0.0,
+    "mean_recall_at_5": 0.0,
+    "mean_precision_at_5": 0.0
+  },
+  "aggregate_by_class": {
+    "factual": {
+      "count": 10,
+      "mean_recall_at_1": 0.0,
+      "mean_recall_at_5": 0.0,
+      "mean_precision_at_5": 0.0
+    },
+    "multi-hop": {
+      "count": 11,
+      "mean_recall_at_1": 0.0,
+      "mean_recall_at_5": 0.0,
+      "mean_precision_at_5": 0.0
+    },
+    "temporal": {
+      "count": 15,
+      "mean_recall_at_1": 0.0,
+      "mean_recall_at_5": 0.0,
+      "mean_precision_at_5": 0.0
+    }
+  },
+  "latency": {
+    "p50_ms": 0.0,
+    "p95_ms": 0.0,
+    "min_ms": 0.0,
+    "max_ms": 0.0,
+    "mean_ms": 0.0,
+    "count": 36
+  },
+  "hit_mechanism": {
+    "path_hits": 0,
+    "snippet_hits": 0,
+    "misses": 36
+  }
+}
