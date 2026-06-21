@@ -146,10 +146,33 @@ Embedding `result` is a JSON string — parse it to get the vector array.
 ## CI/CD
 
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest
+- **Recall gate:** `.github/workflows/recall-regression.yml` — per-class recall@5 regression check against live Scrutator (see below)
 - **Deploy:** SSH to arcana-db, `docker compose up -d --build` (planned)
 - **Шаблон:** `documentation/infrastructure/CI-Runners.md` § 10.2 (Python/FastAPI)
 - **Post-deploy:** health check (`curl -fsS http://localhost:8310/health`), Ops Bot notification on failure
 - **Convention:** см. root `CLAUDE.md` § CI/CD Convention
+
+## Recall@k Regression Gate (SRCH-0030)
+
+Standing CI gate that runs the LTM-0009 harness (`Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py`) over the 36-query `datarim-kb` set and compares per-class recall@5 against `benchmark/recall-gate/baseline.json`.
+
+**Gate files:**
+- `benchmark/recall-gate/recall_gate.py` — thin wrapper (baseline load + per-class delta + exit codes)
+- `benchmark/recall-gate/baseline.json` — committed per-class recall@5 baseline (factual/multi-hop/temporal)
+- `benchmark/recall-gate/thresholds.json` — per-class allowed regression delta
+- `.github/workflows/recall-regression.yml` — CI job on `[self-hosted, linux, arcana-db, docker]`
+
+**Exit codes:** `0` pass, `1` recall regression (build fails), `2` transport/infra error (not a regression).
+
+**Baseline refresh procedure:**
+1. Verify intentional recall improvement in a PR.
+2. On the arcana-db runner: `python benchmark/recall-gate/recall_gate.py --run --update-baseline`
+3. Commit the updated `baseline.json` and include in the PR with a note explaining the improvement.
+4. Review the diff: ensure each class number moved in the expected direction.
+
+**Do NOT update the baseline** to paper over a regression. The baseline is the quality floor; regressions should be fixed in code, not masked by baseline inflation.
+
+**Runner requirement:** `[self-hosted, linux, arcana-db, docker]` only. GitHub-hosted runners cannot reach `100.70.137.104:8310` (Tailscale-only) and are billing-blocked org-wide.
 
 ## Key Commands
 
