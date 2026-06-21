@@ -239,6 +239,55 @@ class TestReranker:
         assert results[1].chunk_id == "B"
 
     @pytest.mark.asyncio
+    async def test_rerank_soft_fail_populates_rrf_citation(self):
+        """On soft-fail, returned results must carry citation with score_kind='rrf' (invariant).
+
+        Guards the SRCH-0029 compliance fix: rerank-ON soft-fail must not return
+        citation=None, which would break the M1 frozen Citation contract (ARCA-0180).
+        """
+        from scrutator.search.embedder import EmbeddingError
+        from scrutator.search.reranker import rerank
+
+        candidates = [
+            _make_result("A", score=0.05),
+            _make_result("B", score=0.03),
+        ]
+        # candidates have citation=None (as hybrid_search returns them before rerank runs)
+        assert all(c.citation is None for c in candidates)
+
+        with patch(
+            "scrutator.search.reranker.embed_colbert",
+            new=AsyncMock(side_effect=EmbeddingError("ColBERT API down")),
+        ):
+            results = await rerank(query="test", candidates=candidates, top_k=2)
+
+        # M1 invariant: citation must be present and use rrf score on soft-fail
+        for r in results:
+            assert r.citation is not None, f"citation must not be None on soft-fail (chunk_id={r.chunk_id})"
+            assert r.citation.score_kind == "rrf", (
+                f"score_kind must be 'rrf' on soft-fail, got {r.citation.score_kind!r}"
+            )
+            assert r.citation.relevance_score == r.score, "citation.relevance_score must mirror RRF .score on soft-fail"
+            assert r.citation.chunk_id == r.chunk_id
+
+    @pytest.mark.asyncio
+    async def test_rerank_soft_fail_unexpected_exception_populates_rrf_citation(self):
+        """On unexpected exception in rerank, citation invariant is still upheld."""
+        from scrutator.search.reranker import rerank
+
+        candidates = [_make_result("X", score=0.04)]
+
+        with patch(
+            "scrutator.search.reranker.embed_colbert",
+            new=AsyncMock(side_effect=RuntimeError("unexpected")),
+        ):
+            results = await rerank(query="test", candidates=candidates, top_k=1)
+
+        assert len(results) == 1
+        assert results[0].citation is not None
+        assert results[0].citation.score_kind == "rrf"
+
+    @pytest.mark.asyncio
     async def test_rerank_sets_score_kind_colbert_rerank(self):
         """After successful rerank, score_kind='colbert_rerank' on all returned results."""
         from scrutator.search.reranker import rerank

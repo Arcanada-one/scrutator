@@ -54,8 +54,9 @@ def _maxsim(q_vecs: np.ndarray, d_vecs: np.ndarray) -> float:
 async def rerank(query: str, candidates: list[SearchResult], top_k: int) -> list[SearchResult]:
     """ColBERT late-interaction rerank of candidates. Returns top_k by MaxSim, descending.
 
-    On embedding failure: logs WARNING and returns candidates[:top_k] unchanged
-    (soft-fail, mirrors the sparse-fallback pattern in searcher.py).
+    On embedding failure: logs WARNING and returns candidates[:top_k] with
+    citation populated as score_kind='rrf' (soft-fail; upholds M1 Citation
+    invariant — citation is never None on returned results).
 
     Pool cap: only the top min(len(candidates), settings.rerank_colbert_max_pool)
     candidates (by current RRF score) are sent to ColBERT. Candidates beyond
@@ -113,7 +114,33 @@ async def rerank(query: str, candidates: list[SearchResult], top_k: int) -> list
 
     except EmbeddingError as exc:
         logger.warning("ColBERT rerank failed (soft-fail, returning RRF order): %s", exc)
-        return candidates[:top_k]
+        return _apply_rrf_citations(candidates[:top_k])
     except Exception as exc:
         logger.warning("ColBERT rerank unexpected error (soft-fail, returning RRF order): %s", exc)
-        return candidates[:top_k]
+        return _apply_rrf_citations(candidates[:top_k])
+
+
+def _apply_rrf_citations(results: list[SearchResult]) -> list[SearchResult]:
+    """Populate citation with score_kind='rrf' on any result that lacks one.
+
+    Called on the soft-fail path to uphold the Citation invariant: every result
+    returned by rerank() must have a non-None citation, even when ColBERT fails.
+    Results that already carry a citation (e.g. from a partial success path) are
+    left untouched.
+    """
+    out = []
+    for r in results:
+        if r.citation is None:
+            citation = Citation(
+                chunk_id=r.chunk_id,
+                source_path=r.source_path,
+                source_type=r.source_type,
+                chunk_index=r.chunk_index,
+                heading_hierarchy=r.heading_hierarchy,
+                relevance_score=r.score,
+                score_kind="rrf",
+            )
+            out.append(r.model_copy(update={"citation": citation}))
+        else:
+            out.append(r)
+    return out
