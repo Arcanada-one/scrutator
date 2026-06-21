@@ -70,6 +70,36 @@ The name comes from the Latin *scrutator* — "one who thoroughly investigates."
 - **PostgreSQL** + pgvector (HNSW) + FTS (tsvector)
 - **RRF** — Reciprocal Rank Fusion (k=60) for hybrid ranking
 
+## Recall@k Regression Gate
+
+CI gate that runs the LTM-0009 benchmark harness against live Scrutator and fails the build when per-class recall@5 drops below a committed baseline.
+
+| Class | Baseline (recall@5) | Regression threshold |
+|-------|--------------------|--------------------|
+| factual | 0.50 | 0.05 |
+| multi-hop | 0.4545 | 0.05 |
+| temporal | 0.6667 | 0.07 |
+
+Thresholds are per-class (factual / multi-hop / temporal independently — not averaged). Temporal has a slightly looser delta because it is the known-weak, higher-variance class.
+
+**Exit codes:** `0` = all classes pass; `1` = recall regression detected; `2` = transport/infrastructure error (network flake — does NOT count as a recall regression).
+
+**Run manually:**
+```bash
+# Gate against an existing report:
+python benchmark/recall-gate/recall_gate.py --report <path-to-report.json>
+
+# Run the harness and gate in one step (requires arcana-db Tailscale access):
+python benchmark/recall-gate/recall_gate.py --run --harness <path-to-ltm-bench-query.py>
+
+# Refresh baseline after an intentional recall change (requires review):
+python benchmark/recall-gate/recall_gate.py --report <path> --update-baseline
+```
+
+**Runner requirement:** the CI job runs on `[self-hosted, linux, arcana-db, docker]` (co-located with Scrutator — reaches `:8310` on localhost). GitHub-hosted runners cannot reach the Tailscale-only endpoint and are billing-blocked org-wide.
+
+**Baseline recalibration:** after an intentional change that improves recall, run `--update-baseline` on the arcana-db runner with a fresh report, review the diff in the PR, then merge. The baseline seeded in `baseline.json` was captured from the 2026-04-26 `with-entities` run (36 queries); recalibrate from a `no-entities` run on first clean CI pass.
+
 ## Quick Start
 
 ```bash
@@ -80,8 +110,8 @@ cd scrutator
 # Install dependencies
 pip install -r requirements-dev.txt
 
-# Run tests
-pytest tests/ -v
+# Run tests (including recall gate unit tests)
+pytest tests/ benchmark/recall-gate/tests/ -v
 
 # Lint
 ruff check src/ tests/
