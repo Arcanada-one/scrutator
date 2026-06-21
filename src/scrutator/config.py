@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     ltm_reflect_grouping: Literal["entity", "cosine"] = "cosine"
     ltm_reflect_cosine_threshold: float = 0.85
 
+    # SRCH-0029 M2: ColBERT late-interaction rerank (default OFF — measure-first per consilium)
+    rerank_enabled: bool = False
+    rerank_pool_multiplier: int = 4  # fetch_limit = limit * multiplier when rerank ON
+    rerank_colbert_max_pool: int = 30  # hard cap on candidates sent to ColBERT
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 
