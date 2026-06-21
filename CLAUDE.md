@@ -143,6 +143,48 @@ curl -X POST https://connector.arcanada.one/connectors/gemini/execute \
 All connectors return: `{id, connector, model, result, usage: {inputTokens, outputTokens, costUsd}, latencyMs, status}`.
 Embedding `result` is a JSON string — parse it to get the vector array.
 
+## ColBERT Rerank + Citation Contract (SRCH-0029)
+
+### M2 — ColBERT late-interaction rerank on `/v1/search`
+
+**Path:** `search/reranker.py` (`rerank()` + `_maxsim()`). Operates on the `/v1/search` hybrid path only. Distinct from `ltm/pipeline.py`'s LLM-based reranker which runs on the `/v1/ltm/recall` path — do NOT conflate or modify those two modules together.
+
+**ColBERT call path:** direct Embedding API at `{settings.embedding_api_url}/v1/embeddings/colbert` (probe-confirmed live 2026-06-22). NOT the Model Connector `/execute + extra.embeddingType=colbert` hop. Mirrors `embed_sparse` — same singleton `httpx.AsyncClient`, same tenacity retry. Response field: `data[i].colbert_vecs` (list of per-token 1024-dim vectors).
+
+**Flag and knobs (all in `config.py`, env prefix `SCRUTATOR_`):**
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `rerank_enabled` | `False` | Master flag — OFF until per-class recall gate passes |
+| `rerank_pool_multiplier` | `4` | `fetch_limit = limit * multiplier` when rerank ON |
+| `rerank_colbert_max_pool` | `30` | Hard cap on candidates sent to ColBERT (bounds latency) |
+
+**Default is OFF.** Flip `rerank_enabled=True` only after a green per-class recall@5 run on the `/v1/search` path (tracked as SRCH-0031). The recall gate at `benchmark/recall-gate/` guards `/v1/ltm/recall`, not `/v1/search` — these are different endpoints.
+
+**Soft-fail invariant:** if ColBERT embedding fails, `rerank()` logs WARNING and falls back to RRF order. The returned results always have `citation` populated with `score_kind="rrf"` (not `None`) — the M1 Citation contract is upheld even on failure.
+
+### M1 — `Citation` frozen contract (ARCA-0180)
+
+`Citation` in `db/models.py` is the **frozen interface contract** consumed by ARCA-0180 (answer side). It is additive-only — never remove or rename fields; bump `schema_version` only on a breaking shape change.
+
+```python
+class Citation(BaseModel):
+    schema_version: int = 1           # frozen; bump = breaking change
+    chunk_id: str
+    source_path: str                  # relative KB path
+    source_type: str                  # "md" | "pdf" | "code"
+    chunk_index: int
+    heading_hierarchy: list[str]
+    relevance_score: float            # score that produced the FINAL ordering
+    score_kind: Literal["rrf", "colbert_rerank"]  # scale disambiguator
+```
+
+**`score_kind` is mandatory for ARCA-0180's abstention gate** because the two scores live on different scales:
+- `"rrf"`: RRF fused score, bounded `~[0, 0.05]` — rerank OFF (or soft-fail)
+- `"colbert_rerank"`: ColBERT MaxSim score, unbounded above — rerank ON (success)
+
+Every `SearchResult` returned by `searcher.search()` carries a non-None `citation` (M1 is always-on, near-zero cost).
+
 ## CI/CD
 
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest

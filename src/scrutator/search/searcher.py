@@ -4,9 +4,24 @@ from __future__ import annotations
 
 import time
 
-from scrutator.db.models import SearchResponse, SearchResult
+from scrutator.config import settings
+from scrutator.db.models import Citation, SearchResponse, SearchResult
 from scrutator.db.repository import hybrid_search, search_with_filters, upsert_namespace
 from scrutator.search.embedder import embed_single, embed_sparse
+from scrutator.search.reranker import rerank
+
+
+def _build_citation(r: SearchResult, score_kind: str) -> Citation:
+    """Build a Citation from a SearchResult's own fields (no extra DB round-trip)."""
+    return Citation(
+        chunk_id=r.chunk_id,
+        source_path=r.source_path,
+        source_type=r.source_type,
+        chunk_index=r.chunk_index,
+        heading_hierarchy=r.heading_hierarchy,
+        relevance_score=r.score,
+        score_kind=score_kind,  # type: ignore[arg-type]
+    )
 
 
 async def search(
@@ -18,7 +33,12 @@ async def search(
     min_score: float = 0.0,
     include_content: bool = True,
 ) -> SearchResponse:
-    """Execute hybrid search: embed query → dense+FTS → RRF → results."""
+    """Execute hybrid search: embed query → dense+FTS → RRF → optional ColBERT rerank → results.
+
+    M1 (SRCH-0029): every SearchResult carries a populated Citation (always-on, near-zero cost).
+    M2 (SRCH-0029): when settings.rerank_enabled=True, widens the fetch pool and reranks via
+    ColBERT MaxSim late-interaction. Default OFF — measure-first per consilium condition 2.
+    """
     start = time.monotonic()
 
     # Resolve namespace id if specified
@@ -49,6 +69,9 @@ async def search(
             )
             for r in raw
         ]
+        # M1: populate citation on filtered results (score_kind=rrf — RRF order)
+        for r in results:
+            r.citation = _build_citation(r, "rrf")
     else:
         # Hybrid search: dense + sparse + FTS
         query_embedding = await embed_single(query)
@@ -57,13 +80,32 @@ async def search(
             query_sparse = sparse_results[0] if sparse_results else None
         except Exception:
             query_sparse = None  # Fallback to 2-way RRF if sparse fails
-        results = await hybrid_search(
-            query_embedding=query_embedding,
-            query_text=query,
-            namespace_id=namespace_id,
-            limit=limit,
-            query_sparse=query_sparse,
-        )
+
+        if settings.rerank_enabled:
+            # M2: widen pool, return full pool for ColBERT rerank
+            results = await hybrid_search(
+                query_embedding=query_embedding,
+                query_text=query,
+                namespace_id=namespace_id,
+                limit=limit,
+                query_sparse=query_sparse,
+                fetch_multiplier=settings.rerank_pool_multiplier,
+                return_pool=True,
+            )
+            # Rerank via ColBERT MaxSim (sets .score and .citation on returned results)
+            results = await rerank(query=query, candidates=results, top_k=limit)
+        else:
+            # M2 OFF: byte-identical behaviour (fetch_limit = limit * 3, return top-limit)
+            results = await hybrid_search(
+                query_embedding=query_embedding,
+                query_text=query,
+                namespace_id=namespace_id,
+                limit=limit,
+                query_sparse=query_sparse,
+            )
+            # M1: populate citation on hybrid results (score_kind=rrf)
+            for r in results:
+                r.citation = _build_citation(r, "rrf")
 
     # Apply filters
     if min_score > 0:
