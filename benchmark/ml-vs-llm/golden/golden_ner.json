@@ -1,0 +1,4664 @@
+[
+  {
+    "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+    "entities": [
+      {
+        "name": "Embeddings Generation",
+        "type": "concept"
+      },
+      {
+        "name": "User Interaction",
+        "type": "concept"
+      },
+      {
+        "name": "text-embedding-3",
+        "type": "technology"
+      },
+      {
+        "name": "Vector",
+        "type": "concept"
+      },
+      {
+        "name": "Qdrant Storage",
+        "type": "technology"
+      },
+      {
+        "name": "Batch Processing",
+        "type": "concept"
+      },
+      {
+        "name": "Background jobs",
+        "type": "concept"
+      },
+      {
+        "name": "bulk embeddings",
+        "type": "concept"
+      },
+      {
+        "name": "Real-time",
+        "type": "concept"
+      },
+      {
+        "name": "new interactions",
+        "type": "concept"
+      },
+      {
+        "name": "Redis queues",
+        "type": "technology"
+      },
+      {
+        "name": "processing",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+    "entities": [
+      {
+        "name": "Multi-Format Input Processing",
+        "type": "concept"
+      },
+      {
+        "name": "Intelligent processing",
+        "type": "concept"
+      },
+      {
+        "name": "Text Messages",
+        "type": "concept"
+      },
+      {
+        "name": "Direct processing",
+        "type": "concept"
+      },
+      {
+        "name": "Voice Messages",
+        "type": "concept"
+      },
+      {
+        "name": "Whisper",
+        "type": "technology"
+      },
+      {
+        "name": "transcription",
+        "type": "concept"
+      },
+      {
+        "name": "Processing",
+        "type": "concept"
+      },
+      {
+        "name": "Photos",
+        "type": "concept"
+      },
+      {
+        "name": "GPT-4 Vision",
+        "type": "technology"
+      },
+      {
+        "name": "analysis",
+        "type": "concept"
+      },
+      {
+        "name": "Description",
+        "type": "concept"
+      },
+      {
+        "name": "Audio Files",
+        "type": "concept"
+      },
+      {
+        "name": "Summary",
+        "type": "concept"
+      },
+      {
+        "name": "Storage",
+        "type": "concept"
+      },
+      {
+        "name": "PDF Documents",
+        "type": "concept"
+      },
+      {
+        "name": "Parsing",
+        "type": "concept"
+      },
+      {
+        "name": "Analysis",
+        "type": "concept"
+      },
+      {
+        "name": "Long Voice Messages",
+        "type": "concept"
+      },
+      {
+        "name": "Auto-convert",
+        "type": "concept"
+      },
+      {
+        "name": "audio file processing",
+        "type": "concept"
+      },
+      {
+        "name": "Natural interaction",
+        "type": "concept"
+      },
+      {
+        "name": "format limitations",
+        "type": "concept"
+      },
+      {
+        "name": "Intelligent understanding",
+        "type": "concept"
+      },
+      {
+        "name": "Automatic organization",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+    "entities": [
+      {
+        "name": "Argana AI",
+        "type": "organization"
+      },
+      {
+        "name": "Telegram bot",
+        "type": "technology"
+      },
+      {
+        "name": "Telegram",
+        "type": "technology"
+      },
+      {
+        "name": "Discovery",
+        "type": "concept"
+      },
+      {
+        "name": "Registration",
+        "type": "concept"
+      },
+      {
+        "name": "Onboarding",
+        "type": "concept"
+      },
+      {
+        "name": "Daily Use",
+        "type": "concept"
+      },
+      {
+        "name": "Progressive Engagement",
+        "type": "concept"
+      },
+      {
+        "name": "Life Integration",
+        "type": "concept"
+      },
+      {
+        "name": "Typical User Path",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+    "entities": [
+      {
+        "name": "Embeddings",
+        "type": "concept"
+      },
+      {
+        "name": "OpenAI",
+        "type": "organization"
+      },
+      {
+        "name": "text-embedding-3",
+        "type": "technology"
+      },
+      {
+        "name": "High-quality embeddings",
+        "type": "concept"
+      },
+      {
+        "name": "Good performance",
+        "type": "concept"
+      },
+      {
+        "name": "Reliable API",
+        "type": "concept"
+      },
+      {
+        "name": "Cost-effective",
+        "type": "concept"
+      },
+      {
+        "name": "Converting interactions to vectors",
+        "type": "concept"
+      },
+      {
+        "name": "Semantic search",
+        "type": "concept"
+      },
+      {
+        "name": "Similarity matching",
+        "type": "concept"
+      },
+      {
+        "name": "API",
+        "type": "technology"
+      },
+      {
+        "name": "vectors",
+        "type": "concept"
+      },
+      {
+        "name": "interactions",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+    "entities": [
+      {
+        "name": "Cost Optimization",
+        "type": "concept"
+      },
+      {
+        "name": "Caching embeddings",
+        "type": "technology"
+      },
+      {
+        "name": "Batch processing",
+        "type": "technology"
+      },
+      {
+        "name": "Model selection",
+        "type": "concept"
+      },
+      {
+        "name": "mini",
+        "type": "technology"
+      },
+      {
+        "name": "Efficient prompt design",
+        "type": "concept"
+      },
+      {
+        "name": "Context optimization",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+    "entities": [
+      {
+        "name": "Mem0",
+        "type": "project"
+      },
+      {
+        "name": "docs.mem0.ai/open-source/graph_memory/overview",
+        "type": "location"
+      },
+      {
+        "name": "mem0.ai/pricing",
+        "type": "location"
+      },
+      {
+        "name": "Mem0 GitHub repo",
+        "type": "location"
+      },
+      {
+        "name": "github.com/mem0ai/mem0",
+        "type": "location"
+      },
+      {
+        "name": "HEAD",
+        "type": "concept"
+      },
+      {
+        "name": "3fbc1c9",
+        "type": "concept"
+      },
+      {
+        "name": "benchmark/candidates/mem0/",
+        "type": "location"
+      },
+      {
+        "name": "2026-04-16",
+        "type": "event"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+    "entities": [
+      {
+        "name": "Mem0 Graph Gate",
+        "type": "project"
+      },
+      {
+        "name": "2026-04-16",
+        "type": "event"
+      },
+      {
+        "name": "LTM-0002 Phase A",
+        "type": "project"
+      },
+      {
+        "name": "Mem0",
+        "type": "technology"
+      },
+      {
+        "name": "Cognee",
+        "type": "technology"
+      },
+      {
+        "name": "OSS SDK",
+        "type": "technology"
+      },
+      {
+        "name": "GitHub",
+        "type": "organization"
+      }
+    ]
+  },
+  {
+    "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+    "entities": [
+      {
+        "name": "LLM API key",
+        "type": "technology"
+      },
+      {
+        "name": "reflect",
+        "type": "concept"
+      },
+      {
+        "name": "reasoning layer",
+        "type": "concept"
+      },
+      {
+        "name": "retain",
+        "type": "concept"
+      },
+      {
+        "name": "recall",
+        "type": "concept"
+      },
+      {
+        "name": "mental models",
+        "type": "concept"
+      },
+      {
+        "name": "Community",
+        "type": "concept"
+      },
+      {
+        "name": "Mem0",
+        "type": "project"
+      },
+      {
+        "name": "9.4k",
+        "type": "concept"
+      },
+      {
+        "name": "53k stars",
+        "type": "concept"
+      },
+      {
+        "name": "Stack Overflow",
+        "type": "organization"
+      },
+      {
+        "name": "community examples",
+        "type": "concept"
+      },
+      {
+        "name": "Embedded PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "single-node",
+        "type": "concept"
+      },
+      {
+        "name": "HA",
+        "type": "concept"
+      },
+      {
+        "name": "external PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "embedded",
+        "type": "concept"
+      },
+      {
+        "name": "Go SDK",
+        "type": "technology"
+      },
+      {
+        "name": "Python",
+        "type": "technology"
+      },
+      {
+        "name": "TS",
+        "type": "technology"
+      },
+      {
+        "name": "benchmark",
+        "type": "concept"
+      },
+      {
+        "name": "Arcanada-specific",
+        "type": "concept"
+      },
+      {
+        "name": "Tailscale",
+        "type": "technology"
+      },
+      {
+        "name": "deploy",
+        "type": "concept"
+      },
+      {
+        "name": "arcana-dev",
+        "type": "project"
+      },
+      {
+        "name": "persistent volume mapping",
+        "type": "concept"
+      },
+      {
+        "name": "backup cron",
+        "type": "concept"
+      },
+      {
+        "name": "B2",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+    "entities": [
+      {
+        "name": "LangMem",
+        "type": "project"
+      },
+      {
+        "name": "https://github.com/langchain-ai/langmem",
+        "type": "location"
+      },
+      {
+        "name": "MIT",
+        "type": "concept"
+      },
+      {
+        "name": "Python",
+        "type": "technology"
+      },
+      {
+        "name": "LangGraph",
+        "type": "technology"
+      },
+      {
+        "name": "LangGraph Platform",
+        "type": "technology"
+      },
+      {
+        "name": "README",
+        "type": "concept"
+      },
+      {
+        "name": "Long-term Memory Store",
+        "type": "concept"
+      },
+      {
+        "name": "Knowledge Graph",
+        "type": "concept"
+      },
+      {
+        "name": "MCP server",
+        "type": "technology"
+      },
+      {
+        "name": "REST",
+        "type": "technology"
+      },
+      {
+        "name": "HTTP API",
+        "type": "technology"
+      },
+      {
+        "name": "LangChain",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+    "entities": [
+      {
+        "name": "LTM-0001",
+        "type": "project"
+      },
+      {
+        "name": "Mem0",
+        "type": "technology"
+      },
+      {
+        "name": "mem0.ai",
+        "type": "organization"
+      },
+      {
+        "name": "MCP",
+        "type": "technology"
+      },
+      {
+        "name": "Hindsight",
+        "type": "technology"
+      },
+      {
+        "name": "MIT",
+        "type": "organization"
+      },
+      {
+        "name": "Zep",
+        "type": "technology"
+      },
+      {
+        "name": "getzep.com",
+        "type": "organization"
+      },
+      {
+        "name": "Cognee",
+        "type": "technology"
+      },
+      {
+        "name": "OSS",
+        "type": "concept"
+      },
+      {
+        "name": "LangMem",
+        "type": "technology"
+      },
+      {
+        "name": "LangGraph",
+        "type": "technology"
+      },
+      {
+        "name": "LlamaIndex Memory",
+        "type": "technology"
+      },
+      {
+        "name": "LlamaIndex",
+        "type": "technology"
+      },
+      {
+        "name": "Letta",
+        "type": "technology"
+      },
+      {
+        "name": "MemGPT",
+        "type": "technology"
+      },
+      {
+        "name": "Graphiti",
+        "type": "technology"
+      },
+      {
+        "name": "Zep core",
+        "type": "technology"
+      },
+      {
+        "name": "MemPalace",
+        "type": "technology"
+      },
+      {
+        "name": "qmd",
+        "type": "technology"
+      },
+      {
+        "name": "BM25",
+        "type": "technology"
+      },
+      {
+        "name": "Karpathy gist",
+        "type": "project"
+      },
+      {
+        "name": "OpenMemory MCP",
+        "type": "technology"
+      },
+      {
+        "name": "EpisodicMemory",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+    "entities": [
+      {
+        "name": "Cipher",
+        "type": "project"
+      },
+      {
+        "name": "ByteRover",
+        "type": "project"
+      },
+      {
+        "name": "brv",
+        "type": "technology"
+      },
+      {
+        "name": "https://github.com/campfirein/cipher",
+        "type": "location"
+      },
+      {
+        "name": "Elastic License 2.0",
+        "type": "concept"
+      },
+      {
+        "name": "OSI",
+        "type": "organization"
+      },
+      {
+        "name": "TypeScript",
+        "type": "technology"
+      },
+      {
+        "name": "Node.js",
+        "type": "technology"
+      },
+      {
+        "name": "macOS ARM64",
+        "type": "technology"
+      },
+      {
+        "name": "Linux x64",
+        "type": "technology"
+      },
+      {
+        "name": "Linux ARM64",
+        "type": "technology"
+      },
+      {
+        "name": "CLI",
+        "type": "technology"
+      },
+      {
+        "name": "README",
+        "type": "concept"
+      },
+      {
+        "name": "ByteRover Cloud",
+        "type": "project"
+      },
+      {
+        "name": "Knowledge Graph",
+        "type": "concept"
+      },
+      {
+        "name": "Context tree",
+        "type": "concept"
+      },
+      {
+        "name": "LongMemEval-S",
+        "type": "concept"
+      },
+      {
+        "name": "MCP server",
+        "type": "technology"
+      },
+      {
+        "name": "brv mcp",
+        "type": "technology"
+      },
+      {
+        "name": "REST",
+        "type": "technology"
+      },
+      {
+        "name": "HTTP API",
+        "type": "technology"
+      },
+      {
+        "name": "LoCoMo",
+        "type": "concept"
+      },
+      {
+        "name": "Discord",
+        "type": "organization"
+      },
+      {
+        "name": "R1 license",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+    "entities": [
+      {
+        "name": "Corpus distribution",
+        "type": "concept"
+      },
+      {
+        "name": "datarim-kb",
+        "type": "project"
+      },
+      {
+        "name": "dreamer-wiki",
+        "type": "project"
+      },
+      {
+        "name": "factual",
+        "type": "concept"
+      },
+      {
+        "name": "multi-hop",
+        "type": "concept"
+      },
+      {
+        "name": "temporal",
+        "type": "concept"
+      },
+      {
+        "name": "2026-04-16",
+        "type": "event"
+      },
+      {
+        "name": "wiki snapshot",
+        "type": "concept"
+      },
+      {
+        "name": ".md",
+        "type": "technology"
+      },
+      {
+        "name": ".mdx",
+        "type": "technology"
+      },
+      {
+        "name": "benchmark/datasets/2026-04-16/dreamer-wiki/MANIFEST.json",
+        "type": "technology"
+      },
+      {
+        "name": "wiki queries",
+        "type": "concept"
+      },
+      {
+        "name": "benchmarking",
+        "type": "concept"
+      },
+      {
+        "name": "ground truth",
+        "type": "concept"
+      },
+      {
+        "name": "wiki retrieval",
+        "type": "concept"
+      },
+      {
+        "name": "sparse-corpus behaviour",
+        "type": "concept"
+      },
+      {
+        "name": "cross-corpus federation",
+        "type": "concept"
+      },
+      {
+        "name": "multi-hop-007",
+        "type": "concept"
+      },
+      {
+        "name": "LTM-0002",
+        "type": "project"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+    "entities": [
+      {
+        "name": "Системы долгосрочной памяти - Сравнение.md",
+        "type": "project"
+      },
+      {
+        "name": "Mem0",
+        "type": "technology"
+      },
+      {
+        "name": "Hindsight",
+        "type": "technology"
+      },
+      {
+        "name": "Zep",
+        "type": "technology"
+      },
+      {
+        "name": "llm-wiki.md",
+        "type": "project"
+      },
+      {
+        "name": "Karpathy",
+        "type": "person"
+      },
+      {
+        "name": "Agent Dreamer",
+        "type": "technology"
+      },
+      {
+        "name": "Mem0 - The Memory Layer for your AI Apps.md",
+        "type": "project"
+      },
+      {
+        "name": "Ilya Belov",
+        "type": "person"
+      },
+      {
+        "name": "Милы Йововчич",
+        "type": "person"
+      },
+      {
+        "name": "LTM",
+        "type": "concept"
+      },
+      {
+        "name": "Long Term Memory",
+        "type": "concept"
+      },
+      {
+        "name": "векторная БД",
+        "type": "technology"
+      },
+      {
+        "name": "file-based wiki",
+        "type": "technology"
+      },
+      {
+        "name": "AI",
+        "type": "concept"
+      },
+      {
+        "name": "ИИ",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+    "entities": [
+      {
+        "name": "Graphiti",
+        "type": "project"
+      },
+      {
+        "name": "https://github.com/getzep/graphiti",
+        "type": "location"
+      },
+      {
+        "name": "Apache-2.0",
+        "type": "concept"
+      },
+      {
+        "name": "25,007",
+        "type": "concept"
+      },
+      {
+        "name": "2024-08-08",
+        "type": "event"
+      },
+      {
+        "name": "2026-04-14",
+        "type": "event"
+      },
+      {
+        "name": "Python",
+        "type": "technology"
+      },
+      {
+        "name": "FastAPI",
+        "type": "technology"
+      },
+      {
+        "name": "server/",
+        "type": "location"
+      },
+      {
+        "name": "self-hosted only",
+        "type": "concept"
+      },
+      {
+        "name": "Zep Cloud",
+        "type": "project"
+      },
+      {
+        "name": "https://github.com/getzep/graphiti README",
+        "type": "location"
+      },
+      {
+        "name": "Docker",
+        "type": "technology"
+      },
+      {
+        "name": "Neo4j 5.26",
+        "type": "technology"
+      },
+      {
+        "name": "FalkorDB 1.1.2",
+        "type": "technology"
+      },
+      {
+        "name": "Kuzu 0.11.2",
+        "type": "technology"
+      },
+      {
+        "name": "Amazon Neptune",
+        "type": "technology"
+      },
+      {
+        "name": "OpenSearch",
+        "type": "technology"
+      },
+      {
+        "name": "bi-temporal tracking",
+        "type": "concept"
+      },
+      {
+        "name": "automatic fact invalidation",
+        "type": "concept"
+      },
+      {
+        "name": "MCP server",
+        "type": "technology"
+      },
+      {
+        "name": "mcp_server/",
+        "type": "location"
+      },
+      {
+        "name": "episode",
+        "type": "concept"
+      },
+      {
+        "name": "entity",
+        "type": "concept"
+      },
+      {
+        "name": "search tools",
+        "type": "concept"
+      },
+      {
+        "name": "REST",
+        "type": "technology"
+      },
+      {
+        "name": "HTTP API",
+        "type": "technology"
+      },
+      {
+        "name": "FastAPI service",
+        "type": "technology"
+      },
+      {
+        "name": "README",
+        "type": "concept"
+      },
+      {
+        "name": "arXiv:2501.13956",
+        "type": "concept"
+      },
+      {
+        "name": "366",
+        "type": "concept"
+      },
+      {
+        "name": "2,484",
+        "type": "concept"
+      },
+      {
+        "name": "Discord",
+        "type": "technology"
+      },
+      {
+        "name": "Bi-temporal knowledge-graph memory engine",
+        "type": "concept"
+      },
+      {
+        "name": "Neo4j",
+        "type": "technology"
+      },
+      {
+        "name": "Kuzu",
+        "type": "technology"
+      },
+      {
+        "name": "FalkorDB",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+    "entities": [
+      {
+        "name": "Query Criteria Rationale",
+        "type": "concept"
+      },
+      {
+        "name": "LTM-0002",
+        "type": "project"
+      },
+      {
+        "name": "Phase C",
+        "type": "event"
+      },
+      {
+        "name": "2026-04-16",
+        "type": "event"
+      },
+      {
+        "name": "benchmark/queries/{factual,multi-hop,temporal}.jsonl",
+        "type": "technology"
+      },
+      {
+        "name": "factual",
+        "type": "concept"
+      },
+      {
+        "name": "multi-hop",
+        "type": "concept"
+      },
+      {
+        "name": "temporal",
+        "type": "concept"
+      },
+      {
+        "name": "benchmark harness",
+        "type": "technology"
+      },
+      {
+        "name": "Phase D",
+        "type": "event"
+      },
+      {
+        "name": "agent behaviour",
+        "type": "concept"
+      },
+      {
+        "name": "class boundaries",
+        "type": "concept"
+      },
+      {
+        "name": "candidates",
+        "type": "concept"
+      },
+      {
+        "name": "final report",
+        "type": "concept"
+      },
+      {
+        "name": "framework",
+        "type": "technology"
+      },
+      {
+        "name": "factual recall",
+        "type": "concept"
+      },
+      {
+        "name": "workflow",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+    "entities": [
+      {
+        "name": "LTM-0002",
+        "type": "project"
+      },
+      {
+        "name": "Hindsight",
+        "type": "technology"
+      },
+      {
+        "name": "4-way hybrid retrieval",
+        "type": "concept"
+      },
+      {
+        "name": "MCP",
+        "type": "technology"
+      },
+      {
+        "name": "MIT",
+        "type": "organization"
+      },
+      {
+        "name": "PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "token cost reflect layer",
+        "type": "concept"
+      },
+      {
+        "name": "Graphiti",
+        "type": "technology"
+      },
+      {
+        "name": "Bi-temporal KG",
+        "type": "concept"
+      },
+      {
+        "name": "Neo4j",
+        "type": "technology"
+      },
+      {
+        "name": "Kuzu",
+        "type": "technology"
+      },
+      {
+        "name": "API",
+        "type": "technology"
+      },
+      {
+        "name": "LoCoMo",
+        "type": "technology"
+      },
+      {
+        "name": "Mem0",
+        "type": "technology"
+      },
+      {
+        "name": "OSS",
+        "type": "concept"
+      },
+      {
+        "name": "pip install",
+        "type": "technology"
+      },
+      {
+        "name": "Cognee",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+    "entities": [
+      {
+        "name": "Bi-temporal knowledge-graph memory engine",
+        "type": "technology"
+      },
+      {
+        "name": "граф сущностей",
+        "type": "concept"
+      },
+      {
+        "name": "explicit tracking",
+        "type": "concept"
+      },
+      {
+        "name": "агентные системы",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+    "entities": [
+      {
+        "name": "pip",
+        "type": "technology"
+      },
+      {
+        "name": "hindsight-sdk",
+        "type": "technology"
+      },
+      {
+        "name": "hindsight",
+        "type": "technology"
+      },
+      {
+        "name": "serve",
+        "type": "concept"
+      },
+      {
+        "name": "port",
+        "type": "concept"
+      },
+      {
+        "name": "8888",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+    "entities": [
+      {
+        "name": "Graphiti",
+        "type": "project"
+      },
+      {
+        "name": "https://github.com/getzep/graphiti",
+        "type": "location"
+      },
+      {
+        "name": "Apache-2.0",
+        "type": "concept"
+      },
+      {
+        "name": "25k",
+        "type": "concept"
+      },
+      {
+        "name": "2026-04-14",
+        "type": "event"
+      },
+      {
+        "name": "bi-temporal knowledge graph engine",
+        "type": "technology"
+      },
+      {
+        "name": "Zep",
+        "type": "project"
+      },
+      {
+        "name": "community edition",
+        "type": "concept"
+      },
+      {
+        "name": "self-hosted only",
+        "type": "concept"
+      },
+      {
+        "name": "Mem0",
+        "type": "project"
+      },
+      {
+        "name": "Multi-backend graph",
+        "type": "technology"
+      },
+      {
+        "name": "Neo4j 5.26",
+        "type": "technology"
+      },
+      {
+        "name": "FalkorDB 1.1.2",
+        "type": "technology"
+      },
+      {
+        "name": "Kuzu 0.11.2",
+        "type": "technology"
+      },
+      {
+        "name": "Amazon Neptune",
+        "type": "technology"
+      },
+      {
+        "name": "OpenSearch",
+        "type": "technology"
+      },
+      {
+        "name": "Bi-temporal model",
+        "type": "concept"
+      },
+      {
+        "name": "valid_at",
+        "type": "concept"
+      },
+      {
+        "name": "invalid_at",
+        "type": "concept"
+      },
+      {
+        "name": "Datarim",
+        "type": "organization"
+      },
+      {
+        "name": "operating model",
+        "type": "concept"
+      },
+      {
+        "name": "TUNE-0003",
+        "type": "project"
+      },
+      {
+        "name": "problem #3",
+        "type": "concept"
+      },
+      {
+        "name": "inconsistency between sessions",
+        "type": "concept"
+      },
+      {
+        "name": "MCP server",
+        "type": "technology"
+      },
+      {
+        "name": "mcp_server/",
+        "type": "location"
+      },
+      {
+        "name": "episode",
+        "type": "concept"
+      },
+      {
+        "name": "entity",
+        "type": "concept"
+      },
+      {
+        "name": "search tools",
+        "type": "technology"
+      },
+      {
+        "name": "REST API",
+        "type": "technology"
+      },
+      {
+        "name": "FastAPI",
+        "type": "technology"
+      },
+      {
+        "name": "token-efficiency benchmarks",
+        "type": "concept"
+      },
+      {
+        "name": "LTM-0002",
+        "type": "project"
+      },
+      {
+        "name": "ArXiv paper",
+        "type": "concept"
+      },
+      {
+        "name": "2501.13956",
+        "type": "concept"
+      },
+      {
+        "name": "Neo4j",
+        "type": "technology"
+      },
+      {
+        "name": "default backend",
+        "type": "concept"
+      },
+      {
+        "name": "RAM",
+        "type": "technology"
+      },
+      {
+        "name": "500MB+",
+        "type": "concept"
+      },
+      {
+        "name": "Kuzu",
+        "type": "technology"
+      },
+      {
+        "name": "benchmark",
+        "type": "concept"
+      },
+      {
+        "name": "search-quality",
+        "type": "concept"
+      },
+      {
+        "name": "LoCoMo",
+        "type": "project"
+      },
+      {
+        "name": "paper",
+        "type": "concept"
+      },
+      {
+        "name": "API",
+        "type": "technology"
+      },
+      {
+        "name": "minimalist",
+        "type": "concept"
+      },
+      {
+        "name": "Hindsight",
+        "type": "project"
+      },
+      {
+        "name": "episodes",
+        "type": "concept"
+      },
+      {
+        "name": "entities",
+        "type": "concept"
+      },
+      {
+        "name": "communities",
+        "type": "concept"
+      },
+      {
+        "name": "search",
+        "type": "concept"
+      },
+      {
+        "name": "learning curve",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+    "entities": [
+      {
+        "name": "Token economics",
+        "type": "concept"
+      },
+      {
+        "name": "LoCoMo 91.6",
+        "type": "technology"
+      },
+      {
+        "name": "LongMemEval 93.4",
+        "type": "technology"
+      },
+      {
+        "name": "6.7K-7.0K tokens",
+        "type": "concept"
+      },
+      {
+        "name": "p50",
+        "type": "concept"
+      },
+      {
+        "name": "1.09s",
+        "type": "concept"
+      },
+      {
+        "name": "Cuts prompt tokens by up to 80%",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+    "entities": [
+      {
+        "name": "Original Workflow",
+        "type": "concept"
+      },
+      {
+        "name": "Load all rules for current mode",
+        "type": "concept"
+      },
+      {
+        "name": "Process according to mode requirements",
+        "type": "concept"
+      },
+      {
+        "name": "Complete documentation per template",
+        "type": "concept"
+      },
+      {
+        "name": "Switch to next mode with minimal context preservation",
+        "type": "concept"
+      },
+      {
+        "name": "rules",
+        "type": "concept"
+      },
+      {
+        "name": "current mode",
+        "type": "concept"
+      },
+      {
+        "name": "mode",
+        "type": "concept"
+      },
+      {
+        "name": "mode requirements",
+        "type": "concept"
+      },
+      {
+        "name": "documentation",
+        "type": "concept"
+      },
+      {
+        "name": "template",
+        "type": "concept"
+      },
+      {
+        "name": "next mode",
+        "type": "concept"
+      },
+      {
+        "name": "context preservation",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+    "entities": [
+      {
+        "name": "planner",
+        "type": "concept"
+      },
+      {
+        "name": "architect",
+        "type": "concept"
+      },
+      {
+        "name": "developer",
+        "type": "concept"
+      },
+      {
+        "name": "reviewer",
+        "type": "concept"
+      },
+      {
+        "name": "compliance",
+        "type": "concept"
+      },
+      {
+        "name": "code-simplifier",
+        "type": "concept"
+      },
+      {
+        "name": "strategist",
+        "type": "concept"
+      },
+      {
+        "name": "devops",
+        "type": "concept"
+      },
+      {
+        "name": "writer",
+        "type": "concept"
+      },
+      {
+        "name": "security",
+        "type": "concept"
+      },
+      {
+        "name": "sre",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+    "entities": [
+      {
+        "name": "Progressive Creative Phase Documentation",
+        "type": "concept"
+      },
+      {
+        "name": "creative phase",
+        "type": "concept"
+      },
+      {
+        "name": "progressive documentation approach",
+        "type": "concept"
+      },
+      {
+        "name": "initial documentation",
+        "type": "concept"
+      },
+      {
+        "name": "detailed analysis",
+        "type": "concept"
+      },
+      {
+        "name": "tabular format",
+        "type": "concept"
+      },
+      {
+        "name": "comparison of options",
+        "type": "concept"
+      },
+      {
+        "name": "complexity-appropriate documentation scaling",
+        "type": "concept"
+      },
+      {
+        "name": ".cursor/rules/isolation_rules/Phases/CreativePhase/optimized-creative-template.mdc",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+    "entities": [
+      {
+        "name": "Claude Code Tips",
+        "type": "concept"
+      },
+      {
+        "name": "/mb-",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-init",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-plan",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-do",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-status",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-continue",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-prd",
+        "type": "technology"
+      },
+      {
+        "name": "PRD",
+        "type": "concept"
+      },
+      {
+        "name": "workflow",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+    "entities": [
+      {
+        "name": "Side-by-Side Comparison",
+        "type": "concept"
+      },
+      {
+        "name": "Cursor IDE",
+        "type": "technology"
+      },
+      {
+        "name": "Claude Code",
+        "type": "technology"
+      },
+      {
+        "name": "New Task",
+        "type": "concept"
+      },
+      {
+        "name": "/van Add auth",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-init Add auth",
+        "type": "technology"
+      },
+      {
+        "name": "Plan",
+        "type": "concept"
+      },
+      {
+        "name": "/plan",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-plan",
+        "type": "technology"
+      },
+      {
+        "name": "Design",
+        "type": "concept"
+      },
+      {
+        "name": "/creative",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-design",
+        "type": "technology"
+      },
+      {
+        "name": "Build",
+        "type": "concept"
+      },
+      {
+        "name": "/do",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-do",
+        "type": "technology"
+      },
+      {
+        "name": "Review",
+        "type": "concept"
+      },
+      {
+        "name": "/reflect",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-reflect",
+        "type": "technology"
+      },
+      {
+        "name": "Archive",
+        "type": "concept"
+      },
+      {
+        "name": "/archive",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-archive",
+        "type": "technology"
+      },
+      {
+        "name": "Status",
+        "type": "concept"
+      },
+      {
+        "name": "/status",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-status",
+        "type": "technology"
+      },
+      {
+        "name": "Continue",
+        "type": "concept"
+      },
+      {
+        "name": "/continue",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-continue",
+        "type": "technology"
+      },
+      {
+        "name": "auth",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+    "entities": [
+      {
+        "name": "Memory Bank System",
+        "type": "technology"
+      },
+      {
+        "name": "Memory Bank system",
+        "type": "technology"
+      },
+      {
+        "name": "Memory Bank",
+        "type": "technology"
+      },
+      {
+        "name": "token efficiency",
+        "type": "concept"
+      },
+      {
+        "name": "context management",
+        "type": "concept"
+      },
+      {
+        "name": "performance",
+        "type": "concept"
+      },
+      {
+        "name": "v0.9",
+        "type": "project"
+      },
+      {
+        "name": "December 13, 2025",
+        "type": "event"
+      },
+      {
+        "name": "AI Quality Rules Integration",
+        "type": "technology"
+      },
+      {
+        "name": "3-tier hierarchical loading",
+        "type": "technology"
+      },
+      {
+        "name": "token reduction",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+    "entities": [
+      {
+        "name": "install.sh",
+        "type": "technology"
+      },
+      {
+        "name": "validate.sh",
+        "type": "technology"
+      },
+      {
+        "name": "merge mode",
+        "type": "concept"
+      },
+      {
+        "name": "--force",
+        "type": "concept"
+      },
+      {
+        "name": "automated security and consistency checks",
+        "type": "concept"
+      },
+      {
+        "name": "38 checks",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+    "entities": [
+      {
+        "name": "Proposal 1",
+        "type": "concept"
+      },
+      {
+        "name": "new-skill",
+        "type": "concept"
+      },
+      {
+        "name": "skills/validate.md",
+        "type": "technology"
+      },
+      {
+        "name": "validate.sh",
+        "type": "technology"
+      },
+      {
+        "name": "validation skill",
+        "type": "concept"
+      },
+      {
+        "name": "script",
+        "type": "technology"
+      },
+      {
+        "name": "security audits",
+        "type": "concept"
+      },
+      {
+        "name": "forbidden terms",
+        "type": "concept"
+      },
+      {
+        "name": "cross-references",
+        "type": "concept"
+      },
+      {
+        "name": "naming conflicts",
+        "type": "concept"
+      },
+      {
+        "name": "grep commands",
+        "type": "technology"
+      },
+      {
+        "name": "compliance",
+        "type": "concept"
+      },
+      {
+        "name": "pending approval",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+    "entities": [
+      {
+        "name": "Pipeline Stages",
+        "type": "concept"
+      },
+      {
+        "name": "init",
+        "type": "concept"
+      },
+      {
+        "name": "Task creation",
+        "type": "concept"
+      },
+      {
+        "name": "complexity assessment",
+        "type": "concept"
+      },
+      {
+        "name": "prd",
+        "type": "concept"
+      },
+      {
+        "name": "Product Requirements Document",
+        "type": "concept"
+      },
+      {
+        "name": "L2+",
+        "type": "concept"
+      },
+      {
+        "name": "plan",
+        "type": "concept"
+      },
+      {
+        "name": "Implementation planning",
+        "type": "concept"
+      },
+      {
+        "name": "security",
+        "type": "concept"
+      },
+      {
+        "name": "rollback",
+        "type": "concept"
+      },
+      {
+        "name": "design",
+        "type": "concept"
+      },
+      {
+        "name": "Architecture",
+        "type": "concept"
+      },
+      {
+        "name": "data model",
+        "type": "concept"
+      },
+      {
+        "name": "creative decisions",
+        "type": "concept"
+      },
+      {
+        "name": "L3+",
+        "type": "concept"
+      },
+      {
+        "name": "do",
+        "type": "concept"
+      },
+      {
+        "name": "TDD implementation",
+        "type": "concept"
+      },
+      {
+        "name": "TDD",
+        "type": "technology"
+      },
+      {
+        "name": "All",
+        "type": "concept"
+      },
+      {
+        "name": "QA",
+        "type": "concept"
+      },
+      {
+        "name": "Automated quality assurance",
+        "type": "concept"
+      },
+      {
+        "name": "compliance",
+        "type": "concept"
+      },
+      {
+        "name": "Post-QA hardening",
+        "type": "concept"
+      },
+      {
+        "name": "PRD revalidation",
+        "type": "concept"
+      },
+      {
+        "name": "PRD",
+        "type": "concept"
+      },
+      {
+        "name": "reflect",
+        "type": "concept"
+      },
+      {
+        "name": "Lessons learned",
+        "type": "concept"
+      },
+      {
+        "name": "framework self-update",
+        "type": "concept"
+      },
+      {
+        "name": "archive",
+        "type": "concept"
+      },
+      {
+        "name": "Task archival",
+        "type": "concept"
+      },
+      {
+        "name": "documentation",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+    "entities": [
+      {
+        "name": "Level-Specific Optimizations",
+        "type": "concept"
+      },
+      {
+        "name": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "type": "project"
+      },
+      {
+        "name": ".cursor",
+        "type": "project"
+      },
+      {
+        "name": "rules",
+        "type": "project"
+      },
+      {
+        "name": "isolation_rules",
+        "type": "project"
+      },
+      {
+        "name": "Level1",
+        "type": "project"
+      },
+      {
+        "name": "optimized-workflow-level1.mdc",
+        "type": "project"
+      },
+      {
+        "name": "Streamlined workflow",
+        "type": "concept"
+      },
+      {
+        "name": "quick bug fixes",
+        "type": "concept"
+      },
+      {
+        "name": "Ultra-compact documentation templates",
+        "type": "concept"
+      },
+      {
+        "name": "documentation templates",
+        "type": "concept"
+      },
+      {
+        "name": "Consolidated memory bank updates",
+        "type": "concept"
+      },
+      {
+        "name": "memory bank updates",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+    "entities": [
+      {
+        "name": "Verification",
+        "type": "concept"
+      },
+      {
+        "name": "optimizations",
+        "type": "concept"
+      },
+      {
+        "name": "Memory Bank system",
+        "type": "technology"
+      },
+      {
+        "name": "functionality",
+        "type": "concept"
+      },
+      {
+        "name": "token efficiency",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+    "entities": [
+      {
+        "name": "Cursor IDE",
+        "type": "technology"
+      },
+      {
+        "name": "Claude Code",
+        "type": "technology"
+      },
+      {
+        "name": "/van",
+        "type": "technology"
+      },
+      {
+        "name": "/plan",
+        "type": "technology"
+      },
+      {
+        "name": "/do",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-init",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-plan",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-do",
+        "type": "technology"
+      },
+      {
+        "name": "/mb-",
+        "type": "technology"
+      },
+      {
+        "name": "authentication",
+        "type": "concept"
+      },
+      {
+        "name": "slash commands",
+        "type": "concept"
+      },
+      {
+        "name": "Autocomplete",
+        "type": "technology"
+      },
+      {
+        "name": "command syntax",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+    "entities": [
+      {
+        "name": "QUICK_REFERENCE.md",
+        "type": "project"
+      },
+      {
+        "name": "System at a glance",
+        "type": "concept"
+      },
+      {
+        "name": "key metrics table",
+        "type": "concept"
+      },
+      {
+        "name": "10 commands overview",
+        "type": "concept"
+      },
+      {
+        "name": "Main workflow pipeline",
+        "type": "concept"
+      },
+      {
+        "name": "15 AI Quality Rules",
+        "type": "concept"
+      },
+      {
+        "name": "Memory Bank files structure",
+        "type": "concept"
+      },
+      {
+        "name": "6-Phase Enhanced Design Process",
+        "type": "concept"
+      },
+      {
+        "name": "Complexity level workflows",
+        "type": "concept"
+      },
+      {
+        "name": "Key optimizations",
+        "type": "concept"
+      },
+      {
+        "name": "metrics",
+        "type": "concept"
+      },
+      {
+        "name": "Security integration",
+        "type": "concept"
+      },
+      {
+        "name": "v2.4",
+        "type": "technology"
+      },
+      {
+        "name": "Datarim",
+        "type": "technology"
+      },
+      {
+        "name": "Architectural innovations",
+        "type": "concept"
+      },
+      {
+        "name": "Quick reference",
+        "type": "concept"
+      },
+      {
+        "name": "checklists",
+        "type": "concept"
+      },
+      {
+        "name": "high-level overview",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+    "entities": [
+      {
+        "name": "Muneral Arcana",
+        "type": "project"
+      },
+      {
+        "name": "AI-агентов",
+        "type": "technology"
+      },
+      {
+        "name": "Jira",
+        "type": "technology"
+      },
+      {
+        "name": "Linear",
+        "type": "technology"
+      },
+      {
+        "name": "Muneral",
+        "type": "project"
+      },
+      {
+        "name": "API",
+        "type": "technology"
+      },
+      {
+        "name": "канбан-доски",
+        "type": "technology"
+      },
+      {
+        "name": "дашборды",
+        "type": "technology"
+      },
+      {
+        "name": "AI agent swarms",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+    "entities": [
+      {
+        "name": "Backend API",
+        "type": "concept"
+      },
+      {
+        "name": "NestJS",
+        "type": "technology"
+      },
+      {
+        "name": "TypeScript",
+        "type": "technology"
+      },
+      {
+        "name": "TypeORM",
+        "type": "technology"
+      },
+      {
+        "name": "PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "Redis",
+        "type": "technology"
+      },
+      {
+        "name": "BullMQ",
+        "type": "technology"
+      },
+      {
+        "name": "WebSocket",
+        "type": "technology"
+      },
+      {
+        "name": "Docker Compose",
+        "type": "technology"
+      },
+      {
+        "name": "REST API",
+        "type": "technology"
+      },
+      {
+        "name": "Rate limiting",
+        "type": "concept"
+      },
+      {
+        "name": "rate-limiter-flexible",
+        "type": "technology"
+      },
+      {
+        "name": "Redis sliding window",
+        "type": "concept"
+      },
+      {
+        "name": "Auth",
+        "type": "concept"
+      },
+      {
+        "name": "JWT",
+        "type": "technology"
+      },
+      {
+        "name": "API Key",
+        "type": "concept"
+      },
+      {
+        "name": "OAuth2",
+        "type": "technology"
+      },
+      {
+        "name": "GitHub",
+        "type": "organization"
+      },
+      {
+        "name": "Telegram",
+        "type": "organization"
+      },
+      {
+        "name": "RBAC",
+        "type": "concept"
+      },
+      {
+        "name": "Guard-based",
+        "type": "concept"
+      },
+      {
+        "name": "workspace",
+        "type": "concept"
+      },
+      {
+        "name": "проекта",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+    "entities": [
+      {
+        "name": "muneral.com",
+        "type": "technology"
+      },
+      {
+        "name": "Cloudflare",
+        "type": "technology"
+      },
+      {
+        "name": "SSL",
+        "type": "technology"
+      },
+      {
+        "name": "Full Strict",
+        "type": "concept"
+      },
+      {
+        "name": "Arcana WWW",
+        "type": "project"
+      },
+      {
+        "name": "49.13.52.208",
+        "type": "technology"
+      },
+      {
+        "name": "Arcana PROD",
+        "type": "project"
+      },
+      {
+        "name": "65.108.236.39",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+    "entities": [
+      {
+        "name": "muneral.com",
+        "type": "project"
+      },
+      {
+        "name": "Cloudflare DNS",
+        "type": "technology"
+      },
+      {
+        "name": "A-запись",
+        "type": "concept"
+      },
+      {
+        "name": "49.13.52.208",
+        "type": "technology"
+      },
+      {
+        "name": "Orange Cloud",
+        "type": "technology"
+      },
+      {
+        "name": "Proxy",
+        "type": "concept"
+      },
+      {
+        "name": "Full (Strict) SSL",
+        "type": "technology"
+      },
+      {
+        "name": "Origin Certificate",
+        "type": "concept"
+      },
+      {
+        "name": "nginx",
+        "type": "technology"
+      },
+      {
+        "name": "Nginx virtual host",
+        "type": "technology"
+      },
+      {
+        "name": "Arcana WWW",
+        "type": "project"
+      },
+      {
+        "name": "ssh",
+        "type": "technology"
+      },
+      {
+        "name": "~/.ssh/id_ed25519",
+        "type": "technology"
+      },
+      {
+        "name": "root@49.13.52.208",
+        "type": "technology"
+      },
+      {
+        "name": "Landing",
+        "type": "concept"
+      },
+      {
+        "name": "/var/www/muneral.com/",
+        "type": "location"
+      },
+      {
+        "name": "Backend",
+        "type": "concept"
+      },
+      {
+        "name": "App",
+        "type": "concept"
+      },
+      {
+        "name": "Arcana PROD",
+        "type": "project"
+      },
+      {
+        "name": "root@65.108.236.39",
+        "type": "technology"
+      },
+      {
+        "name": "Deploy script",
+        "type": "concept"
+      },
+      {
+        "name": "/Users/ug/arcanada/Projects/Websites/deploy.sh",
+        "type": "location"
+      },
+      {
+        "name": "GA4",
+        "type": "technology"
+      },
+      {
+        "name": "data stream",
+        "type": "concept"
+      },
+      {
+        "name": "property",
+        "type": "concept"
+      },
+      {
+        "name": "Arcanada Ecosystem",
+        "type": "project"
+      },
+      {
+        "name": "Google Search Console",
+        "type": "technology"
+      },
+      {
+        "name": "DNS TXT верификация",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+    "entities": [
+      {
+        "name": "AI-агентов",
+        "type": "concept"
+      },
+      {
+        "name": "API-first",
+        "type": "concept"
+      },
+      {
+        "name": "REST",
+        "type": "technology"
+      },
+      {
+        "name": "WebSocket",
+        "type": "technology"
+      },
+      {
+        "name": "Авторизация агентов",
+        "type": "concept"
+      },
+      {
+        "name": "API Key",
+        "type": "technology"
+      },
+      {
+        "name": "Bearer",
+        "type": "technology"
+      },
+      {
+        "name": "OAuth2",
+        "type": "technology"
+      },
+      {
+        "name": "client_credentials flow",
+        "type": "technology"
+      },
+      {
+        "name": "Агент-исполнитель",
+        "type": "concept"
+      },
+      {
+        "name": "agent_id",
+        "type": "concept"
+      },
+      {
+        "name": "model",
+        "type": "concept"
+      },
+      {
+        "name": "provider",
+        "type": "concept"
+      },
+      {
+        "name": "Совместная работа агентов",
+        "type": "concept"
+      },
+      {
+        "name": "roles",
+        "type": "concept"
+      },
+      {
+        "name": "lead",
+        "type": "concept"
+      },
+      {
+        "name": "reviewer",
+        "type": "concept"
+      },
+      {
+        "name": "executor",
+        "type": "concept"
+      },
+      {
+        "name": "Граф связей",
+        "type": "concept"
+      },
+      {
+        "name": "depends_on",
+        "type": "concept"
+      },
+      {
+        "name": "blocks",
+        "type": "concept"
+      },
+      {
+        "name": "related_to",
+        "type": "concept"
+      },
+      {
+        "name": "duplicates",
+        "type": "concept"
+      },
+      {
+        "name": "Статусы задач",
+        "type": "concept"
+      },
+      {
+        "name": "todo",
+        "type": "concept"
+      },
+      {
+        "name": "in_progress",
+        "type": "concept"
+      },
+      {
+        "name": "review",
+        "type": "concept"
+      },
+      {
+        "name": "blocked",
+        "type": "concept"
+      },
+      {
+        "name": "done",
+        "type": "concept"
+      },
+      {
+        "name": "cancelled",
+        "type": "concept"
+      },
+      {
+        "name": "Приоритеты",
+        "type": "concept"
+      },
+      {
+        "name": "critical",
+        "type": "concept"
+      },
+      {
+        "name": "high",
+        "type": "concept"
+      },
+      {
+        "name": "medium",
+        "type": "concept"
+      },
+      {
+        "name": "low",
+        "type": "concept"
+      },
+      {
+        "name": "Метки",
+        "type": "concept"
+      },
+      {
+        "name": "tags",
+        "type": "concept"
+      },
+      {
+        "name": "labels",
+        "type": "concept"
+      },
+      {
+        "name": "История активности",
+        "type": "concept"
+      },
+      {
+        "name": "audit log",
+        "type": "concept"
+      },
+      {
+        "name": "Webhooks",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+    "entities": [
+      {
+        "name": "Security Considerations",
+        "type": "concept"
+      },
+      {
+        "name": "Implementations",
+        "type": "concept"
+      },
+      {
+        "name": "self-modification bypassing controls",
+        "type": "concept"
+      },
+      {
+        "name": "privilege escalation",
+        "type": "concept"
+      },
+      {
+        "name": "unauthorized replication of AE",
+        "type": "concept"
+      },
+      {
+        "name": "AE",
+        "type": "concept"
+      },
+      {
+        "name": "removal or tampering of audit logs",
+        "type": "concept"
+      },
+      {
+        "name": "audit logs",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+    "entities": [
+      {
+        "name": "Harm potential",
+        "type": "concept"
+      },
+      {
+        "name": "human",
+        "type": "concept"
+      },
+      {
+        "name": "financial",
+        "type": "concept"
+      },
+      {
+        "name": "system",
+        "type": "concept"
+      },
+      {
+        "name": "Permission scope",
+        "type": "concept"
+      },
+      {
+        "name": "Data sensitivity",
+        "type": "concept"
+      },
+      {
+        "name": "Instruction origin",
+        "type": "concept"
+      },
+      {
+        "name": "trusted",
+        "type": "concept"
+      },
+      {
+        "name": "untrusted",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+    "entities": [
+      {
+        "name": "Kill Switch Requirements",
+        "type": "concept"
+      },
+      {
+        "name": "compliant system",
+        "type": "concept"
+      },
+      {
+        "name": "Immediate termination trigger",
+        "type": "concept"
+      },
+      {
+        "name": "Out-of-band control",
+        "type": "concept"
+      },
+      {
+        "name": "AE",
+        "type": "concept"
+      },
+      {
+        "name": "Guaranteed execution within bounded time",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+    "entities": [
+      {
+        "name": "Security Considerations",
+        "type": "concept"
+      },
+      {
+        "name": "Implementations",
+        "type": "concept"
+      },
+      {
+        "name": "Self-modification bypassing controls",
+        "type": "concept"
+      },
+      {
+        "name": "Privilege escalation",
+        "type": "concept"
+      },
+      {
+        "name": "Unauthorized replication of AE",
+        "type": "concept"
+      },
+      {
+        "name": "AE",
+        "type": "concept"
+      },
+      {
+        "name": "Removal or tampering of audit logs",
+        "type": "concept"
+      },
+      {
+        "name": "audit logs",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+    "entities": [
+      {
+        "name": "Node.js 22 LTS",
+        "type": "technology"
+      },
+      {
+        "name": "TypeScript",
+        "type": "technology"
+      },
+      {
+        "name": "pnpm",
+        "type": "technology"
+      },
+      {
+        "name": "commander",
+        "type": "technology"
+      },
+      {
+        "name": "simple-git",
+        "type": "technology"
+      },
+      {
+        "name": "pino",
+        "type": "technology"
+      },
+      {
+        "name": "vitest",
+        "type": "technology"
+      },
+      {
+        "name": "zod",
+        "type": "technology"
+      },
+      {
+        "name": "Claude CLI",
+        "type": "technology"
+      },
+      {
+        "name": "v2.1.92+",
+        "type": "concept"
+      },
+      {
+        "name": "Team plan",
+        "type": "concept"
+      },
+      {
+        "name": "Opus model",
+        "type": "technology"
+      },
+      {
+        "name": "effort medium",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+    "entities": [
+      {
+        "name": "macOS",
+        "type": "technology"
+      },
+      {
+        "name": "launchd",
+        "type": "technology"
+      },
+      {
+        "name": "StartInterval=60",
+        "type": "concept"
+      },
+      {
+        "name": "Linux",
+        "type": "technology"
+      },
+      {
+        "name": "PROD Arcana WWW",
+        "type": "project"
+      },
+      {
+        "name": "systemd timer",
+        "type": "technology"
+      },
+      {
+        "name": "OnCalendar=*:*:00",
+        "type": "concept"
+      },
+      {
+        "name": "sudo",
+        "type": "technology"
+      },
+      {
+        "name": "claude",
+        "type": "technology"
+      },
+      {
+        "name": "CLI",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+    "entities": [
+      {
+        "name": "Agent Dreamer",
+        "type": "technology"
+      },
+      {
+        "name": "Arcanada",
+        "type": "project"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+    "entities": [
+      {
+        "name": "whitelist",
+        "type": "concept"
+      },
+      {
+        "name": "area",
+        "type": "concept"
+      },
+      {
+        "name": "topic",
+        "type": "concept"
+      },
+      {
+        "name": "slug",
+        "type": "concept"
+      },
+      {
+        "name": "kebab-case",
+        "type": "concept"
+      },
+      {
+        "name": "TL;DR",
+        "type": "concept"
+      },
+      {
+        "name": "WikiLinks",
+        "type": "concept"
+      },
+      {
+        "name": "Area/topic/slug",
+        "type": "concept"
+      },
+      {
+        "name": "index_entry",
+        "type": "concept"
+      },
+      {
+        "name": "log_entry",
+        "type": "concept"
+      },
+      {
+        "name": "SCHEMA.md",
+        "type": "concept"
+      },
+      {
+        "name": "reasoning",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+    "entities": [
+      {
+        "name": "Cursor CLI",
+        "type": "technology"
+      },
+      {
+        "name": "curl",
+        "type": "technology"
+      },
+      {
+        "name": "POST",
+        "type": "concept"
+      },
+      {
+        "name": "Authorization",
+        "type": "concept"
+      },
+      {
+        "name": "Bearer",
+        "type": "concept"
+      },
+      {
+        "name": "API_KEY",
+        "type": "concept"
+      },
+      {
+        "name": "Content-Type",
+        "type": "concept"
+      },
+      {
+        "name": "application/json",
+        "type": "concept"
+      },
+      {
+        "name": "prompt",
+        "type": "concept"
+      },
+      {
+        "name": "Explain this code",
+        "type": "concept"
+      },
+      {
+        "name": "context",
+        "type": "concept"
+      },
+      {
+        "name": "/path/to/file",
+        "type": "concept"
+      },
+      {
+        "name": "https://api.connector.arcanada.one/connectors/cursor/execute",
+        "type": "technology"
+      },
+      {
+        "name": "api.connector.arcanada.one",
+        "type": "technology"
+      },
+      {
+        "name": "arcanada",
+        "type": "organization"
+      },
+      {
+        "name": "JSON",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+    "entities": [
+      {
+        "name": "Model Connector",
+        "type": "project"
+      },
+      {
+        "name": "AI CLI agents",
+        "type": "technology"
+      },
+      {
+        "name": "cloud model providers",
+        "type": "technology"
+      },
+      {
+        "name": "Arcanada Ecosystem",
+        "type": "project"
+      },
+      {
+        "name": "arcanada.one",
+        "type": "location"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+    "entities": [
+      {
+        "name": "Arcanada AI",
+        "type": "organization"
+      },
+      {
+        "name": "89.167.24.119",
+        "type": "technology"
+      },
+      {
+        "name": "GitHub Actions",
+        "type": "technology"
+      },
+      {
+        "name": "main",
+        "type": "technology"
+      },
+      {
+        "name": "HashiCorp Vault",
+        "type": "technology"
+      },
+      {
+        "name": "Arcanada mesh",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+    "entities": [
+      {
+        "name": "Feature Flags",
+        "type": "concept"
+      },
+      {
+        "name": "testing",
+        "type": "concept"
+      },
+      {
+        "name": "SKIP_API_CALLS",
+        "type": "technology"
+      },
+      {
+        "name": "false",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+    "entities": [
+      {
+        "name": "OpenRouter API Configuration",
+        "type": "concept"
+      },
+      {
+        "name": "OPENROUTER_API_KEY",
+        "type": "technology"
+      },
+      {
+        "name": "sk-or-v1-REDACTED0000000000000000000000000000000000000000000000000000",
+        "type": "technology"
+      },
+      {
+        "name": "OPENROUTER_MODEL",
+        "type": "technology"
+      },
+      {
+        "name": "google/gemini-2.0-flash-lite-001",
+        "type": "technology"
+      },
+      {
+        "name": "OPENROUTER_TEMPERATURE",
+        "type": "technology"
+      },
+      {
+        "name": "OpenRouter",
+        "type": "organization"
+      },
+      {
+        "name": "Google",
+        "type": "organization"
+      },
+      {
+        "name": "Gemini",
+        "type": "technology"
+      },
+      {
+        "name": "API",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+    "entities": [
+      {
+        "name": "ENABLE_SPEAKER_PROFILES",
+        "type": "concept"
+      },
+      {
+        "name": "SPEAKER_PROFILES_PATH",
+        "type": "concept"
+      },
+      {
+        "name": "./data/speakers.json",
+        "type": "location"
+      },
+      {
+        "name": "OPENROUTER_EMBEDDING_MODEL",
+        "type": "concept"
+      },
+      {
+        "name": "openai/text-embedding-3-small",
+        "type": "technology"
+      },
+      {
+        "name": "WEIGHT_KEYWORDS",
+        "type": "concept"
+      },
+      {
+        "name": "WEIGHT_SEMANTIC",
+        "type": "concept"
+      },
+      {
+        "name": "WEIGHT_STYLE",
+        "type": "concept"
+      },
+      {
+        "name": "WEIGHT_LENGTH",
+        "type": "concept"
+      },
+      {
+        "name": "Speaker profiles",
+        "type": "concept"
+      },
+      {
+        "name": "openai",
+        "type": "organization"
+      },
+      {
+        "name": "text-embedding-3-small",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+    "entities": [
+      {
+        "name": "Embedding Engine",
+        "type": "project"
+      },
+      {
+        "name": "BGE-M3",
+        "type": "technology"
+      },
+      {
+        "name": "arcana-db",
+        "type": "technology"
+      },
+      {
+        "name": "Dense vectors",
+        "type": "concept"
+      },
+      {
+        "name": "1024-мерные",
+        "type": "concept"
+      },
+      {
+        "name": "baseline semantic search",
+        "type": "concept"
+      },
+      {
+        "name": "Sparse vectors",
+        "type": "concept"
+      },
+      {
+        "name": "BM25-style",
+        "type": "technology"
+      },
+      {
+        "name": "keyword matching",
+        "type": "concept"
+      },
+      {
+        "name": "ColBERT multi-vector",
+        "type": "technology"
+      },
+      {
+        "name": "document-level precision",
+        "type": "concept"
+      },
+      {
+        "name": "Hybrid search",
+        "type": "concept"
+      },
+      {
+        "name": "dense",
+        "type": "concept"
+      },
+      {
+        "name": "sparse",
+        "type": "concept"
+      },
+      {
+        "name": "ColBERT",
+        "type": "technology"
+      },
+      {
+        "name": "use_fp16",
+        "type": "technology"
+      },
+      {
+        "name": "multi-worker uvicorn",
+        "type": "technology"
+      },
+      {
+        "name": "batch processing",
+        "type": "concept"
+      },
+      {
+        "name": "uvicorn",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+    "entities": [
+      {
+        "name": "Инфраструктура",
+        "type": "concept"
+      },
+      {
+        "name": "arcana-db",
+        "type": "technology"
+      },
+      {
+        "name": "135.181.222.38",
+        "type": "technology"
+      },
+      {
+        "name": "Tailscale",
+        "type": "technology"
+      },
+      {
+        "name": "100.70.137.104",
+        "type": "technology"
+      },
+      {
+        "name": "Embedding API",
+        "type": "technology"
+      },
+      {
+        "name": "8300",
+        "type": "technology"
+      },
+      {
+        "name": "LIVE",
+        "type": "concept"
+      },
+      {
+        "name": "BAAI/bge-m3",
+        "type": "technology"
+      },
+      {
+        "name": "Tailscale mesh",
+        "type": "technology"
+      },
+      {
+        "name": "GitHub",
+        "type": "organization"
+      },
+      {
+        "name": "https://github.com/Arcanada-one/scrutator",
+        "type": "technology"
+      },
+      {
+        "name": "Arcanada-one",
+        "type": "organization"
+      },
+      {
+        "name": "scrutator",
+        "type": "project"
+      },
+      {
+        "name": "public",
+        "type": "concept"
+      },
+      {
+        "name": "Datarim prefix",
+        "type": "concept"
+      },
+      {
+        "name": "SRCH",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+    "entities": [
+      {
+        "name": "Disk Arcana",
+        "type": "project"
+      },
+      {
+        "name": "Open-source",
+        "type": "concept"
+      },
+      {
+        "name": "файловый синхронизатор",
+        "type": "technology"
+      },
+      {
+        "name": "баз знаний",
+        "type": "concept"
+      },
+      {
+        "name": "AI-агентных экосистем",
+        "type": "concept"
+      },
+      {
+        "name": "PRD",
+        "type": "concept"
+      },
+      {
+        "name": "datarim/prd/PRD-DISK-0001-disk-arcana.md",
+        "type": "location"
+      },
+      {
+        "name": "Prior research",
+        "type": "concept"
+      },
+      {
+        "name": "Projects/Arganize.me/origin/Vault syncronizer/",
+        "type": "location"
+      },
+      {
+        "name": "Arganize.me",
+        "type": "project"
+      },
+      {
+        "name": "Vault syncronizer",
+        "type": "technology"
+      },
+      {
+        "name": "Домен",
+        "type": "concept"
+      },
+      {
+        "name": "disk.arcanada.one",
+        "type": "location"
+      },
+      {
+        "name": "Repo",
+        "type": "concept"
+      },
+      {
+        "name": "github.com/Arcanada-one/disk-arcana",
+        "type": "location"
+      },
+      {
+        "name": "Arcanada-one",
+        "type": "organization"
+      },
+      {
+        "name": "TBD",
+        "type": "concept"
+      },
+      {
+        "name": "License",
+        "type": "concept"
+      },
+      {
+        "name": "MIT",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+    "entities": [
+      {
+        "name": "Inbox Organizer Agent",
+        "type": "project"
+      },
+      {
+        "name": "Obsidian",
+        "type": "technology"
+      },
+      {
+        "name": "Inbox",
+        "type": "concept"
+      },
+      {
+        "name": "Second Brain",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+    "entities": [
+      {
+        "name": "Arcana PROD",
+        "type": "technology"
+      },
+      {
+        "name": "65.108.236.39",
+        "type": "technology"
+      },
+      {
+        "name": "NestJS API",
+        "type": "technology"
+      },
+      {
+        "name": "nginx",
+        "type": "technology"
+      },
+      {
+        "name": "static SPA",
+        "type": "technology"
+      },
+      {
+        "name": "Docker",
+        "type": "technology"
+      },
+      {
+        "name": "Arcana DB",
+        "type": "technology"
+      },
+      {
+        "name": "135.181.222.38",
+        "type": "technology"
+      },
+      {
+        "name": "PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "arcanada_support",
+        "type": "technology"
+      },
+      {
+        "name": "Redis",
+        "type": "technology"
+      },
+      {
+        "name": "support:",
+        "type": "technology"
+      },
+      {
+        "name": "Cloudflare",
+        "type": "organization"
+      },
+      {
+        "name": "edge",
+        "type": "technology"
+      },
+      {
+        "name": "DNS",
+        "type": "technology"
+      },
+      {
+        "name": "WAF",
+        "type": "technology"
+      },
+      {
+        "name": "DDoS",
+        "type": "technology"
+      },
+      {
+        "name": "Turnstile",
+        "type": "technology"
+      },
+      {
+        "name": "Origin Cert",
+        "type": "technology"
+      },
+      {
+        "name": "documentation/credentials/Arcanada Support — Credentials Summary.md",
+        "type": "technology"
+      },
+      {
+        "name": "SUP-0010",
+        "type": "project"
+      },
+      {
+        "name": "documentation/infrastructure/Servers.md",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+    "entities": [
+      {
+        "name": "Technical Strategy",
+        "type": "concept"
+      },
+      {
+        "name": "macOS",
+        "type": "technology"
+      },
+      {
+        "name": "Python",
+        "type": "technology"
+      },
+      {
+        "name": "PyAutoGUI",
+        "type": "technology"
+      },
+      {
+        "name": "UI control",
+        "type": "concept"
+      },
+      {
+        "name": "pyperclip",
+        "type": "technology"
+      },
+      {
+        "name": "clipboard access",
+        "type": "concept"
+      },
+      {
+        "name": "AppleScript",
+        "type": "technology"
+      },
+      {
+        "name": "browser-specific DOM extraction",
+        "type": "concept"
+      },
+      {
+        "name": "Chrome",
+        "type": "technology"
+      },
+      {
+        "name": "Safari",
+        "type": "technology"
+      },
+      {
+        "name": "Extraction Method",
+        "type": "concept"
+      },
+      {
+        "name": "Method A",
+        "type": "concept"
+      },
+      {
+        "name": "UI-based",
+        "type": "concept"
+      },
+      {
+        "name": "Cmd+A",
+        "type": "technology"
+      },
+      {
+        "name": "Cmd+C",
+        "type": "technology"
+      },
+      {
+        "name": "sidebars",
+        "type": "concept"
+      },
+      {
+        "name": "Method B",
+        "type": "concept"
+      },
+      {
+        "name": "DOM-based",
+        "type": "concept"
+      },
+      {
+        "name": "JS snippet",
+        "type": "technology"
+      },
+      {
+        "name": "browser",
+        "type": "technology"
+      },
+      {
+        "name": "div",
+        "type": "technology"
+      },
+      {
+        "name": "message classes",
+        "type": "concept"
+      },
+      {
+        "name": "text",
+        "type": "concept"
+      },
+      {
+        "name": "Browsers",
+        "type": "technology"
+      },
+      {
+        "name": "Method C",
+        "type": "concept"
+      },
+      {
+        "name": "Accessibility-based",
+        "type": "concept"
+      },
+      {
+        "name": "pyobjc",
+        "type": "technology"
+      },
+      {
+        "name": "UI tree",
+        "type": "concept"
+      },
+      {
+        "name": "text fields",
+        "type": "concept"
+      },
+      {
+        "name": "Desktop App",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+    "entities": [
+      {
+        "name": "Мобильный клиент",
+        "type": "project"
+      },
+      {
+        "name": "Android",
+        "type": "technology"
+      },
+      {
+        "name": "iOS",
+        "type": "technology"
+      },
+      {
+        "name": "Flutter",
+        "type": "technology"
+      },
+      {
+        "name": "React Native",
+        "type": "technology"
+      },
+      {
+        "name": "Expo",
+        "type": "technology"
+      },
+      {
+        "name": "Foreground Service",
+        "type": "technology"
+      },
+      {
+        "name": "Kotlin",
+        "type": "technology"
+      },
+      {
+        "name": "AudioRecord",
+        "type": "technology"
+      },
+      {
+        "name": "AVAudioSession",
+        "type": "technology"
+      },
+      {
+        "name": "AVAudioEngine",
+        "type": "technology"
+      },
+      {
+        "name": "AVAudioRecorder",
+        "type": "technology"
+      },
+      {
+        "name": "background audio mode",
+        "type": "concept"
+      },
+      {
+        "name": "RN‑модули",
+        "type": "technology"
+      },
+      {
+        "name": "Bluetooth‑гарнитура",
+        "type": "technology"
+      },
+      {
+        "name": "HFP",
+        "type": "technology"
+      },
+      {
+        "name": "A2DP",
+        "type": "technology"
+      },
+      {
+        "name": "AudioManager",
+        "type": "technology"
+      },
+      {
+        "name": "CoreBluetooth",
+        "type": "technology"
+      },
+      {
+        "name": "TTS",
+        "type": "technology"
+      },
+      {
+        "name": "just_audio",
+        "type": "technology"
+      },
+      {
+        "name": "audio_session",
+        "type": "technology"
+      },
+      {
+        "name": "audio focus",
+        "type": "concept"
+      },
+      {
+        "name": "playAndRecord",
+        "type": "concept"
+      },
+      {
+        "name": "duck",
+        "type": "concept"
+      },
+      {
+        "name": "mix",
+        "type": "concept"
+      },
+      {
+        "name": "audioplayers",
+        "type": "technology"
+      },
+      {
+        "name": "RT‑канал",
+        "type": "concept"
+      },
+      {
+        "name": "WebSocket",
+        "type": "technology"
+      },
+      {
+        "name": "web_socket_channel",
+        "type": "technology"
+      },
+      {
+        "name": "dart:io",
+        "type": "technology"
+      },
+      {
+        "name": "gRPC Streaming",
+        "type": "technology"
+      },
+      {
+        "name": "HTTP",
+        "type": "technology"
+      },
+      {
+        "name": "Dio",
+        "type": "technology"
+      },
+      {
+        "name": "http",
+        "type": "technology"
+      },
+      {
+        "name": "connectivity_plus",
+        "type": "technology"
+      },
+      {
+        "name": "InternetAddress.lookup",
+        "type": "technology"
+      },
+      {
+        "name": "RECORD_AUDIO",
+        "type": "concept"
+      },
+      {
+        "name": "BLUETOOTH_CONNECT",
+        "type": "concept"
+      },
+      {
+        "name": "BLUETOOTH",
+        "type": "concept"
+      },
+      {
+        "name": "BLUETOOTH_ADMIN",
+        "type": "concept"
+      },
+      {
+        "name": "FOREGROUND_SERVICE",
+        "type": "concept"
+      },
+      {
+        "name": "INTERNET",
+        "type": "concept"
+      },
+      {
+        "name": "ACCESS_NETWORK_STATE",
+        "type": "concept"
+      },
+      {
+        "name": "POST_NOTIFICATIONS",
+        "type": "concept"
+      },
+      {
+        "name": "NSMicrophoneUsageDescription",
+        "type": "concept"
+      },
+      {
+        "name": "NSBluetoothAlwaysUsageDescription",
+        "type": "concept"
+      },
+      {
+        "name": "Background Modes",
+        "type": "concept"
+      },
+      {
+        "name": "Audio",
+        "type": "concept"
+      },
+      {
+        "name": "VoIP",
+        "type": "technology"
+      },
+      {
+        "name": "voice assistant",
+        "type": "concept"
+      },
+      {
+        "name": "VoIP‑сценарий",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+    "entities": [
+      {
+        "name": "results/quick_v2/",
+        "type": "location"
+      },
+      {
+        "name": "JSON",
+        "type": "technology"
+      },
+      {
+        "name": "CSV",
+        "type": "technology"
+      },
+      {
+        "name": "results/quick_v2/sandbox_ollama/",
+        "type": "location"
+      },
+      {
+        "name": "Ollama",
+        "type": "technology"
+      },
+      {
+        "name": "results/quick_v2/sandbox_agent/",
+        "type": "location"
+      },
+      {
+        "name": "Claude Code agent",
+        "type": "technology"
+      },
+      {
+        "name": "bench/quick_bench_v2.py",
+        "type": "location"
+      },
+      {
+        "name": "скрипт бенчмарка",
+        "type": "concept"
+      },
+      {
+        "name": "воспроизводимый",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+    "entities": [
+      {
+        "name": "ПРАВИЛО PROMPT ENGINEERING",
+        "type": "concept"
+      },
+      {
+        "name": "ИИ",
+        "type": "technology"
+      },
+      {
+        "name": "prompt",
+        "type": "concept"
+      },
+      {
+        "name": "Memory-Bank",
+        "type": "technology"
+      },
+      {
+        "name": "PROMPT_ENGINEERING_RULE",
+        "type": "concept"
+      },
+      {
+        "name": "after_collecting_requirements",
+        "type": "event"
+      },
+      {
+        "name": "workflow",
+        "type": "concept"
+      },
+      {
+        "name": "Чат 1",
+        "type": "concept"
+      },
+      {
+        "name": "Memory Bank",
+        "type": "technology"
+      },
+      {
+        "name": "Чат 2",
+        "type": "concept"
+      },
+      {
+        "name": "чек-листу",
+        "type": "concept"
+      },
+      {
+        "name": "контекст",
+        "type": "concept"
+      },
+      {
+        "name": "expected results",
+        "type": "concept"
+      },
+      {
+        "name": "test cases",
+        "type": "concept"
+      },
+      {
+        "name": "corner cases",
+        "type": "concept"
+      },
+      {
+        "name": "definition of done",
+        "type": "concept"
+      },
+      {
+        "name": "boundaries",
+        "type": "concept"
+      },
+      {
+        "name": "complexity check",
+        "type": "concept"
+      },
+      {
+        "name": "Чат 3",
+        "type": "concept"
+      },
+      {
+        "name": "skeleton creation",
+        "type": "concept"
+      },
+      {
+        "name": "checklist_for_good_prompt",
+        "type": "concept"
+      },
+      {
+        "name": "Expected results",
+        "type": "concept"
+      },
+      {
+        "name": "Definition of Done",
+        "type": "concept"
+      },
+      {
+        "name": "example_good_prompt",
+        "type": "concept"
+      },
+      {
+        "name": "Postgres",
+        "type": "technology"
+      },
+      {
+        "name": "Project overview",
+        "type": "concept"
+      },
+      {
+        "name": "Current architecture",
+        "type": "concept"
+      },
+      {
+        "name": "Database schema",
+        "type": "concept"
+      },
+      {
+        "name": "Happy path",
+        "type": "concept"
+      },
+      {
+        "name": "Corner cases",
+        "type": "concept"
+      },
+      {
+        "name": "All data migrated",
+        "type": "concept"
+      },
+      {
+        "name": "All tests green",
+        "type": "concept"
+      },
+      {
+        "name": "Docker Compose file",
+        "type": "technology"
+      },
+      {
+        "name": "миграцию старых данных",
+        "type": "concept"
+      },
+      {
+        "name": "оптимизацию",
+        "type": "concept"
+      },
+      {
+        "name": "skeleton",
+        "type": "concept"
+      },
+      {
+        "name": "stubs",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+    "entities": [
+      {
+        "name": "MUN-0011",
+        "type": "project"
+      },
+      {
+        "name": "Muneral",
+        "type": "project"
+      },
+      {
+        "name": "TypeScript",
+        "type": "technology"
+      },
+      {
+        "name": "Docker",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+    "entities": [
+      {
+        "name": "BASE_URL",
+        "type": "concept"
+      },
+      {
+        "name": "http://localhost:8001",
+        "type": "technology"
+      },
+      {
+        "name": "localhost",
+        "type": "location"
+      },
+      {
+        "name": "8001",
+        "type": "concept"
+      },
+      {
+        "name": "SSH tunnel",
+        "type": "technology"
+      },
+      {
+        "name": "ssh",
+        "type": "technology"
+      },
+      {
+        "name": "15432",
+        "type": "concept"
+      },
+      {
+        "name": "5432",
+        "type": "concept"
+      },
+      {
+        "name": "root",
+        "type": "person"
+      },
+      {
+        "name": "135.181.222.38",
+        "type": "location"
+      },
+      {
+        "name": "DATABASE_URL",
+        "type": "concept"
+      },
+      {
+        "name": "postgresql",
+        "type": "technology"
+      },
+      {
+        "name": "postgres",
+        "type": "technology"
+      },
+      {
+        "name": "108b5a5543cbe1d4a5aae5d39818c563",
+        "type": "concept"
+      },
+      {
+        "name": "llm_council",
+        "type": "project"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+    "entities": [
+      {
+        "name": "Модель мастерства пользователя",
+        "type": "concept"
+      },
+      {
+        "name": "системное мышление",
+        "type": "concept"
+      },
+      {
+        "name": "Цифровой двойник",
+        "type": "technology"
+      },
+      {
+        "name": "автообновление",
+        "type": "technology"
+      },
+      {
+        "name": "Предметные знания",
+        "type": "concept"
+      },
+      {
+        "name": "Pack",
+        "type": "technology"
+      },
+      {
+        "name": "source-of-truth",
+        "type": "concept"
+      },
+      {
+        "name": "доменное знание",
+        "type": "concept"
+      },
+      {
+        "name": "Capture-to-Pack",
+        "type": "technology"
+      },
+      {
+        "name": "маршрутизация знаний",
+        "type": "concept"
+      },
+      {
+        "name": "ядро знаний",
+        "type": "concept"
+      },
+      {
+        "name": "L1/L2/L3",
+        "type": "technology"
+      },
+      {
+        "name": "слоистая архитектура",
+        "type": "concept"
+      },
+      {
+        "name": "staging",
+        "type": "technology"
+      },
+      {
+        "name": "промоция правил",
+        "type": "concept"
+      },
+      {
+        "name": "IWE",
+        "type": "project"
+      },
+      {
+        "name": "PAI",
+        "type": "project"
+      },
+      {
+        "name": "vendor-agnostic",
+        "type": "concept"
+      },
+      {
+        "name": "экзокортексы",
+        "type": "concept"
+      },
+      {
+        "name": "AI-обёртки",
+        "type": "concept"
+      },
+      {
+        "name": "structured workflows",
+        "type": "concept"
+      },
+      {
+        "name": "vendor-agnostic environments",
+        "type": "concept"
+      },
+      {
+        "name": "GitHub",
+        "type": "organization"
+      },
+      {
+        "name": "Product Hunt",
+        "type": "organization"
+      },
+      {
+        "name": "HackerNews",
+        "type": "organization"
+      },
+      {
+        "name": "Reddit",
+        "type": "organization"
+      },
+      {
+        "name": "YC",
+        "type": "organization"
+      },
+      {
+        "name": "Facebook",
+        "type": "organization"
+      },
+      {
+        "name": "клод код",
+        "type": "technology"
+      },
+      {
+        "name": "опус 4.6",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+    "entities": [
+      {
+        "name": "chatgpt.com",
+        "type": "organization"
+      },
+      {
+        "name": "Copy as Markdown",
+        "type": "concept"
+      },
+      {
+        "name": "Cmd+V",
+        "type": "technology"
+      },
+      {
+        "name": "Obsidian",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+    "entities": [
+      {
+        "name": "Scrutator",
+        "type": "project"
+      },
+      {
+        "name": "Knowledge Retrieval and Meaning Engine",
+        "type": "concept"
+      },
+      {
+        "name": "Arcanada Ecosystem",
+        "type": "project"
+      },
+      {
+        "name": "unified search",
+        "type": "concept"
+      },
+      {
+        "name": "retrieval",
+        "type": "concept"
+      },
+      {
+        "name": "meaning extraction",
+        "type": "concept"
+      },
+      {
+        "name": "PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "pgvector",
+        "type": "technology"
+      },
+      {
+        "name": "vector storage",
+        "type": "concept"
+      },
+      {
+        "name": "BGE-M3",
+        "type": "technology"
+      },
+      {
+        "name": "embeddings",
+        "type": "concept"
+      },
+      {
+        "name": "dense",
+        "type": "concept"
+      },
+      {
+        "name": "sparse",
+        "type": "concept"
+      },
+      {
+        "name": "ColBERT",
+        "type": "technology"
+      },
+      {
+        "name": "FastAPI",
+        "type": "technology"
+      },
+      {
+        "name": "API layer",
+        "type": "concept"
+      },
+      {
+        "name": "Pavel Valentov",
+        "type": "person"
+      },
+      {
+        "name": "arcana-db server",
+        "type": "location"
+      },
+      {
+        "name": "port 8310",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+    "entities": [
+      {
+        "name": "Scrutator",
+        "type": "technology"
+      },
+      {
+        "name": "Knowledge Retrieval and Meaning Engine",
+        "type": "concept"
+      },
+      {
+        "name": "Arcanada Ecosystem",
+        "type": "project"
+      },
+      {
+        "name": "wiki",
+        "type": "technology"
+      },
+      {
+        "name": "datarim",
+        "type": "technology"
+      },
+      {
+        "name": "project docs",
+        "type": "concept"
+      },
+      {
+        "name": "agent memories",
+        "type": "concept"
+      },
+      {
+        "name": "BAAI/bge-m3",
+        "type": "technology"
+      },
+      {
+        "name": "embeddings",
+        "type": "concept"
+      },
+      {
+        "name": "1024-dimensional dense vectors",
+        "type": "concept"
+      },
+      {
+        "name": "sparse vectors",
+        "type": "concept"
+      },
+      {
+        "name": "ColBERT multi-vector",
+        "type": "technology"
+      },
+      {
+        "name": "PostgreSQL",
+        "type": "technology"
+      },
+      {
+        "name": "pgvector",
+        "type": "technology"
+      },
+      {
+        "name": "vector storage",
+        "type": "concept"
+      },
+      {
+        "name": "Reciprocal Rank Fusion",
+        "type": "concept"
+      },
+      {
+        "name": "RRF",
+        "type": "concept"
+      },
+      {
+        "name": "hybrid search",
+        "type": "concept"
+      },
+      {
+        "name": "dense cosine similarity",
+        "type": "concept"
+      },
+      {
+        "name": "sparse lexical matching",
+        "type": "concept"
+      },
+      {
+        "name": "full-text search",
+        "type": "concept"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+    "entities": [
+      {
+        "name": "МФЦА",
+        "type": "organization"
+      },
+      {
+        "name": "https://aifc.kz/ru/home/",
+        "type": "technology"
+      }
+    ]
+  },
+  {
+    "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+    "entities": [
+      {
+        "name": "Telegram",
+        "type": "technology"
+      },
+      {
+        "name": "MAX",
+        "type": "technology"
+      },
+      {
+        "name": "Jabber",
+        "type": "technology"
+      },
+      {
+        "name": "Signal",
+        "type": "technology"
+      },
+      {
+        "name": "Session",
+        "type": "technology"
+      },
+      {
+        "name": "SimpleX",
+        "type": "technology"
+      },
+      {
+        "name": "Element",
+        "type": "technology"
+      },
+      {
+        "name": "Фландерс",
+        "type": "person"
+      },
+      {
+        "name": "YouTube",
+        "type": "organization"
+      }
+    ]
+  },
+  {
+    "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+    "entities": [
+      {
+        "name": "Web master",
+        "type": "concept"
+      },
+      {
+        "name": "developers.facebook.com",
+        "type": "organization"
+      },
+      {
+        "name": "Facebook",
+        "type": "organization"
+      },
+      {
+        "name": "pavel@valentov.com",
+        "type": "person"
+      }
+    ]
+  }
+]

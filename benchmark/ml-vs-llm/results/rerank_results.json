@@ -1,0 +1,2468 @@
+{
+  "benchmark": "reranking",
+  "queries_total": 50,
+  "queries_with_candidates": 50,
+  "models": {
+    "reranker": {
+      "model": "BAAI/bge-reranker-v2-m3",
+      "ndcg_at_5": 0.6355,
+      "mrr": 0.81,
+      "queries_evaluated": 50,
+      "queries_errors": 0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "cost_usd": 0.0,
+      "latency_mean_ms": 2644.6,
+      "latency_p50_ms": 2633.9,
+      "latency_p95_ms": 3374.9
+    },
+    "haiku": {
+      "model": "anthropic/claude-3.5-haiku",
+      "ndcg_at_5": 0.5548,
+      "mrr": 0.819,
+      "queries_evaluated": 50,
+      "queries_errors": 0,
+      "total_input_tokens": 44646,
+      "total_output_tokens": 7509,
+      "cost_usd": 0.065753,
+      "latency_mean_ms": 2819.1,
+      "latency_p50_ms": 2584.5,
+      "latency_p95_ms": 4464.3
+    },
+    "gpt4omini": {
+      "model": "openai/gpt-4o-mini",
+      "ndcg_at_5": 0.656,
+      "mrr": 0.8383,
+      "queries_evaluated": 47,
+      "queries_errors": 0,
+      "total_input_tokens": 37121,
+      "total_output_tokens": 12252,
+      "cost_usd": 0.012919,
+      "latency_mean_ms": 3608.6,
+      "latency_p50_ms": 3400.3,
+      "latency_p95_ms": 5070.3
+    }
+  },
+  "predictions": {
+    "reranker": [
+      {
+        "query": "embedding models for knowledge graph",
+        "ranked_ids": [
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "2de17289-f43c-4126-b74d-2188278c999f",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916"
+        ],
+        "latency_ms": 3201.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "how does BGE-M3 hybrid search work",
+        "ranked_ids": [
+          "28da2f95-a42b-4233-8b29-9849df4e1616",
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "180f7a4d-f6fa-487a-877f-89c0b2307ae4",
+          "b41dacf8-e994-494b-8c0b-41177bd0656b",
+          "2b47648b-4ce4-41a9-a1a4-7289edf14363",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07",
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f"
+        ],
+        "latency_ms": 3172.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "entity extraction from text chunks",
+        "ranked_ids": [
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4",
+          "e66b7b9b-704a-43ca-b2b7-579cf148c96d",
+          "fbbcf881-afeb-4d01-8856-9790542b2e94",
+          "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+          "823caf5c-eed0-464b-8fb5-2e49084b523b",
+          "5428a76d-67b5-4cc6-9fe1-76ac090823a4",
+          "288af4bc-faea-4b36-bd6a-47f24ed5b257",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "b3f3e549-7aec-4d56-a25d-c0f0b0fa80bb"
+        ],
+        "latency_ms": 2888.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "LLM vs ML for NER tasks",
+        "ranked_ids": [
+          "d93e252b-e883-4cfd-8a46-571653d5617d",
+          "ffc1ca74-ca05-4c48-ac77-2fa77cc61b75",
+          "81bd57d2-88cc-44a6-ad62-1d1dc4505d7c",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "c826a841-8229-4758-a5b2-31172a3fe742",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "96f3f3ab-7951-4348-8f30-2c89211f1300",
+          "193d4261-875d-45ae-a122-35abc499e2cf",
+          "ede1207f-8ed0-497c-b2e9-17c50b496e81",
+          "e0a08ad2-d80c-4d4a-8956-a780dcec8e3d"
+        ],
+        "latency_ms": 2514.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "vector database indexing strategies",
+        "ranked_ids": [
+          "823caf5c-eed0-464b-8fb5-2e49084b523b",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f",
+          "24570fb3-c69a-43f6-ad80-bf30cd5938f7",
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "30c7034d-c3a2-4006-b60b-29261a90cff6",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "9766a606-9a0f-49cf-a67f-3a51e0f0ff06",
+          "d52e025b-319d-4737-893c-8944188d13cf"
+        ],
+        "latency_ms": 2678.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "knowledge graph deduplication",
+        "ranked_ids": [
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+          "2de17289-f43c-4126-b74d-2188278c999f",
+          "17179c01-10f9-4d8f-90d4-908e433a206e",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "45f01173-78e3-4a9a-b1fe-cce43fd8337c",
+          "58f4ee9f-8975-4bb0-bcce-3e6ef0c79016",
+          "c381dd56-9439-4645-a596-456261a8668e",
+          "416b2f65-5ef4-496e-9a07-aefa93c3d677"
+        ],
+        "latency_ms": 3130.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "transformer architecture for NLP",
+        "ranked_ids": [
+          "3672192f-dc5f-4b96-b392-075d3818c314",
+          "40c1df1b-5eaf-456d-8267-6b068c55c9be",
+          "1d86cb0e-f515-4581-818c-171f43bc95a8",
+          "f4cf9e1a-5bb5-4a4a-821f-e7e27ad0e6cb",
+          "46fec04f-72d2-42fa-aec4-260b9e10b93c",
+          "2871b849-12e8-4376-a2b4-c65e22e5be86",
+          "bed22221-f6b2-47ee-9912-edfb5eca2c42",
+          "957427bc-ce50-4046-992e-01b75ee5a8a8",
+          "7ef3f223-0627-4d07-8736-fe8b6591994e",
+          "96f3f3ab-7951-4348-8f30-2c89211f1300"
+        ],
+        "latency_ms": 3374.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "RAG retrieval augmented generation",
+        "ranked_ids": [
+          "b41dacf8-e994-494b-8c0b-41177bd0656b",
+          "180f7a4d-f6fa-487a-877f-89c0b2307ae4",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "93351e48-0f41-407e-9413-804207d6cb4b",
+          "2205f52b-4a11-4aca-a27e-cda620caceb2",
+          "bb8dfcab-8332-430e-8492-1533b635bece",
+          "e2c8d6f4-4786-44ea-9417-dabc96bad16f",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "eca469f5-fb35-4412-ba0a-055d7aea28ce"
+        ],
+        "latency_ms": 2990.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "fine-tuning language models",
+        "ranked_ids": [
+          "32be75df-a9a2-44c0-a00f-c992acda34cb",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "c4e4f313-24c3-44ec-8f05-c802e0bf7f04",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "dd54cf67-3c82-4d24-9cf3-8affa10df174",
+          "380447aa-fa44-4226-b75f-a7e5f92613e1",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "3878921e-bdca-49a0-a6ce-a0e897511ad3"
+        ],
+        "latency_ms": 1835.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "prompt engineering best practices",
+        "ranked_ids": [
+          "71e5e489-3ad0-4925-83de-73e3cbc937de",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+          "099fc4fa-9756-4e9c-abcd-00ff6afcf4ea",
+          "e878e3f8-d629-47ec-9ee3-7f9575d16c73",
+          "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+          "d93e252b-e883-4cfd-8a46-571653d5617d",
+          "eb2d357c-1860-4df0-b316-67d00fede031",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246"
+        ],
+        "latency_ms": 2324.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Arcanada ecosystem architecture",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "a63379ee-1452-4ac5-a211-24ca0f34779a",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "96cf60b4-6217-4019-b253-0f89e5e5eeb4",
+          "e41dc184-3cd9-45d7-8f31-978af03a635d",
+          "1842c8b9-078b-419d-b341-8be7aae57d5e",
+          "e79b0006-838b-4ea1-b41b-4841682177a9",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d"
+        ],
+        "latency_ms": 2769.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Agent Dreamer wiki organization",
+        "ranked_ids": [
+          "e79b0006-838b-4ea1-b41b-4841682177a9",
+          "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+          "e7beb1f8-163b-49dd-b46c-ff868180a1f4",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "a8dd0846-e139-4674-81c2-851e589c4dac",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246",
+          "d2935c62-c347-4cc0-a3d5-c7ac0df3dfc0",
+          "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+          "2d4d8a74-a933-4571-95e4-6c13b5390148",
+          "99090061-a528-4159-939f-f1c14c125cc0"
+        ],
+        "latency_ms": 2676.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Scrutator search engine design",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "7539f36f-247a-4352-ab13-5b174f849b8a",
+          "11d31782-8d42-4877-9cb2-97cd9cbf47d1",
+          "2faffe87-97ec-4b2e-abad-5f397f7c6df5",
+          "da1196dc-b3c4-455d-a35a-58c3605a0a4b",
+          "2b47648b-4ce4-41a9-a1a4-7289edf14363",
+          "2871b849-12e8-4376-a2b4-c65e22e5be86",
+          "ea3411bc-eb11-43af-be75-c51786d15636",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a"
+        ],
+        "latency_ms": 2960.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Model Connector API integration",
+        "ranked_ids": [
+          "7c1708bd-f8a3-4ba4-804d-5a5890b2712a",
+          "f8028840-b5b0-4d5e-8b6d-30458949ae1e",
+          "e5139c80-ca5f-4fde-b27c-7940d9259872",
+          "cfd278c6-3236-4a4f-982d-cba450634c54",
+          "c4e4f313-24c3-44ec-8f05-c802e0bf7f04",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "4a03cd68-8a22-45b0-bf4f-4d7f496c81b8",
+          "7457e062-8b5d-44b4-b2f2-76b26a79c416",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff"
+        ],
+        "latency_ms": 4138.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "datarim workflow management",
+        "ranked_ids": [
+          "2326ffb8-f84a-430c-b188-592ca79fab53",
+          "6d20c5e4-f7b7-46f0-be28-03d49b65d234",
+          "7ba1e9a3-97c5-44ab-ade1-f96bdb875b78",
+          "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+          "1261c642-81cb-48cf-8023-4784a1c10f06",
+          "93c813ad-044d-488a-8dd4-d1b2074bc28b",
+          "86d6c644-a802-43d2-ac1e-7e54467e7b08",
+          "a9156152-9be7-4afd-9310-f2775bc25095",
+          "906686fb-c715-46ab-a508-2bee02116168",
+          "96e055b8-4404-4138-9295-95f4ccf4fb2a"
+        ],
+        "latency_ms": 2000.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Verdicus macOS application",
+        "ranked_ids": [
+          "646c191d-577e-4d81-909e-1b1a347bfaa4",
+          "4cd5b5ee-1546-487e-b2b3-a40154cea139",
+          "f0bf47a8-fb08-438f-8602-bd2ad77c84f2",
+          "7e9ac199-4f6c-480a-a79a-c12e757b5e80",
+          "99e8eb7c-d2f2-469b-8992-239fcecef148",
+          "5e3b2ae4-9060-4474-b7a7-b934e46981b3",
+          "a35ba215-f208-4036-8d59-2ef84914cbcf",
+          "5605e171-5253-44cd-8867-d3279c76e7c4",
+          "bd58b1ae-5d88-4cd6-af34-ad710593fd61",
+          "c091cbe0-5f85-4041-b121-30ff6ee1455f"
+        ],
+        "latency_ms": 2331.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Ops Bot monitoring system",
+        "ranked_ids": [
+          "5ac10cee-4880-4d31-b392-c3a2ec4cc791",
+          "8ca01184-7e65-42e4-a370-8733799a110f",
+          "43602041-b136-4d66-8d58-9441a7d2d4e5",
+          "3eb1508e-de02-4b5e-a04f-ca05a390b40e",
+          "8580b0eb-a79d-451c-8648-83e44858e236",
+          "f2a9c443-5254-4a89-836f-6cb2e5ed5bd5",
+          "361dac3e-0ddd-438c-bc5d-a3a0dfeabf06",
+          "f56d883f-1c5e-4e30-8055-64b4f216849c",
+          "9d93191b-0e1b-45cb-9c38-7e41e185fdc6",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e"
+        ],
+        "latency_ms": 2901.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Personal Assistant telegram bot",
+        "ranked_ids": [
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "afba1713-6a7f-40f7-9b3b-1d06599e5489",
+          "7a7d7b4f-d2b8-459d-9c88-1a61f4d54850",
+          "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+          "3e784f18-a696-4464-ae8d-e454e7d59352",
+          "05cc3662-3fb1-4d5b-bd37-9c72e3d0cddb",
+          "9d93191b-0e1b-45cb-9c38-7e41e185fdc6",
+          "31c5919f-cfa4-46c6-8a64-3607183f756b",
+          "7a95023d-7156-46c0-9b09-13d0329fa8b4",
+          "03a991d0-1fd2-44f9-b840-258d2ecd9953"
+        ],
+        "latency_ms": 1878.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Disk Arcana file synchronization",
+        "ranked_ids": [
+          "5efbc676-852a-4910-a10e-04bc1e666451",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+          "07c652f3-0567-4238-9f49-f3067867bbf3",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "b394daf1-7820-4ab7-bf13-36b714229753",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "c6bac447-41dc-46bf-a45a-5300b42688b4"
+        ],
+        "latency_ms": 2934.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Long Term Memory project",
+        "ranked_ids": [
+          "aaefda8a-142d-41e0-ac45-66fa48f21ae4",
+          "9dcb61ba-5060-466d-85f6-54602764fbdd",
+          "d09f0538-ed91-4a3f-87c5-3e8fed88fea4",
+          "a306e20d-84aa-45fa-9ce6-fa0723f310c1",
+          "a996ce4d-5ac2-49f1-b8f5-1bfd5a4996c0",
+          "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+          "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+          "414a7fed-d5e8-470c-bd85-c24eb34044d9",
+          "45f01173-78e3-4a9a-b1fe-cce43fd8337c",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e"
+        ],
+        "latency_ms": 3061.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "SSL certificate management Cloudflare",
+        "ranked_ids": [
+          "2583eaf1-4287-4e21-b178-4d22eaca66fa",
+          "c6bac447-41dc-46bf-a45a-5300b42688b4",
+          "12759900-1a64-4096-9295-e5aca72792f0",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "8401a3e7-73af-4588-bc94-170cc89dbad6",
+          "c8043071-7c85-40c5-adc2-87592e5fda08",
+          "4c8e4cdb-feaa-426e-8117-639a58385cbb",
+          "4b1284b9-bad1-400e-82dc-60d3c1253250"
+        ],
+        "latency_ms": 3146.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "HashiCorp Vault secret storage",
+        "ranked_ids": [
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "662040d3-918c-4508-a558-aed57cbb6078",
+          "614d6d07-9ced-4b6d-916c-a8ab8ac2f962",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b",
+          "283fe574-c1f0-47dc-a870-b11884de043c",
+          "a2d70e1e-48c7-4102-87b9-579acad9f9b9",
+          "d06249eb-0ebc-4880-8c54-188662110ace",
+          "b394daf1-7820-4ab7-bf13-36b714229753",
+          "41fcb55b-1d13-4ef0-9f22-6c1f446afe63",
+          "f884e187-83b2-4d18-a285-cd78c7b8ae23"
+        ],
+        "latency_ms": 2812.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Tailscale mesh VPN setup",
+        "ranked_ids": [
+          "921db22e-f0f7-4766-b347-c89cef1d8b13",
+          "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+          "ff017c76-b4b7-406c-b4ba-3a8cc4425974",
+          "fe70d5b7-cf36-434c-aede-2c93ed39137f",
+          "4769cb35-8a33-43cc-bb90-e25f6957bcb8",
+          "361dac3e-0ddd-438c-bc5d-a3a0dfeabf06",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "0301115f-5e32-4d0b-96ef-b2b6a50bef2a"
+        ],
+        "latency_ms": 2255.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "server access control policies",
+        "ranked_ids": [
+          "1a12ee16-8f72-4921-b8a2-c350662fe5de",
+          "6062c4dd-9331-4b8c-8892-ff4e77022ed3",
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "66a90d76-2144-46fe-8ca5-3be82df2970a",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "d861b617-e3f6-47fe-a21f-cc520002b0a6",
+          "905a1901-9d60-41be-9fc1-4c95bfb2e76d",
+          "ec6edc8c-bc32-499b-8b94-af328747b7c5",
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db"
+        ],
+        "latency_ms": 3237.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "API authentication bearer tokens",
+        "ranked_ids": [
+          "5fa143c4-ec8b-44d0-bbc8-1bddcb7be305",
+          "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "8cebdaa5-34a7-488c-b978-3265236edf0c",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "186ef595-732c-49c0-897b-fc06196f8979",
+          "334441e4-1061-45c0-a2bc-9f35d94f3877",
+          "c74296f8-f340-4156-ac2d-c79cb5823d90",
+          "e5d88bc0-e21a-4230-a02b-da05eb100d87"
+        ],
+        "latency_ms": 2581.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "SSH key management GitHub",
+        "ranked_ids": [
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "a1a55132-9b95-43b6-98b0-c4065afdce6e",
+          "d63d6ae7-4a63-45ec-847b-8a5a185a0fc8",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "1aa02a2c-1422-40a7-992f-824dc816eb7b",
+          "ae48a908-661b-4a0a-9c94-d20869bd9dff",
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6"
+        ],
+        "latency_ms": 2553.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "rate limiting and DDoS protection",
+        "ranked_ids": [
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "6062c4dd-9331-4b8c-8892-ff4e77022ed3",
+          "ea21a556-26a7-4825-b760-c8f9643b00fa",
+          "2181a6d7-874b-423a-bcdb-7dc201078cda",
+          "c30fc083-c73b-4470-988b-43d021bf6194",
+          "42414d6d-2f88-4ee0-99f1-c13f659ddafd",
+          "498ede4d-2944-46c9-b579-45f11ea3beee"
+        ],
+        "latency_ms": 3331.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Docker container security",
+        "ranked_ids": [
+          "0d00c3c8-7e6b-4c80-a325-de5f7ff7c27a",
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "fe0da4c2-914a-4297-b56f-991169c8b08e",
+          "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1",
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6",
+          "9766a606-9a0f-49cf-a67f-3a51e0f0ff06",
+          "c917644c-13fb-4fa7-b3bf-acf620725986",
+          "2b39e916-70a6-48a7-9c28-899abcb7af07",
+          "d4d96a15-91f8-4763-8036-f0ad8eb27a84"
+        ],
+        "latency_ms": 1928.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "startup revenue model",
+        "ranked_ids": [
+          "6cc828d6-63fb-4a50-8d45-d07e68cd5677",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "aad13ed8-a804-4afa-9d1c-9de813004148",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "4a03cd68-8a22-45b0-bf4f-4d7f496c81b8",
+          "e5139c80-ca5f-4fde-b27c-7940d9259872",
+          "29a16896-3439-45ad-aa91-aef028dcbc04",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "527f7baf-24d2-4fda-b41e-ea15d2fe4e39",
+          "7c1708bd-f8a3-4ba4-804d-5a5890b2712a"
+        ],
+        "latency_ms": 2874.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "content marketing strategy",
+        "ranked_ids": [
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "45f4fb99-791b-45e1-a527-2f5faaa82e97",
+          "e288213e-7a6f-4ae9-be53-74bfa301aa9e",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "76e32a4e-669f-4dd9-ac8c-ef241c1cb801",
+          "6d9b724e-efef-40e4-a181-e025e1ad4ccb",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "43065656-9e59-4fff-8233-017471e69482",
+          "41d7d62b-d4d4-4543-8831-f273fb6aa81e"
+        ],
+        "latency_ms": 2203.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "social media engagement optimization",
+        "ranked_ids": [
+          "8a1178aa-7966-4a6f-9dc0-580ed37aaf8e",
+          "498ede4d-2944-46c9-b579-45f11ea3beee",
+          "a1fecce0-a258-4f94-849a-7933ee0e6b53",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "41fcb55b-1d13-4ef0-9f22-6c1f446afe63",
+          "4522b9cd-f344-41fd-b241-1264757c84e3",
+          "56802560-a2f0-4c50-840e-b292f5fa1868",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07"
+        ],
+        "latency_ms": 2491.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "freelance business management",
+        "ranked_ids": [
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "0d0c5e1d-7da6-4fa6-af70-4d16968607c9",
+          "9e7576c1-a9b4-4265-b41e-10155169d31e",
+          "a1fecce0-a258-4f94-849a-7933ee0e6b53",
+          "4b926941-b418-4f6d-8b05-1b87fd14103c",
+          "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+          "8d669e12-f358-4902-9bb6-2398a06ab19e",
+          "bb6103d5-1a33-40e2-8ff2-3e85297a11a3",
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "3b870885-7303-490a-851e-9399ab5d25db"
+        ],
+        "latency_ms": 1479.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "SaaS pricing models",
+        "ranked_ids": [
+          "897dfdf9-a473-49a1-95aa-70d36067ca6e",
+          "751f49d4-d6a1-44a1-bf20-effd797e6260",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "32be75df-a9a2-44c0-a00f-c992acda34cb",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "921db22e-f0f7-4766-b347-c89cef1d8b13",
+          "380447aa-fa44-4226-b75f-a7e5f92613e1",
+          "3878921e-bdca-49a0-a6ce-a0e897511ad3"
+        ],
+        "latency_ms": 2633.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "customer acquisition cost",
+        "ranked_ids": [
+          "751f49d4-d6a1-44a1-bf20-effd797e6260",
+          "83df7ee6-dd59-45be-8e76-e3a1538c0717",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "05211b52-7cb9-469a-803d-f6f6e4b0c733",
+          "8273bff7-2476-49f7-969c-7d7cad35810d",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "f8108f6a-bc0d-4112-9084-9e33462e89a3",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4",
+          "6e891542-0e6f-4f7c-812b-4830320bef50"
+        ],
+        "latency_ms": 2625.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "project management methodology",
+        "ranked_ids": [
+          "c12a0ec1-aa1b-4bf1-af9b-69ba75eb9633",
+          "afd6f579-7552-4088-a9bf-654aa78f4392",
+          "a97413da-1e72-4cec-83e0-25db22e12f91",
+          "f324443d-8b5a-4519-8c61-37ab9192ce31",
+          "eab78e5b-7985-4279-91d0-a73c93a8f826",
+          "1fe037fb-bed0-4397-b3e2-ed174005da5a",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "21894fe1-4c49-4d43-ac0f-5724233c5c2a",
+          "f3ecb894-e942-4365-8813-82ec11c4a366"
+        ],
+        "latency_ms": 1982.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Docker compose deployment",
+        "ranked_ids": [
+          "55140889-0140-4ca7-b93d-745bd7a63aea",
+          "96cf60b4-6217-4019-b253-0f89e5e5eeb4",
+          "c3a17b14-29f6-4047-a9df-4355d38138b2",
+          "7e9ac199-4f6c-480a-a79a-c12e757b5e80",
+          "a583ee0a-ef15-4e3f-8eba-2147d72d39a5",
+          "2b39e916-70a6-48a7-9c28-899abcb7af07",
+          "c91efefd-0f54-4d12-af94-b52d247bb894",
+          "d4d96a15-91f8-4763-8036-f0ad8eb27a84",
+          "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1",
+          "c917644c-13fb-4fa7-b3bf-acf620725986"
+        ],
+        "latency_ms": 2621.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "CI/CD GitHub Actions pipeline",
+        "ranked_ids": [
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "16a71293-a22f-43f9-b9ae-08a77788562e",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "736651f9-ca26-4f3e-8495-346b609a43f3",
+          "48f1a695-2460-4ff3-851a-52f9145fb592",
+          "ae48a908-661b-4a0a-9c94-d20869bd9dff",
+          "d63d6ae7-4a63-45ec-847b-8a5a185a0fc8",
+          "31bab02f-f020-4c9a-a650-b7635553a56b",
+          "3b5a16ed-2c83-4dc2-9999-d1f5a80b83a7"
+        ],
+        "latency_ms": 4033.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Nginx reverse proxy configuration",
+        "ranked_ids": [
+          "1c485506-87e8-4cd3-9941-fac5e74631ef",
+          "30002248-c858-42e8-bd2d-8e52746e7a14",
+          "41cbb815-a820-49eb-b5cd-8a3bce485326",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "12759900-1a64-4096-9295-e5aca72792f0",
+          "922abe1a-e8ee-465b-9ea0-867474896649",
+          "8401a3e7-73af-4588-bc94-170cc89dbad6",
+          "a7234272-7435-4b24-b622-4fd2a9681f78",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1"
+        ],
+        "latency_ms": 2968.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "PostgreSQL performance tuning",
+        "ranked_ids": [
+          "203a6013-54bc-4b76-ba7b-011cbb7714fd",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "498ede4d-2944-46c9-b579-45f11ea3beee",
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "a306e20d-84aa-45fa-9ce6-fa0723f310c1",
+          "56802560-a2f0-4c50-840e-b292f5fa1868",
+          "41cbb815-a820-49eb-b5cd-8a3bce485326",
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1"
+        ],
+        "latency_ms": 2623.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Redis caching strategies",
+        "ranked_ids": [
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "db81cdb3-1562-4d94-9c60-1e1f646a648a",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "452bbdca-9037-4045-b897-a4df18c57ba5",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "cb940968-2d1f-43f6-aabc-45d592f7f8cc",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "357ce012-825c-426a-ad74-aeb3a7038aab",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "bf41a6f5-2c77-4629-bce4-2c4fdc8d42e8"
+        ],
+        "latency_ms": 2150.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "NestJS FastAPI framework comparison",
+        "ranked_ids": [
+          "a50cad66-e404-40cb-8c72-ad26e637a83a",
+          "ee407008-e1d4-4c96-b472-ce37180ae106",
+          "f8028840-b5b0-4d5e-8b6d-30458949ae1e",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "411b2bd7-f3b4-4c4f-8511-f9d20b32e374",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "30ad694a-0b98-42a5-9217-0c777f6b1a3d"
+        ],
+        "latency_ms": 2854.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "Obsidian knowledge management",
+        "ranked_ids": [
+          "7f83d0f5-08d5-41c3-985c-eaebe626a517",
+          "a7623e2f-8a5c-4c47-8a4b-2be73c4ff4c7",
+          "c2e66089-112f-4790-837f-3e3e65508161",
+          "d16536c2-a1be-4327-8980-e9f6e7a307bd",
+          "1cdacfa1-cf23-47fc-a60a-f6b83096627e",
+          "f4cf9e1a-5bb5-4a4a-821f-e7e27ad0e6cb",
+          "5eae1ea3-0426-46ef-a44a-c904a2fa77e1",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07",
+          "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+          "56802560-a2f0-4c50-840e-b292f5fa1868"
+        ],
+        "latency_ms": 2305.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "git workflow branching strategy",
+        "ranked_ids": [
+          "357ce012-825c-426a-ad74-aeb3a7038aab",
+          "f943e679-d289-4b3f-96f2-8035038261a2",
+          "600ece1e-49f6-4efe-ac2f-8ebcf16c26f3",
+          "6d20c5e4-f7b7-46f0-be28-03d49b65d234",
+          "9779bb25-c026-4454-aa6b-1a692c5f45ec",
+          "6782f472-f7bd-4baa-a385-7f2860e07403",
+          "feeff425-2149-4ae6-8035-4ba00951d3f1",
+          "d9e521d2-dd54-4211-9a13-5642f05b6bf3",
+          "57506811-3e4e-4dae-a346-49948002c0ca",
+          "27e1d1ba-7b54-48c0-9182-ad3236f32adb"
+        ],
+        "latency_ms": 2341.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "meaning of human life",
+        "ranked_ids": [
+          "b1f3cb03-01b8-47b4-bfef-2fce155f18b9",
+          "00029f50-d442-47ef-967a-b96b96fb064c",
+          "8273bff7-2476-49f7-969c-7d7cad35810d",
+          "582ba5b8-3aa7-4e3f-ac15-7724f4322455",
+          "d67a0615-08c8-42cf-9209-c34801596c3a",
+          "501c9783-cebf-4001-a626-da7ad8962800",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "da1de50e-679d-4366-bf8d-1ff7594e8292",
+          "c091cbe0-5f85-4041-b121-30ff6ee1455f"
+        ],
+        "latency_ms": 2287.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "AI ethics and consciousness",
+        "ranked_ids": [
+          "d87bf24f-3308-4700-a368-9ddcc1346fda",
+          "598cea39-2cd6-40b1-87ec-22e7b1799b68",
+          "dacf0412-9e0c-4bc8-a77d-e6fc61034e88",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "6808f93d-4bc9-484d-84bc-b8eaf072d3d5",
+          "c2b137cb-7cf8-45a6-9d54-c6fb73133345",
+          "9d978757-8fdb-4c0f-a1f6-96d815777ea2",
+          "501c9783-cebf-4001-a626-da7ad8962800",
+          "2e2bf0df-dde3-4f3c-9b53-4775a4855bbd",
+          "9b973b09-92d0-4bb8-832b-716ca30bc0f5"
+        ],
+        "latency_ms": 1940.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "rules of robotics for AI agents",
+        "ranked_ids": [
+          "6611f945-d034-45b5-8d7e-060cddbb7f3d",
+          "598cea39-2cd6-40b1-87ec-22e7b1799b68",
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "0923315a-f141-4d2c-8887-f2f7f5908550",
+          "ddde9df2-29de-4013-9b27-d0ce2d0369ce",
+          "b4bcd6a4-cfe6-4e33-8c42-4432bfe81213",
+          "93c813ad-044d-488a-8dd4-d1b2074bc28b",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66",
+          "03a991d0-1fd2-44f9-b840-258d2ecd9953",
+          "93351e48-0f41-407e-9413-804207d6cb4b"
+        ],
+        "latency_ms": 2693.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "digital immortality concept",
+        "ranked_ids": [
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "6cc828d6-63fb-4a50-8d45-d07e68cd5677",
+          "8273bff7-2476-49f7-969c-7d7cad35810d",
+          "66990d81-7cb9-4847-b80b-73a0fdf1b3fd",
+          "f4c48963-0063-483b-a599-5dbc0e31598e",
+          "7482bb32-5ff9-438d-a2ff-c0e336e7c7ed",
+          "6a914105-37ad-4d5a-a7dd-fd362dec6d65",
+          "eef4c5e4-b6d8-4875-9234-885706eca4be",
+          "d87bf24f-3308-4700-a368-9ddcc1346fda"
+        ],
+        "latency_ms": 1734.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "knowledge and wisdom distinction",
+        "ranked_ids": [
+          "6c0c965d-fff2-469e-80c9-3c0b1af7799e",
+          "75a616b4-d2f8-4ff1-87fa-efd4779fb5b2",
+          "f4cf9e1a-5bb5-4a4a-821f-e7e27ad0e6cb",
+          "0e6315f9-6be8-4632-8c31-7f82bd7a1270",
+          "c12a0ec1-aa1b-4bf1-af9b-69ba75eb9633",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "29aedceb-a022-42cd-9d86-49df48f8d5c5",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "582ba5b8-3aa7-4e3f-ac15-7724f4322455"
+        ],
+        "latency_ms": 2963.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "human-AI collaboration future",
+        "ranked_ids": [
+          "96f3f3ab-7951-4348-8f30-2c89211f1300",
+          "6cc828d6-63fb-4a50-8d45-d07e68cd5677",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66",
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "017f67f9-9a4e-4217-8a79-850cffa5a062",
+          "d7f89c80-9452-432a-b547-2451d8bb26f2",
+          "e0a08ad2-d80c-4d4a-8956-a780dcec8e3d"
+        ],
+        "latency_ms": 2539.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "query": "philosophy of technology",
+        "ranked_ids": [
+          "0f5a220b-416a-4e29-bcc4-2b7bdb2d4f04",
+          "1a8125cf-631e-4882-a3fe-bfb4e121559a",
+          "c6d7a536-e61a-4d8f-ab2f-3e2bce65c7f0",
+          "d67a0615-08c8-42cf-9209-c34801596c3a",
+          "4aa34a1f-2089-4604-9828-e188e4799851",
+          "6c0c965d-fff2-469e-80c9-3c0b1af7799e",
+          "21894fe1-4c49-4d43-ac0f-5724233c5c2a",
+          "9325caf9-da77-4eba-85ce-7f73a0304088",
+          "32993ef6-9715-49e2-9572-d3dd7a16b1e6",
+          "3b870885-7303-490a-851e-9399ab5d25db"
+        ],
+        "latency_ms": 2270.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    ],
+    "haiku": [
+      {
+        "query": "embedding models for knowledge graph",
+        "ranked_ids": [
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "2de17289-f43c-4126-b74d-2188278c999f"
+        ],
+        "latency_ms": 4464.3,
+        "input_tokens": 1035,
+        "output_tokens": 291
+      },
+      {
+        "query": "how does BGE-M3 hybrid search work",
+        "ranked_ids": [
+          "43dda678-e49f-41ff-8b02-2716d10abb07",
+          "2b47648b-4ce4-41a9-a1a4-7289edf14363",
+          "b41dacf8-e994-494b-8c0b-41177bd0656b"
+        ],
+        "latency_ms": 2248.1,
+        "input_tokens": 988,
+        "output_tokens": 89
+      },
+      {
+        "query": "entity extraction from text chunks",
+        "ranked_ids": [
+          "fbbcf89b-afeb-4d01-8856-9790542b2e94",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4"
+        ],
+        "latency_ms": 1906.8,
+        "input_tokens": 970,
+        "output_tokens": 93
+      },
+      {
+        "query": "LLM vs ML for NER tasks",
+        "ranked_ids": [
+          "c826a841-8229-4758-a5b2-31172a3fe742",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "81bd57d8-88cc-44a6-ad62-1d1dc4505d7c",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "96f3f3ab-7951-4348-8f30-2c89211f1300"
+        ],
+        "latency_ms": 2710.3,
+        "input_tokens": 853,
+        "output_tokens": 143
+      },
+      {
+        "query": "vector database indexing strategies",
+        "ranked_ids": [
+          "823caf5c-eed0-464b-8fb5-2e49084b523b",
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "61d25f7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "24570fb3-c69a-43f6-ad80-bf30cd5938f7",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f"
+        ],
+        "latency_ms": 3084.8,
+        "input_tokens": 903,
+        "output_tokens": 151
+      },
+      {
+        "query": "knowledge graph deduplication",
+        "ranked_ids": [
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "45f01173-78e3-4a9a-b1fe-cce43fd8337c",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "17179c01-10f9-4d8f-90d4-908e433a206e",
+          "2de17289-f43c-4126-b74d-2188278c999f",
+          "58f4ee9f-8975-4bb0-bcce-3e6ef0c79016",
+          "c381dd56-9439-4645-a596-456261a8668e",
+          "416b2f65-5ef4-496e-9a07-aefa93c3d677"
+        ],
+        "latency_ms": 3964.7,
+        "input_tokens": 1069,
+        "output_tokens": 287
+      },
+      {
+        "query": "transformer architecture for NLP",
+        "ranked_ids": [
+          "96f3f3ab-7951-4348-8f30-2c89211f1300"
+        ],
+        "latency_ms": 1253.5,
+        "input_tokens": 793,
+        "output_tokens": 34
+      },
+      {
+        "query": "RAG retrieval augmented generation",
+        "ranked_ids": [
+          "b41dacf8-e994-494b-8c0b-41177bd0656b",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "eca469f5-fb35-4412-ba0a-055d7aea28ce"
+        ],
+        "latency_ms": 3176.6,
+        "input_tokens": 810,
+        "output_tokens": 147
+      },
+      {
+        "query": "fine-tuning language models",
+        "ranked_ids": [
+          "32be75df-a9a2-44c0-a00f-c992acda34cb",
+          "380447aa-fa44-4226-b75f-a7e5f92613e1",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "c4e4f313-24c3-44ec-8f05-c802e0bf7f04",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "3878921e-bdca-49a0-a6ce-a0e897511ad3",
+          "dd54cf67-3c82-4d24-9cf3-8affa10df174",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d"
+        ],
+        "latency_ms": 3739.5,
+        "input_tokens": 659,
+        "output_tokens": 285
+      },
+      {
+        "query": "prompt engineering best practices",
+        "ranked_ids": [
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "71e5e489-3ad0-4925-83de-73e3cbc937de",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "e878e3f8-d629-47ec-9ee3-7f9575d16c73"
+        ],
+        "latency_ms": 2088.7,
+        "input_tokens": 870,
+        "output_tokens": 119
+      },
+      {
+        "query": "Arcanada ecosystem architecture",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "a63379ee-1452-4ac5-a211-24ca0f34779a",
+          "e41dc184-3cd9-45d7-8f31-978af03a635d",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "1842c8b9-078b-419d-b341-8be7aae57d5e"
+        ],
+        "latency_ms": 2708.2,
+        "input_tokens": 950,
+        "output_tokens": 170
+      },
+      {
+        "query": "Agent Dreamer wiki organization",
+        "ranked_ids": [
+          "e79b0006-838b-4ea1-b41b-4841682177a9",
+          "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+          "e7beb1f8-163b-49dd-b46c-ff868180a1f4",
+          "d2935c62-c347-4cc0-a3d5-c7ac0df3dfc0",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246",
+          "a8dd0846-e139-4674-81c2-851e589c4dac"
+        ],
+        "latency_ms": 3540.8,
+        "input_tokens": 931,
+        "output_tokens": 203
+      },
+      {
+        "query": "Scrutator search engine design",
+        "ranked_ids": [
+          "7539f36f-247a-4352-ab13-5b174f849b8a",
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "da1196dc-b3c4-455d-a35a-58c3605a0a4b",
+          "2faffe87-97ec-4b2e-abad-5f397f7c6df5"
+        ],
+        "latency_ms": 2570.9,
+        "input_tokens": 1060,
+        "output_tokens": 148
+      },
+      {
+        "query": "Model Connector API integration",
+        "ranked_ids": [
+          "e5139c80-ca5f-4fde-b27c-7940d9259872",
+          "7c1708bd-f8a3-4ba4-804d-5a5890b2712a",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "7457e062-8b5d-44b4-b2f2-76b26a79c416",
+          "f8028840-b5b0-4d5e-8b6d-30458949ae1e"
+        ],
+        "latency_ms": 2506.5,
+        "input_tokens": 888,
+        "output_tokens": 154
+      },
+      {
+        "query": "datarim workflow management",
+        "ranked_ids": [
+          "86d6c644-a802-43d2-ac1e-7e54467e7b08",
+          "93c813ad-044d-488a-8dd4-d1b2074bc28b",
+          "7ba1e9a3-97c5-44ab-ade1-f96bdb875b78",
+          "96e055b8-4404-4138-9295-95f4ccf4fb2a",
+          "906686fb-c715-46ab-a508-2bee02116168",
+          "a9156152-9be7-4afd-9310-f2775bc25095",
+          "6d20c5e4-f7b7-46f0-be28-03d49b65d234",
+          "2326ffb8-f84a-430c-b188-592ca79fab53",
+          "1261c642-81cb-48cf-8023-4784a1c10f06",
+          "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00"
+        ],
+        "latency_ms": 4163.7,
+        "input_tokens": 975,
+        "output_tokens": 281
+      },
+      {
+        "query": "Verdicus macOS application",
+        "ranked_ids": [
+          "646c191d-577e-4d81-909e-1b1a347bfaa4",
+          "f0bf47a8-fb08-438f-8602-bd2ad77c84f2",
+          "5e3b2ae4-9060-4474-b7a7-b934e46981b3",
+          "4cd5b5ee-1546-487e-b2b3-a40154cea139"
+        ],
+        "latency_ms": 2093.8,
+        "input_tokens": 844,
+        "output_tokens": 119
+      },
+      {
+        "query": "Ops Bot monitoring system",
+        "ranked_ids": [
+          "f2a9c443-5254-4a89-836f-6cb2e5ed5bd5",
+          "43602041-b136-4d66-8d58-9441a7d2d4e5",
+          "3eb1508e-de02-4b5e-a04f-ca05a390b40e",
+          "8580b0eb-a79d-451c-8648-83e44858e236",
+          "5ac10cee-4880-4d31-b392-c3a2ec4cc791"
+        ],
+        "latency_ms": 2740.4,
+        "input_tokens": 839,
+        "output_tokens": 148
+      },
+      {
+        "query": "Personal Assistant telegram bot",
+        "ranked_ids": [
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "afba1713-6a7f-40f7-9b3b-1d06599e5489",
+          "05cc3662-3fb1-4d5b-bd37-9c72e3d0cddb",
+          "3e784f18-a696-4464-ae8d-e454e7d59352",
+          "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+          "31c5919f-cfa4-46c6-8a64-3607183f756b",
+          "7a7d7b4f-d2b8-459d-9c88-1a61f4d54850",
+          "9d93191b-0e1b-45cb-9c38-7e41e185fdc6",
+          "7a95023d-7156-46c0-9b09-13d0329fa8b4",
+          "03a991d0-1fd2-44f9-b840-258d2ecd9953"
+        ],
+        "latency_ms": 4424.2,
+        "input_tokens": 863,
+        "output_tokens": 295
+      },
+      {
+        "query": "Disk Arcana file synchronization",
+        "ranked_ids": [
+          "5efbc676-852a-4910-a10e-04bc1e666451",
+          "07c652f3-0567-4238-9f49-f3067867bbf3",
+          "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd"
+        ],
+        "latency_ms": 2920.0,
+        "input_tokens": 1136,
+        "output_tokens": 114
+      },
+      {
+        "query": "Long Term Memory project",
+        "ranked_ids": [
+          "aaefda8a-142d-41e0-ac45-66fa48f21ae4",
+          "9dcb61ba-5060-466d-85f6-54602764fbdd",
+          "d09f0538-ed91-4a3f-87c5-3e8fed88fea4",
+          "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+          "a996ce4d-5ac2-49f1-b8f5-1bfd5a4996c0",
+          "1a9075a1-6ba8-40a6-a9e7-2df24cb28536"
+        ],
+        "latency_ms": 3069.6,
+        "input_tokens": 986,
+        "output_tokens": 182
+      },
+      {
+        "query": "SSL certificate management Cloudflare",
+        "ranked_ids": [
+          "2583eaf1-4287-4e21-b178-4d22eaca66fa",
+          "12759900-1a64-4096-9295-e5aca72792f0",
+          "c6bac447-41dc-46bf-a45a-5300b42688b4",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "8401a3e7-73af-4588-bc94-170cc89dbad6",
+          "4b1284b9-bad1-400e-82dc-60d3c1253250",
+          "4c8e4cdb-feaa-426e-8117-639a58385cbb",
+          "c8043071-7c85-40c5-adc2-87592e5fda08"
+        ],
+        "latency_ms": 3441.2,
+        "input_tokens": 947,
+        "output_tokens": 249
+      },
+      {
+        "query": "HashiCorp Vault secret storage",
+        "ranked_ids": [
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b"
+        ],
+        "latency_ms": 1797.6,
+        "input_tokens": 838,
+        "output_tokens": 62
+      },
+      {
+        "query": "Tailscale mesh VPN setup",
+        "ranked_ids": [
+          "fe70d5b7-cf36-434c-aede-2c93ed39137f",
+          "4769cb35-8a33-43cc-bb90-e25f6957bcb8",
+          "ff017c76-b4b7-406c-b4ba-3a8cc4425974"
+        ],
+        "latency_ms": 4144.4,
+        "input_tokens": 831,
+        "output_tokens": 187
+      },
+      {
+        "query": "server access control policies",
+        "ranked_ids": [
+          "d861b617-e3f6-47fe-a21f-cc520002b0a6",
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "66a90d76-2144-46fe-8ca5-3be82df2970a",
+          "905a1901-9d60-41be-9fc1-4c95bfb2e76d"
+        ],
+        "latency_ms": 2339.6,
+        "input_tokens": 811,
+        "output_tokens": 120
+      },
+      {
+        "query": "API authentication bearer tokens",
+        "ranked_ids": [
+          "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "5fa143c4-ec8b-44d0-bbc8-1bddcb7be305"
+        ],
+        "latency_ms": 2032.3,
+        "input_tokens": 1041,
+        "output_tokens": 100
+      },
+      {
+        "query": "SSH key management GitHub",
+        "ranked_ids": [
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6",
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d"
+        ],
+        "latency_ms": 1986.6,
+        "input_tokens": 1008,
+        "output_tokens": 93
+      },
+      {
+        "query": "rate limiting and DDoS protection",
+        "ranked_ids": [
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "ea21a556-26a7-4825-b760-c8f9643b00fa"
+        ],
+        "latency_ms": 3031.9,
+        "input_tokens": 962,
+        "output_tokens": 119
+      },
+      {
+        "query": "Docker container security",
+        "ranked_ids": [
+          "c917644c-13fb-4fa7-b3bf-acf620725986",
+          "2b39e916-70a6-48a7-9c28-899abcb7af07",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1",
+          "fe0da4c2-914a-4297-b56f-991169c8b08e",
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "0d00c3c8-7e6b-4c80-a325-de5f7ff7c27a",
+          "4d96a15-91f8-4763-8036-f0ad8eb27a84",
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6",
+          "9766a606-9a0f-49cf-a67f-3a51e0f0ff06"
+        ],
+        "latency_ms": 4580.4,
+        "input_tokens": 878,
+        "output_tokens": 297
+      },
+      {
+        "query": "startup revenue model",
+        "ranked_ids": [
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "527f7baf-24d2-4fda-b41e-ea15d2fe4e39",
+          "e5139c80-ca5f-4fde-b27c-7940d9259872",
+          "7c1708bd-f8a3-4ba4-804d-5a5890b2712a"
+        ],
+        "latency_ms": 3007.3,
+        "input_tokens": 797,
+        "output_tokens": 119
+      },
+      {
+        "query": "content marketing strategy",
+        "ranked_ids": [
+          "76e32a4e-669f-4dd9-ac8c-ef241c1cb801",
+          "e288213e-7a6f-4ae9-be53-74bfa301aa9e",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "45f4fb99-791b-45e1-a527-2f5faaa82e97"
+        ],
+        "latency_ms": 3444.2,
+        "input_tokens": 942,
+        "output_tokens": 144
+      },
+      {
+        "query": "social media engagement optimization",
+        "ranked_ids": [
+          "8a1178aa-7966-4a6f-9dc0-580ed37aaf8e",
+          "a1fecce0-a258-4f94-849a-7933ee0e6b53",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e"
+        ],
+        "latency_ms": 2025.5,
+        "input_tokens": 758,
+        "output_tokens": 92
+      },
+      {
+        "query": "freelance business management",
+        "ranked_ids": [
+          "0d0c5e1d-7da6-4fa6-af70-4d16968607c9",
+          "9e7576c1-a9b4-4265-b41e-10155169d31e"
+        ],
+        "latency_ms": 1660.3,
+        "input_tokens": 724,
+        "output_tokens": 66
+      },
+      {
+        "query": "SaaS pricing models",
+        "ranked_ids": [
+          "751f49d4-d6a1-44a1-bf20-effd797e6260"
+        ],
+        "latency_ms": 1189.7,
+        "input_tokens": 698,
+        "output_tokens": 34
+      },
+      {
+        "query": "customer acquisition cost",
+        "ranked_ids": [
+          "64ea9c5c-45cf-aa76-c75dae26024f",
+          "05211b52-7cb9-469a-803d-f6f6e4b0c733",
+          "83df7ee6-dd59-45be-8e76-e3a1538c0717",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4",
+          "6e891542-0e6f-4f7c-812b-4830320bef50"
+        ],
+        "latency_ms": 2495.3,
+        "input_tokens": 981,
+        "output_tokens": 145
+      },
+      {
+        "query": "project management methodology",
+        "ranked_ids": [
+          "afd6f579-7552-4088-a9bf-654aa78f4392",
+          "a97413da-1e72-4cec-83e0-25db22e12f91",
+          "c12a0ec1-aa1b-4bf1-af9b-69ba75eb9633",
+          "f324443d-8b5a-4519-8c61-37ab9192ce31",
+          "1fe037fb-bed0-4397-b3e2-ed174005da5a",
+          "21894fe1-4c49-4d43-ac0f-5724233c5c2a",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "f3ecb894-e942-4365-8813-82ec11c4a366",
+          "eab78e5b-7985-4279-91d0-a73c93a8f826",
+          "03e93e31-4c85-4e42-b936-fbf485424518"
+        ],
+        "latency_ms": 3674.5,
+        "input_tokens": 804,
+        "output_tokens": 277
+      },
+      {
+        "query": "Docker compose deployment",
+        "ranked_ids": [
+          "55140889-0140-4ca7-b93d-745bd7a63aea",
+          "c3a17b14-29f6-4047-a9df-4355d38138b2",
+          "c91efefd-0f54-4d12-af94-b52d247bb894",
+          "2b39e6c-70a6-48a7-9c28-899abcb7af07",
+          "d4d96a15-91f8-4763-8036-f0ad8eb27a84"
+        ],
+        "latency_ms": 2584.5,
+        "input_tokens": 914,
+        "output_tokens": 148
+      },
+      {
+        "query": "CI/CD GitHub Actions pipeline",
+        "ranked_ids": [
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "ae48a908-661b-4a0a-9c94-d20869bd9dff",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "736651f9-ca26-4f3e-8495-346b609a43f3"
+        ],
+        "latency_ms": 2577.9,
+        "input_tokens": 1011,
+        "output_tokens": 116
+      },
+      {
+        "query": "Nginx reverse proxy configuration",
+        "ranked_ids": [
+          "1c485506-87e8-4cd3-9941-fac5e74631ef",
+          "30002248-c858-42e8-bd2d-8e52746e7a14",
+          "a7234272-7435-4b24-b622-4fd2a9681f78",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323"
+        ],
+        "latency_ms": 2397.2,
+        "input_tokens": 937,
+        "output_tokens": 115
+      },
+      {
+        "query": "PostgreSQL performance tuning",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "203a6013-54bc-4b76-ba7b-011cbb7714fd"
+        ],
+        "latency_ms": 1822.1,
+        "input_tokens": 792,
+        "output_tokens": 60
+      },
+      {
+        "query": "Redis caching strategies",
+        "ranked_ids": [
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "452bbdca-9037-4045-b897-a4df18c57ba5",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "64ea9dcc-5cc5-45cf-aa76-c75dae26024f",
+          "db81cdb3-1562-4d94-9c60-1e1f646a648a"
+        ],
+        "latency_ms": 2457.9,
+        "input_tokens": 948,
+        "output_tokens": 148
+      },
+      {
+        "query": "NestJS FastAPI framework comparison",
+        "ranked_ids": [
+          "a50cad66-e404-40cb-8c72-ad26e637a83a",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "ee407030-e1d4-4c96-b472-ce37180ae106"
+        ],
+        "latency_ms": 2533.6,
+        "input_tokens": 1067,
+        "output_tokens": 119
+      },
+      {
+        "query": "Obsidian knowledge management",
+        "ranked_ids": [
+          "7f83d0f5-08d5-41c3-985c-eaebe626a517",
+          "c2e66089-112f-4790-837f-3e3e65508161",
+          "a7623e2f-8a5c-4c47-8a4b-2be73c4ff4c7",
+          "1cdacfa1-cf23-47fc-a60a-f6b83096627e",
+          "5eae1ae3-0426-46ef-a44a-c904a2fa77e1",
+          "d16536c2-a1be-4327-8980-e9f6e7a307bd"
+        ],
+        "latency_ms": 3093.1,
+        "input_tokens": 983,
+        "output_tokens": 180
+      },
+      {
+        "query": "git workflow branching strategy",
+        "ranked_ids": [
+          "d9e521d2-dd54-4211-9a13-5642f05b6bf3",
+          "357ce012-825c-426a-ad74-aeb3a7038aab",
+          "6782f472-f7bd-4baa-a385-7f2860e07403",
+          "57506811-3e4e-4dae-a346-49948002c0ca"
+        ],
+        "latency_ms": 2184.6,
+        "input_tokens": 856,
+        "output_tokens": 113
+      },
+      {
+        "query": "meaning of human life",
+        "ranked_ids": [
+          "501c9783-cebf-4001-a626-da7ad8962800",
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "d67a0615-08c8-42cf-9209-c34801596c3a",
+          "00029f50-d442-47ef-967a-b96b96fb064c",
+          "b1f3cb03-01b8-47b4-bfef-2fce155f18b9",
+          "8273bff7-2476-49f7-969c-7d7cad35810d",
+          "582ba5b8-3aa7-4e3f-ac15-7724f4322455",
+          "da1de50e-679d-4366-bf8d-1ff7594e8292",
+          "c091cbe0-5f85-4041-b121-30ff6ee1455f"
+        ],
+        "latency_ms": 4363.8,
+        "input_tokens": 864,
+        "output_tokens": 278
+      },
+      {
+        "query": "AI ethics and consciousness",
+        "ranked_ids": [
+          "d87bf24f-3308-4700-a368-9ddcc1346fda",
+          "598cea39-2cd6-40b1-87ec-22e7b1799b68",
+          "dacf0412-9e0c-4bc8-a77d-e6fc61034e88"
+        ],
+        "latency_ms": 2166.1,
+        "input_tokens": 853,
+        "output_tokens": 88
+      },
+      {
+        "query": "rules of robotics for AI agents",
+        "ranked_ids": [
+          "6611f945-d034-45b5-8d7e-060cddbb7f3d",
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "0923315a-f141-4d2c-8887-f2f7f5908550",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66"
+        ],
+        "latency_ms": 5668.9,
+        "input_tokens": 871,
+        "output_tokens": 123
+      },
+      {
+        "query": "digital immortality concept",
+        "ranked_ids": [
+          "7482bb32-5ff9-438d-a2ff-c0e336e7c7ed",
+          "d87bf24f-3308-4700-a368-9ddcc1346fda",
+          "eef4c5e4-b6d8-4875-9234-885706eca4be",
+          "6a914105-37ad-4d5a-a7dd-fd362dec6d65"
+        ],
+        "latency_ms": 2132.5,
+        "input_tokens": 743,
+        "output_tokens": 117
+      },
+      {
+        "query": "knowledge and wisdom distinction",
+        "ranked_ids": [
+          "29aedceb-a022-42cd-9d86-49df48f8d5c5",
+          "75a616b4-d2f8-4ff1-87fa-efd4779fb5b2",
+          "0e6315f9-6be8-4632-8c31-7f82bd7a1270"
+        ],
+        "latency_ms": 2201.3,
+        "input_tokens": 943,
+        "output_tokens": 95
+      },
+      {
+        "query": "human-AI collaboration future",
+        "ranked_ids": [
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "017f67f9-9a4e-4217-8a79-850cffa5a062",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e"
+        ],
+        "latency_ms": 2748.4,
+        "input_tokens": 759,
+        "output_tokens": 152
+      },
+      {
+        "query": "philosophy of technology",
+        "ranked_ids": [
+          "1a8125cf-631e-4882-a3fe-bfb4e121559a",
+          "0f5a220b-416a-4e29-bcc4-2b7bdb2d4f04",
+          "c6d7a536-e61a-4d8f-ab2f-3e2bce65c7f0"
+        ],
+        "latency_ms": 1795.9,
+        "input_tokens": 663,
+        "output_tokens": 100
+      }
+    ],
+    "gpt4omini": [
+      {
+        "query": "embedding models for knowledge graph",
+        "ranked_ids": [
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "2de17289-f43c-4126-b74d-2188278c999f"
+        ],
+        "latency_ms": 3119.6,
+        "input_tokens": 894,
+        "output_tokens": 266
+      },
+      {
+        "query": "how does BGE-M3 hybrid search work",
+        "ranked_ids": [
+          "28da2f95-a42b-4233-8b29-9849df4e1616",
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "2b47648b-4ce4-41a9-a1a4-7289edf14363",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "b41dacf8-e994-494b-8c0b-41177bd0656b",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07",
+          "180f7a4d-f6fa-487a-877f-89c0b2307ae4",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee"
+        ],
+        "latency_ms": 4126.0,
+        "input_tokens": 862,
+        "output_tokens": 264
+      },
+      {
+        "query": "entity extraction from text chunks",
+        "ranked_ids": [
+          "fbbcf881-afeb-4d01-8856-9790542b2e94",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4",
+          "288af4bc-faea-4b36-bd6a-47f24ed5b257",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+          "b3f3e549-7aec-4d56-a25d-c0f0b0fa80bb",
+          "5428a76d-67b5-4cc6-9fe1-76ac090823a4",
+          "e66b7b9b-704a-43ca-b2b7-579cf148c96d",
+          "823caf5c-eed0-464b-8fb5-2e49084b523b"
+        ],
+        "latency_ms": 2691.1,
+        "input_tokens": 838,
+        "output_tokens": 271
+      },
+      {
+        "query": "LLM vs ML for NER tasks",
+        "ranked_ids": [
+          "81bd57d2-88cc-44a6-ad62-1d1dc4505d7c",
+          "96f3f3ab-7951-4348-8f30-2c89211f1300",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "e0a08ad2-d80c-4d4a-8956-a780dcec8e3d",
+          "c826a841-8229-4758-a5b2-31172a3fe742",
+          "193d4261-875d-45ae-a122-35abc499e2cf",
+          "ff1ca74-ca05-4c48-ac77-2fa77cc61b75",
+          "d93e252b-e883-4cfd-8a46-571653d5617d",
+          "ede1207f-8ed0-497c-b2e9-17c50b496e81"
+        ],
+        "latency_ms": 4612.6,
+        "input_tokens": 752,
+        "output_tokens": 258
+      },
+      {
+        "query": "vector database indexing strategies",
+        "ranked_ids": [
+          "43dda677-f886-41fe-8dbf-21c322ac8187",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+          "823caf5c-eed0-464b-8fb5-2e49084b523b",
+          "24570fb3-c69a-43f6-ad80-bf30cd5938f7",
+          "4b8b0d3b-db6f-4166-a7a5-b8172012607f",
+          "30c7034d-c3a2-4006-b60b-29261a90cff6",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "d52e025b-319d-4737-893c-8944188d13cf",
+          "9766a606-9a0f-49cf-a67f-3a51e0f0ff06",
+          "eaadd958-76fa-488c-889c-33923b3850f6"
+        ],
+        "latency_ms": 3400.3,
+        "input_tokens": 793,
+        "output_tokens": 260
+      },
+      {
+        "query": "knowledge graph deduplication",
+        "ranked_ids": [
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "2de17289-f43c-4126-b74d-2188278c999f",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "227b2c53-aa7a-4f89-ad4b-7431f8d1c916",
+          "45f01173-78e3-4a9a-b1fe-cce43fd8337c",
+          "17179c01-10f9-4d8f-90d4-908e433a206e",
+          "58f4ee9f-8975-4bb0-bcce-3e6ef0c79016",
+          "c381dd56-9439-4645-a596-456261a8668e",
+          "416b2f65-5ef4-496e-9a07-aefa93c3d677",
+          "ba446c61-fd24-4c5f-8587-46f601b0fa65"
+        ],
+        "latency_ms": 5011.3,
+        "input_tokens": 936,
+        "output_tokens": 268
+      },
+      {
+        "query": "transformer architecture for NLP",
+        "ranked_ids": [],
+        "latency_ms": 573.7,
+        "input_tokens": 707,
+        "output_tokens": 5
+      },
+      {
+        "query": "RAG retrieval augmented generation",
+        "ranked_ids": [
+          "b41dacf8-e994-494b-8c0b-41177bd0656b",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "eca469f5-fb35-4412-ba0a-055d7aea28ce",
+          "180f7a4d-f6fa-487a-877f-89c0b2307ae4",
+          "93351e48-0f41-407e-9413-804207d6cb4b",
+          "2205f52b-4a11-4aca-a27e-cda620caceb2",
+          "e2c8d6f4-4786-44ea-9417-dabc96bad16f",
+          "bb8dfcab-8332-430e-8492-1533b635bece"
+        ],
+        "latency_ms": 5418.1,
+        "input_tokens": 717,
+        "output_tokens": 261
+      },
+      {
+        "query": "fine-tuning language models",
+        "ranked_ids": [
+          "32be75df-a9a2-44c0-a00f-c992acda34cb",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "c4e4f313-24c3-44ec-8f05-c802e0bf7f04",
+          "3878921e-bdca-49a0-a6ce-a0e897511ad3",
+          "380447aa-fa44-4226-b75f-a7e5f92613e1",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "dd54cf67-3c82-4d24-9cf3-8affa10df174"
+        ],
+        "latency_ms": 4363.9,
+        "input_tokens": 603,
+        "output_tokens": 262
+      },
+      {
+        "query": "prompt engineering best practices",
+        "ranked_ids": [
+          "71e5e489-3ad0-4925-83de-73e3cbc937de",
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "e878e3f8-d629-47ec-9ee3-7f9575d16c73",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246",
+          "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+          "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+          "eb2d357c-1860-4df0-b316-67d00fede031",
+          "d93e252b-e883-4cfd-8a46-571653d5617d",
+          "099fc4fa-9756-4e9c-abcd-00ff6afcf4ea"
+        ],
+        "latency_ms": 4937.1,
+        "input_tokens": 757,
+        "output_tokens": 258
+      },
+      {
+        "query": "Arcanada ecosystem architecture",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "a63379ee-1452-4ac5-a211-24ca0f34779a",
+          "e41dc184-3cd9-45d7-8f31-978af03a635d",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "1842c8b9-078b-419d-b341-8be7aae57d5e",
+          "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+          "e79b0006-838b-4ea1-b41b-4841682177a9",
+          "96cf60b4-6217-4019-b253-0f89e5e5eeb4",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d"
+        ],
+        "latency_ms": 3251.1,
+        "input_tokens": 823,
+        "output_tokens": 266
+      },
+      {
+        "query": "Agent Dreamer wiki organization",
+        "ranked_ids": [
+          "e79b0006-838b-4ea1-b41b-4841682177a9",
+          "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+          "d2935c62-c347-4cc0-a3d5-c7ac0df3dfc0",
+          "a8dd0846-e139-4674-81c2-851e589c4dac",
+          "e7beb1f8-163b-49dd-b46c-ff868180a1f4",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246",
+          "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+          "2d4d8a74-a933-4571-95e4-6c13b5390148",
+          "99090061-a528-4159-939f-f1c14c125cc0"
+        ],
+        "latency_ms": 4172.8,
+        "input_tokens": 779,
+        "output_tokens": 264
+      },
+      {
+        "query": "Scrutator search engine design",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "7539f36f-247a-4352-ab13-5b174f849b8a",
+          "da1196dc-b3c4-455d-a35a-58c3605a0a4b",
+          "2faffe87-97ec-4b2e-abad-5f397f7c6df5",
+          "11d31782-8d42-4877-9cb2-97cd9cbf47d1",
+          "2871b849-12e8-4376-a2b4-c65e22e5be86",
+          "2b47648b-4ce4-41a9-a1a4-7289edf14363",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "ea3411bc-eb11-43af-be75-c51786d15636"
+        ],
+        "latency_ms": 2849.8,
+        "input_tokens": 889,
+        "output_tokens": 263
+      },
+      {
+        "query": "Model Connector API integration",
+        "ranked_ids": [
+          "7c1708bd-f8a3-4ba4-804d-5a5890b2712a",
+          "e5139c80-ca5f-4fde-b27c-7940d9259872",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "f8028840-b5b0-4d5e-8b6d-30458949ae1e",
+          "7457e062-8b5d-44b4-b2f2-76b26a79c416",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "cfd278c6-3236-4a4f-982d-cba450634c54",
+          "4a03cd68-8a22-45b0-bf4f-4d7f496c81b8",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "c4e4f313-24c3-44ec-8f05-c802e0bf7f04"
+        ],
+        "latency_ms": 3394.8,
+        "input_tokens": 789,
+        "output_tokens": 281
+      },
+      {
+        "query": "datarim workflow management",
+        "ranked_ids": [
+          "6d20c5e4-f7b7-46f0-be28-03d49b65d234",
+          "2326ffb8-f84a-430c-b188-592ca79fab53",
+          "86d6c644-a802-43d2-ac1e-7e54467e7b08",
+          "93c813ad-044d-488a-8dd4-d1b2074bc28b",
+          "7ba1e9a3-97c5-44ab-ade1-f96bdb875b78",
+          "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+          "96e055b8-4404-4138-9295-95f4ccf4fb2a",
+          "906686fb-c715-46ab-a508-2bee02116168",
+          "a9156152-9be7-4afd-9310-f2775bc25095",
+          "1261c642-81cb-48cf-8023-4784a1c10f06"
+        ],
+        "latency_ms": 2588.3,
+        "input_tokens": 874,
+        "output_tokens": 255
+      },
+      {
+        "query": "Verdicus macOS application",
+        "ranked_ids": [
+          "646c191d-577e-4d81-909e-1b1a347bfaa4",
+          "f0bf47a8-fb08-438f-8602-bd2ad77c84f2",
+          "4cd5b5ee-1546-487e-b2b3-a40154cea139",
+          "a35ba215-f208-4036-8d59-2ef84914cbcf",
+          "bd58b1ae-5d88-4cd6-af34-ad710593fd61",
+          "99e8eb7c-d2f2-469b-8992-239fcecef148",
+          "5e3b2ae4-9060-4474-b7a7-b934e46981b3",
+          "5605e171-5253-44cd-8867-d3279c76e7c4",
+          "7e9ac199-4f6c-480a-a79a-c12e757b5e80",
+          "c091cbe0-5f85-4041-b121-30ff6ee1455f"
+        ],
+        "latency_ms": 2377.2,
+        "input_tokens": 710,
+        "output_tokens": 259
+      },
+      {
+        "query": "Ops Bot monitoring system",
+        "ranked_ids": [
+          "f2a9c443-5254-4a89-836f-6cb2e5ed5bd5",
+          "8580b0eb-a79d-451c-8648-83e44858e236",
+          "3eb1508e-de02-4b5e-a04f-ca05a390b40e",
+          "43602041-b136-4d66-8d58-9441a7d2d4e5",
+          "5ac10cee-4880-4d31-b392-c3a2ec4cc791",
+          "361dac3e-0ddd-438c-bc5d-a3a0dfeabf06",
+          "8ca01184-7e65-42e4-a370-8733799a110f",
+          "f56d883f-1c5e-4e30-8055-64b4f216849c",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "9d93191b-0e1b-45cb-9c38-7e41e185fdc6"
+        ],
+        "latency_ms": 3626.8,
+        "input_tokens": 737,
+        "output_tokens": 268
+      },
+      {
+        "query": "Personal Assistant telegram bot",
+        "ranked_ids": [
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "3e784f18-a696-4464-ae8d-e454e7d59352",
+          "afba1713-6a7f-40f7-9b3b-1d06599e5489",
+          "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+          "05cc3662-3fb1-4d5b-bd37-9c72e3d0cddb",
+          "31c5919f-cfa4-46c6-8a64-3607183f756b",
+          "7a7d7b4f-d2b8-459d-9c88-1a61f4d54850",
+          "9d93191b-0e1b-45cb-9c38-7e41e185fdc6",
+          "7a95023d-7156-46c0-9b09-13d0329fa8b4"
+        ],
+        "latency_ms": 2647.2,
+        "input_tokens": 777,
+        "output_tokens": 250
+      },
+      {
+        "query": "Disk Arcana file synchronization",
+        "ranked_ids": [
+          "5efbc676-852a-4910-a10e-04bc1e666451",
+          "5054b507-0d27-44cd-bcf9-2b9f766692cd",
+          "07c652f3-0567-4238-9f49-f3067867bbf3",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "c6bac447-41dc-46bf-a45a-5300b42688b4",
+          "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "b394daf1-7820-4ab7-bf13-36b714229753",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a"
+        ],
+        "latency_ms": 3171.8,
+        "input_tokens": 953,
+        "output_tokens": 251
+      },
+      {
+        "query": "Long Term Memory project",
+        "ranked_ids": [
+          "aaefda8a-142d-41e0-ac45-66fa48f21ae4",
+          "9dcb61ba-5060-466d-85f6-54602764fbdd",
+          "d09f0538-ed91-4a3f-87c5-3e8fed88fea4",
+          "a306e20d-84aa-45fa-9ce6-fa0723f310c1",
+          "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+          "a996ce4d-5ac2-49f1-b8f5-1bfd5a4996c0",
+          "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "45f01173-78e3-4a9a-b1fe-cce43fd8337c",
+          "414a7fed-d5e8-470c-bd85-c24eb34044d9"
+        ],
+        "latency_ms": 3942.7,
+        "input_tokens": 850,
+        "output_tokens": 269
+      },
+      {
+        "query": "SSL certificate management Cloudflare",
+        "ranked_ids": [
+          "2583eaf1-4287-4e21-b178-4d22eaca66fa",
+          "c6bac447-41dc-46bf-a45a-5300b42688b4",
+          "12759900-1a64-4096-9295-e5aca72792f0",
+          "8401a3e7-73af-4588-bc94-170cc89dbad6",
+          "4c8e4cdb-feaa-426e-8117-639a58385cbb",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "c8043071-7c85-40c5-adc2-87592e5fda08",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "4b1284b9-bad1-400e-82dc-60d3c1253250"
+        ],
+        "latency_ms": 5070.3,
+        "input_tokens": 835,
+        "output_tokens": 257
+      },
+      {
+        "query": "HashiCorp Vault secret storage",
+        "ranked_ids": [
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "0ee7393e-3e8e-4306-8781-fb73705c406b",
+          "a2d70e1e-48c7-4102-87b9-579acad9f9b9",
+          "41fcb55b-1d13-4ef0-9f22-6c1f446afe63",
+          "b394daf1-7820-4ab7-bf13-36b714229753",
+          "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+          "662040d3-918c-4508-a558-aed57cbb6078",
+          "d06249eb-0ebc-4880-8c54-188662110ace",
+          "283fe574-c1f0-47dc-a870-b11884de043c",
+          "614d6d07-9ced-4b6d-916c-a8ab8ac2f962"
+        ],
+        "latency_ms": 2850.0,
+        "input_tokens": 745,
+        "output_tokens": 247
+      },
+      {
+        "query": "Tailscale mesh VPN setup",
+        "ranked_ids": [
+          "fe70d5b7-cf36-434c-aede-2c93ed39137f",
+          "4769cb35-8a33-43cc-bb90-e25f6957bcb8",
+          "ff017c76-b4b7-406c-b4ba-3a8cc4425974",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "0301115f-5e32-4d0b-96ef-b2b6a50bef2a",
+          "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+          "921db22e-f0f7-4766-b347-c89cef1d8b13",
+          "361dac3e-0ddd-438c-bc5d-a3a0dfeabf06",
+          "0eabbcac-2045-4592-a3bb-ceb323ae4246"
+        ],
+        "latency_ms": 3557.0,
+        "input_tokens": 732,
+        "output_tokens": 261
+      },
+      {
+        "query": "server access control policies",
+        "ranked_ids": [
+          "d861b617-e3f6-47fe-a21f-cc520002b0a6",
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "905a1901-9d60-41be-9fc1-4c95bfb2e76d",
+          "66a90d76-2144-46fe-8ca5-3be82df2970a",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "ec6edc8c-bc32-499b-8b94-af328747b7c5",
+          "1a12ee16-8f72-4921-b8a2-c350662fe5de",
+          "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+          "6062c4dd-9331-4b8c-8892-ff4e77022ed3"
+        ],
+        "latency_ms": 5623.2,
+        "input_tokens": 734,
+        "output_tokens": 268
+      },
+      {
+        "query": "API authentication bearer tokens",
+        "ranked_ids": [
+          "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "5fa143c4-ec8b-44d0-bbc8-1bddcb7be305",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "e5d88bc0-e21a-4230-a02b-da05eb100d87",
+          "c74296f8-f340-4156-ac2d-c79cb5823d90",
+          "334441e4-1061-45c0-a2bc-9f35d94f3877",
+          "8cebdaa5-34a7-488c-b978-3265236edf0c",
+          "186ef595-732c-49c0-897b-fc06196f8979"
+        ],
+        "latency_ms": 2628.2,
+        "input_tokens": 892,
+        "output_tokens": 264
+      },
+      {
+        "query": "SSH key management GitHub",
+        "ranked_ids": [
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6",
+          "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+          "85c2e196-2afb-4a47-8b81-1b259ae98743",
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "ae48a908-661b-4a0a-9c94-d20869bd9dff",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2",
+          "d63d6ae7-4a63-45ec-847b-8a5a185a0fc8",
+          "1aa02a2c-1422-40a7-992f-824dc816eb7b",
+          "a1a55132-9b95-43b6-98b0-c4065afdce6e"
+        ],
+        "latency_ms": 3443.9,
+        "input_tokens": 912,
+        "output_tokens": 278
+      },
+      {
+        "query": "rate limiting and DDoS protection",
+        "ranked_ids": [
+          "03e93e31-4c85-4e42-b936-fbf485424518",
+          "b4c78820-7587-4b15-9a25-30e9b6d981df",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "6062c4dd-9331-4b8c-8892-ff4e77022ed3",
+          "ea21a556-26a7-4825-b760-c8f9643b00fa",
+          "498ede4d-2944-46c9-b579-45f11ea3beee",
+          "42414d6d-2f88-4ee0-99f1-c13f659ddafd",
+          "c30fc083-c73b-4470-988b-43d021bf6194",
+          "2181a6d7-874b-423a-bcdb-7dc201078cda",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323"
+        ],
+        "latency_ms": 2979.7,
+        "input_tokens": 838,
+        "output_tokens": 262
+      },
+      {
+        "query": "Docker container security",
+        "ranked_ids": [
+          "d4d96a15-91f8-4763-8036-f0ad8eb27a84",
+          "c917644c-13fb-4fa7-b3bf-acf620725986",
+          "fe0da4c2-914a-4297-b56f-991169c8b08e",
+          "98d531f9-f5e9-4439-8ebf-9114f96cdd24",
+          "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1",
+          "0d00c3c8-7e6b-4c80-a325-de5f7ff7c27a",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "2b39e916-70a6-48a7-9c28-899abcb7af07",
+          "292c283e-d56e-4ee2-95cf-26c0a7bd57b6",
+          "9766a606-9a0f-49cf-a67f-3a51e0f0ff06"
+        ],
+        "latency_ms": 2375.3,
+        "input_tokens": 796,
+        "output_tokens": 276
+      },
+      {
+        "query": "startup revenue model",
+        "ranked_ids": [],
+        "latency_ms": 717.2,
+        "input_tokens": 714,
+        "output_tokens": 6
+      },
+      {
+        "query": "content marketing strategy",
+        "ranked_ids": [
+          "76e32a4e-669f-4dd9-ac8c-ef241c1cb801",
+          "e288213e-7a6f-4ae9-be53-74bfa301aa9e",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "45f4fb99-791b-45e1-a527-2f5faaa82e97",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "43065656-9e59-4fff-8233-017471e69482",
+          "41d7d62b-d4d4-4543-8831-f273fb6aa81e",
+          "6d9b724e-efef-40e4-a181-e025e1ad4ccb",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f"
+        ],
+        "latency_ms": 2992.4,
+        "input_tokens": 828,
+        "output_tokens": 254
+      },
+      {
+        "query": "social media engagement optimization",
+        "ranked_ids": [
+          "8a1178aa-7966-4a6f-9dc0-580ed37aaf8e",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "a1fecce0-a258-4f94-849a-7933ee0e6b53",
+          "498ede4d-2944-46c9-b579-45f11ea3beee",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "56802560-a2f0-4c50-840e-b292f5fa1868",
+          "4522b9cd-f344-41fd-b241-1264757c84e3",
+          "41fcb55b-1d13-4ef0-9f22-6c1f446afe63",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07",
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255"
+        ],
+        "latency_ms": 4769.6,
+        "input_tokens": 678,
+        "output_tokens": 259
+      },
+      {
+        "query": "freelance business management",
+        "ranked_ids": [
+          "0d0c5e1d-7da6-4fa6-af70-4d16968607c9",
+          "9e7576c1-a9b4-4265-b41e-10155169d31e",
+          "901e28d6-9c77-4aa0-a1d9-c30eed3dd255",
+          "a1fecce0-a258-4f94-849a-7933ee0e6b53",
+          "bb6103d5-1a33-40e2-8ff2-3e85297a11a3",
+          "4b926941-b418-4f6d-8b05-1b87fd14103c",
+          "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+          "8d669e12-f358-4902-9bb6-2398a06ab19e",
+          "3b870885-7303-490a-851e-9399ab5d25db",
+          "03e93e31-4c85-4e42-b936-fbf485424518"
+        ],
+        "latency_ms": 4019.3,
+        "input_tokens": 667,
+        "output_tokens": 264
+      },
+      {
+        "query": "SaaS pricing models",
+        "ranked_ids": [
+          "751f49d4-d6a1-44a1-bf20-effd797e6260",
+          "32be75df-a9a2-44c0-a00f-c992acda34cb",
+          "380447aa-fa44-4226-b75f-a7e5f92613e1",
+          "28b3f817-b981-450a-af25-dad897f4ce83",
+          "1f282864-35c9-4009-9d3f-b7c61cc5fe6a",
+          "76ac7ba3-458b-47ce-92ca-3697a9fb45e1",
+          "3878921e-bdca-49a0-a6ce-a0e897511ad3",
+          "b928c31a-0c9a-42d6-9020-47e9218c50ff",
+          "897dfdf9-a473-49a1-95aa-70d36067ca6e",
+          "921db22e-f0f7-4766-b347-c89cef1d8b13"
+        ],
+        "latency_ms": 4047.7,
+        "input_tokens": 626,
+        "output_tokens": 254
+      },
+      {
+        "query": "customer acquisition cost",
+        "ranked_ids": [
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "05211b52-7cb9-469a-803d-f6f6e4b0c733",
+          "83df7ee6-dd59-45be-8e76-e3a1538c0717",
+          "3468790c-54e2-4834-8714-5bf6c53c9c2d",
+          "751f49d4-d6a1-44a1-bf20-effd797e6260",
+          "62b538b7-d3ab-4f4e-9109-b0ceb31553e4",
+          "6e891542-0e6f-4f7c-812b-4830320bef50",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "f8108f6a-bc0d-4112-9084-9e33462e89a3",
+          "8273bff7-2476-49f7-969c-7d7cad35810d"
+        ],
+        "latency_ms": 2584.5,
+        "input_tokens": 854,
+        "output_tokens": 266
+      },
+      {
+        "query": "project management methodology",
+        "ranked_ids": [
+          "afd6f579-7552-4088-a9bf-654aa78f4392",
+          "a97413da-1e72-4cec-83e0-25db22e12f91",
+          "f324443d-8b5a-4519-8c61-37ab9192ce31",
+          "c12a0ec1-aa1b-4bf1-af9b-69ba75eb9633",
+          "1fe037fb-bed0-4397-b3e2-ed174005da5a",
+          "eab78e5b-7985-4279-91d0-a73c93a8f826",
+          "21894fe1-4c49-4d43-ac0f-5724233c5c2a",
+          "205d0353-e894-4898-a4af-d5effa308553",
+          "f3ecb894-e942-4365-8813-82ec11c4a366",
+          "03e93e31-4e85-4e42-b936-fbf485424518"
+        ],
+        "latency_ms": 3331.4,
+        "input_tokens": 683,
+        "output_tokens": 252
+      },
+      {
+        "query": "Docker compose deployment",
+        "ranked_ids": [
+          "c3a17b14-29f6-4047-a9df-4355d38138b2",
+          "55140889-0140-4ca7-b93d-745bd7a63aea",
+          "c91efefd-0f54-4d12-af94-b52d247bb894",
+          "d4d96a15-91f8-4763-8036-f0ad8eb27a84",
+          "c917644c-13fb-4fa7-b3bf-acf620725986",
+          "2b39e916-70a6-48a7-9c28-899abcb7af07",
+          "7e9ac199-4f6c-480a-a79a-c12e757b5e80",
+          "a583ee0a-ef15-4e3f-8eba-2147d72d39a5",
+          "96cf60b4-6217-4019-b253-0f89e5e5eeb4",
+          "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1"
+        ],
+        "latency_ms": 3365.5,
+        "input_tokens": 822,
+        "output_tokens": 268
+      },
+      {
+        "query": "CI/CD GitHub Actions pipeline",
+        "ranked_ids": [
+          "e0bba69c-05f8-4a0d-a728-898953656a9d",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "736651f9-ca26-4f3e-8495-346b609a43f3",
+          "16a71293-a22f-43f9-b9ae-08a77788562e",
+          "48f1a695-2460-4ff3-851a-52f9145fb592",
+          "ae48a908-661b-4a0a-9c94-d20869bd9dff",
+          "6634e6af-ccc5-48f6-a12b-5b2fcedd094a",
+          "3b5a16ed-2c83-4dc2-9999-d1f5a80b83a7",
+          "d63d6ae7-4a63-45ec-847b-8a5a185a0fc8"
+        ],
+        "latency_ms": 3506.8,
+        "input_tokens": 897,
+        "output_tokens": 242
+      },
+      {
+        "query": "Nginx reverse proxy configuration",
+        "ranked_ids": [
+          "1c485506-87e8-4cd3-9941-fac5e74631ef",
+          "30002248-c858-42e8-bd2d-8e52746e7a14",
+          "12759900-1a64-4096-9295-e5aca72792f0",
+          "922abe1a-e8ee-465b-9ea0-867474896649",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+          "a7234272-7435-4b24-b622-4fd2a9681f78",
+          "3bc6f51c-ac33-4aca-a2cf-84978a2f2705",
+          "8401a3e7-73af-4588-bc94-170cc89dbad6",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1"
+        ],
+        "latency_ms": 3110.9,
+        "input_tokens": 842,
+        "output_tokens": 226
+      },
+      {
+        "query": "PostgreSQL performance tuning",
+        "ranked_ids": [
+          "1a24debf-3baa-404e-8f97-b85294d220c6",
+          "203a6013-54bc-4b76-ba7b-011cbb7714fd",
+          "4756d3d6-985a-49b6-83ec-829d9408982d",
+          "1933924c-ffe1-4768-b683-14fd6d914bc1",
+          "56802560-a2f0-4c50-840e-b292f5fa1868",
+          "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+          "eaadd958-76fa-488c-889c-33923b3850f6",
+          "a306e20d-84aa-45fa-9ce6-fa0723f310c1",
+          "498ede4d-2944-46c9-b579-45f11ea3beee",
+          "41cbb815-a820-49eb-b5cd-8a3bce485326"
+        ],
+        "latency_ms": 3289.4,
+        "input_tokens": 701,
+        "output_tokens": 237
+      },
+      {
+        "query": "Redis caching strategies",
+        "ranked_ids": [
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+          "452bbdca-9037-4045-b897-a4df18c57ba5",
+          "cb940968-2d1f-43f6-aabc-45d592f7f8cc",
+          "361dd81f-382a-48e5-a899-2ae65d0e0b1b",
+          "db81cdb3-1562-4d94-9c60-1e1f646a648a",
+          "bf41a6f5-2c77-4629-bce4-2c4fdc8d42e8",
+          "357ce012-825c-426a-ad74-aeb3a7038aab",
+          "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f"
+        ],
+        "latency_ms": 3829.5,
+        "input_tokens": 816,
+        "output_tokens": 269
+      },
+      {
+        "query": "NestJS FastAPI framework comparison",
+        "ranked_ids": [
+          "a50cad66-e404-40cb-8c72-ad26e637a83a",
+          "ee407008-e1d4-4c96-b472-ce37180ae106",
+          "5d37320f-2732-4ca6-9e63-bc62d9cdc00f",
+          "411b2bd7-f3b4-4c4f-8511-f9d20b32e374",
+          "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+          "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+          "30ad694a-0b98-42a5-9217-0c777f6b1a3d",
+          "7c7d009c-ad45-4bcf-90db-be88cc8253ac",
+          "f8028840-b5b0-4d5e-8b6d-30458949ae1e",
+          "b1cd8b56-606a-44e4-a83b-2b6bee836323"
+        ],
+        "latency_ms": 3627.8,
+        "input_tokens": 902,
+        "output_tokens": 269
+      },
+      {
+        "query": "Obsidian knowledge management",
+        "ranked_ids": [
+          "7f83d0f5-08d5-41c3-985c-eaebe626a517",
+          "a7623e2f-8a5c-4c47-8a4b-2be73c4ff4c7",
+          "c2e66089-112f-4790-837f-3e3e65508161",
+          "5eae1ea3-0426-46ef-a44a-c904a2fa77e1",
+          "1cdacfa1-cf23-47fc-a60a-f6b83096627e",
+          "c5c4398c-e49f-41ff-8b02-2716d10abb07",
+          "d16536c2-a1be-4327-8980-e9f6e7a307bd",
+          "f4cf9e1a-5bb5-4a4a-821f-e7e27ad0e6cb",
+          "56802560-a2f0-4c50-840e-b292f5fa1868",
+          "7d06631c-b629-4fdf-ae8c-e3abd9f61efd"
+        ],
+        "latency_ms": 4450.4,
+        "input_tokens": 845,
+        "output_tokens": 273
+      },
+      {
+        "query": "git workflow branching strategy",
+        "ranked_ids": [
+          "9779bb25-c026-4454-aa6b-1a692c5f45ec",
+          "600ece1e-49f6-4efe-ac2f-8ebcf16c26f3",
+          "feeff425-2149-4ae6-8035-4ba00951d3f1",
+          "f943e679-d289-4b3f-96f2-8035038261a2",
+          "357ce012-825c-426a-ad74-aeb3a7038aab",
+          "6782f472-f7bd-4baa-a385-7f2860e07403",
+          "57506811-3e4e-4dae-a346-49948002c0ca",
+          "d9e521d2-dd54-4211-9a13-5642f05b6bf3",
+          "6d20c5e4-f7b7-46f0-be28-03d49b65d234",
+          "27e1d1ba-7b54-48c0-9182-ad3236f32adb"
+        ],
+        "latency_ms": 3761.9,
+        "input_tokens": 762,
+        "output_tokens": 243
+      },
+      {
+        "query": "meaning of human life",
+        "ranked_ids": [
+          "00029f50-d442-47ef-967a-b96b96fb064c",
+          "501c9783-cebf-4001-a626-da7ad8962800",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "d67a0615-08c8-42cf-9209-c34801596c3a",
+          "428552ce-ab51-4f8c-9129-de172dc9b744",
+          "b1f3cb03-01b8-47b4-bfef-2fce155f18b9",
+          "582ba5b8-3aa7-4e3f-ac15-7724f4322455",
+          "da1de50e-679d-4366-bf8d-1ff7594e8292",
+          "c091cbe0-5f85-4041-b121-30ff6ee1455f",
+          "8273bff7-2476-49f7-969c-7d7cad35810d"
+        ],
+        "latency_ms": 4063.4,
+        "input_tokens": 765,
+        "output_tokens": 255
+      },
+      {
+        "query": "AI ethics and consciousness",
+        "ranked_ids": [
+          "d87bf24f-3308-4700-a368-9ddcc1346fda",
+          "598cea39-2cd6-40b1-87ec-22e7b1799b68",
+          "1fb6f953-5cb5-4133-8637-0b3b2c6af926",
+          "501c9783-cebf-4001-a626-da7ad8962800",
+          "dacf0412-9e0c-4bc8-a77d-e6fc61034e88",
+          "9d978757-8fdb-4c0f-a1f6-96d815777ea2",
+          "9b973b09-92d0-4bb8-832b-716ca30bc0f5",
+          "2e2bf0df-dde3-4f3c-9b53-4775a4855bbd",
+          "6808f93d-4bc9-484d-84bc-b8eaf072d3d5",
+          "c2b137cb-7cf8-45a6-9d54-c6fb73133345"
+        ],
+        "latency_ms": 2978.3,
+        "input_tokens": 749,
+        "output_tokens": 267
+      },
+      {
+        "query": "rules of robotics for AI agents",
+        "ranked_ids": [
+          "6611f945-d034-45b5-8d7e-060cddbb7f3d",
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66",
+          "0923315a-f141-4d2c-8887-f2f7f5908550",
+          "ddde9df2-29de-4013-9b27-d0ce2d0369ce",
+          "93c813ad-044d-488a-8dd4-d1b2074bc28b",
+          "598cea39-2cd6-40b1-87ec-22e7b1799b68",
+          "b4bcd6a4-cfe6-4e33-8c42-4432bfe81213",
+          "93351e48-0f41-407e-9413-804207d6cb4b",
+          "03a991d0-1fd2-44f9-b840-258d2ecd9953"
+        ],
+        "latency_ms": 4626.5,
+        "input_tokens": 770,
+        "output_tokens": 270
+      },
+      {
+        "query": "digital immortality concept",
+        "ranked_ids": [],
+        "latency_ms": 620.8,
+        "input_tokens": 680,
+        "output_tokens": 5
+      },
+      {
+        "query": "knowledge and wisdom distinction",
+        "ranked_ids": [
+          "c12a0ec1-aa1b-4bf1-af9b-69ba75eb9633",
+          "0e6315f9-6be8-4632-8c31-7f82bd7a1270",
+          "29aedceb-a022-42cd-9d86-49df48f8d5c5",
+          "75a616b4-d2f8-4ff1-87fa-efd4779fb5b2",
+          "6c0c965d-fff2-469e-80c9-3c0b1af7799e",
+          "d5d3704b-3a9d-476c-98cc-61af338b46af",
+          "f4cf9e1a-5bb5-4a4a-821f-e7e27ad0e6cb",
+          "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+          "582ba5b8-3aa7-4e3f-ac15-7724f4322455",
+          "4756d3d6-985a-49b6-83ec-829d9408982d"
+        ],
+        "latency_ms": 3374.6,
+        "input_tokens": 804,
+        "output_tokens": 282
+      },
+      {
+        "query": "human-AI collaboration future",
+        "ranked_ids": [
+          "6cc828d6-63fb-4a50-8d45-d07e68cd5677",
+          "017f67f9-9a4e-4217-8a79-850cffa5a062",
+          "bd55b1ef-05f6-43ae-9578-c380176a1c6e",
+          "e417575d-dea2-49fb-8f2f-617c66e44a66",
+          "2f8eb0e5-8b4c-402a-8e04-1db8f7629a62",
+          "f3a7e896-4c75-40b6-87d4-b1bb0dd76716",
+          "e0a08ad2-d80c-4d4a-8956-a780dcec8e3d",
+          "d7f89c80-9452-432a-b547-2451d8bb26f2",
+          "4720b1bf-d407-4b76-b2b0-b87c56c5f5d2"
+        ],
+        "latency_ms": 2809.9,
+        "input_tokens": 683,
+        "output_tokens": 253
+      },
+      {
+        "query": "philosophy of technology",
+        "ranked_ids": [
+          "0f5a220b-416a-4e29-bcc4-2b7bdb2d4f04",
+          "9325caf9-da77-4eba-85ce-7f73a0304088",
+          "c6d7a536-e61a-4d8f-ab2f-3e2bce65c7f0",
+          "1a8125cf-631e-4882-a3fe-bfb4e121559a",
+          "4aa34a1f-2089-4604-9828-e188e4799851",
+          "d67a0615-08c8-42cf-9209-c34801596c3a",
+          "21894fe1-4c49-4d43-ac0f-5724233c5c2a",
+          "3b870885-7303-490a-851e-9399ab5d25db",
+          "32993ef6-9715-49e2-9572-d3dd7a16b1e6"
+        ],
+        "latency_ms": 2835.5,
+        "input_tokens": 610,
+        "output_tokens": 242
+      }
+    ]
+  }
+}

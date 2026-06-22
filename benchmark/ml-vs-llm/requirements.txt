@@ -1,0 +1,16 @@
+# ML models
+gliner>=0.2
+setfit
+sentence-transformers  # for BGE-Reranker via CrossEncoder
+torch --index-url https://download.pytorch.org/whl/cpu
+
+# HTTP
+requests
+
+# Metrics & visualization
+numpy
+matplotlib
+scikit-learn
+
+# Utilities
+tqdm
