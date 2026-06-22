@@ -644,12 +644,19 @@ class TestSearcherCitationAndRerank:
         assert s.rerank_colbert_max_pool == 30
 
     def test_ltm_pipeline_untouched(self):
-        """V-AC-4: ltm/pipeline.py must not be changed by SRCH-0029."""
-        import subprocess
+        """V-AC-4: ltm/pipeline.py must not be changed by SRCH-0029.
 
+        Checks the working tree for uncommitted changes under ltm/. Resolves the
+        repo root from this file's location (no hardcoded absolute path — that
+        broke on the CI runner where the author's local path does not exist).
+        """
+        import subprocess
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[1]
         result = subprocess.run(
             ["git", "diff", "HEAD", "--name-only"],
-            cwd="/Users/ug/arcanada/Projects/Scrutator/code",
+            cwd=str(repo_root),
             capture_output=True,
             text=True,
         )
