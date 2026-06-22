@@ -1,0 +1,1703 @@
+{
+  "benchmark": "classification",
+  "chunks_total": 70,
+  "golden_chunks": 70,
+  "labels": [
+    "AI",
+    "arcana",
+    "security",
+    "business",
+    "tools",
+    "philosophy"
+  ],
+  "models": {
+    "setfit": {
+      "model": "setfit-paraphrase-MiniLM",
+      "accuracy": 0.6143,
+      "f1_macro": 0.3269,
+      "per_class": {
+        "AI": {
+          "precision": 0.7368,
+          "recall": 0.7,
+          "f1": 0.7179
+        },
+        "arcana": {
+          "precision": 0.1429,
+          "recall": 1.0,
+          "f1": 0.25
+        },
+        "business": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "infrastructure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "philosophy": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "precision": 0.4667,
+          "recall": 0.875,
+          "f1": 0.6087
+        },
+        "tools": {
+          "precision": 0.84,
+          "recall": 0.6176,
+          "f1": 0.7119
+        }
+      },
+      "chunks_processed": 70,
+      "chunks_errors": 0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "cost_usd": 0.0,
+      "latency_mean_ms": 12.4,
+      "latency_p50_ms": 13.3,
+      "latency_p95_ms": 17.6
+    },
+    "haiku": {
+      "model": "anthropic/claude-3.5-haiku",
+      "accuracy": 0.7714,
+      "f1_macro": 0.5464,
+      "per_class": {
+        "AI": {
+          "precision": 0.875,
+          "recall": 0.7,
+          "f1": 0.7778
+        },
+        "arcana": {
+          "precision": 0.125,
+          "recall": 1.0,
+          "f1": 0.2222
+        },
+        "business": {
+          "precision": 1.0,
+          "recall": 0.3333,
+          "f1": 0.5
+        },
+        "infrastructure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333
+        },
+        "tools": {
+          "precision": 0.8108,
+          "recall": 0.8824,
+          "f1": 0.8451
+        }
+      },
+      "chunks_processed": 70,
+      "chunks_errors": 0,
+      "total_input_tokens": 14979,
+      "total_output_tokens": 288,
+      "cost_usd": 0.013135,
+      "latency_mean_ms": 993.8,
+      "latency_p50_ms": 952.0,
+      "latency_p95_ms": 1345.5
+    },
+    "gpt4omini": {
+      "model": "openai/gpt-4o-mini",
+      "accuracy": 0.6571,
+      "f1_macro": 0.4569,
+      "per_class": {
+        "AI": {
+          "precision": 0.8,
+          "recall": 0.6,
+          "f1": 0.6857
+        },
+        "arcana": {
+          "precision": 0.0833,
+          "recall": 1.0,
+          "f1": 0.1538
+        },
+        "business": {
+          "precision": 0.3333,
+          "recall": 0.1667,
+          "f1": 0.2222
+        },
+        "infrastructure": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333
+        },
+        "tools": {
+          "precision": 0.7576,
+          "recall": 0.7353,
+          "f1": 0.7463
+        }
+      },
+      "chunks_processed": 70,
+      "chunks_errors": 0,
+      "total_input_tokens": 13048,
+      "total_output_tokens": 122,
+      "cost_usd": 0.00203,
+      "latency_mean_ms": 691.7,
+      "latency_p50_ms": 639.3,
+      "latency_p95_ms": 1194.6
+    }
+  },
+  "predictions": {
+    "setfit": [
+      {
+        "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+        "area": "AI",
+        "confidence": 0.201,
+        "latency_ms": 12.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+        "area": "tools",
+        "confidence": 0.2995,
+        "latency_ms": 16.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+        "area": "AI",
+        "confidence": 0.2959,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+        "area": "AI",
+        "confidence": 0.3209,
+        "latency_ms": 11.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+        "area": "AI",
+        "confidence": 0.2376,
+        "latency_ms": 9.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+        "area": "AI",
+        "confidence": 0.259,
+        "latency_ms": 14.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+        "area": "security",
+        "confidence": 0.1875,
+        "latency_ms": 13.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+        "area": "AI",
+        "confidence": 0.2516,
+        "latency_ms": 14.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+        "area": "tools",
+        "confidence": 0.2696,
+        "latency_ms": 13.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+        "area": "AI",
+        "confidence": 0.3385,
+        "latency_ms": 13.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+        "area": "security",
+        "confidence": 0.3812,
+        "latency_ms": 14.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+        "area": "AI",
+        "confidence": 0.1851,
+        "latency_ms": 14.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+        "area": "AI",
+        "confidence": 0.2356,
+        "latency_ms": 17.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+        "area": "security",
+        "confidence": 0.2517,
+        "latency_ms": 17.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+        "area": "AI",
+        "confidence": 0.1875,
+        "latency_ms": 18.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+        "area": "AI",
+        "confidence": 0.1198,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+        "area": "AI",
+        "confidence": 0.2523,
+        "latency_ms": 13.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+        "area": "tools",
+        "confidence": 0.2152,
+        "latency_ms": 8.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+        "area": "arcana",
+        "confidence": 0.1966,
+        "latency_ms": 13.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+        "area": "security",
+        "confidence": 0.2007,
+        "latency_ms": 11.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+        "area": "tools",
+        "confidence": 0.2276,
+        "latency_ms": 8.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+        "area": "tools",
+        "confidence": 0.5194,
+        "latency_ms": 9.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+        "area": "tools",
+        "confidence": 0.2375,
+        "latency_ms": 13.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+        "area": "tools",
+        "confidence": 0.1966,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+        "area": "tools",
+        "confidence": 0.2237,
+        "latency_ms": 13.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+        "area": "AI",
+        "confidence": 0.3245,
+        "latency_ms": 10.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+        "area": "tools",
+        "confidence": 0.228,
+        "latency_ms": 9.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+        "area": "security",
+        "confidence": 0.3662,
+        "latency_ms": 12.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+        "area": "tools",
+        "confidence": 0.3851,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+        "area": "tools",
+        "confidence": 0.2841,
+        "latency_ms": 11.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+        "area": "security",
+        "confidence": 0.3053,
+        "latency_ms": 8.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+        "area": "security",
+        "confidence": 0.1999,
+        "latency_ms": 14.9,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+        "area": "tools",
+        "confidence": 0.405,
+        "latency_ms": 13.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+        "area": "business",
+        "confidence": 0.1557,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+        "area": "tools",
+        "confidence": 0.2082,
+        "latency_ms": 13.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+        "area": "arcana",
+        "confidence": 0.4114,
+        "latency_ms": 11.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+        "area": "security",
+        "confidence": 0.287,
+        "latency_ms": 13.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+        "area": "tools",
+        "confidence": 0.2648,
+        "latency_ms": 13.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+        "area": "security",
+        "confidence": 0.4651,
+        "latency_ms": 9.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+        "area": "security",
+        "confidence": 0.3736,
+        "latency_ms": 8.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+        "area": "security",
+        "confidence": 0.146,
+        "latency_ms": 9.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+        "area": "security",
+        "confidence": 0.4624,
+        "latency_ms": 9.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+        "area": "tools",
+        "confidence": 0.3618,
+        "latency_ms": 10.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+        "area": "tools",
+        "confidence": 0.1692,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+        "area": "AI",
+        "confidence": 0.2469,
+        "latency_ms": 10.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+        "area": "philosophy",
+        "confidence": 0.177,
+        "latency_ms": 13.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+        "area": "tools",
+        "confidence": 0.2437,
+        "latency_ms": 11.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+        "area": "arcana",
+        "confidence": 0.4158,
+        "latency_ms": 8.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+        "area": "arcana",
+        "confidence": 0.3565,
+        "latency_ms": 10.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+        "area": "business",
+        "confidence": 0.1102,
+        "latency_ms": 7.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+        "area": "tools",
+        "confidence": 0.1716,
+        "latency_ms": 20.0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+        "area": "tools",
+        "confidence": 0.2101,
+        "latency_ms": 10.6,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+        "area": "AI",
+        "confidence": 0.2589,
+        "latency_ms": 13.7,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+        "area": "arcana",
+        "confidence": 0.2282,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+        "area": "tools",
+        "confidence": 0.2825,
+        "latency_ms": 13.2,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+        "area": "security",
+        "confidence": 0.2073,
+        "latency_ms": 8.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+        "area": "tools",
+        "confidence": 0.3482,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+        "area": "tools",
+        "confidence": 0.1712,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+        "area": "AI",
+        "confidence": 0.1964,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+        "area": "AI",
+        "confidence": 0.1964,
+        "latency_ms": 13.3,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+        "area": "AI",
+        "confidence": 0.2085,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+        "area": "tools",
+        "confidence": 0.3316,
+        "latency_ms": 8.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+        "area": "tools",
+        "confidence": 0.3033,
+        "latency_ms": 12.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+        "area": "philosophy",
+        "confidence": 0.1668,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+        "area": "security",
+        "confidence": 0.206,
+        "latency_ms": 13.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+        "area": "arcana",
+        "confidence": 0.3837,
+        "latency_ms": 12.1,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+        "area": "arcana",
+        "confidence": 0.3424,
+        "latency_ms": 13.5,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+        "area": "AI",
+        "confidence": 0.223,
+        "latency_ms": 9.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+        "area": "security",
+        "confidence": 0.2009,
+        "latency_ms": 13.4,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      {
+        "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+        "area": "tools",
+        "confidence": 0.2755,
+        "latency_ms": 9.8,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    ],
+    "haiku": [
+      {
+        "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+        "area": "AI",
+        "latency_ms": 740.1,
+        "input_tokens": 119,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+        "area": "AI",
+        "latency_ms": 851.7,
+        "input_tokens": 200,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+        "area": "AI",
+        "latency_ms": 1296.5,
+        "input_tokens": 154,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+        "area": "AI",
+        "latency_ms": 1120.4,
+        "input_tokens": 117,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+        "area": "AI",
+        "latency_ms": 1067.4,
+        "input_tokens": 98,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+        "area": "AI",
+        "latency_ms": 921.9,
+        "input_tokens": 199,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+        "area": "arcana",
+        "latency_ms": 1183.7,
+        "input_tokens": 167,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+        "area": "arcana",
+        "latency_ms": 1170.7,
+        "input_tokens": 229,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+        "area": "tools",
+        "latency_ms": 722.9,
+        "input_tokens": 326,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+        "area": "AI",
+        "latency_ms": 955.3,
+        "input_tokens": 353,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+        "area": "tools",
+        "latency_ms": 980.8,
+        "input_tokens": 445,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+        "area": "tools",
+        "latency_ms": 1161.3,
+        "input_tokens": 354,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+        "area": "AI",
+        "latency_ms": 1304.4,
+        "input_tokens": 338,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+        "area": "tools",
+        "latency_ms": 1189.5,
+        "input_tokens": 423,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+        "area": "tools",
+        "latency_ms": 809.0,
+        "input_tokens": 204,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+        "area": "AI",
+        "latency_ms": 1255.5,
+        "input_tokens": 300,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+        "area": "AI",
+        "latency_ms": 719.8,
+        "input_tokens": 147,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+        "area": "tools",
+        "latency_ms": 1099.7,
+        "input_tokens": 83,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+        "area": "tools",
+        "latency_ms": 762.3,
+        "input_tokens": 564,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+        "area": "business",
+        "latency_ms": 852.0,
+        "input_tokens": 143,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+        "area": "tools",
+        "latency_ms": 696.1,
+        "input_tokens": 95,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+        "area": "tools",
+        "latency_ms": 693.8,
+        "input_tokens": 91,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+        "area": "tools",
+        "latency_ms": 1170.6,
+        "input_tokens": 175,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+        "area": "tools",
+        "latency_ms": 1123.3,
+        "input_tokens": 164,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+        "area": "tools",
+        "latency_ms": 1161.7,
+        "input_tokens": 222,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+        "area": "AI",
+        "latency_ms": 763.7,
+        "input_tokens": 137,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+        "area": "tools",
+        "latency_ms": 1032.7,
+        "input_tokens": 97,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+        "area": "security",
+        "latency_ms": 1275.4,
+        "input_tokens": 148,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+        "area": "tools",
+        "latency_ms": 1157.3,
+        "input_tokens": 205,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+        "area": "tools",
+        "latency_ms": 1184.1,
+        "input_tokens": 141,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+        "area": "tools",
+        "latency_ms": 1183.7,
+        "input_tokens": 92,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+        "area": "tools",
+        "latency_ms": 781.9,
+        "input_tokens": 247,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+        "area": "tools",
+        "latency_ms": 1134.3,
+        "input_tokens": 198,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+        "area": "tools",
+        "latency_ms": 879.8,
+        "input_tokens": 210,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+        "area": "tools",
+        "latency_ms": 798.6,
+        "input_tokens": 180,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+        "area": "arcana",
+        "latency_ms": 1490.3,
+        "input_tokens": 131,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+        "area": "tools",
+        "latency_ms": 1146.4,
+        "input_tokens": 270,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+        "area": "AI",
+        "latency_ms": 802.7,
+        "input_tokens": 298,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+        "area": "security",
+        "latency_ms": 765.7,
+        "input_tokens": 105,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+        "area": "security",
+        "latency_ms": 750.5,
+        "input_tokens": 94,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+        "area": "security",
+        "latency_ms": 1345.5,
+        "input_tokens": 106,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+        "area": "security",
+        "latency_ms": 1193.0,
+        "input_tokens": 108,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+        "area": "tools",
+        "latency_ms": 1061.9,
+        "input_tokens": 118,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+        "area": "tools",
+        "latency_ms": 802.7,
+        "input_tokens": 148,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+        "area": "AI",
+        "latency_ms": 802.3,
+        "input_tokens": 104,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+        "area": "tools",
+        "latency_ms": 834.5,
+        "input_tokens": 633,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+        "area": "tools",
+        "latency_ms": 862.1,
+        "input_tokens": 146,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+        "area": "AI",
+        "latency_ms": 1240.4,
+        "input_tokens": 94,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+        "area": "security",
+        "latency_ms": 1128.1,
+        "input_tokens": 113,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+        "area": "tools",
+        "latency_ms": 801.6,
+        "input_tokens": 74,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+        "area": "tools",
+        "latency_ms": 1289.3,
+        "input_tokens": 149,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+        "area": "tools",
+        "latency_ms": 952.0,
+        "input_tokens": 145,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+        "area": "arcana",
+        "latency_ms": 1143.0,
+        "input_tokens": 206,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+        "area": "arcana",
+        "latency_ms": 900.9,
+        "input_tokens": 205,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+        "area": "arcana",
+        "latency_ms": 811.0,
+        "input_tokens": 192,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+        "area": "tools",
+        "latency_ms": 806.9,
+        "input_tokens": 108,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+        "area": "tools",
+        "latency_ms": 1164.5,
+        "input_tokens": 213,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+        "area": "tools",
+        "latency_ms": 935.3,
+        "input_tokens": 247,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+        "area": "tools",
+        "latency_ms": 1356.7,
+        "input_tokens": 784,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+        "area": "tools",
+        "latency_ms": 799.8,
+        "input_tokens": 165,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+        "area": "AI",
+        "latency_ms": 784.6,
+        "input_tokens": 610,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+        "area": "tools",
+        "latency_ms": 902.9,
+        "input_tokens": 86,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+        "area": "tools",
+        "latency_ms": 681.3,
+        "input_tokens": 146,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+        "area": "AI",
+        "latency_ms": 835.2,
+        "input_tokens": 873,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+        "area": "tools",
+        "latency_ms": 764.4,
+        "input_tokens": 148,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+        "area": "arcana",
+        "latency_ms": 1618.5,
+        "input_tokens": 166,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+        "area": "arcana",
+        "latency_ms": 866.4,
+        "input_tokens": 190,
+        "output_tokens": 5
+      },
+      {
+        "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+        "area": "business",
+        "latency_ms": 741.8,
+        "input_tokens": 87,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+        "area": "security",
+        "latency_ms": 779.7,
+        "input_tokens": 249,
+        "output_tokens": 4
+      },
+      {
+        "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+        "area": "tools",
+        "latency_ms": 1201.4,
+        "input_tokens": 103,
+        "output_tokens": 4
+      }
+    ],
+    "gpt4omini": [
+      {
+        "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+        "area": "tools",
+        "latency_ms": 930.0,
+        "input_tokens": 110,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+        "area": "AI",
+        "latency_ms": 482.5,
+        "input_tokens": 184,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+        "area": "AI",
+        "latency_ms": 688.8,
+        "input_tokens": 152,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+        "area": "AI",
+        "latency_ms": 669.8,
+        "input_tokens": 110,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+        "area": "AI",
+        "latency_ms": 503.3,
+        "input_tokens": 91,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+        "area": "AI",
+        "latency_ms": 603.0,
+        "input_tokens": 182,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+        "area": "tools",
+        "latency_ms": 690.9,
+        "input_tokens": 151,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+        "area": "arcana",
+        "latency_ms": 764.7,
+        "input_tokens": 195,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+        "area": "tools",
+        "latency_ms": 479.1,
+        "input_tokens": 290,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+        "area": "AI",
+        "latency_ms": 1015.0,
+        "input_tokens": 285,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+        "area": "security",
+        "latency_ms": 799.6,
+        "input_tokens": 396,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+        "area": "tools",
+        "latency_ms": 835.4,
+        "input_tokens": 321,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+        "area": "AI",
+        "latency_ms": 641.5,
+        "input_tokens": 268,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+        "area": "tools",
+        "latency_ms": 830.5,
+        "input_tokens": 390,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+        "area": "AI",
+        "latency_ms": 516.2,
+        "input_tokens": 191,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+        "area": "tools",
+        "latency_ms": 548.2,
+        "input_tokens": 257,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+        "area": "AI",
+        "latency_ms": 585.2,
+        "input_tokens": 124,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+        "area": "tools",
+        "latency_ms": 879.7,
+        "input_tokens": 79,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+        "area": "tools",
+        "latency_ms": 532.1,
+        "input_tokens": 450,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+        "area": "AI",
+        "latency_ms": 612.1,
+        "input_tokens": 132,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+        "area": "tools",
+        "latency_ms": 515.0,
+        "input_tokens": 95,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+        "area": "tools",
+        "latency_ms": 542.5,
+        "input_tokens": 87,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+        "area": "tools",
+        "latency_ms": 489.0,
+        "input_tokens": 159,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+        "area": "tools",
+        "latency_ms": 730.2,
+        "input_tokens": 154,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+        "area": "tools",
+        "latency_ms": 955.7,
+        "input_tokens": 203,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+        "area": "AI",
+        "latency_ms": 1014.4,
+        "input_tokens": 132,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+        "area": "tools",
+        "latency_ms": 548.0,
+        "input_tokens": 92,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+        "area": "security",
+        "latency_ms": 585.5,
+        "input_tokens": 142,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+        "area": "business",
+        "latency_ms": 498.9,
+        "input_tokens": 186,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+        "area": "tools",
+        "latency_ms": 1555.3,
+        "input_tokens": 131,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+        "area": "tools",
+        "latency_ms": 541.2,
+        "input_tokens": 90,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+        "area": "tools",
+        "latency_ms": 794.5,
+        "input_tokens": 202,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+        "area": "tools",
+        "latency_ms": 693.2,
+        "input_tokens": 180,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+        "area": "arcana",
+        "latency_ms": 848.7,
+        "input_tokens": 163,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+        "area": "tools",
+        "latency_ms": 842.5,
+        "input_tokens": 159,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+        "area": "arcana",
+        "latency_ms": 1194.6,
+        "input_tokens": 116,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+        "area": "arcana",
+        "latency_ms": 651.6,
+        "input_tokens": 232,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+        "area": "AI",
+        "latency_ms": 545.0,
+        "input_tokens": 254,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+        "area": "security",
+        "latency_ms": 652.9,
+        "input_tokens": 102,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+        "area": "security",
+        "latency_ms": 822.6,
+        "input_tokens": 89,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+        "area": "security",
+        "latency_ms": 498.7,
+        "input_tokens": 98,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+        "area": "security",
+        "latency_ms": 593.3,
+        "input_tokens": 103,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+        "area": "tools",
+        "latency_ms": 1244.5,
+        "input_tokens": 115,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+        "area": "arcana",
+        "latency_ms": 503.1,
+        "input_tokens": 127,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+        "area": "arcana",
+        "latency_ms": 479.4,
+        "input_tokens": 90,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+        "area": "business",
+        "latency_ms": 490.1,
+        "input_tokens": 500,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+        "area": "arcana",
+        "latency_ms": 443.1,
+        "input_tokens": 132,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+        "area": "AI",
+        "latency_ms": 617.4,
+        "input_tokens": 90,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+        "area": "tools",
+        "latency_ms": 639.3,
+        "input_tokens": 107,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+        "area": "tools",
+        "latency_ms": 611.8,
+        "input_tokens": 70,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+        "area": "tools",
+        "latency_ms": 758.9,
+        "input_tokens": 143,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+        "area": "tools",
+        "latency_ms": 943.0,
+        "input_tokens": 136,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+        "area": "tools",
+        "latency_ms": 1222.6,
+        "input_tokens": 177,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+        "area": "arcana",
+        "latency_ms": 592.4,
+        "input_tokens": 180,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+        "area": "arcana",
+        "latency_ms": 684.2,
+        "input_tokens": 167,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+        "area": "tools",
+        "latency_ms": 579.2,
+        "input_tokens": 100,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+        "area": "arcana",
+        "latency_ms": 599.9,
+        "input_tokens": 186,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+        "area": "tools",
+        "latency_ms": 609.5,
+        "input_tokens": 222,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+        "area": "tools",
+        "latency_ms": 520.2,
+        "input_tokens": 629,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+        "area": "tools",
+        "latency_ms": 534.0,
+        "input_tokens": 153,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+        "area": "AI",
+        "latency_ms": 810.8,
+        "input_tokens": 491,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+        "area": "tools",
+        "latency_ms": 831.1,
+        "input_tokens": 85,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+        "area": "tools",
+        "latency_ms": 595.5,
+        "input_tokens": 141,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+        "area": "AI",
+        "latency_ms": 742.1,
+        "input_tokens": 676,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+        "area": "tools",
+        "latency_ms": 527.0,
+        "input_tokens": 128,
+        "output_tokens": 1
+      },
+      {
+        "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+        "area": "arcana",
+        "latency_ms": 482.3,
+        "input_tokens": 153,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+        "area": "arcana",
+        "latency_ms": 617.7,
+        "input_tokens": 170,
+        "output_tokens": 3
+      },
+      {
+        "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+        "area": "business",
+        "latency_ms": 682.2,
+        "input_tokens": 78,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+        "area": "security",
+        "latency_ms": 661.2,
+        "input_tokens": 181,
+        "output_tokens": 2
+      },
+      {
+        "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+        "area": "tools",
+        "latency_ms": 674.5,
+        "input_tokens": 94,
+        "output_tokens": 2
+      }
+    ]
+  }
+}
