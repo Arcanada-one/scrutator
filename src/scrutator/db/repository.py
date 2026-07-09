@@ -750,6 +750,7 @@ async def upsert_entity(
             DO UPDATE SET
                 description = COALESCE(EXCLUDED.description, entities.description),
                 properties = entities.properties || EXCLUDED.properties,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entities.source_chunk_id),
                 updated_at = NOW()
             RETURNING id::text
             """,
@@ -778,7 +779,9 @@ async def upsert_entity_edge(
             INSERT INTO entity_edges (source_entity_id, target_entity_id, relation, weight, source_chunk_id)
             VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid)
             ON CONFLICT (source_entity_id, target_entity_id, relation)
-            DO UPDATE SET weight = EXCLUDED.weight
+            DO UPDATE SET
+                weight = EXCLUDED.weight,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entity_edges.source_chunk_id)
             RETURNING id
             """,
             source_entity_id,
@@ -1142,7 +1145,8 @@ async def upsert_entity_event(
                 valid_from = COALESCE(EXCLUDED.valid_from, entity_events.valid_from),
                 valid_to = COALESCE(EXCLUDED.valid_to, entity_events.valid_to),
                 description = COALESCE(EXCLUDED.description, entity_events.description),
-                properties = entity_events.properties || EXCLUDED.properties
+                properties = entity_events.properties || EXCLUDED.properties,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entity_events.source_chunk_id)
             RETURNING id::text
             """,
             namespace_id,
