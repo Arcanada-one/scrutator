@@ -606,6 +606,79 @@ async def get_chunks_by_source_path(
     return results
 
 
+def _row_to_chunk_lookup(row: Any) -> ChunkLookupResult:
+    meta = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else dict(row["metadata"] or {})
+    return ChunkLookupResult(
+        chunk_id=row["chunk_id"],
+        chunk_index=row["chunk_index"],
+        source_path=row["source_path"],
+        source_type=row["source_type"],
+        content_preview=row["content_preview"] or "",
+        metadata=meta,
+    )
+
+
+async def get_section_siblings_children(chunk_id: str) -> dict[str, Any] | None:
+    """Fetch the target chunk's document-scoped row set for section-context assembly.
+
+    SRCH-0021 (V-AC-4): looks up the target chunk, then all chunks sharing its
+    `metadata.section.doc_id`; navigator.build_section_context derives
+    ancestors/self/siblings/children from the returned rows in-memory.
+    Falls back to grouping by `(namespace_id, source_path)` when the target
+    chunk has no `section` key yet (un-backfilled document — PRD Risk table).
+    Returns None if chunk_id does not exist. Parameterized throughout — no
+    f-string/`%`-format SQL (V-AC-8).
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        self_row = await conn.fetchrow(
+            """
+            SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
+                   namespace_id, LEFT(content, 200) AS content_preview, metadata
+            FROM chunks
+            WHERE id = $1::uuid
+            """,
+            chunk_id,
+        )
+        if self_row is None:
+            return None
+
+        namespace_id = self_row["namespace_id"]
+        meta = (
+            json.loads(self_row["metadata"])
+            if isinstance(self_row["metadata"], str)
+            else dict(self_row["metadata"] or {})
+        )
+        doc_id = (meta.get("section") or {}).get("doc_id") or None
+
+        if doc_id:
+            rows = await conn.fetch(
+                """
+                SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
+                       LEFT(content, 200) AS content_preview, metadata
+                FROM chunks
+                WHERE namespace_id = $1 AND metadata->'section'->>'doc_id' = $2
+                ORDER BY chunk_index
+                """,
+                namespace_id,
+                doc_id,
+            )
+        else:
+            rows = await conn.fetch(
+                """
+                SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
+                       LEFT(content, 200) AS content_preview, metadata
+                FROM chunks
+                WHERE namespace_id = $1 AND source_path = $2
+                ORDER BY chunk_index
+                """,
+                namespace_id,
+                self_row["source_path"],
+            )
+
+    return {"doc_rows": [_row_to_chunk_lookup(row) for row in rows]}
+
+
 async def search_with_filters(
     query_text: str,
     namespace_id: int,
@@ -773,6 +846,7 @@ async def upsert_entity(
             DO UPDATE SET
                 description = COALESCE(EXCLUDED.description, entities.description),
                 properties = entities.properties || EXCLUDED.properties,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entities.source_chunk_id),
                 updated_at = NOW()
             RETURNING id::text
             """,
@@ -801,7 +875,9 @@ async def upsert_entity_edge(
             INSERT INTO entity_edges (source_entity_id, target_entity_id, relation, weight, source_chunk_id)
             VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid)
             ON CONFLICT (source_entity_id, target_entity_id, relation)
-            DO UPDATE SET weight = EXCLUDED.weight
+            DO UPDATE SET
+                weight = EXCLUDED.weight,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entity_edges.source_chunk_id)
             RETURNING id
             """,
             source_entity_id,
@@ -1165,7 +1241,8 @@ async def upsert_entity_event(
                 valid_from = COALESCE(EXCLUDED.valid_from, entity_events.valid_from),
                 valid_to = COALESCE(EXCLUDED.valid_to, entity_events.valid_to),
                 description = COALESCE(EXCLUDED.description, entity_events.description),
-                properties = entity_events.properties || EXCLUDED.properties
+                properties = entity_events.properties || EXCLUDED.properties,
+                source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entity_events.source_chunk_id)
             RETURNING id::text
             """,
             namespace_id,

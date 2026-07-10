@@ -2,11 +2,55 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+import unicodedata
 
 from scrutator.chunker.tokenizer import token_count
 
 _HEADER_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
+
+# SRCH-0021: hierarchical navigation — section metadata schema version.
+# Bump when normalize_heading_path()'s output shape changes; backfill_sections.py
+# re-derives any chunk whose stored section.schema_version != this constant.
+SECTION_SCHEMA_VERSION = 1
+
+_SLUG_WHITESPACE_RE = re.compile(r"[\s_]+")
+
+
+def slugify(text: str) -> str:
+    """GitHub-style deterministic slug: strip leading '#', lowercase, keep unicode
+    word characters (cyrillic + latin + digits), collapse whitespace to '-'."""
+    text = text.lstrip("#").strip().lower()
+    text = unicodedata.normalize("NFKC", text)
+    kept = [ch for ch in text if ch.isalnum() or ch in (" ", "-", "_")]
+    slug = _SLUG_WHITESPACE_RE.sub("-", "".join(kept))
+    return slug.strip("-")
+
+
+def compute_doc_id(namespace: str, source_path: str) -> str:
+    """Stable document identity for grouping/outline, scoped to a namespace."""
+    return hashlib.sha256(f"{namespace}|{source_path}".encode()).hexdigest()[:16]
+
+
+def normalize_heading_path(heading_hierarchy: list[str]) -> dict:
+    """Normalize a '#'-prefixed heading stack into the `section` metadata shape.
+
+    `doc_id` is left empty here — the chunker has no namespace context;
+    the indexer (which knows the namespace) stamps it in via compute_doc_id()
+    before writing the metadata dict to the DB.
+    """
+    heading_path = [h.lstrip("#").strip() for h in heading_hierarchy]
+    anchor_path = [slugify(h) for h in heading_path]
+    return {
+        "doc_id": "",
+        "heading_path": heading_path,
+        "depth": len(heading_path),
+        "anchor": anchor_path[-1] if anchor_path else "",
+        "anchor_path": anchor_path,
+        "section_key": "/".join(anchor_path),
+        "schema_version": SECTION_SCHEMA_VERSION,
+    }
 
 
 def split_by_headers(text: str) -> list[tuple[list[str], str]]:

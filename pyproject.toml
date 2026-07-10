@@ -44,6 +44,10 @@ known-first-party = ["scrutator"]
 # FastAPI's Depends()/Query()/etc. in argument defaults is the documented idiom, not a
 # mutable-default footgun — ruff's B008 has this exact escape hatch.
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Header"]
+[tool.ruff.lint.per-file-ignores]
+# Migrated verbatim from the SRCH-0031 v0 checkout (Precondition P1) — kept as the
+# pre-harness.py reference implementation, not reformatted or relinted in place.
+"benchmark/scrutator/measure.py" = ["E401", "E501", "E741", "F401", "I001", "SIM115"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

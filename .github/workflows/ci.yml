@@ -7,6 +7,14 @@ on:
     branches: [main]
 
 jobs:
+  network-exposure:
+    # Mandatory per documentation/mandates/cicd-convention.md § 5. This repo's harness code
+    # (SRCH-0015) makes outbound-only calls (no new listener) — wired anyway per repo-wide
+    # convention, not because this PR introduces a compose/redis/postgres/systemd change.
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@main
+    with:
+      compose_paths: docker-compose.yml
+
   lint-and-test:
     runs-on: [self-hosted, Linux, X64]
 
@@ -27,13 +35,16 @@ jobs:
       - name: Format check
         run: ruff format --check src/ tests/
 
+      - name: Security scan (SRCH-0021 navigation/backfill surface)
+        run: bandit -ll -ii -r src/scrutator/search/navigator.py src/scrutator/search/searcher.py src/scrutator/health.py tools/backfill_sections.py
+
       - name: Test
         run: pytest tests/ -v
         env:
           PYTHONPATH: src
 
   deploy:
-    needs: lint-and-test
+    needs: [network-exposure, lint-and-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: [self-hosted, linux, arcana-db, docker]
     concurrency:

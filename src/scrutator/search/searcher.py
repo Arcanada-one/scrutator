@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import time
+from typing import Literal
 
 from scrutator.config import settings
-from scrutator.db.models import Citation, SearchResponse, SearchResult
+from scrutator.db.models import Citation, GroupedSearchResult, SearchResponse, SearchResult
 from scrutator.db.repository import hybrid_search, search_with_filters
 from scrutator.search.embedder import embed_single, embed_sparse
 from scrutator.search.reranker import rerank
@@ -24,6 +25,44 @@ def _build_citation(r: SearchResult, score_kind: str) -> Citation:
     )
 
 
+def _group_key(r: SearchResult, group_by: Literal["document", "section"]) -> str:
+    """SRCH-0021 D-REQ-05: fold key. Falls back to source_path when un-backfilled
+    (no `section` key yet) — same degrade-gracefully posture as the nav endpoints."""
+    section = r.metadata.get("section") if r.metadata else None
+    if group_by == "document":
+        return (section or {}).get("doc_id") or r.source_path
+    return (section or {}).get("section_key") or r.source_path
+
+
+def _fold_by_group(results: list[SearchResult], group_by: Literal["document", "section"]) -> list[GroupedSearchResult]:
+    """Post-fusion, in-memory fold — never touches the RRF query/order upstream (V-AC-5)."""
+    order: list[str] = []
+    groups: dict[str, list[SearchResult]] = {}
+    for r in results:
+        key = _group_key(r, group_by)
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(r)
+
+    grouped: list[GroupedSearchResult] = []
+    for key in order:
+        members = groups[key]
+        representative = max(members, key=lambda m: m.score)
+        section = representative.metadata.get("section") if representative.metadata else None
+        grouped.append(
+            GroupedSearchResult(
+                group_key=key,
+                doc_id=(section or {}).get("doc_id", ""),
+                score=max(m.score for m in members),
+                representative=representative,
+                member_chunk_ids=[m.chunk_id for m in members],
+                member_count=len(members),
+            )
+        )
+    return grouped
+
+
 async def search(
     query: str,
     namespace_id: int,
@@ -32,6 +71,7 @@ async def search(
     limit: int = 10,
     min_score: float = 0.0,
     include_content: bool = True,
+    group_by: Literal["document", "section"] | None = None,
 ) -> SearchResponse:
     """Execute hybrid search: embed query → dense+FTS → RRF → optional ColBERT rerank → results.
 
@@ -43,6 +83,9 @@ async def search(
     `auth.dependency.resolve_namespace_selector` against the authenticated principal's
     allowed-namespace set) — this function never auto-provisions or trusts a raw namespace
     string. Read paths never call `upsert_namespace`.
+
+    SRCH-0021 (D-REQ-05/06): group_by is opt-in and post-fusion only — absent (None, the
+    default) leaves every prior code path byte-identical (V-AC-6).
     """
     start = time.monotonic()
 
@@ -116,6 +159,15 @@ async def search(
             r.content = ""
 
     elapsed_ms = (time.monotonic() - start) * 1000
+
+    if group_by:
+        grouped = _fold_by_group(results, group_by)
+        return SearchResponse(
+            results=grouped,
+            total=len(grouped),
+            query=query,
+            search_time_ms=round(elapsed_ms, 2),
+        )
 
     return SearchResponse(
         results=results,

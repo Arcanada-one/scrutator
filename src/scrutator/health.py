@@ -19,8 +19,10 @@ from scrutator.db.models import (
     IndexStats,
     NamespaceCreate,
     NamespaceInfo,
+    OutlineResponse,
     SearchRequest,
     SearchResponse,
+    SectionContext,
 )
 from scrutator.db.repository import (
     delete_edges_by_creator,
@@ -62,6 +64,7 @@ from scrutator.memory.service import (
 )
 from scrutator.search.embedder import close_client as close_embedding_client
 from scrutator.search.indexer import index_document
+from scrutator.search.navigator import build_outline, build_section_context
 from scrutator.search.searcher import search
 
 logger = logging.getLogger(__name__)
@@ -145,9 +148,23 @@ async def search_endpoint(
             limit=request.limit,
             min_score=request.min_score,
             include_content=request.include_content,
+            group_by=request.group_by,
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Search failed: {e}") from e
+
+
+# ── Navigation endpoints (SRCH-0021) ─────────────────────────────────
+
+
+@app.get("/v1/navigate/outline", response_model=OutlineResponse)
+async def navigate_outline(namespace: str, source_path: str, max_nodes: int = 2000) -> OutlineResponse:
+    return await build_outline(namespace=namespace, source_path=source_path, max_nodes=max_nodes)
+
+
+@app.get("/v1/navigate/section", response_model=SectionContext)
+async def navigate_section(chunk_id: str) -> SectionContext:
+    return await build_section_context(chunk_id)
 
 
 @app.get("/v1/chunks", response_model=list[ChunkLookupResult])

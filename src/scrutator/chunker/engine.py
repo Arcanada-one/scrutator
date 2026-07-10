@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 
 from scrutator.chunker.metadata import detect_language, extract_frontmatter, extract_tags, extract_wikilinks
-from scrutator.chunker.models import Chunk, ChunkMetadata, ChunkResult
-from scrutator.chunker.splitters import semantic_split, split_by_headers, split_code
+from scrutator.chunker.models import Chunk, ChunkMetadata, ChunkResult, SectionMeta
+from scrutator.chunker.splitters import normalize_heading_path, semantic_split, split_by_headers, split_code
 from scrutator.chunker.tokenizer import token_count
 
 # File extension to source type mapping
@@ -55,6 +55,7 @@ def _make_chunk(
     parent_id: str | None = None,
 ) -> Chunk:
     """Create a Chunk with extracted metadata."""
+    section = SectionMeta(**normalize_heading_path(heading_hierarchy)) if heading_hierarchy else None
     return Chunk(
         content=content,
         chunk_index=index,
@@ -68,6 +69,7 @@ def _make_chunk(
             wikilinks=extract_wikilinks(content),
             tags=extract_tags(content),
             language=detect_language(content),
+            section=section,
         ),
     )
 
