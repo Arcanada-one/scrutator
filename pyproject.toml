@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://arcanada.one"
+Homepage = "https://arcanada.ai"
 Repository = "https://github.com/Arcanada-one/scrutator"
 Documentation = "https://github.com/Arcanada-one/scrutator/tree/main/docs"
 
