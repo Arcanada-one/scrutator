@@ -150,3 +150,25 @@ subject to `by_class.factual(chosen) >= baseline - 2pp`.
 
 Factor=1.0 is diagnostic only (excluded from default candidates due to
 hallucination amplification risk).
+
+## Production TEMPR backfill (LTM-0014)
+
+`tools/backfill_ltm_temper.py` — one-shot, idempotent/resumable backfill of
+entity/edge/temporal-event extraction for chunks that predate the TEMPR
+pipeline (zero rows in `entities` pointing back at them via `source_chunk_id`).
+Same hard-gate convention as `tools/backfill_sections.py` (see
+`docs/navigation.md`): defaults to `--dry-run` (report candidate count, zero
+LLM calls, zero writes); `--live` performs real extraction (billed LLM calls
+via `settings.ltm_mc_url`/`ltm_connector`/`ltm_model`) and real upserts.
+**Operator-run only — not invoked by CI, by tests, or by any task automation.**
+
+```bash
+python tools/backfill_ltm_temper.py --namespace arcanada
+python tools/backfill_ltm_temper.py --namespace arcanada --live --limit 200
+```
+
+Idempotent: `upsert_entity`/`upsert_entity_edge`/`upsert_entity_event` are
+`ON CONFLICT` upserts (LTM-0019 COALESCE-repairs `source_chunk_id` on every
+re-run), so a crashed or `--limit`-batched run can simply be re-invoked — only
+chunks still missing entities are re-selected. Per-chunk extraction failures
+are logged and skipped, not fatal to the run.
