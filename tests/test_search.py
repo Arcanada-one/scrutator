@@ -300,6 +300,61 @@ class TestIndexer:
             assert result.chunks_indexed >= 0
 
     @pytest.mark.asyncio
+    async def test_index_document_writes_section_metadata(self):
+        """SRCH-0021 V-AC-1/D-REQ-06: section written alongside heading_hierarchy, doc_id stamped."""
+        from scrutator.chunker.splitters import compute_doc_id
+        from scrutator.search.indexer import index_document
+
+        with (
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
+            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+        ):
+            mock_embed.return_value = [[0.1] * 1024]
+            mock_ns.return_value = 1
+
+            async def _capture(chunk_dicts, *_args, **_kwargs):
+                _capture.seen = chunk_dicts
+                return len(chunk_dicts)
+
+            mock_insert.side_effect = _capture
+
+            await index_document(content="# Intro\n\nHello world", source_path="wiki/x.md", namespace="arcanada")
+
+            chunk_dicts = _capture.seen
+            assert len(chunk_dicts) == 1
+            metadata = chunk_dicts[0]["metadata"]
+            assert metadata["heading_hierarchy"] == ["# Intro"]  # unchanged, back-compat
+            assert metadata["section"] is not None
+            assert metadata["section"]["section_key"] == "intro"
+            assert metadata["section"]["doc_id"] == compute_doc_id("arcanada", "wiki/x.md")
+
+    @pytest.mark.asyncio
+    async def test_index_document_non_markdown_section_none(self):
+        """SRCH-0021: non-markdown chunks get section=None explicitly (no doc structure)."""
+        from scrutator.search.indexer import index_document
+
+        with (
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
+            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+        ):
+            mock_embed.return_value = [[0.1] * 1024]
+            mock_ns.return_value = 1
+
+            async def _capture(chunk_dicts, *_args, **_kwargs):
+                _capture.seen = chunk_dicts
+                return len(chunk_dicts)
+
+            mock_insert.side_effect = _capture
+
+            await index_document(content="plain text, no headers", source_path="note.txt", namespace="arcanada")
+
+            assert _capture.seen[0]["metadata"]["section"] is None
+
+    @pytest.mark.asyncio
     async def test_index_without_project(self):
         from scrutator.search.indexer import index_document
 
@@ -485,6 +540,157 @@ class TestAPI:
         client = TestClient(app)
         resp = client.post("/v1/index", json={"content": "  ", "source_path": "x.md"})
         assert resp.status_code == 422
+
+
+# ── SRCH-0021: group_by + default-path-unchanged ─────────────────────
+
+
+class TestGroupBy:
+    def _mock_result(self, chunk_id: str, score: float, section_key: str, doc_id: str = "doc1") -> SearchResult:
+        return SearchResult(
+            chunk_id=chunk_id,
+            content=f"content {chunk_id}",
+            source_path="docs/same.md",
+            source_type="markdown",
+            chunk_index=0,
+            score=score,
+            namespace="arcanada",
+            metadata={"section": {"doc_id": doc_id, "section_key": section_key}},
+        )
+
+    @pytest.mark.asyncio
+    async def test_group_by_document_folds_duplicates(self):
+        """V-AC-5: 5 same-document hits fold into 1 group, member_count=5, score=max(member)."""
+        from scrutator.search.searcher import search
+
+        mock_results = [
+            self._mock_result("c1", 0.05, "doc/intro"),
+            self._mock_result("c2", 0.04, "doc/section-a"),
+            self._mock_result("c3", 0.03, "doc/section-b"),
+            self._mock_result("c4", 0.02, "doc/section-c"),
+            self._mock_result("c5", 0.01, "doc/section-d"),
+        ]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+        ):
+            mock_embed.return_value = [0.1] * 1024
+            mock_sparse.return_value = None
+            mock_search.return_value = mock_results
+
+            resp = await search(query="test", limit=5, group_by="document")
+
+        assert resp.total == 1
+        group = resp.results[0]
+        assert group.member_count == 5
+        assert group.score == pytest.approx(0.05)
+        assert group.doc_id == "doc1"
+        assert set(group.member_chunk_ids) == {"c1", "c2", "c3", "c4", "c5"}
+        assert group.representative.chunk_id == "c1"
+
+    @pytest.mark.asyncio
+    async def test_group_by_section_separates_distinct_sections(self):
+        from scrutator.search.searcher import search
+
+        mock_results = [
+            self._mock_result("c1", 0.05, "doc/intro"),
+            self._mock_result("c2", 0.04, "doc/intro"),
+            self._mock_result("c3", 0.03, "doc/other"),
+        ]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+        ):
+            mock_embed.return_value = [0.1] * 1024
+            mock_sparse.return_value = None
+            mock_search.return_value = mock_results
+
+            resp = await search(query="test", limit=3, group_by="section")
+
+        assert resp.total == 2
+        keys = {g.group_key for g in resp.results}
+        assert keys == {"doc/intro", "doc/other"}
+
+    @pytest.mark.asyncio
+    async def test_group_by_absent_returns_flat_search_results(self):
+        """D-REQ-06: group_by omitted → results stay plain SearchResult objects."""
+        from scrutator.search.searcher import search
+
+        mock_results = [self._mock_result("c1", 0.05, "doc/intro")]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+        ):
+            mock_embed.return_value = [0.1] * 1024
+            mock_sparse.return_value = None
+            mock_search.return_value = mock_results
+
+            resp = await search(query="test", limit=1)
+
+        assert resp.results[0].chunk_id == "c1"
+        assert not hasattr(resp.results[0], "member_count")
+
+
+class TestSearchDefaultPathUnchanged:
+    """V-AC-6: absent group_by ⇒ SearchResponse byte-identical to the v0.3.0 baseline
+    captured (pre-SRCH-0021) in tests/fixtures/search_baseline_v0.3.0.json (Step 0)."""
+
+    @pytest.mark.asyncio
+    async def test_search_default_path_unchanged(self):
+        import json
+        from pathlib import Path
+
+        from scrutator.search.searcher import search
+
+        mock_results = [
+            SearchResult(
+                chunk_id="c1",
+                content="Alpha content",
+                source_path="docs/alpha.md",
+                source_type="markdown",
+                chunk_index=0,
+                score=0.05,
+                namespace="arcanada",
+                heading_hierarchy=["# Alpha", "## Intro"],
+            ),
+            SearchResult(
+                chunk_id="c2",
+                content="Beta content",
+                source_path="docs/beta.md",
+                source_type="markdown",
+                chunk_index=1,
+                score=0.03,
+                namespace="arcanada",
+                heading_hierarchy=["# Beta"],
+            ),
+        ]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+        ):
+            mock_embed.return_value = [0.1] * 1024
+            mock_sparse.return_value = [{"tok": 0.5}]
+            mock_search.return_value = mock_results
+            mock_ns.return_value = 1
+
+            resp = await search(query="baseline query", namespace="arcanada", limit=5)
+
+        data = resp.model_dump()
+        data.pop("search_time_ms", None)
+
+        baseline_path = Path(__file__).parent / "fixtures" / "search_baseline_v0.3.0.json"
+        baseline = json.loads(baseline_path.read_text())
+
+        assert json.dumps(data, sort_keys=True) == json.dumps(baseline, sort_keys=True)
 
 
 # ── SRCH-0029 M1+M2 searcher integration tests ───────────────────────

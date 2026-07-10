@@ -8,6 +8,24 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from scrutator.chunker.splitters import SECTION_SCHEMA_VERSION
+
+
+class SectionMeta(BaseModel):
+    """Normalized hierarchical-section identity (SRCH-0021).
+
+    `doc_id` is populated by the indexer (scoped to a namespace) — it is
+    empty at chunk-time, since the chunker has no namespace context.
+    """
+
+    doc_id: str = ""
+    heading_path: list[str]
+    depth: int
+    anchor: str
+    anchor_path: list[str]
+    section_key: str
+    schema_version: int = SECTION_SCHEMA_VERSION
+
 
 class ChunkMetadata(BaseModel):
     """Metadata extracted from the source document."""
@@ -19,6 +37,7 @@ class ChunkMetadata(BaseModel):
     wikilinks: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     language: str | None = None
+    section: SectionMeta | None = None
 
 
 class Chunk(BaseModel):
