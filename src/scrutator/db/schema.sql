@@ -196,3 +196,17 @@ CREATE INDEX IF NOT EXISTS idx_meta_facts_entities ON meta_facts USING gin(entit
 CREATE INDEX IF NOT EXISTS idx_meta_facts_dense
     ON meta_facts USING hnsw (embedding_dense vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
+
+-- SRCH-0023: local FK-only cache fallback for principal -> allowed-namespace resolution.
+-- Source of truth is Auth Arcana ReBAC (OpenFGA); this table is a degraded RBAC facade used
+-- only when the live OpenFGA endpoint is unreachable/unconfirmed. Seeded out-of-band by an
+-- operator-run grant script (scripts/grant_namespace.py) — never written by request-path code.
+CREATE TABLE IF NOT EXISTS principal_namespace_grants (
+    id SERIAL PRIMARY KEY,
+    principal_id TEXT NOT NULL,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
+    granted_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(principal_id, namespace_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_principal_grants_principal ON principal_namespace_grants(principal_id);

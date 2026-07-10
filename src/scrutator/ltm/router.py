@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
+from scrutator.auth.models import TenantContext
 from scrutator.config import settings
 from scrutator.db import repository
 from scrutator.ltm.llm import LtmLlmClient
@@ -40,8 +42,12 @@ def _create_llm_client() -> LtmLlmClient:
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest(req: IngestRequest) -> IngestResponse:
-    """Ingest a document: chunk, embed, extract entities/edges."""
+async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant_context)) -> IngestResponse:
+    """Ingest a document: chunk, embed, extract entities/edges.
+
+    Write path — namespace auto-provisioning (`upsert_namespace`) is intentional here (SRCH-0023
+    Step 3 keeps it only at write/ingest sites).
+    """
     namespace_id = await repository.upsert_namespace(req.namespace)
     if req.project:
         await repository.upsert_project(namespace_id, req.project)
@@ -109,11 +115,13 @@ async def ingest(req: IngestRequest) -> IngestResponse:
 
 
 @router.get("/jobs/{job_id}", response_model=LtmJob)
-async def get_job(job_id: str) -> LtmJob:
-    """Get job status."""
+async def get_job(job_id: str, ctx: TenantContext = Depends(require_tenant_context)) -> LtmJob:
+    """Get job status — scoped to the caller's allowed-namespace set."""
     job = await repository.get_ltm_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+    if job["namespace_id"] not in ctx.allowed_namespace_ids:
+        raise HTTPException(status_code=403, detail="job not in caller's allowed namespace set")
     return LtmJob(
         id=job["id"],
         namespace=str(job["namespace_id"]),
@@ -157,18 +165,20 @@ def _dicts_to_recall_results(dicts: list[dict]) -> list[RecallResult]:
 
 
 @router.post("/recall", response_model=RecallResponse)
-async def recall(req: RecallRequest) -> RecallResponse:
+async def recall(req: RecallRequest, ctx: TenantContext = Depends(require_tenant_context)) -> RecallResponse:
     """Recall memories with entity enrichment + optional temporal filter."""
     start = time.monotonic()
+    namespace_id = await resolve_namespace_selector(ctx, req.namespace)
 
     # Fetch a wider candidate pool when temporal filter is active to keep `limit` results
     fetch_limit = req.limit * 3 if (req.as_of or req.time_range) else req.limit
-    search_response = await search(query=req.query, namespace=req.namespace, limit=fetch_limit, min_score=req.min_score)
+    search_response = await search(
+        query=req.query, namespace_id=namespace_id, limit=fetch_limit, min_score=req.min_score
+    )
     results_dicts = _search_results_to_dicts(search_response.results)
 
-    namespace_id = await repository.upsert_namespace(req.namespace) if req.namespace else None
     llm = _create_llm_client()
-    pipeline = RecallPipeline(llm=llm, namespace=req.namespace or "arcanada", namespace_id=namespace_id or 0)
+    pipeline = RecallPipeline(llm=llm, namespace=req.namespace or "arcanada", namespace_id=namespace_id)
 
     # LTM-0012 — temporal pre-filter (before entity enrichment to save work)
     if req.as_of is not None or req.time_range is not None:
@@ -209,27 +219,35 @@ async def recall(req: RecallRequest) -> RecallResponse:
 
 
 @router.get("/entities")
-async def list_entities(namespace: str = "arcanada", limit: int = 100) -> dict:
+async def list_entities(
+    namespace: str = "arcanada",
+    limit: int = 100,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> dict:
     """List entities in a namespace."""
-    namespace_id = await repository.upsert_namespace(namespace)
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     entities = await repository.list_entities(namespace_id, min(limit, 500))
     return {"entities": entities, "total": len(entities), "namespace": namespace}
 
 
 @router.get("/graph")
-async def get_graph(namespace: str = "arcanada", entity_name: str | None = None) -> dict:
+async def get_graph(
+    namespace: str = "arcanada",
+    entity_name: str | None = None,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> dict:
     """Get entity graph (nodes + edges) for a namespace, optionally centered on an entity."""
-    namespace_id = await repository.upsert_namespace(namespace)
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     nodes, edges = await repository.get_entity_graph(namespace_id, entity_name)
     return {"nodes": nodes, "edges": edges, "namespace": namespace}
 
 
 @router.post("/reflect", response_model=ReflectResponse)
-async def reflect(req: ReflectRequest) -> ReflectResponse:
+async def reflect(req: ReflectRequest, ctx: TenantContext = Depends(require_tenant_context)) -> ReflectResponse:
     """LTM-0013 — manual trigger for one reflect run."""
     if not settings.ltm_reflect_enabled:
         raise HTTPException(status_code=503, detail="reflect disabled by config")
-    namespace_id = await repository.upsert_namespace(req.namespace)
+    namespace_id = await resolve_namespace_selector(ctx, req.namespace)
     llm = _create_llm_client()
     budget = ReflectBudget(
         max_usd=settings.ltm_reflect_budget_usd,
@@ -258,9 +276,10 @@ async def list_meta_facts(
     namespace: str = "arcanada",
     fact_type: str | None = None,
     limit: int = 100,
+    ctx: TenantContext = Depends(require_tenant_context),
 ) -> dict:
     """LTM-0013 — debug listing of meta-facts in a namespace."""
-    namespace_id = await repository.upsert_namespace(namespace)
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     facts = await repository.list_meta_facts_by_namespace(
         namespace_id=namespace_id,
         fact_type=fact_type,
@@ -274,9 +293,10 @@ async def list_events(
     entity: str,
     namespace: str = "arcanada",
     include_superseded: bool = False,
+    ctx: TenantContext = Depends(require_tenant_context),
 ) -> dict:
     """LTM-0012 — list temporal events for an entity in a namespace."""
-    namespace_id = await repository.upsert_namespace(namespace)
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     events = await repository.get_events_for_entity(
         namespace_id=namespace_id,
         entity_name=entity,

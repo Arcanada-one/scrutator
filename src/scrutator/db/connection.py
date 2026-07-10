@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import asyncpg
@@ -46,3 +48,20 @@ async def apply_schema() -> None:
     async with pool.acquire() as conn:
         await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
         await conn.execute(sql)
+
+
+@asynccontextmanager
+async def acquire_scoped(namespace_id: int) -> AsyncIterator[asyncpg.Connection]:
+    """Acquire a pooled connection scoped to one tenant for the RLS (SRCH-0023 B2) GUC.
+
+    `SET LOCAL` — set here via the parameterized `set_config(..., true)` form — is
+    transaction-scoped by Postgres semantics: it automatically reverts when the transaction
+    ends. Wrapping the entire borrow in one explicit transaction is what prevents a pooled
+    connection from leaking one tenant's `app.tenant_id` into the next borrower (V-AC-8) —
+    `SET LOCAL` executed outside a transaction behaves like session-wide `SET`, which
+    asyncpg's pool does not reset on release.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        await conn.execute("SELECT set_config('app.tenant_id', $1, true)", str(namespace_id))
+        yield conn

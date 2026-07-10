@@ -3,9 +3,11 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 
 from scrutator import __version__
+from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
+from scrutator.auth.models import TenantContext
 from scrutator.chunker.engine import chunk_document
 from scrutator.chunker.models import ChunkRequest, ChunkResponse
 from scrutator.config import settings
@@ -99,7 +101,7 @@ async def health() -> dict:
 
 
 @app.post("/v1/chunk", response_model=ChunkResponse)
-async def chunk_endpoint(request: ChunkRequest) -> ChunkResponse:
+async def chunk_endpoint(request: ChunkRequest, ctx: TenantContext = Depends(require_tenant_context)) -> ChunkResponse:
     result = chunk_document(
         content=request.content,
         source_path=request.source_path,
@@ -116,7 +118,7 @@ async def chunk_endpoint(request: ChunkRequest) -> ChunkResponse:
 
 
 @app.post("/v1/index", response_model=IndexResponse)
-async def index_endpoint(request: IndexRequest) -> IndexResponse:
+async def index_endpoint(request: IndexRequest, ctx: TenantContext = Depends(require_tenant_context)) -> IndexResponse:
     try:
         return await index_document(
             content=request.content,
@@ -133,11 +135,14 @@ async def index_endpoint(request: IndexRequest) -> IndexResponse:
 
 
 @app.post("/v1/search", response_model=SearchResponse)
-async def search_endpoint(request: SearchRequest) -> SearchResponse:
+async def search_endpoint(
+    request: SearchRequest, ctx: TenantContext = Depends(require_tenant_context)
+) -> SearchResponse:
+    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
         return await search(
             query=request.query,
-            namespace=request.namespace,
+            namespace_id=namespace_id,
             project=request.project,
             source_type=request.source_type,
             limit=request.limit,
@@ -163,22 +168,26 @@ async def navigate_section(chunk_id: str) -> SectionContext:
 
 
 @app.get("/v1/chunks", response_model=list[ChunkLookupResult])
-async def get_chunks(source_path: str, namespace: str | None = None) -> list[ChunkLookupResult]:
+async def get_chunks(
+    source_path: str,
+    namespace: str | None = None,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> list[ChunkLookupResult]:
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
-        namespace_id = None
-        if namespace:
-            namespaces = await get_namespaces()
-            for ns in namespaces:
-                if ns.name == namespace:
-                    namespace_id = ns.id
-                    break
         return await get_chunks_by_source_path(source_path, namespace_id)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Chunk lookup failed: {e}") from e
 
 
 @app.post("/v1/namespaces", response_model=NamespaceInfo)
-async def create_namespace(request: NamespaceCreate) -> NamespaceInfo:
+async def create_namespace(
+    request: NamespaceCreate, ctx: TenantContext = Depends(require_tenant_context)
+) -> NamespaceInfo:
+    # Privileged write: namespace creation requires a verified principal — never permitted
+    # for the grace-window anonymous context, even while SCRUTATOR_AUTH_ENFORCE=False.
+    if ctx.principal_id == "anonymous":
+        raise HTTPException(status_code=401, detail="namespace creation requires an authenticated principal")
     try:
         ns_id = await upsert_namespace(request.name, request.description)
         return NamespaceInfo(id=ns_id, name=request.name, description=request.description, chunk_count=0)
@@ -187,17 +196,17 @@ async def create_namespace(request: NamespaceCreate) -> NamespaceInfo:
 
 
 @app.get("/v1/namespaces", response_model=list[NamespaceInfo])
-async def list_namespaces() -> list[NamespaceInfo]:
+async def list_namespaces(ctx: TenantContext = Depends(require_tenant_context)) -> list[NamespaceInfo]:
     try:
-        return await get_namespaces()
+        return await get_namespaces(namespace_ids=ctx.allowed_namespace_ids)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to list namespaces: {e}") from e
 
 
 @app.get("/v1/stats", response_model=IndexStats)
-async def stats_endpoint() -> IndexStats:
+async def stats_endpoint(ctx: TenantContext = Depends(require_tenant_context)) -> IndexStats:
     try:
-        data = await get_stats()
+        data = await get_stats(namespace_ids=ctx.allowed_namespace_ids)
         return IndexStats(**data)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to get stats: {e}") from e
@@ -207,7 +216,9 @@ async def stats_endpoint() -> IndexStats:
 
 
 @app.post("/v1/dream/analyze", response_model=DreamAnalysisResult)
-async def dream_analyze_endpoint(request: DreamAnalysisRequest) -> DreamAnalysisResult:
+async def dream_analyze_endpoint(
+    request: DreamAnalysisRequest, ctx: TenantContext = Depends(require_tenant_context)
+) -> DreamAnalysisResult:
     try:
         return await dream_analyze(request)
     except Exception as e:
@@ -215,7 +226,7 @@ async def dream_analyze_endpoint(request: DreamAnalysisRequest) -> DreamAnalysis
 
 
 @app.post("/v1/edges")
-async def create_edges(edges: list[EdgeCreate]) -> dict:
+async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(require_tenant_context)) -> dict:
     try:
         count = await insert_edges([e.model_dump() for e in edges])
         return {"created": count}
@@ -224,7 +235,7 @@ async def create_edges(edges: list[EdgeCreate]) -> dict:
 
 
 @app.get("/v1/edges/{chunk_id}", response_model=list[EdgeInfo])
-async def get_edges(chunk_id: str) -> list[EdgeInfo]:
+async def get_edges(chunk_id: str, ctx: TenantContext = Depends(require_tenant_context)) -> list[EdgeInfo]:
     try:
         rows = await get_edges_for_chunk(chunk_id)
         return [EdgeInfo(**r) for r in rows]
@@ -233,15 +244,13 @@ async def get_edges(chunk_id: str) -> list[EdgeInfo]:
 
 
 @app.delete("/v1/edges")
-async def delete_edges(created_by: str, namespace: str | None = None) -> dict:
+async def delete_edges(
+    created_by: str,
+    namespace: str | None = None,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> dict:
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
-        namespace_id = None
-        if namespace:
-            namespaces = await get_namespaces()
-            for ns in namespaces:
-                if ns.name == namespace:
-                    namespace_id = ns.id
-                    break
         count = await delete_edges_by_creator(created_by, namespace_id)
         return {"deleted": count}
     except Exception as e:
@@ -249,7 +258,9 @@ async def delete_edges(created_by: str, namespace: str | None = None) -> dict:
 
 
 @app.post("/v1/edges/by-path", response_model=EdgeCreateByPathResponse)
-async def create_edges_by_path_endpoint(edges: list[EdgeCreateByPath]) -> EdgeCreateByPathResponse:
+async def create_edges_by_path_endpoint(
+    edges: list[EdgeCreateByPath], ctx: TenantContext = Depends(require_tenant_context)
+) -> EdgeCreateByPathResponse:
     try:
         return await create_edges_by_path(edges)
     except Exception as e:
@@ -260,7 +271,9 @@ async def create_edges_by_path_endpoint(edges: list[EdgeCreateByPath]) -> EdgeCr
 
 
 @app.post("/v1/memories", response_model=MemoryIndexResponse)
-async def create_memory(record: MemoryRecord) -> MemoryIndexResponse:
+async def create_memory(
+    record: MemoryRecord, ctx: TenantContext = Depends(require_tenant_context)
+) -> MemoryIndexResponse:
     try:
         return await index_memory(record)
     except Exception as e:
@@ -268,7 +281,9 @@ async def create_memory(record: MemoryRecord) -> MemoryIndexResponse:
 
 
 @app.post("/v1/memories/bulk", response_model=MemoryBulkResponse)
-async def create_memories_bulk(request: MemoryBulkRequest) -> MemoryBulkResponse:
+async def create_memories_bulk(
+    request: MemoryBulkRequest, ctx: TenantContext = Depends(require_tenant_context)
+) -> MemoryBulkResponse:
     try:
         return await memory_bulk_index(request.memories)
     except Exception as e:
@@ -276,15 +291,18 @@ async def create_memories_bulk(request: MemoryBulkRequest) -> MemoryBulkResponse
 
 
 @app.post("/v1/memories/recall", response_model=MemoryRecallResponse)
-async def recall_memories(request: MemoryRecallRequest) -> MemoryRecallResponse:
+async def recall_memories(
+    request: MemoryRecallRequest, ctx: TenantContext = Depends(require_tenant_context)
+) -> MemoryRecallResponse:
+    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
-        return await memory_recall(request)
+        return await memory_recall(request, namespace_id)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Memory recall failed: {e}") from e
 
 
 @app.get("/v1/memories/stats", response_model=MemoryStats)
-async def memory_stats_endpoint() -> MemoryStats:
+async def memory_stats_endpoint(ctx: TenantContext = Depends(require_tenant_context)) -> MemoryStats:
     try:
         return await get_memory_stats()
     except Exception as e:
@@ -292,17 +310,15 @@ async def memory_stats_endpoint() -> MemoryStats:
 
 
 @app.delete("/v1/memories")
-async def delete_memories(actor: str, namespace: str | None = None) -> dict:
+async def delete_memories(
+    actor: str,
+    namespace: str | None = None,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> dict:
     from scrutator.db.repository import delete_memories_by_actor
 
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
-        namespace_id = None
-        if namespace:
-            namespaces = await get_namespaces()
-            for ns in namespaces:
-                if ns.name == namespace:
-                    namespace_id = ns.id
-                    break
         count = await delete_memories_by_actor(actor, namespace_id)
         return {"deleted": count}
     except Exception as e:
