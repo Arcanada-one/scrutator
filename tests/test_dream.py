@@ -19,6 +19,8 @@ from scrutator.dream.models import (
     StaleChunk,
 )
 
+from .conftest import override_tenant_context
+
 # ── Model validation tests ──────────────────────────────────────────
 
 
@@ -646,7 +648,10 @@ class TestDreamAPI:
     def test_delete_edges_endpoint(self):
         from scrutator.health import app
 
-        with patch("scrutator.health.delete_edges_by_creator", new_callable=AsyncMock, return_value=3):
+        with (
+            patch("scrutator.health.delete_edges_by_creator", new_callable=AsyncMock, return_value=3),
+            override_tenant_context(app),
+        ):
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.delete("/v1/edges?created_by=dreamer")
             assert resp.status_code == 200

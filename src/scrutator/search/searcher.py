@@ -6,7 +6,7 @@ import time
 
 from scrutator.config import settings
 from scrutator.db.models import Citation, SearchResponse, SearchResult
-from scrutator.db.repository import hybrid_search, search_with_filters, upsert_namespace
+from scrutator.db.repository import hybrid_search, search_with_filters
 from scrutator.search.embedder import embed_single, embed_sparse
 from scrutator.search.reranker import rerank
 
@@ -26,7 +26,7 @@ def _build_citation(r: SearchResult, score_kind: str) -> Citation:
 
 async def search(
     query: str,
-    namespace: str | None = None,
+    namespace_id: int,
     project: str | None = None,
     source_type: str | None = None,
     limit: int = 10,
@@ -38,13 +38,13 @@ async def search(
     M1 (SRCH-0029): every SearchResult carries a populated Citation (always-on, near-zero cost).
     M2 (SRCH-0029): when settings.rerank_enabled=True, widens the fetch pool and reranks via
     ColBERT MaxSim late-interaction. Default OFF — measure-first per consilium condition 2.
+
+    SRCH-0023: namespace_id is mandatory and MUST be resolved by the caller (via
+    `auth.dependency.resolve_namespace_selector` against the authenticated principal's
+    allowed-namespace set) — this function never auto-provisions or trusts a raw namespace
+    string. Read paths never call `upsert_namespace`.
     """
     start = time.monotonic()
-
-    # Resolve namespace id if specified
-    namespace_id = None
-    if namespace:
-        namespace_id = await upsert_namespace(namespace)
 
     if source_type:
         # Use filtered search when source_type is specified
