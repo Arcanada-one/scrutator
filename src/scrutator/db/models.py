@@ -82,6 +82,7 @@ class SearchRequest(BaseModel):
     limit: int = 10
     min_score: float = 0.0
     include_content: bool = True
+    group_by: Literal["document", "section"] | None = None  # SRCH-0021, opt-in, default off
 
     @field_validator("query")
     @classmethod
@@ -144,10 +145,78 @@ class SearchResult(BaseModel):
     citation: Citation | None = None  # M1 (SRCH-0029): typed source attribution; None until populated by searcher
 
 
-class SearchResponse(BaseModel):
-    """API response for POST /v1/search."""
+class GroupedSearchResult(BaseModel):
+    """A `group_by`-folded search result (SRCH-0021, D-REQ-05). Only present when
+    `SearchRequest.group_by` is set; the default (absent) search path never builds these."""
 
-    results: list[SearchResult]
+    group_key: str
+    doc_id: str = ""
+    score: float
+    representative: SearchResult
+    member_chunk_ids: list[str] = Field(default_factory=list)
+    member_count: int = 0
+
+
+class SearchResponse(BaseModel):
+    """API response for POST /v1/search.
+
+    `results` is `list[SearchResult]` when `group_by` is absent (default, byte-identical
+    to pre-SRCH-0021 behaviour — V-AC-6) or `list[GroupedSearchResult]` when set (D-REQ-05).
+    """
+
+    results: list[SearchResult] | list[GroupedSearchResult]
     total: int
     query: str
     search_time_ms: float
+
+
+# ── SRCH-0021: hierarchical navigation ───────────────────────────────
+
+
+class OutlineNode(BaseModel):
+    """One node of a document's table-of-contents tree."""
+
+    title: str
+    anchor: str
+    depth: int
+    section_key: str
+    chunk_ids: list[str] = Field(default_factory=list)
+    children: list[OutlineNode] = Field(default_factory=list)
+
+
+class OutlineResponse(BaseModel):
+    """API response for GET /v1/navigate/outline."""
+
+    source_path: str
+    namespace: str
+    doc_id: str
+    total_chunks: int
+    outline: list[OutlineNode] = Field(default_factory=list)
+
+
+class SectionBreadcrumb(BaseModel):
+    """A lightweight section reference (used for ancestors/siblings/children)."""
+
+    title: str
+    section_key: str
+    depth: int
+
+
+class SectionSelf(SectionBreadcrumb):
+    """The target section itself, additionally carrying its chunk ids."""
+
+    chunk_ids: list[str] = Field(default_factory=list)
+
+
+class SectionContext(BaseModel):
+    """API response for GET /v1/navigate/section."""
+
+    chunk_id: str
+    doc_id: str
+    section_key: str
+    ancestors: list[SectionBreadcrumb] = Field(default_factory=list)
+    self_: SectionSelf = Field(alias="self")
+    siblings: list[SectionBreadcrumb] = Field(default_factory=list)
+    children: list[SectionBreadcrumb] = Field(default_factory=list)
+
+    model_config = {"populate_by_name": True}

@@ -5,7 +5,15 @@ import os
 from scrutator.chunker import Chunk, ChunkMetadata, chunk_document
 from scrutator.chunker.metadata import detect_language, extract_frontmatter, extract_tags, extract_wikilinks
 from scrutator.chunker.models import ChunkRequest
-from scrutator.chunker.splitters import semantic_split, split_by_headers, split_code
+from scrutator.chunker.splitters import (
+    SECTION_SCHEMA_VERSION,
+    compute_doc_id,
+    normalize_heading_path,
+    semantic_split,
+    slugify,
+    split_by_headers,
+    split_code,
+)
 from scrutator.chunker.tokenizer import token_count, truncate_to_tokens
 
 # --------------- T1: Chunk model creation ---------------
@@ -38,6 +46,21 @@ def test_metadata_defaults():
     assert meta.wikilinks == []
     assert meta.tags == []
     assert meta.language is None
+    assert meta.section is None
+
+
+def test_section_meta_shape():
+    from scrutator.chunker.models import SectionMeta
+
+    section = SectionMeta(
+        heading_path=["Doc", "Section"],
+        depth=2,
+        anchor="section",
+        anchor_path=["doc", "section"],
+        section_key="doc/section",
+    )
+    assert section.doc_id == ""
+    assert section.schema_version == SECTION_SCHEMA_VERSION
 
 
 def test_chunk_request_defaults():
@@ -137,6 +160,60 @@ def test_split_by_headers_three_sections():
     assert sections[2][0] == ["# Title", "## Section 2"]
 
 
+# --------------- T9 (SRCH-0021): slugify + normalize_heading_path ---------------
+
+
+def test_slugify_deterministic():
+    assert slugify("## Hello World") == "hello-world"
+    assert slugify("## Hello World") == slugify("## Hello World")
+
+
+def test_slugify_latin_punctuation():
+    assert slugify("### API: Design & Rollout!") == "api-design-rollout"
+
+
+def test_slugify_cyrillic():
+    slug = slugify("## Семантическая индексация")
+    assert slug == "семантическая-индексация"
+    assert slug == slugify("## Семантическая индексация")
+
+
+def test_slugify_strips_hash_and_trims():
+    assert slugify("   # Leading Whitespace   ") == "leading-whitespace"
+
+
+def test_section_normalization():
+    hierarchy = ["# Doc", "## Section", "### Sub"]
+    section = normalize_heading_path(hierarchy)
+    assert section["heading_path"] == ["Doc", "Section", "Sub"]
+    assert section["depth"] == 3
+    assert section["anchor"] == "sub"
+    assert section["anchor_path"] == ["doc", "section", "sub"]
+    assert section["section_key"] == "doc/section/sub"
+    assert section["schema_version"] == SECTION_SCHEMA_VERSION
+
+
+def test_section_normalization_empty_hierarchy():
+    section = normalize_heading_path([])
+    assert section["heading_path"] == []
+    assert section["depth"] == 0
+    assert section["anchor"] == ""
+    assert section["section_key"] == ""
+
+
+def test_compute_doc_id_deterministic():
+    doc_id = compute_doc_id("arcanada", "notes/example.md")
+    assert doc_id == compute_doc_id("arcanada", "notes/example.md")
+    assert len(doc_id) == 16
+
+
+def test_compute_doc_id_varies_by_namespace_and_path():
+    a = compute_doc_id("arcanada", "notes/example.md")
+    b = compute_doc_id("ltm-bench-1", "notes/example.md")
+    c = compute_doc_id("arcanada", "notes/other.md")
+    assert len({a, b, c}) == 3
+
+
 def test_split_by_headers_nested():
     text = "# Title\n\n## A\n\n### A1\n\nDeep.\n\n## B\n\nFlat."
     sections = split_by_headers(text)
@@ -199,6 +276,7 @@ def test_engine_short_doc():
     assert result.strategy_used == "single"
     assert result.total_chunks == 1
     assert result.chunks[0].metadata.source_type == "text"
+    assert result.chunks[0].metadata.section is None
 
 
 # --------------- T12: engine: markdown headers ---------------
@@ -226,6 +304,13 @@ Second section with different content.
     assert result.total_chunks >= 3
     # Frontmatter should be extracted
     assert result.chunks[0].metadata.frontmatter.get("title") == "Test Doc"
+    # SRCH-0021: section normalized from the header stack, doc_id left for the indexer
+    section = result.chunks[0].metadata.section
+    assert section is not None
+    assert section.heading_path == ["Introduction"]
+    assert section.depth == 1
+    assert section.anchor == "introduction"
+    assert section.doc_id == ""
 
 
 # --------------- T13: engine: giant file ---------------
@@ -271,6 +356,7 @@ class Config:
     result = chunk_document(code, "src/config.py")
     assert result.strategy_used == "code_boundaries"
     assert result.total_chunks >= 2
+    assert all(c.metadata.section is None for c in result.chunks)
 
 
 # --------------- T15: API: POST /v1/chunk ---------------

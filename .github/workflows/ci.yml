@@ -35,6 +35,9 @@ jobs:
       - name: Format check
         run: ruff format --check src/ tests/
 
+      - name: Security scan (SRCH-0021 navigation/backfill surface)
+        run: bandit -ll -ii -r src/scrutator/search/navigator.py src/scrutator/search/searcher.py src/scrutator/health.py tools/backfill_sections.py
+
       - name: Test
         run: pytest tests/ -v
         env:

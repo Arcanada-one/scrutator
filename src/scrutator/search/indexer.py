@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 
 from scrutator.chunker.engine import chunk_document
+from scrutator.chunker.models import SectionMeta
+from scrutator.chunker.splitters import compute_doc_id
 from scrutator.db.models import IndexResponse
 from scrutator.db.repository import (
     delete_by_source,
@@ -17,6 +19,13 @@ from scrutator.db.repository import (
 from scrutator.search.embedder import embed_sparse, embed_texts
 
 logger = logging.getLogger(__name__)
+
+
+def _stamp_doc_id(section: SectionMeta | None, namespace: str, source_path: str) -> dict | None:
+    """Finalize a chunk's section dict with its namespace-scoped doc_id (indexer-only context)."""
+    if section is None:
+        return None
+    return {**section.model_dump(), "doc_id": compute_doc_id(namespace, source_path)}
 
 
 async def index_document(
@@ -68,6 +77,7 @@ async def index_document(
                 "wikilinks": c.metadata.wikilinks,
                 "tags": c.metadata.tags,
                 "language": c.metadata.language,
+                "section": _stamp_doc_id(c.metadata.section, namespace, source_path),
             },
         }
         for c in chunk_result.chunks
