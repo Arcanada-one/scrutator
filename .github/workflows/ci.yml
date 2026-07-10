@@ -63,7 +63,7 @@ jobs:
       - name: Notify Ops Bot on failure
         if: failure()
         run: |
-          curl -fsS -X POST https://ops.arcanada.one/events \
+          curl -fsS -X POST https://ops.arcanada.ai/events \
             -H "Authorization: Bearer ${{ secrets.OPSBOT_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{"category":"fatal","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'
