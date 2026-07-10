@@ -78,13 +78,14 @@ async def bulk_index(records: list[MemoryRecord]) -> MemoryBulkResponse:
     return MemoryBulkResponse(indexed=len(memory_ids), memory_ids=memory_ids)
 
 
-async def recall(request: MemoryRecallRequest) -> MemoryRecallResponse:
-    """Search memories with filters and importance boosting."""
-    start = time.monotonic()
+async def recall(request: MemoryRecallRequest, namespace_id: int) -> MemoryRecallResponse:
+    """Search memories with filters and importance boosting.
 
-    namespace_id = None
-    if request.namespace:
-        namespace_id = await repository.upsert_namespace(request.namespace)
+    SRCH-0023: namespace_id is mandatory and MUST be resolved by the caller (via
+    `auth.dependency.resolve_namespace_selector`) — this read path never auto-provisions
+    a namespace from the caller-supplied request.namespace string.
+    """
+    start = time.monotonic()
 
     results = await repository.search_with_filters(
         query_text=request.query,

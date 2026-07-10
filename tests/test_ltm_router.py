@@ -44,7 +44,7 @@ class TestReflectEndpoint:
     def test_reflect_dry_run_returns_preview(self):
         with (
             patch(
-                "scrutator.ltm.router.repository.upsert_namespace",
+                "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
                 return_value=1,
             ),
@@ -62,7 +62,7 @@ class TestReflectEndpoint:
     def test_reflect_persist_omits_preview(self):
         with (
             patch(
-                "scrutator.ltm.router.repository.upsert_namespace",
+                "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
                 return_value=1,
             ),
@@ -103,7 +103,7 @@ class TestMetaFactsEndpoint:
         ]
         with (
             patch(
-                "scrutator.ltm.router.repository.upsert_namespace",
+                "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
                 return_value=1,
             ),
@@ -125,7 +125,7 @@ class TestMetaFactsEndpoint:
     def test_list_meta_facts_caps_limit(self):
         with (
             patch(
-                "scrutator.ltm.router.repository.upsert_namespace",
+                "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
                 return_value=1,
             ),

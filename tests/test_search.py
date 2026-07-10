@@ -396,13 +396,11 @@ class TestSearcher:
         with (
             patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
             patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
-            patch("scrutator.search.searcher.upsert_namespace", new_callable=AsyncMock) as mock_ns,
         ):
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = mock_results
-            mock_ns.return_value = 1
 
-            resp = await search(query="test query", namespace="arcanada", limit=5)
+            resp = await search(query="test query", namespace_id=1, limit=5)
             assert resp.total == 1
             assert resp.results[0].source_path == "wiki/test.md"
             assert resp.search_time_ms > 0
@@ -439,7 +437,7 @@ class TestSearcher:
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", min_score=0.03)
+            resp = await search(query="test", namespace_id=1, min_score=0.03)
             assert resp.total == 1
             assert resp.results[0].chunk_id == "b"
 
@@ -466,27 +464,17 @@ class TestSearcher:
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", include_content=False)
+            resp = await search(query="test", namespace_id=1, include_content=False)
             assert resp.results[0].content == ""
 
     @pytest.mark.asyncio
-    async def test_search_no_namespace(self):
-        """Search without namespace → all namespaces."""
+    async def test_search_requires_namespace_id(self):
+        """SRCH-0023 V-AC-1: namespace_id is mandatory — search() never defaults to
+        all-namespaces. Omitting it is a TypeError, not a silent full-corpus read."""
         from scrutator.search.searcher import search
 
-        with (
-            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
-            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
-        ):
-            mock_embed.return_value = [0.1] * 1024
-            mock_search.return_value = []
-
-            resp = await search(query="test")
-            assert resp.total == 0
-            # namespace_id=None was passed
-            mock_search.assert_called_once()
-            call_kwargs = mock_search.call_args
-            assert call_kwargs[1]["namespace_id"] is None
+        with pytest.raises(TypeError):
+            await search(query="test")
 
 
 # ── API endpoint tests (FastAPI TestClient, mocked DB) ───────────────
@@ -580,7 +568,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=5, group_by="document")
+            resp = await search(query="test", namespace_id=1, limit=5, group_by="document")
 
         assert resp.total == 1
         group = resp.results[0]
@@ -609,7 +597,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=3, group_by="section")
+            resp = await search(query="test", namespace_id=1, limit=3, group_by="section")
 
         assert resp.total == 2
         keys = {g.group_key for g in resp.results}
@@ -631,7 +619,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=1)
+            resp = await search(query="test", namespace_id=1, limit=1)
 
         assert resp.results[0].chunk_id == "c1"
         assert not hasattr(resp.results[0], "member_count")
@@ -675,14 +663,14 @@ class TestSearchDefaultPathUnchanged:
             patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
             patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
-            patch("scrutator.search.searcher.upsert_namespace", new_callable=AsyncMock) as mock_ns,
         ):
             mock_embed.return_value = [0.1] * 1024
             mock_sparse.return_value = [{"tok": 0.5}]
             mock_search.return_value = mock_results
-            mock_ns.return_value = 1
 
-            resp = await search(query="baseline query", namespace="arcanada", limit=5)
+            # SRCH-0023: namespace_id is now mandatory (int); the removed upsert_namespace
+            # patch is obsolete (read path never provisions a namespace).
+            resp = await search(query="baseline query", namespace_id=1, limit=5)
 
         data = resp.model_dump()
         data.pop("search_time_ms", None)
@@ -726,7 +714,7 @@ class TestSearcherCitationAndRerank:
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=2)
+            resp = await search(query="test", namespace_id=1, limit=2)
 
         assert resp.total == 2
         for r in resp.results:
@@ -752,7 +740,7 @@ class TestSearcherCitationAndRerank:
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=2)
+            resp = await search(query="test", namespace_id=1, limit=2)
 
         # Order preserved from RRF
         assert resp.results[0].chunk_id == "A"
@@ -778,7 +766,7 @@ class TestSearcherCitationAndRerank:
             mock_embed.return_value = [0.1] * 1024
             mock_search.return_value = [self._mock_result()]
 
-            await search(query="test", limit=1)
+            await search(query="test", namespace_id=1, limit=1)
 
         # rerank module should never be called when flag is OFF
         mock_rerank.assert_not_called()
@@ -811,7 +799,7 @@ class TestSearcherCitationAndRerank:
             mock_search.return_value = [self._mock_result("A", 0.03)]
             mock_rerank.return_value = [reranked_result]
 
-            resp = await search(query="test", limit=1)
+            resp = await search(query="test", namespace_id=1, limit=1)
 
         mock_rerank.assert_called_once()
         assert resp.results[0].citation.score_kind == "colbert_rerank"
@@ -834,7 +822,7 @@ class TestSearcherCitationAndRerank:
             mock_search.return_value = []
             mock_rerank.return_value = []
 
-            await search(query="test", limit=5)
+            await search(query="test", namespace_id=1, limit=5)
 
         call_kwargs = mock_search.call_args[1]
         assert call_kwargs.get("fetch_multiplier") == 4

@@ -9,6 +9,8 @@ from fastapi.testclient import TestClient
 
 from scrutator.db.models import ChunkLookupResult
 
+from .conftest import override_tenant_context
+
 # ── Model tests ───────────────────────────────────────────────────
 
 
@@ -173,12 +175,13 @@ class TestChunkLookupAPI:
             ),
         ]
 
+        from scrutator.health import app
+
         with (
             patch("scrutator.health.get_chunks_by_source_path", new_callable=AsyncMock, return_value=mock_results),
             patch("scrutator.health.get_namespaces", new_callable=AsyncMock, return_value=[]),
+            override_tenant_context(app),
         ):
-            from scrutator.health import app
-
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/v1/chunks", params={"source_path": "wiki/AI/ML.md"})
             assert resp.status_code == 200
@@ -188,12 +191,13 @@ class TestChunkLookupAPI:
             assert data[0]["chunk_index"] == 0
 
     def test_get_chunks_endpoint_empty(self):
+        from scrutator.health import app
+
         with (
             patch("scrutator.health.get_chunks_by_source_path", new_callable=AsyncMock, return_value=[]),
             patch("scrutator.health.get_namespaces", new_callable=AsyncMock, return_value=[]),
+            override_tenant_context(app),
         ):
-            from scrutator.health import app
-
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/v1/chunks", params={"source_path": "nonexistent.md"})
             assert resp.status_code == 200

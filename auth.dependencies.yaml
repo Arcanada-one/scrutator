@@ -1,0 +1,39 @@
+# Auth Arcana consumer manifest (Auth Arcana Mandate §6, SRCH-0023).
+# Declares how Scrutator consumes Auth Arcana identity + authorization.
+# Modeled on Projects/Arcanada Support/code/api/auth.dependencies.yaml's shape.
+
+service: scrutator
+
+# [to-be-confirmed]: set to the Auth Arcana release that ships the OpenFGA consumer-check
+# endpoint used by src/scrutator/auth/rebac_client.py, once the live endpoint from plan
+# Step 0 is confirmed. Until then this service runs against the principal_namespace_grants
+# FK-cache fallback (degraded RBAC facade per mandate §5) — see rebac.fallback below.
+auth_arcana_min_version: "[to-be-confirmed]"
+
+identity:
+  # No bespoke Scrutator key system (mandate §4) — callers present either credential shape.
+  service_token_prefix: "arc_api_"
+  oidc_jwks_url: "https://auth.arcanada.ai/.well-known/jwks.json"
+
+rebac:
+  # Auth Arcana OpenFGA is the source of truth; tuple shape per authz/model.fga:
+  #   user:<principal_id>#can_read@namespace:<namespace_name>
+  store_endpoint: "[to-be-confirmed]" # SCRUTATOR_AUTH_ARCANA_OPENFGA_URL
+  rebac_types:
+    - namespace
+  # Degrades to a local FK-only cache (principal_namespace_grants table) when the live
+  # OpenFGA endpoint above is unreachable/unconfirmed — an explicit, recorded fallback
+  # per mandate §5 ("RBAC facade for simple cases"), not a silent permanent design.
+  fallback: fk_cache
+  fallback_table: principal_namespace_grants
+
+scopes_consumed:
+  - namespace:read
+  - namespace:create
+
+grace_period:
+  # SCRUTATOR_AUTH_ENFORCE — 30-day dual-auth grace (mandate §8). Unauthenticated
+  # requests are logged as would-deny audit events, not rejected, until flipped.
+  flag: SCRUTATOR_AUTH_ENFORCE
+  default: false
+  window_days: 30

@@ -233,7 +233,6 @@ class TestServiceRecall:
         request = MemoryRecallRequest(query="test query", namespace="arcanada")
 
         with patch("scrutator.memory.service.repository") as mock_repo:
-            mock_repo.upsert_namespace = AsyncMock(return_value=1)
             mock_repo.search_with_filters = AsyncMock(
                 return_value=[
                     {
@@ -259,7 +258,7 @@ class TestServiceRecall:
 
             from scrutator.memory.service import recall
 
-            result = await recall(request)
+            result = await recall(request, namespace_id=1)
 
         assert result.total == 1
         assert result.results[0].actor == "dreamer"
@@ -271,7 +270,6 @@ class TestServiceRecall:
         request = MemoryRecallRequest(query="test", min_score=0.9)
 
         with patch("scrutator.memory.service.repository") as mock_repo:
-            mock_repo.upsert_namespace = AsyncMock(return_value=1)
             mock_repo.search_with_filters = AsyncMock(
                 return_value=[
                     {
@@ -289,7 +287,7 @@ class TestServiceRecall:
 
             from scrutator.memory.service import recall
 
-            result = await recall(request)
+            result = await recall(request, namespace_id=1)
 
         assert result.total == 0
 
@@ -298,12 +296,11 @@ class TestServiceRecall:
         request = MemoryRecallRequest(query="nothing here")
 
         with patch("scrutator.memory.service.repository") as mock_repo:
-            mock_repo.upsert_namespace = AsyncMock(return_value=1)
             mock_repo.search_with_filters = AsyncMock(return_value=[])
 
             from scrutator.memory.service import recall
 
-            result = await recall(request)
+            result = await recall(request, namespace_id=1)
 
         assert result.total == 0
         assert result.results == []

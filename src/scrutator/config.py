@@ -66,6 +66,20 @@ class Settings(BaseSettings):
     rerank_pool_multiplier: int = 4  # fetch_limit = limit * multiplier when rerank ON
     rerank_colbert_max_pool: int = 30  # hard cap on candidates sent to ColBERT
 
+    # SRCH-0023: tenant isolation — Auth Arcana identity + authorization
+    auth_arcana_jwks_url: str = "https://auth.arcanada.ai/.well-known/jwks.json"
+    auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
+    auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
+    auth_arcana_openfga_store_id: str = ""
+
+    # Dual-auth grace (30-day window, Auth Arcana mandate §8): False = advisory would-deny audit
+    # log only, never rejects. MUST stay False until the operator explicitly flips it in prod.
+    # env_prefix below makes this SCRUTATOR_AUTH_ENFORCE.
+    auth_enforce: bool = False
+
+    # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
+    rls_enabled: bool = False
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 

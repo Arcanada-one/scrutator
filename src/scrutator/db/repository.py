@@ -141,7 +141,7 @@ async def delete_by_source(source_path: str) -> int:
 async def hybrid_search(
     query_embedding: list[float],
     query_text: str,
-    namespace_id: int | None = None,
+    namespace_id: int,
     limit: int = 10,
     query_sparse: dict[str, float] | None = None,
     fetch_multiplier: int = 3,
@@ -175,7 +175,7 @@ async def hybrid_search(
                         ORDER BY c.embedding_dense <=> $1
                     ) AS rank
                     FROM chunks c
-                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
                     ORDER BY c.embedding_dense <=> $1
                     LIMIT $3
@@ -186,7 +186,7 @@ async def hybrid_search(
                                + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                     ) AS rank
                     FROM chunks c
-                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
                     LIMIT $3
@@ -202,7 +202,7 @@ async def hybrid_search(
                     ) AS rank
                     FROM sparse_vectors sv
                     JOIN chunks c ON c.id = sv.chunk_id
-                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    WHERE c.namespace_id = $2
                     LIMIT $3
                 ),
                 ranked AS (
@@ -245,7 +245,7 @@ async def hybrid_search(
                         ORDER BY c.embedding_dense <=> $1
                     ) AS rank
                     FROM chunks c
-                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
                     ORDER BY c.embedding_dense <=> $1
                     LIMIT $3
@@ -256,7 +256,7 @@ async def hybrid_search(
                                + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                     ) AS rank
                     FROM chunks c
-                    WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                    WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
                     LIMIT $3
@@ -498,8 +498,9 @@ async def get_edge_stats(namespace_id: int | None = None) -> dict[str, Any]:
     }
 
 
-async def get_namespaces() -> list[NamespaceInfo]:
-    """List all namespaces with chunk counts."""
+async def get_namespaces(namespace_ids: frozenset[int]) -> list[NamespaceInfo]:
+    """List namespaces within namespace_ids, with chunk counts. Empty set -> empty result
+    (SRCH-0023 V-AC-6 — never enumerate outside the caller's allowed-set)."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
@@ -508,9 +509,11 @@ async def get_namespaces() -> list[NamespaceInfo]:
                    COUNT(c.id)::int AS chunk_count
             FROM namespaces n
             LEFT JOIN chunks c ON c.namespace_id = n.id
+            WHERE n.id = ANY($1::int[])
             GROUP BY n.id, n.name, n.description
             ORDER BY n.name
-            """
+            """,
+            list(namespace_ids),
         )
     return [
         NamespaceInfo(id=r["id"], name=r["name"], description=r["description"], chunk_count=r["chunk_count"])
@@ -518,13 +521,21 @@ async def get_namespaces() -> list[NamespaceInfo]:
     ]
 
 
-async def get_stats() -> dict[str, Any]:
-    """Get index statistics."""
+async def get_stats(namespace_ids: frozenset[int]) -> dict[str, Any]:
+    """Get index statistics scoped to namespace_ids. Empty set -> zeroed stats
+    (SRCH-0023 V-AC-6 — never enumerate outside the caller's allowed-set)."""
     pool = await get_pool()
+    ns_id_list = list(namespace_ids)
     async with pool.acquire() as conn:
-        total_chunks = await conn.fetchval("SELECT COUNT(*)::int FROM chunks")
-        total_namespaces = await conn.fetchval("SELECT COUNT(*)::int FROM namespaces")
-        total_projects = await conn.fetchval("SELECT COUNT(*)::int FROM projects")
+        total_chunks = await conn.fetchval(
+            "SELECT COUNT(*)::int FROM chunks WHERE namespace_id = ANY($1::int[])", ns_id_list
+        )
+        total_namespaces = await conn.fetchval(
+            "SELECT COUNT(*)::int FROM namespaces WHERE id = ANY($1::int[])", ns_id_list
+        )
+        total_projects = await conn.fetchval(
+            "SELECT COUNT(*)::int FROM projects WHERE namespace_id = ANY($1::int[])", ns_id_list
+        )
         ns_rows = await conn.fetch(
             """
             SELECT n.name,
@@ -532,9 +543,11 @@ async def get_stats() -> dict[str, Any]:
                    COUNT(DISTINCT c.project_id)::int AS project_count
             FROM namespaces n
             LEFT JOIN chunks c ON c.namespace_id = n.id
+            WHERE n.id = ANY($1::int[])
             GROUP BY n.name
             ORDER BY n.name
-            """
+            """,
+            ns_id_list,
         )
     return {
         "total_chunks": total_chunks or 0,
@@ -668,7 +681,7 @@ async def get_section_siblings_children(chunk_id: str) -> dict[str, Any] | None:
 
 async def search_with_filters(
     query_text: str,
-    namespace_id: int | None = None,
+    namespace_id: int,
     source_type: str | None = None,
     actor: str | None = None,
     memory_type: str | None = None,
@@ -723,7 +736,7 @@ async def search_with_filters(
                     ORDER BY c.embedding_dense <=> $1
                 ) AS rank
                 FROM chunks c
-                WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                WHERE c.namespace_id = $2
                   AND c.embedding_dense IS NOT NULL
                   {extra_where}
                 ORDER BY c.embedding_dense <=> $1
@@ -735,7 +748,7 @@ async def search_with_filters(
                            + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                 ) AS rank
                 FROM chunks c
-                WHERE ($2::int IS NULL OR c.namespace_id = $2)
+                WHERE c.namespace_id = $2
                   AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                        OR c.textsearch_en @@ plainto_tsquery('english', $4))
                   {extra_where}
