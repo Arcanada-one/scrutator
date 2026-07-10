@@ -1,0 +1,26 @@
+{
+  "factual": {
+    "n": 15,
+    "recall@1": 0.6,
+    "recall@5": 0.9333333333333333,
+    "latency_p50_ms": 1014.0
+  },
+  "multi-hop": {
+    "n": 8,
+    "recall@1": 0.75,
+    "recall@5": 1.0,
+    "latency_p50_ms": 1175.1
+  },
+  "temporal": {
+    "n": 10,
+    "recall@1": 0.6,
+    "recall@5": 0.8,
+    "latency_p50_ms": 997.15
+  },
+  "overall": {
+    "n": 33,
+    "recall@1": 0.6363636363636364,
+    "recall@5": 0.9090909090909091,
+    "latency_p50_ms": 1023.5
+  }
+}
