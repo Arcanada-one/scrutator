@@ -21,6 +21,8 @@ dependencies = [
     "asyncpg>=0.30",
     "pgvector>=0.3",
     "httpx>=0.28",
+    "numpy>=1.26",
+    "pyjwt[crypto]>=2.10",
 ]
 
 [project.urls]
@@ -37,6 +39,15 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["scrutator"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's Depends()/Query()/etc. in argument defaults is the documented idiom, not a
+# mutable-default footgun — ruff's B008 has this exact escape hatch.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Header"]
+[tool.ruff.lint.per-file-ignores]
+# Migrated verbatim from the SRCH-0031 v0 checkout (Precondition P1) — kept as the
+# pre-harness.py reference implementation, not reformatted or relinted in place.
+"benchmark/scrutator/measure.py" = ["E401", "E501", "E741", "F401", "I001", "SIM115"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

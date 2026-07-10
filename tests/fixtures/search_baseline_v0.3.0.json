@@ -1,0 +1,60 @@
+{
+  "query": "baseline query",
+  "results": [
+    {
+      "chunk_id": "c1",
+      "chunk_index": 0,
+      "citation": {
+        "chunk_id": "c1",
+        "chunk_index": 0,
+        "heading_hierarchy": [
+          "# Alpha",
+          "## Intro"
+        ],
+        "relevance_score": 0.05,
+        "schema_version": 1,
+        "score_kind": "rrf",
+        "source_path": "docs/alpha.md",
+        "source_type": "markdown"
+      },
+      "content": "Alpha content",
+      "heading_hierarchy": [
+        "# Alpha",
+        "## Intro"
+      ],
+      "metadata": {},
+      "namespace": "arcanada",
+      "project": null,
+      "score": 0.05,
+      "source_path": "docs/alpha.md",
+      "source_type": "markdown"
+    },
+    {
+      "chunk_id": "c2",
+      "chunk_index": 1,
+      "citation": {
+        "chunk_id": "c2",
+        "chunk_index": 1,
+        "heading_hierarchy": [
+          "# Beta"
+        ],
+        "relevance_score": 0.03,
+        "schema_version": 1,
+        "score_kind": "rrf",
+        "source_path": "docs/beta.md",
+        "source_type": "markdown"
+      },
+      "content": "Beta content",
+      "heading_hierarchy": [
+        "# Beta"
+      ],
+      "metadata": {},
+      "namespace": "arcanada",
+      "project": null,
+      "score": 0.03,
+      "source_path": "docs/beta.md",
+      "source_type": "markdown"
+    }
+  ],
+  "total": 2
+}
