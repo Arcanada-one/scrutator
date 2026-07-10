@@ -1,0 +1,77 @@
+name: Scrutator /v1/search Benchmark (SRCH-0015)
+
+# HARD-GATE (plan Phase 7 Step 4): this workflow is authored disabled — manual dispatch
+# only, no `schedule:` trigger. Enabling a recurring schedule puts automated traffic on a
+# fixed cadence against an unauthenticated mesh endpoint (SRCH-0024 still pending) plus
+# recurring LLM-baseline spend every run. Do not add a `schedule:` trigger without explicit
+# operator go-ahead — see benchmark/scrutator/README.md and the SRCH-0015 plan § Phase 7.
+
+on:
+  workflow_dispatch:
+    inputs:
+      golden_set:
+        description: 'Golden set path (relative to repo root)'
+        type: string
+        default: 'benchmark/scrutator/golden/golden-arcanada-v0.jsonl'
+      models:
+        description: 'Comma-separated model names to dispatch'
+        type: string
+        default: 'bge-m3'
+      recall_threshold:
+        description: 'Minimum overall recall@5 required for a passing run'
+        type: string
+        default: '0.879'
+
+jobs:
+  unit-tests:
+    # Lint + unit tests only — no network calls, safe on any self-hosted runner.
+    runs-on: [self-hosted, linux, arcana-prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install pytest ruff
+
+      - name: Lint
+        run: ruff check benchmark/scrutator/
+
+      - name: Unit tests
+        run: python -m pytest benchmark/scrutator/tests/ -v
+
+  benchmark:
+    needs: unit-tests
+    # NOT ubuntu-latest: (a) 100.70.137.104:8310 is Tailscale-mesh-only, unreachable from
+    # hosted runners; (b) Arcanada org has no funded hosted-runner billing (VERD-0058).
+    runs-on: [self-hosted, linux, arcana-ai]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Run harness (read-only, mesh-internal calls only)
+        run: |
+          python benchmark/scrutator/harness.py \
+            --golden "${{ inputs.golden_set }}" \
+            --models "${{ inputs.models }}" \
+            --namespace arcanada \
+            --corpus-root . \
+            --recall-threshold "${{ inputs.recall_threshold }}" \
+            --out-summary results-summary.json
+        env:
+          # Model Connector credential for any llm:* baseline dispatch — Vault via GitHub
+          # Secrets, never hardcoded (Security condition, PRD § Consilium / Appendix A).
+          MC_API_KEY: ${{ secrets.MC_API_KEY }}
+
+      - name: Upload results summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrutator-benchmark-results
+          path: results-summary.json
