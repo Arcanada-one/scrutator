@@ -1,0 +1,6012 @@
+[
+  {
+    "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+    "triples": [
+      {
+        "source": "User Interaction",
+        "relation": "processed_by",
+        "target": "text-embedding-3"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "generates",
+        "target": "Vector"
+      },
+      {
+        "source": "Vector",
+        "relation": "stored_in",
+        "target": "Qdrant Storage"
+      },
+      {
+        "source": "Batch Processing",
+        "relation": "uses",
+        "target": "Background jobs"
+      },
+      {
+        "source": "Background jobs",
+        "relation": "handles",
+        "target": "bulk embeddings"
+      },
+      {
+        "source": "Real-time",
+        "relation": "processes",
+        "target": "new interactions"
+      },
+      {
+        "source": "Redis queues",
+        "relation": "used_for",
+        "target": "processing"
+      },
+      {
+        "source": "Embeddings Generation",
+        "relation": "implements",
+        "target": "Batch Processing"
+      },
+      {
+        "source": "Embeddings Generation",
+        "relation": "uses",
+        "target": "text-embedding-3"
+      },
+      {
+        "source": "Embeddings Generation",
+        "relation": "produces",
+        "target": "Vector"
+      },
+      {
+        "source": "Embeddings Generation",
+        "relation": "stores_in",
+        "target": "Qdrant Storage"
+      },
+      {
+        "source": "Batch Processing",
+        "relation": "uses",
+        "target": "Redis queues"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+    "triples": [
+      {
+        "source": "Multi-Format Input Processing",
+        "relation": "implements",
+        "target": "Intelligent processing"
+      },
+      {
+        "source": "Text Messages",
+        "relation": "uses",
+        "target": "Direct processing"
+      },
+      {
+        "source": "Voice Messages",
+        "relation": "uses",
+        "target": "Whisper"
+      },
+      {
+        "source": "Voice Messages",
+        "relation": "undergoes",
+        "target": "transcription"
+      },
+      {
+        "source": "transcription",
+        "relation": "leads_to",
+        "target": "Processing"
+      },
+      {
+        "source": "Photos",
+        "relation": "uses",
+        "target": "GPT-4 Vision"
+      },
+      {
+        "source": "Photos",
+        "relation": "undergoes",
+        "target": "analysis"
+      },
+      {
+        "source": "analysis",
+        "relation": "produces",
+        "target": "Description"
+      },
+      {
+        "source": "Description",
+        "relation": "leads_to",
+        "target": "Processing"
+      },
+      {
+        "source": "Audio Files",
+        "relation": "uses",
+        "target": "Whisper"
+      },
+      {
+        "source": "Audio Files",
+        "relation": "undergoes",
+        "target": "transcription"
+      },
+      {
+        "source": "transcription",
+        "relation": "produces",
+        "target": "Summary"
+      },
+      {
+        "source": "Summary",
+        "relation": "leads_to",
+        "target": "Storage"
+      },
+      {
+        "source": "PDF Documents",
+        "relation": "undergoes",
+        "target": "Parsing"
+      },
+      {
+        "source": "Parsing",
+        "relation": "leads_to",
+        "target": "Analysis"
+      },
+      {
+        "source": "Analysis",
+        "relation": "produces",
+        "target": "Summary"
+      },
+      {
+        "source": "Summary",
+        "relation": "leads_to",
+        "target": "Storage"
+      },
+      {
+        "source": "Long Voice Messages",
+        "relation": "uses",
+        "target": "Auto-convert"
+      },
+      {
+        "source": "Auto-convert",
+        "relation": "enables",
+        "target": "audio file processing"
+      },
+      {
+        "source": "Multi-Format Input Processing",
+        "relation": "enables",
+        "target": "Natural interaction"
+      },
+      {
+        "source": "Multi-Format Input Processing",
+        "relation": "eliminates",
+        "target": "format limitations"
+      },
+      {
+        "source": "Multi-Format Input Processing",
+        "relation": "provides",
+        "target": "Intelligent understanding"
+      },
+      {
+        "source": "Multi-Format Input Processing",
+        "relation": "enables",
+        "target": "Automatic organization"
+      },
+      {
+        "source": "Whisper",
+        "relation": "performs",
+        "target": "transcription"
+      },
+      {
+        "source": "GPT-4 Vision",
+        "relation": "performs",
+        "target": "analysis"
+      }
+    ]
+  },
+  {
+    "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+    "triples": [
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Discovery"
+      },
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Registration"
+      },
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Onboarding"
+      },
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Daily Use"
+      },
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Progressive Engagement"
+      },
+      {
+        "source": "Typical User Path",
+        "relation": "includes",
+        "target": "Life Integration"
+      },
+      {
+        "source": "Discovery",
+        "relation": "involves_learning_about",
+        "target": "Argana AI"
+      },
+      {
+        "source": "Registration",
+        "relation": "involves_starting_conversation_with",
+        "target": "Telegram bot"
+      },
+      {
+        "source": "Onboarding",
+        "relation": "uses",
+        "target": "Telegram"
+      },
+      {
+        "source": "Daily Use",
+        "relation": "uses",
+        "target": "Telegram"
+      },
+      {
+        "source": "Telegram bot",
+        "relation": "runs_on",
+        "target": "Telegram"
+      },
+      {
+        "source": "Telegram bot",
+        "relation": "created_by",
+        "target": "Argana AI"
+      },
+      {
+        "source": "Registration",
+        "relation": "leads_to",
+        "target": "Onboarding"
+      },
+      {
+        "source": "Onboarding",
+        "relation": "leads_to",
+        "target": "Daily Use"
+      },
+      {
+        "source": "Daily Use",
+        "relation": "leads_to",
+        "target": "Progressive Engagement"
+      },
+      {
+        "source": "Progressive Engagement",
+        "relation": "leads_to",
+        "target": "Life Integration"
+      }
+    ]
+  },
+  {
+    "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+    "triples": [
+      {
+        "source": "text-embedding-3",
+        "relation": "created_by",
+        "target": "OpenAI"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "provides",
+        "target": "High-quality embeddings"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "has",
+        "target": "Good performance"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "has",
+        "target": "Reliable API"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "is",
+        "target": "Cost-effective"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "used_for",
+        "target": "Converting interactions to vectors"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "used_for",
+        "target": "Semantic search"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "used_for",
+        "target": "Similarity matching"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "implements",
+        "target": "Embeddings"
+      },
+      {
+        "source": "text-embedding-3",
+        "relation": "uses",
+        "target": "API"
+      },
+      {
+        "source": "Converting interactions to vectors",
+        "relation": "converts",
+        "target": "interactions"
+      },
+      {
+        "source": "Converting interactions to vectors",
+        "relation": "produces",
+        "target": "vectors"
+      },
+      {
+        "source": "Semantic search",
+        "relation": "uses",
+        "target": "vectors"
+      },
+      {
+        "source": "Similarity matching",
+        "relation": "uses",
+        "target": "vectors"
+      },
+      {
+        "source": "Reliable API",
+        "relation": "part_of",
+        "target": "API"
+      }
+    ]
+  },
+  {
+    "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+    "triples": [
+      {
+        "source": "Caching embeddings",
+        "relation": "part_of",
+        "target": "Cost Optimization"
+      },
+      {
+        "source": "Batch processing",
+        "relation": "part_of",
+        "target": "Cost Optimization"
+      },
+      {
+        "source": "Model selection",
+        "relation": "part_of",
+        "target": "Cost Optimization"
+      },
+      {
+        "source": "Efficient prompt design",
+        "relation": "part_of",
+        "target": "Cost Optimization"
+      },
+      {
+        "source": "Context optimization",
+        "relation": "part_of",
+        "target": "Cost Optimization"
+      },
+      {
+        "source": "Model selection",
+        "relation": "uses",
+        "target": "mini"
+      },
+      {
+        "source": "mini",
+        "relation": "related_to",
+        "target": "Model selection"
+      }
+    ]
+  },
+  {
+    "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+    "triples": [
+      {
+        "source": "docs.mem0.ai/open-source/graph_memory/overview",
+        "relation": "part_of",
+        "target": "Mem0"
+      },
+      {
+        "source": "mem0.ai/pricing",
+        "relation": "part_of",
+        "target": "Mem0"
+      },
+      {
+        "source": "Mem0 GitHub repo",
+        "relation": "part_of",
+        "target": "Mem0"
+      },
+      {
+        "source": "github.com/mem0ai/mem0",
+        "relation": "located_in",
+        "target": "Mem0 GitHub repo"
+      },
+      {
+        "source": "HEAD",
+        "relation": "located_in",
+        "target": "github.com/mem0ai/mem0"
+      },
+      {
+        "source": "3fbc1c9",
+        "relation": "part_of",
+        "target": "HEAD"
+      },
+      {
+        "source": "github.com/mem0ai/mem0",
+        "relation": "cloned_into",
+        "target": "benchmark/candidates/mem0/"
+      },
+      {
+        "source": "benchmark/candidates/mem0/",
+        "relation": "created_by",
+        "target": "2026-04-16"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+    "triples": [
+      {
+        "source": "Mem0 Graph Gate",
+        "relation": "investigated_on",
+        "target": "2026-04-16"
+      },
+      {
+        "source": "Mem0 Graph Gate",
+        "relation": "part_of",
+        "target": "LTM-0002 Phase A"
+      },
+      {
+        "source": "LTM-0002 Phase A",
+        "relation": "focuses_on",
+        "target": "Mem0 Graph Gate"
+      },
+      {
+        "source": "LTM-0002 Phase A",
+        "relation": "evaluates",
+        "target": "Mem0"
+      },
+      {
+        "source": "LTM-0002 Phase A",
+        "relation": "evaluates",
+        "target": "Cognee"
+      },
+      {
+        "source": "Mem0",
+        "relation": "uses",
+        "target": "OSS SDK"
+      },
+      {
+        "source": "Cognee",
+        "relation": "related_to",
+        "target": "Mem0"
+      },
+      {
+        "source": "Mem0",
+        "relation": "located_in",
+        "target": "GitHub"
+      },
+      {
+        "source": "OSS SDK",
+        "relation": "located_in",
+        "target": "GitHub"
+      }
+    ]
+  },
+  {
+    "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+    "triples": [
+      {
+        "source": "LLM API key",
+        "relation": "required_for",
+        "target": "reflect"
+      },
+      {
+        "source": "reflect",
+        "relation": "part_of",
+        "target": "reasoning layer"
+      },
+      {
+        "source": "retain",
+        "relation": "works_without",
+        "target": "LLM API key"
+      },
+      {
+        "source": "recall",
+        "relation": "works_without",
+        "target": "LLM API key"
+      },
+      {
+        "source": "mental models",
+        "relation": "depends_on",
+        "target": "LLM API key"
+      },
+      {
+        "source": "Community",
+        "relation": "smaller_than",
+        "target": "Mem0"
+      },
+      {
+        "source": "Community",
+        "relation": "has",
+        "target": "9.4k"
+      },
+      {
+        "source": "Mem0",
+        "relation": "has",
+        "target": "53k stars"
+      },
+      {
+        "source": "Community",
+        "relation": "has_fewer",
+        "target": "Stack Overflow"
+      },
+      {
+        "source": "Community",
+        "relation": "has_fewer",
+        "target": "community examples"
+      },
+      {
+        "source": "Embedded PostgreSQL",
+        "relation": "limited_to",
+        "target": "single-node"
+      },
+      {
+        "source": "HA",
+        "relation": "requires",
+        "target": "external PostgreSQL"
+      },
+      {
+        "source": "external PostgreSQL",
+        "relation": "not",
+        "target": "embedded"
+      },
+      {
+        "source": "Go SDK",
+        "relation": "less_mature_than",
+        "target": "Python"
+      },
+      {
+        "source": "Go SDK",
+        "relation": "less_mature_than",
+        "target": "TS"
+      },
+      {
+        "source": "Go SDK",
+        "relation": "needs_verification_in",
+        "target": "benchmark"
+      },
+      {
+        "source": "Tailscale",
+        "relation": "used_for",
+        "target": "deploy"
+      },
+      {
+        "source": "deploy",
+        "relation": "part_of",
+        "target": "arcana-dev"
+      },
+      {
+        "source": "arcana-dev",
+        "relation": "requires",
+        "target": "persistent volume mapping"
+      },
+      {
+        "source": "arcana-dev",
+        "relation": "requires",
+        "target": "backup cron"
+      },
+      {
+        "source": "backup cron",
+        "relation": "connects_to",
+        "target": "B2"
+      },
+      {
+        "source": "Tailscale",
+        "relation": "related_to",
+        "target": "Arcanada-specific"
+      },
+      {
+        "source": "deploy",
+        "relation": "related_to",
+        "target": "Arcanada-specific"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+    "triples": [
+      {
+        "source": "LangMem",
+        "relation": "located_in",
+        "target": "https://github.com/langchain-ai/langmem"
+      },
+      {
+        "source": "LangMem",
+        "relation": "uses",
+        "target": "MIT"
+      },
+      {
+        "source": "LangMem",
+        "relation": "implements",
+        "target": "Python"
+      },
+      {
+        "source": "LangMem",
+        "relation": "integrates_with",
+        "target": "LangGraph"
+      },
+      {
+        "source": "LangMem",
+        "relation": "integrates_with",
+        "target": "LangGraph Platform"
+      },
+      {
+        "source": "LangMem",
+        "relation": "uses",
+        "target": "Long-term Memory Store"
+      },
+      {
+        "source": "LangMem",
+        "relation": "part_of",
+        "target": "LangChain"
+      },
+      {
+        "source": "Long-term Memory Store",
+        "relation": "part_of",
+        "target": "LangGraph Platform"
+      },
+      {
+        "source": "LangGraph Platform",
+        "relation": "serves",
+        "target": "HTTP API"
+      },
+      {
+        "source": "LangMem",
+        "relation": "depends_on",
+        "target": "LangGraph"
+      },
+      {
+        "source": "LangMem",
+        "relation": "coupled_to",
+        "target": "LangChain"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+    "triples": [
+      {
+        "source": "Mem0",
+        "relation": "created_by",
+        "target": "mem0.ai"
+      },
+      {
+        "source": "Mem0",
+        "relation": "implements",
+        "target": "MCP"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "created_by",
+        "target": "MIT"
+      },
+      {
+        "source": "Zep",
+        "relation": "created_by",
+        "target": "getzep.com"
+      },
+      {
+        "source": "Cognee",
+        "relation": "implements",
+        "target": "OSS"
+      },
+      {
+        "source": "LangMem",
+        "relation": "depends_on",
+        "target": "LangGraph"
+      },
+      {
+        "source": "LlamaIndex Memory",
+        "relation": "depends_on",
+        "target": "LlamaIndex"
+      },
+      {
+        "source": "Letta",
+        "relation": "extends",
+        "target": "MemGPT"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "part_of",
+        "target": "Zep core"
+      },
+      {
+        "source": "qmd",
+        "relation": "uses",
+        "target": "BM25"
+      },
+      {
+        "source": "qmd",
+        "relation": "related_to",
+        "target": "Karpathy gist"
+      },
+      {
+        "source": "Mem0",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "Zep",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "Cognee",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "LangMem",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "LlamaIndex Memory",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "Letta",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "MemPalace",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "qmd",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "OpenMemory MCP",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      },
+      {
+        "source": "EpisodicMemory",
+        "relation": "part_of",
+        "target": "LTM-0001"
+      }
+    ]
+  },
+  {
+    "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+    "triples": [
+      {
+        "source": "Cipher (project)",
+        "relation": "renamed_to",
+        "target": "ByteRover (project)"
+      },
+      {
+        "source": "ByteRover (project)",
+        "relation": "renamed_to",
+        "target": "brv (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "located_in",
+        "target": "https://github.com/campfirein/cipher (location)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "uses",
+        "target": "Elastic License 2.0 (concept)"
+      },
+      {
+        "source": "Elastic License 2.0 (concept)",
+        "relation": "related_to",
+        "target": "OSI (organization)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "implements",
+        "target": "TypeScript (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "implements",
+        "target": "Node.js (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "supports",
+        "target": "macOS ARM64 (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "supports",
+        "target": "Linux x64 (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "supports",
+        "target": "Linux ARM64 (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "implements",
+        "target": "CLI (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "README (concept)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "ByteRover Cloud (project)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "supports",
+        "target": "Knowledge Graph (concept)"
+      },
+      {
+        "source": "Knowledge Graph (concept)",
+        "relation": "implements",
+        "target": "Context tree (concept)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "LongMemEval-S (concept)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "implements",
+        "target": "MCP server (technology)"
+      },
+      {
+        "source": "brv mcp (technology)",
+        "relation": "part_of",
+        "target": "MCP server (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "REST (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "HTTP API (technology)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "LoCoMo (concept)"
+      },
+      {
+        "source": "Cipher (project)",
+        "relation": "related_to",
+        "target": "Discord (organization)"
+      },
+      {
+        "source": "Elastic License 2.0 (concept)",
+        "relation": "related_to",
+        "target": "R1 license (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+    "triples": [
+      {
+        "source": "Corpus distribution",
+        "relation": "part_of",
+        "target": "datarim-kb"
+      },
+      {
+        "source": "Corpus distribution",
+        "relation": "part_of",
+        "target": "dreamer-wiki"
+      },
+      {
+        "source": "factual",
+        "relation": "part_of",
+        "target": "Corpus distribution"
+      },
+      {
+        "source": "multi-hop",
+        "relation": "part_of",
+        "target": "Corpus distribution"
+      },
+      {
+        "source": "temporal",
+        "relation": "part_of",
+        "target": "Corpus distribution"
+      },
+      {
+        "source": "2026-04-16",
+        "relation": "created_by",
+        "target": "wiki snapshot"
+      },
+      {
+        "source": "wiki snapshot",
+        "relation": "contains",
+        "target": ".md"
+      },
+      {
+        "source": "wiki snapshot",
+        "relation": "contains",
+        "target": ".mdx"
+      },
+      {
+        "source": "benchmark/datasets/2026-04-16/dreamer-wiki/MANIFEST.json",
+        "relation": "documents",
+        "target": "wiki snapshot"
+      },
+      {
+        "source": "wiki queries",
+        "relation": "created_from",
+        "target": "dreamer-wiki"
+      },
+      {
+        "source": "wiki queries",
+        "relation": "used_for",
+        "target": "benchmarking"
+      },
+      {
+        "source": "ground truth",
+        "relation": "measured_at",
+        "target": "2026-04-16"
+      },
+      {
+        "source": "benchmarking",
+        "relation": "exercises",
+        "target": "wiki retrieval"
+      },
+      {
+        "source": "sparse-corpus behaviour",
+        "relation": "part_of",
+        "target": "wiki retrieval"
+      },
+      {
+        "source": "benchmarking",
+        "relation": "exercises",
+        "target": "cross-corpus federation"
+      },
+      {
+        "source": "multi-hop-007",
+        "relation": "implements",
+        "target": "cross-corpus federation"
+      },
+      {
+        "source": "LTM-0002",
+        "relation": "excludes",
+        "target": "wiki snapshot"
+      },
+      {
+        "source": "datarim-kb",
+        "relation": "related_to",
+        "target": "LTM-0002"
+      },
+      {
+        "source": "dreamer-wiki",
+        "relation": "related_to",
+        "target": "LTM-0002"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+    "triples": [
+      {
+        "source": "Системы долгосрочной памяти - Сравнение.md",
+        "relation": "contains",
+        "target": "Mem0"
+      },
+      {
+        "source": "Системы долгосрочной памяти - Сравнение.md",
+        "relation": "contains",
+        "target": "Hindsight"
+      },
+      {
+        "source": "Системы долгосрочной памяти - Сравнение.md",
+        "relation": "contains",
+        "target": "Zep"
+      },
+      {
+        "source": "llm-wiki.md",
+        "relation": "created_by",
+        "target": "Karpathy"
+      },
+      {
+        "source": "llm-wiki.md",
+        "relation": "implements",
+        "target": "file-based wiki"
+      },
+      {
+        "source": "llm-wiki.md",
+        "relation": "related_to",
+        "target": "Agent Dreamer"
+      },
+      {
+        "source": "file-based wiki",
+        "relation": "uses",
+        "target": "векторная БД"
+      },
+      {
+        "source": "Mem0 - The Memory Layer for your AI Apps.md",
+        "relation": "related_to",
+        "target": "Mem0"
+      },
+      {
+        "source": "Ilya Belov",
+        "relation": "related_to",
+        "target": "Милы Йововчич"
+      },
+      {
+        "source": "Ilya Belov",
+        "relation": "discusses",
+        "target": "LTM"
+      },
+      {
+        "source": "LTM",
+        "relation": "related_to",
+        "target": "Long Term Memory"
+      },
+      {
+        "source": "AI",
+        "relation": "related_to",
+        "target": "ИИ"
+      },
+      {
+        "source": "Mem0",
+        "relation": "part_of",
+        "target": "AI"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "part_of",
+        "target": "AI"
+      },
+      {
+        "source": "Zep",
+        "relation": "part_of",
+        "target": "AI"
+      },
+      {
+        "source": "Agent Dreamer",
+        "relation": "part_of",
+        "target": "AI"
+      },
+      {
+        "source": "Long Term Memory",
+        "relation": "part_of",
+        "target": "AI"
+      }
+    ]
+  },
+  {
+    "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+    "triples": [
+      {
+        "source": "Graphiti (project)",
+        "relation": "located_in",
+        "target": "https://github.com/getzep/graphiti (location)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Apache-2.0 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "has",
+        "target": "25,007 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "created_on",
+        "target": "2024-08-08 (event)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "last_pushed_on",
+        "target": "2026-04-14 (event)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implemented_in",
+        "target": "Python (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "FastAPI (technology)"
+      },
+      {
+        "source": "FastAPI (technology)",
+        "relation": "located_in",
+        "target": "server/ (location)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "positioned_as",
+        "target": "self-hosted only (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "contrasted_against",
+        "target": "Zep Cloud (project)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "documented_in",
+        "target": "https://github.com/getzep/graphiti README (location)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "runs_via",
+        "target": "Docker (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "Neo4j 5.26 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "FalkorDB 1.1.2 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "Kuzu 0.11.2 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "Amazon Neptune (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "OpenSearch (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "bi-temporal tracking (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "automatic fact invalidation (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "provides",
+        "target": "MCP server (technology)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "located_in",
+        "target": "mcp_server/ (location)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "includes",
+        "target": "episode (concept)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "includes",
+        "target": "entity (concept)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "includes",
+        "target": "search tools (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "provides",
+        "target": "REST (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "provides",
+        "target": "HTTP API (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "FastAPI service (technology)"
+      },
+      {
+        "source": "FastAPI service (technology)",
+        "relation": "located_in",
+        "target": "server/ (location)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "documented_in",
+        "target": "README (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "has_paper_at",
+        "target": "arXiv:2501.13956 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "has",
+        "target": "366 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "has",
+        "target": "2,484 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Discord (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "is",
+        "target": "Bi-temporal knowledge-graph memory engine (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "Neo4j (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "Kuzu (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "supports",
+        "target": "FalkorDB (technology)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+    "triples": [
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "part_of",
+        "target": "LTM-0002"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "part_of",
+        "target": "Phase C"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "created_by",
+        "target": "2026-04-16"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "uses",
+        "target": "benchmark/queries/{factual,multi-hop,temporal}.jsonl"
+      },
+      {
+        "source": "benchmark/queries/{factual,multi-hop,temporal}.jsonl",
+        "relation": "implements",
+        "target": "factual"
+      },
+      {
+        "source": "benchmark/queries/{factual,multi-hop,temporal}.jsonl",
+        "relation": "implements",
+        "target": "multi-hop"
+      },
+      {
+        "source": "benchmark/queries/{factual,multi-hop,temporal}.jsonl",
+        "relation": "implements",
+        "target": "temporal"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "explains",
+        "target": "factual"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "explains",
+        "target": "multi-hop"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "explains",
+        "target": "temporal"
+      },
+      {
+        "source": "factual",
+        "relation": "probes",
+        "target": "agent behaviour"
+      },
+      {
+        "source": "multi-hop",
+        "relation": "probes",
+        "target": "agent behaviour"
+      },
+      {
+        "source": "temporal",
+        "relation": "probes",
+        "target": "agent behaviour"
+      },
+      {
+        "source": "Query Criteria Rationale",
+        "relation": "explains",
+        "target": "class boundaries"
+      },
+      {
+        "source": "benchmark harness",
+        "relation": "part_of",
+        "target": "Phase D"
+      },
+      {
+        "source": "benchmark harness",
+        "relation": "scores",
+        "target": "candidates"
+      },
+      {
+        "source": "benchmark harness",
+        "relation": "produces",
+        "target": "final report"
+      },
+      {
+        "source": "framework",
+        "relation": "evaluated_by",
+        "target": "benchmark harness"
+      },
+      {
+        "source": "framework",
+        "relation": "performs",
+        "target": "factual recall"
+      },
+      {
+        "source": "framework",
+        "relation": "performs",
+        "target": "multi-hop"
+      },
+      {
+        "source": "framework",
+        "relation": "used_in",
+        "target": "workflow"
+      }
+    ]
+  },
+  {
+    "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+    "triples": [
+      {
+        "source": "LTM-0002",
+        "relation": "tests",
+        "target": "Hindsight"
+      },
+      {
+        "source": "LTM-0002",
+        "relation": "tests",
+        "target": "Graphiti"
+      },
+      {
+        "source": "LTM-0002",
+        "relation": "tests",
+        "target": "Mem0"
+      },
+      {
+        "source": "LTM-0002",
+        "relation": "considers",
+        "target": "Cognee"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "implements",
+        "target": "4-way hybrid retrieval"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "supports",
+        "target": "MCP"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "created_by",
+        "target": "MIT"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "uses",
+        "target": "PostgreSQL"
+      },
+      {
+        "source": "Hindsight",
+        "relation": "implements",
+        "target": "token cost reflect layer"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "implements",
+        "target": "Bi-temporal KG"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "uses",
+        "target": "Neo4j"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "uses",
+        "target": "Kuzu"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "provides",
+        "target": "API"
+      },
+      {
+        "source": "Graphiti",
+        "relation": "related_to",
+        "target": "LoCoMo"
+      },
+      {
+        "source": "Mem0",
+        "relation": "supports",
+        "target": "OSS"
+      },
+      {
+        "source": "Mem0",
+        "relation": "uses",
+        "target": "pip install"
+      },
+      {
+        "source": "Cognee",
+        "relation": "related_to",
+        "target": "Mem0"
+      }
+    ]
+  },
+  {
+    "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+    "triples": [
+      {
+        "source": "Bi-temporal knowledge-graph memory engine",
+        "relation": "builds",
+        "target": "граф сущностей"
+      },
+      {
+        "source": "Bi-temporal knowledge-graph memory engine",
+        "relation": "updates",
+        "target": "граф сущностей"
+      },
+      {
+        "source": "Bi-temporal knowledge-graph memory engine",
+        "relation": "uses",
+        "target": "explicit tracking"
+      },
+      {
+        "source": "граф сущностей",
+        "relation": "implements",
+        "target": "explicit tracking"
+      },
+      {
+        "source": "Bi-temporal knowledge-graph memory engine",
+        "relation": "designed_for",
+        "target": "агентные системы"
+      },
+      {
+        "source": "агентные системы",
+        "relation": "uses",
+        "target": "Bi-temporal knowledge-graph memory engine"
+      }
+    ]
+  },
+  {
+    "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+    "triples": [
+      {
+        "source": "pip",
+        "relation": "installs",
+        "target": "hindsight-sdk"
+      },
+      {
+        "source": "hindsight",
+        "relation": "uses",
+        "target": "serve"
+      },
+      {
+        "source": "hindsight",
+        "relation": "uses",
+        "target": "port"
+      },
+      {
+        "source": "serve",
+        "relation": "uses",
+        "target": "port"
+      },
+      {
+        "source": "port",
+        "relation": "has_value",
+        "target": "8888"
+      },
+      {
+        "source": "hindsight-sdk",
+        "relation": "related_to",
+        "target": "hindsight"
+      }
+    ]
+  },
+  {
+    "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+    "triples": [
+      {
+        "source": "Graphiti (project)",
+        "relation": "located_in",
+        "target": "https://github.com/getzep/graphiti (location)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Apache-2.0 (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "related_to",
+        "target": "25k (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "related_to",
+        "target": "2026-04-14 (event)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "bi-temporal knowledge graph engine (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "created_by",
+        "target": "Zep (project)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "self-hosted only (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "Multi-backend graph (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Neo4j 5.26 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "FalkorDB 1.1.2 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Kuzu 0.11.2 (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "Amazon Neptune (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "OpenSearch (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "Bi-temporal model (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "MCP server (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "implements",
+        "target": "REST API (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "uses",
+        "target": "FastAPI (technology)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "related_to",
+        "target": "ArXiv paper (concept)"
+      },
+      {
+        "source": "Graphiti (project)",
+        "relation": "related_to",
+        "target": "2501.13956 (concept)"
+      },
+      {
+        "source": "Zep (project)",
+        "relation": "related_to",
+        "target": "community edition (concept)"
+      },
+      {
+        "source": "Multi-backend graph (technology)",
+        "relation": "uses",
+        "target": "Neo4j 5.26 (technology)"
+      },
+      {
+        "source": "Multi-backend graph (technology)",
+        "relation": "uses",
+        "target": "FalkorDB 1.1.2 (technology)"
+      },
+      {
+        "source": "Multi-backend graph (technology)",
+        "relation": "uses",
+        "target": "Kuzu 0.11.2 (technology)"
+      },
+      {
+        "source": "Multi-backend graph (technology)",
+        "relation": "uses",
+        "target": "Amazon Neptune (technology)"
+      },
+      {
+        "source": "Multi-backend graph (technology)",
+        "relation": "uses",
+        "target": "OpenSearch (technology)"
+      },
+      {
+        "source": "Bi-temporal model (concept)",
+        "relation": "uses",
+        "target": "valid_at (concept)"
+      },
+      {
+        "source": "Bi-temporal model (concept)",
+        "relation": "uses",
+        "target": "invalid_at (concept)"
+      },
+      {
+        "source": "Datarim (organization)",
+        "relation": "uses",
+        "target": "operating model (concept)"
+      },
+      {
+        "source": "TUNE-0003 (project)",
+        "relation": "related_to",
+        "target": "problem #3 (concept)"
+      },
+      {
+        "source": "problem #3 (concept)",
+        "relation": "related_to",
+        "target": "inconsistency between sessions (concept)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "located_in",
+        "target": "mcp_server/ (location)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "uses",
+        "target": "episode (concept)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "uses",
+        "target": "entity (concept)"
+      },
+      {
+        "source": "MCP server (technology)",
+        "relation": "uses",
+        "target": "search tools (technology)"
+      },
+      {
+        "source": "REST API (technology)",
+        "relation": "uses",
+        "target": "FastAPI (technology)"
+      },
+      {
+        "source": "LTM-0002 (project)",
+        "relation": "related_to",
+        "target": "token-efficiency benchmarks (concept)"
+      },
+      {
+        "source": "ArXiv paper (concept)",
+        "relation": "related_to",
+        "target": "2501.13956 (concept)"
+      },
+      {
+        "source": "Neo4j (technology)",
+        "relation": "part_of",
+        "target": "default backend (concept)"
+      },
+      {
+        "source": "Neo4j (technology)",
+        "relation": "uses",
+        "target": "RAM (technology)"
+      },
+      {
+        "source": "RAM (technology)",
+        "relation": "related_to",
+        "target": "500MB+ (concept)"
+      },
+      {
+        "source": "Kuzu (technology)",
+        "relation": "related_to",
+        "target": "benchmark (concept)"
+      },
+      {
+        "source": "LoCoMo (project)",
+        "relation": "related_to",
+        "target": "search-quality (concept)"
+      },
+      {
+        "source": "LoCoMo (project)",
+        "relation": "related_to",
+        "target": "paper (concept)"
+      },
+      {
+        "source": "API (technology)",
+        "relation": "related_to",
+        "target": "minimalist (concept)"
+      },
+      {
+        "source": "Hindsight (project)",
+        "relation": "uses",
+        "target": "episodes (concept)"
+      },
+      {
+        "source": "Hindsight (project)",
+        "relation": "uses",
+        "target": "entities (concept)"
+      },
+      {
+        "source": "Hindsight (project)",
+        "relation": "uses",
+        "target": "communities (concept)"
+      },
+      {
+        "source": "Hindsight (project)",
+        "relation": "uses",
+        "target": "search (concept)"
+      },
+      {
+        "source": "Hindsight (project)",
+        "relation": "related_to",
+        "target": "learning curve (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+    "triples": [
+      {
+        "source": "LoCoMo 91.6 (technology)",
+        "relation": "part_of",
+        "target": "Token economics (concept)"
+      },
+      {
+        "source": "LongMemEval 93.4 (technology)",
+        "relation": "part_of",
+        "target": "Token economics (concept)"
+      },
+      {
+        "source": "6.7K-7.0K tokens (concept)",
+        "relation": "related_to",
+        "target": "Token economics (concept)"
+      },
+      {
+        "source": "p50 (concept)",
+        "relation": "related_to",
+        "target": "6.7K-7.0K tokens (concept)"
+      },
+      {
+        "source": "1.09s (concept)",
+        "relation": "related_to",
+        "target": "p50 (concept)"
+      },
+      {
+        "source": "Cuts prompt tokens by up to 80% (concept)",
+        "relation": "related_to",
+        "target": "Token economics (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+    "triples": [
+      {
+        "source": "Original Workflow",
+        "relation": "includes",
+        "target": "Load all rules for current mode"
+      },
+      {
+        "source": "Original Workflow",
+        "relation": "includes",
+        "target": "Process according to mode requirements"
+      },
+      {
+        "source": "Original Workflow",
+        "relation": "includes",
+        "target": "Complete documentation per template"
+      },
+      {
+        "source": "Original Workflow",
+        "relation": "includes",
+        "target": "Switch to next mode with minimal context preservation"
+      },
+      {
+        "source": "Load all rules for current mode",
+        "relation": "uses",
+        "target": "rules"
+      },
+      {
+        "source": "Load all rules for current mode",
+        "relation": "depends_on",
+        "target": "current mode"
+      },
+      {
+        "source": "Process according to mode requirements",
+        "relation": "follows",
+        "target": "mode requirements"
+      },
+      {
+        "source": "Process according to mode requirements",
+        "relation": "depends_on",
+        "target": "mode"
+      },
+      {
+        "source": "Complete documentation per template",
+        "relation": "creates",
+        "target": "documentation"
+      },
+      {
+        "source": "Complete documentation per template",
+        "relation": "uses",
+        "target": "template"
+      },
+      {
+        "source": "Switch to next mode with minimal context preservation",
+        "relation": "transitions_to",
+        "target": "next mode"
+      },
+      {
+        "source": "Switch to next mode with minimal context preservation",
+        "relation": "implements",
+        "target": "context preservation"
+      },
+      {
+        "source": "rules",
+        "relation": "related_to",
+        "target": "current mode"
+      },
+      {
+        "source": "mode requirements",
+        "relation": "part_of",
+        "target": "mode"
+      },
+      {
+        "source": "current mode",
+        "relation": "part_of",
+        "target": "mode"
+      },
+      {
+        "source": "next mode",
+        "relation": "part_of",
+        "target": "mode"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+    "triples": [
+      {
+        "source": "planner",
+        "relation": "part_of",
+        "target": "architect"
+      },
+      {
+        "source": "architect",
+        "relation": "works_with",
+        "target": "developer"
+      },
+      {
+        "source": "developer",
+        "relation": "works_with",
+        "target": "reviewer"
+      },
+      {
+        "source": "reviewer",
+        "relation": "works_with",
+        "target": "compliance"
+      },
+      {
+        "source": "compliance",
+        "relation": "related_to",
+        "target": "security"
+      },
+      {
+        "source": "code-simplifier",
+        "relation": "works_with",
+        "target": "developer"
+      },
+      {
+        "source": "strategist",
+        "relation": "works_with",
+        "target": "planner"
+      },
+      {
+        "source": "devops",
+        "relation": "works_with",
+        "target": "sre"
+      },
+      {
+        "source": "writer",
+        "relation": "works_with",
+        "target": "developer"
+      },
+      {
+        "source": "security",
+        "relation": "works_with",
+        "target": "compliance"
+      },
+      {
+        "source": "sre",
+        "relation": "works_with",
+        "target": "devops"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+    "triples": [
+      {
+        "source": "Progressive Creative Phase Documentation",
+        "relation": "optimizes",
+        "target": "creative phase"
+      },
+      {
+        "source": "Progressive Creative Phase Documentation",
+        "relation": "uses",
+        "target": "progressive documentation approach"
+      },
+      {
+        "source": "progressive documentation approach",
+        "relation": "includes",
+        "target": "initial documentation"
+      },
+      {
+        "source": "progressive documentation approach",
+        "relation": "includes",
+        "target": "detailed analysis"
+      },
+      {
+        "source": "progressive documentation approach",
+        "relation": "includes",
+        "target": "tabular format"
+      },
+      {
+        "source": "progressive documentation approach",
+        "relation": "includes",
+        "target": "complexity-appropriate documentation scaling"
+      },
+      {
+        "source": "tabular format",
+        "relation": "enables",
+        "target": "comparison of options"
+      },
+      {
+        "source": ".cursor/rules/isolation_rules/Phases/CreativePhase/optimized-creative-template.mdc",
+        "relation": "implements",
+        "target": "Progressive Creative Phase Documentation"
+      },
+      {
+        "source": "initial documentation",
+        "relation": "part_of",
+        "target": "progressive documentation approach"
+      },
+      {
+        "source": "detailed analysis",
+        "relation": "part_of",
+        "target": "progressive documentation approach"
+      },
+      {
+        "source": "tabular format",
+        "relation": "part_of",
+        "target": "progressive documentation approach"
+      },
+      {
+        "source": "complexity-appropriate documentation scaling",
+        "relation": "part_of",
+        "target": "progressive documentation approach"
+      }
+    ]
+  },
+  {
+    "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+    "triples": [
+      {
+        "source": "Claude Code Tips",
+        "relation": "recommends",
+        "target": "/mb-"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-init"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-plan"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-do"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-status"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-continue"
+      },
+      {
+        "source": "/mb-",
+        "relation": "includes",
+        "target": "/mb-prd"
+      },
+      {
+        "source": "/mb-status",
+        "relation": "shows",
+        "target": "workflow"
+      },
+      {
+        "source": "/mb-continue",
+        "relation": "resumes",
+        "target": "workflow"
+      },
+      {
+        "source": "/mb-prd",
+        "relation": "generates",
+        "target": "PRD"
+      },
+      {
+        "source": "/mb-init",
+        "relation": "starts",
+        "target": "workflow"
+      },
+      {
+        "source": "/mb-plan",
+        "relation": "part_of",
+        "target": "workflow"
+      },
+      {
+        "source": "/mb-do",
+        "relation": "part_of",
+        "target": "workflow"
+      },
+      {
+        "source": "workflow",
+        "relation": "follows_sequence",
+        "target": "/mb-init"
+      },
+      {
+        "source": "/mb-init",
+        "relation": "precedes",
+        "target": "/mb-plan"
+      },
+      {
+        "source": "/mb-plan",
+        "relation": "precedes",
+        "target": "/mb-do"
+      }
+    ]
+  },
+  {
+    "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+    "triples": [
+      {
+        "source": "Side-by-Side Comparison",
+        "relation": "compares",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "Side-by-Side Comparison",
+        "relation": "compares",
+        "target": "Claude Code"
+      },
+      {
+        "source": "New Task",
+        "relation": "implemented_by",
+        "target": "/van Add auth"
+      },
+      {
+        "source": "New Task",
+        "relation": "implemented_by",
+        "target": "/mb-init Add auth"
+      },
+      {
+        "source": "/van Add auth",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-init Add auth",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "/van Add auth",
+        "relation": "related_to",
+        "target": "auth"
+      },
+      {
+        "source": "/mb-init Add auth",
+        "relation": "related_to",
+        "target": "auth"
+      },
+      {
+        "source": "Plan",
+        "relation": "implemented_by",
+        "target": "/plan"
+      },
+      {
+        "source": "Plan",
+        "relation": "implemented_by",
+        "target": "/mb-plan"
+      },
+      {
+        "source": "/plan",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-plan",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Design",
+        "relation": "implemented_by",
+        "target": "/creative"
+      },
+      {
+        "source": "Design",
+        "relation": "implemented_by",
+        "target": "/mb-design"
+      },
+      {
+        "source": "/creative",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-design",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Build",
+        "relation": "implemented_by",
+        "target": "/do"
+      },
+      {
+        "source": "Build",
+        "relation": "implemented_by",
+        "target": "/mb-do"
+      },
+      {
+        "source": "/do",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-do",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Review",
+        "relation": "implemented_by",
+        "target": "/reflect"
+      },
+      {
+        "source": "Review",
+        "relation": "implemented_by",
+        "target": "/mb-reflect"
+      },
+      {
+        "source": "/reflect",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-reflect",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Archive",
+        "relation": "implemented_by",
+        "target": "/archive"
+      },
+      {
+        "source": "Archive",
+        "relation": "implemented_by",
+        "target": "/mb-archive"
+      },
+      {
+        "source": "/archive",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-archive",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Status",
+        "relation": "implemented_by",
+        "target": "/status"
+      },
+      {
+        "source": "Status",
+        "relation": "implemented_by",
+        "target": "/mb-status"
+      },
+      {
+        "source": "/status",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-status",
+        "relation": "part_of",
+        "target": "Claude Code"
+      },
+      {
+        "source": "Continue",
+        "relation": "implemented_by",
+        "target": "/continue"
+      },
+      {
+        "source": "Continue",
+        "relation": "implemented_by",
+        "target": "/mb-continue"
+      },
+      {
+        "source": "/continue",
+        "relation": "part_of",
+        "target": "Cursor IDE"
+      },
+      {
+        "source": "/mb-continue",
+        "relation": "part_of",
+        "target": "Claude Code"
+      }
+    ]
+  },
+  {
+    "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+    "triples": [
+      {
+        "source": "Memory Bank System",
+        "relation": "enhances",
+        "target": "token efficiency"
+      },
+      {
+        "source": "Memory Bank System",
+        "relation": "enhances",
+        "target": "context management"
+      },
+      {
+        "source": "Memory Bank System",
+        "relation": "enhances",
+        "target": "performance"
+      },
+      {
+        "source": "Memory Bank system",
+        "relation": "enhances",
+        "target": "token efficiency"
+      },
+      {
+        "source": "Memory Bank system",
+        "relation": "enhances",
+        "target": "context management"
+      },
+      {
+        "source": "Memory Bank system",
+        "relation": "enhances",
+        "target": "performance"
+      },
+      {
+        "source": "v0.9",
+        "relation": "updated_on",
+        "target": "December 13, 2025"
+      },
+      {
+        "source": "AI Quality Rules Integration",
+        "relation": "uses",
+        "target": "3-tier hierarchical loading"
+      },
+      {
+        "source": "AI Quality Rules Integration",
+        "relation": "achieves",
+        "target": "token reduction"
+      },
+      {
+        "source": "3-tier hierarchical loading",
+        "relation": "achieves",
+        "target": "token reduction"
+      },
+      {
+        "source": "AI Quality Rules Integration",
+        "relation": "part_of",
+        "target": "v0.9"
+      },
+      {
+        "source": "3-tier hierarchical loading",
+        "relation": "part_of",
+        "target": "v0.9"
+      }
+    ]
+  },
+  {
+    "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+    "triples": [
+      {
+        "source": "install.sh",
+        "relation": "implements",
+        "target": "merge mode"
+      },
+      {
+        "source": "install.sh",
+        "relation": "uses",
+        "target": "--force"
+      },
+      {
+        "source": "validate.sh",
+        "relation": "implements",
+        "target": "automated security and consistency checks"
+      },
+      {
+        "source": "automated security and consistency checks",
+        "relation": "includes",
+        "target": "38 checks"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+    "triples": [
+      {
+        "source": "Proposal 1",
+        "relation": "categorized_as",
+        "target": "new-skill"
+      },
+      {
+        "source": "Proposal 1",
+        "relation": "targets",
+        "target": "skills/validate.md"
+      },
+      {
+        "source": "Proposal 1",
+        "relation": "targets",
+        "target": "validate.sh"
+      },
+      {
+        "source": "Proposal 1",
+        "relation": "creates",
+        "target": "validation skill"
+      },
+      {
+        "source": "Proposal 1",
+        "relation": "creates",
+        "target": "script"
+      },
+      {
+        "source": "Proposal 1",
+        "relation": "has_status",
+        "target": "pending approval"
+      },
+      {
+        "source": "validation skill",
+        "relation": "automates",
+        "target": "security audits"
+      },
+      {
+        "source": "script",
+        "relation": "automates",
+        "target": "security audits"
+      },
+      {
+        "source": "security audits",
+        "relation": "includes",
+        "target": "forbidden terms"
+      },
+      {
+        "source": "security audits",
+        "relation": "includes",
+        "target": "cross-references"
+      },
+      {
+        "source": "security audits",
+        "relation": "includes",
+        "target": "naming conflicts"
+      },
+      {
+        "source": "grep commands",
+        "relation": "used_during",
+        "target": "compliance"
+      },
+      {
+        "source": "validation skill",
+        "relation": "replaces",
+        "target": "grep commands"
+      },
+      {
+        "source": "script",
+        "relation": "replaces",
+        "target": "grep commands"
+      }
+    ]
+  },
+  {
+    "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+    "triples": [
+      {
+        "source": "init",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "prd",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "plan",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "design",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "do",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "QA",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "compliance",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "reflect",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "archive",
+        "relation": "part_of",
+        "target": "Pipeline Stages"
+      },
+      {
+        "source": "init",
+        "relation": "involves",
+        "target": "Task creation"
+      },
+      {
+        "source": "init",
+        "relation": "involves",
+        "target": "complexity assessment"
+      },
+      {
+        "source": "init",
+        "relation": "applies_to",
+        "target": "All"
+      },
+      {
+        "source": "prd",
+        "relation": "implements",
+        "target": "Product Requirements Document"
+      },
+      {
+        "source": "prd",
+        "relation": "applies_to",
+        "target": "L2+"
+      },
+      {
+        "source": "plan",
+        "relation": "involves",
+        "target": "Implementation planning"
+      },
+      {
+        "source": "plan",
+        "relation": "involves",
+        "target": "security"
+      },
+      {
+        "source": "plan",
+        "relation": "involves",
+        "target": "rollback"
+      },
+      {
+        "source": "plan",
+        "relation": "applies_to",
+        "target": "L2+"
+      },
+      {
+        "source": "design",
+        "relation": "involves",
+        "target": "Architecture"
+      },
+      {
+        "source": "design",
+        "relation": "involves",
+        "target": "data model"
+      },
+      {
+        "source": "design",
+        "relation": "involves",
+        "target": "creative decisions"
+      },
+      {
+        "source": "design",
+        "relation": "applies_to",
+        "target": "L3+"
+      },
+      {
+        "source": "do",
+        "relation": "implements",
+        "target": "TDD implementation"
+      },
+      {
+        "source": "do",
+        "relation": "applies_to",
+        "target": "All"
+      },
+      {
+        "source": "TDD implementation",
+        "relation": "uses",
+        "target": "TDD"
+      },
+      {
+        "source": "QA",
+        "relation": "implements",
+        "target": "Automated quality assurance"
+      },
+      {
+        "source": "QA",
+        "relation": "applies_to",
+        "target": "All"
+      },
+      {
+        "source": "compliance",
+        "relation": "involves",
+        "target": "Post-QA hardening"
+      },
+      {
+        "source": "compliance",
+        "relation": "involves",
+        "target": "PRD revalidation"
+      },
+      {
+        "source": "compliance",
+        "relation": "applies_to",
+        "target": "L3+"
+      },
+      {
+        "source": "PRD revalidation",
+        "relation": "related_to",
+        "target": "PRD"
+      },
+      {
+        "source": "PRD",
+        "relation": "related_to",
+        "target": "Product Requirements Document"
+      },
+      {
+        "source": "reflect",
+        "relation": "involves",
+        "target": "Lessons learned"
+      },
+      {
+        "source": "reflect",
+        "relation": "involves",
+        "target": "framework self-update"
+      },
+      {
+        "source": "reflect",
+        "relation": "applies_to",
+        "target": "All"
+      },
+      {
+        "source": "archive",
+        "relation": "involves",
+        "target": "Task archival"
+      },
+      {
+        "source": "archive",
+        "relation": "involves",
+        "target": "documentation"
+      },
+      {
+        "source": "archive",
+        "relation": "applies_to",
+        "target": "All"
+      }
+    ]
+  },
+  {
+    "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+    "triples": [
+      {
+        "source": "Level-Specific Optimizations",
+        "relation": "includes",
+        "target": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "part_of",
+        "target": ".cursor"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "part_of",
+        "target": "rules"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "part_of",
+        "target": "isolation_rules"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "part_of",
+        "target": "Level1"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "contains",
+        "target": "optimized-workflow-level1.mdc"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "implements",
+        "target": "Streamlined workflow"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "implements",
+        "target": "Ultra-compact documentation templates"
+      },
+      {
+        "source": "/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc",
+        "relation": "implements",
+        "target": "Consolidated memory bank updates"
+      },
+      {
+        "source": "Streamlined workflow",
+        "relation": "designed_for",
+        "target": "quick bug fixes"
+      },
+      {
+        "source": "Ultra-compact documentation templates",
+        "relation": "extends",
+        "target": "documentation templates"
+      },
+      {
+        "source": "Consolidated memory bank updates",
+        "relation": "extends",
+        "target": "memory bank updates"
+      },
+      {
+        "source": "rules",
+        "relation": "contains",
+        "target": "isolation_rules"
+      },
+      {
+        "source": "isolation_rules",
+        "relation": "contains",
+        "target": "Level1"
+      },
+      {
+        "source": "Level1",
+        "relation": "contains",
+        "target": "optimized-workflow-level1.mdc"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+    "triples": [
+      {
+        "source": "optimizations",
+        "relation": "designed_to_maintain",
+        "target": "functionality"
+      },
+      {
+        "source": "optimizations",
+        "relation": "maintains_compatibility_with",
+        "target": "Memory Bank system"
+      },
+      {
+        "source": "functionality",
+        "relation": "part_of",
+        "target": "Memory Bank system"
+      },
+      {
+        "source": "functionality",
+        "relation": "remains_intact_in",
+        "target": "Memory Bank system"
+      },
+      {
+        "source": "optimizations",
+        "relation": "improves",
+        "target": "token efficiency"
+      },
+      {
+        "source": "Verification",
+        "relation": "relates_to",
+        "target": "optimizations"
+      },
+      {
+        "source": "Verification",
+        "relation": "relates_to",
+        "target": "Memory Bank system"
+      },
+      {
+        "source": "Verification",
+        "relation": "relates_to",
+        "target": "functionality"
+      },
+      {
+        "source": "Verification",
+        "relation": "relates_to",
+        "target": "token efficiency"
+      }
+    ]
+  },
+  {
+    "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+    "triples": [
+      {
+        "source": "Cursor IDE",
+        "relation": "uses",
+        "target": "slash commands"
+      },
+      {
+        "source": "Cursor IDE",
+        "relation": "uses",
+        "target": "/van"
+      },
+      {
+        "source": "Cursor IDE",
+        "relation": "uses",
+        "target": "/plan"
+      },
+      {
+        "source": "Cursor IDE",
+        "relation": "uses",
+        "target": "/do"
+      },
+      {
+        "source": "Cursor IDE",
+        "relation": "supports",
+        "target": "Autocomplete"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "uses",
+        "target": "/mb-init"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "uses",
+        "target": "/mb-plan"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "uses",
+        "target": "/mb-do"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "uses",
+        "target": "/mb-"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "uses",
+        "target": "command syntax"
+      },
+      {
+        "source": "/van",
+        "relation": "part_of",
+        "target": "slash commands"
+      },
+      {
+        "source": "/plan",
+        "relation": "part_of",
+        "target": "slash commands"
+      },
+      {
+        "source": "/do",
+        "relation": "part_of",
+        "target": "slash commands"
+      },
+      {
+        "source": "/mb-init",
+        "relation": "part_of",
+        "target": "/mb-"
+      },
+      {
+        "source": "/mb-plan",
+        "relation": "part_of",
+        "target": "/mb-"
+      },
+      {
+        "source": "/mb-do",
+        "relation": "part_of",
+        "target": "/mb-"
+      },
+      {
+        "source": "/van",
+        "relation": "works_on",
+        "target": "authentication"
+      },
+      {
+        "source": "/mb-init",
+        "relation": "works_on",
+        "target": "authentication"
+      },
+      {
+        "source": "Autocomplete",
+        "relation": "related_to",
+        "target": "slash commands"
+      },
+      {
+        "source": "Claude Code",
+        "relation": "implements",
+        "target": "command syntax"
+      }
+    ]
+  },
+  {
+    "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+    "triples": [
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "System at a glance"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "key metrics table"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "10 commands overview"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Main workflow pipeline"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "15 AI Quality Rules"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Memory Bank files structure"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "6-Phase Enhanced Design Process"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Complexity level workflows"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Key optimizations"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "metrics"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Security integration"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "contains",
+        "target": "Architectural innovations"
+      },
+      {
+        "source": "System at a glance",
+        "relation": "includes",
+        "target": "key metrics table"
+      },
+      {
+        "source": "Security integration",
+        "relation": "uses",
+        "target": "v2.4"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "related_to",
+        "target": "Datarim"
+      },
+      {
+        "source": "Key optimizations",
+        "relation": "includes",
+        "target": "metrics"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "provides",
+        "target": "Quick reference"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "provides",
+        "target": "checklists"
+      },
+      {
+        "source": "QUICK_REFERENCE.md",
+        "relation": "provides",
+        "target": "high-level overview"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+    "triples": [
+      {
+        "source": "Muneral Arcana",
+        "relation": "part_of",
+        "target": "Muneral"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "designed_for",
+        "target": "AI-агентов"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "designed_for",
+        "target": "AI agent swarms"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "differs_from",
+        "target": "Jira"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "differs_from",
+        "target": "Linear"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "uses",
+        "target": "API"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "provides",
+        "target": "канбан-доски"
+      },
+      {
+        "source": "Muneral Arcana",
+        "relation": "provides",
+        "target": "дашборды"
+      },
+      {
+        "source": "Jira",
+        "relation": "oriented_towards",
+        "target": "людей"
+      },
+      {
+        "source": "Linear",
+        "relation": "oriented_towards",
+        "target": "людей"
+      },
+      {
+        "source": "канбан-доски",
+        "relation": "provides_observability_for",
+        "target": "людей"
+      },
+      {
+        "source": "дашборды",
+        "relation": "provides_observability_for",
+        "target": "людей"
+      },
+      {
+        "source": "API",
+        "relation": "designed_for",
+        "target": "AI-агентов"
+      }
+    ]
+  },
+  {
+    "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+    "triples": [
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "NestJS"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "TypeScript"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "TypeORM"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "PostgreSQL"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "Redis"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "BullMQ"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "WebSocket"
+      },
+      {
+        "source": "Backend API",
+        "relation": "uses",
+        "target": "Docker Compose"
+      },
+      {
+        "source": "Backend API",
+        "relation": "implements",
+        "target": "REST API"
+      },
+      {
+        "source": "Backend API",
+        "relation": "implements",
+        "target": "Rate limiting"
+      },
+      {
+        "source": "Backend API",
+        "relation": "implements",
+        "target": "Auth"
+      },
+      {
+        "source": "Backend API",
+        "relation": "implements",
+        "target": "RBAC"
+      },
+      {
+        "source": "NestJS",
+        "relation": "uses",
+        "target": "TypeScript"
+      },
+      {
+        "source": "NestJS",
+        "relation": "uses",
+        "target": "TypeORM"
+      },
+      {
+        "source": "NestJS",
+        "relation": "uses",
+        "target": "PostgreSQL"
+      },
+      {
+        "source": "Redis",
+        "relation": "used_for",
+        "target": "BullMQ"
+      },
+      {
+        "source": "Redis",
+        "relation": "used_for",
+        "target": "WebSocket"
+      },
+      {
+        "source": "Rate limiting",
+        "relation": "uses",
+        "target": "rate-limiter-flexible"
+      },
+      {
+        "source": "rate-limiter-flexible",
+        "relation": "uses",
+        "target": "Redis sliding window"
+      },
+      {
+        "source": "Redis sliding window",
+        "relation": "depends_on",
+        "target": "Redis"
+      },
+      {
+        "source": "Auth",
+        "relation": "uses",
+        "target": "JWT"
+      },
+      {
+        "source": "Auth",
+        "relation": "uses",
+        "target": "API Key"
+      },
+      {
+        "source": "Auth",
+        "relation": "uses",
+        "target": "OAuth2"
+      },
+      {
+        "source": "OAuth2",
+        "relation": "integrates_with",
+        "target": "GitHub"
+      },
+      {
+        "source": "OAuth2",
+        "relation": "integrates_with",
+        "target": "Telegram"
+      },
+      {
+        "source": "RBAC",
+        "relation": "implements",
+        "target": "Guard-based"
+      },
+      {
+        "source": "RBAC",
+        "relation": "operates_on",
+        "target": "workspace"
+      },
+      {
+        "source": "RBAC",
+        "relation": "operates_on",
+        "target": "проекта"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+    "triples": [
+      {
+        "source": "muneral.com",
+        "relation": "uses",
+        "target": "Cloudflare"
+      },
+      {
+        "source": "muneral.com",
+        "relation": "uses",
+        "target": "SSL"
+      },
+      {
+        "source": "muneral.com",
+        "relation": "uses",
+        "target": "Full Strict"
+      },
+      {
+        "source": "Arcana WWW",
+        "relation": "located_in",
+        "target": "49.13.52.208"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "located_in",
+        "target": "65.108.236.39"
+      }
+    ]
+  },
+  {
+    "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+    "triples": [
+      {
+        "source": "muneral.com",
+        "relation": "uses",
+        "target": "Cloudflare DNS"
+      },
+      {
+        "source": "Cloudflare DNS",
+        "relation": "implements",
+        "target": "A-запись"
+      },
+      {
+        "source": "A-запись",
+        "relation": "points_to",
+        "target": "49.13.52.208"
+      },
+      {
+        "source": "Cloudflare DNS",
+        "relation": "uses",
+        "target": "Orange Cloud"
+      },
+      {
+        "source": "Orange Cloud",
+        "relation": "implements",
+        "target": "Proxy"
+      },
+      {
+        "source": "Cloudflare DNS",
+        "relation": "uses",
+        "target": "Full (Strict) SSL"
+      },
+      {
+        "source": "Origin Certificate",
+        "relation": "installed_in",
+        "target": "nginx"
+      },
+      {
+        "source": "nginx",
+        "relation": "implements",
+        "target": "Nginx virtual host"
+      },
+      {
+        "source": "Nginx virtual host",
+        "relation": "runs_on",
+        "target": "Arcana WWW"
+      },
+      {
+        "source": "Arcana WWW",
+        "relation": "accessed_via",
+        "target": "ssh"
+      },
+      {
+        "source": "ssh",
+        "relation": "uses",
+        "target": "~/.ssh/id_ed25519"
+      },
+      {
+        "source": "ssh",
+        "relation": "connects_to",
+        "target": "root@49.13.52.208"
+      },
+      {
+        "source": "Landing",
+        "relation": "located_in",
+        "target": "/var/www/muneral.com/"
+      },
+      {
+        "source": "/var/www/muneral.com/",
+        "relation": "hosted_on",
+        "target": "Arcana WWW"
+      },
+      {
+        "source": "Backend",
+        "relation": "runs_on",
+        "target": "Arcana PROD"
+      },
+      {
+        "source": "App",
+        "relation": "runs_on",
+        "target": "Arcana PROD"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "accessed_via",
+        "target": "root@65.108.236.39"
+      },
+      {
+        "source": "muneral.com",
+        "relation": "deployed_by",
+        "target": "Deploy script"
+      },
+      {
+        "source": "Deploy script",
+        "relation": "located_in",
+        "target": "/Users/ug/arcanada/Projects/Websites/deploy.sh"
+      },
+      {
+        "source": "muneral.com",
+        "relation": "tracked_by",
+        "target": "GA4"
+      },
+      {
+        "source": "GA4",
+        "relation": "uses",
+        "target": "data stream"
+      },
+      {
+        "source": "data stream",
+        "relation": "part_of",
+        "target": "property"
+      },
+      {
+        "source": "property",
+        "relation": "named",
+        "target": "Arcanada Ecosystem"
+      },
+      {
+        "source": "muneral.com",
+        "relation": "verified_in",
+        "target": "Google Search Console"
+      },
+      {
+        "source": "Google Search Console",
+        "relation": "uses",
+        "target": "DNS TXT верификация"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+    "triples": [
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "API-first"
+      },
+      {
+        "source": "API-first",
+        "relation": "implements",
+        "target": "REST"
+      },
+      {
+        "source": "API-first",
+        "relation": "implements",
+        "target": "WebSocket"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Авторизация агентов"
+      },
+      {
+        "source": "Авторизация агентов",
+        "relation": "implements",
+        "target": "API Key"
+      },
+      {
+        "source": "Авторизация агентов",
+        "relation": "implements",
+        "target": "Bearer"
+      },
+      {
+        "source": "Авторизация агентов",
+        "relation": "implements",
+        "target": "OAuth2"
+      },
+      {
+        "source": "OAuth2",
+        "relation": "uses",
+        "target": "client_credentials flow"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "works_on",
+        "target": "Агент-исполнитель"
+      },
+      {
+        "source": "Агент-исполнитель",
+        "relation": "uses",
+        "target": "agent_id"
+      },
+      {
+        "source": "Агент-исполнитель",
+        "relation": "uses",
+        "target": "model"
+      },
+      {
+        "source": "Агент-исполнитель",
+        "relation": "uses",
+        "target": "provider"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "implements",
+        "target": "Совместная работа агентов"
+      },
+      {
+        "source": "Совместная работа агентов",
+        "relation": "uses",
+        "target": "roles"
+      },
+      {
+        "source": "roles",
+        "relation": "includes",
+        "target": "lead"
+      },
+      {
+        "source": "roles",
+        "relation": "includes",
+        "target": "reviewer"
+      },
+      {
+        "source": "roles",
+        "relation": "includes",
+        "target": "executor"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Граф связей"
+      },
+      {
+        "source": "Граф связей",
+        "relation": "includes",
+        "target": "depends_on"
+      },
+      {
+        "source": "Граф связей",
+        "relation": "includes",
+        "target": "blocks"
+      },
+      {
+        "source": "Граф связей",
+        "relation": "includes",
+        "target": "related_to"
+      },
+      {
+        "source": "Граф связей",
+        "relation": "includes",
+        "target": "duplicates"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Статусы задач"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "todo"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "in_progress"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "review"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "blocked"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "done"
+      },
+      {
+        "source": "Статусы задач",
+        "relation": "includes",
+        "target": "cancelled"
+      },
+      {
+        "source": "todo",
+        "relation": "transitions_to",
+        "target": "in_progress"
+      },
+      {
+        "source": "in_progress",
+        "relation": "transitions_to",
+        "target": "review"
+      },
+      {
+        "source": "review",
+        "relation": "transitions_to",
+        "target": "blocked"
+      },
+      {
+        "source": "blocked",
+        "relation": "transitions_to",
+        "target": "done"
+      },
+      {
+        "source": "done",
+        "relation": "transitions_to",
+        "target": "cancelled"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Приоритеты"
+      },
+      {
+        "source": "Приоритеты",
+        "relation": "includes",
+        "target": "critical"
+      },
+      {
+        "source": "Приоритеты",
+        "relation": "includes",
+        "target": "high"
+      },
+      {
+        "source": "Приоритеты",
+        "relation": "includes",
+        "target": "medium"
+      },
+      {
+        "source": "Приоритеты",
+        "relation": "includes",
+        "target": "low"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Метки"
+      },
+      {
+        "source": "Метки",
+        "relation": "includes",
+        "target": "tags"
+      },
+      {
+        "source": "Метки",
+        "relation": "includes",
+        "target": "labels"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "История активности"
+      },
+      {
+        "source": "История активности",
+        "relation": "implements",
+        "target": "audit log"
+      },
+      {
+        "source": "AI-агентов",
+        "relation": "uses",
+        "target": "Webhooks"
+      }
+    ]
+  },
+  {
+    "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+    "triples": [
+      {
+        "source": "Security Considerations",
+        "relation": "applies_to",
+        "target": "Implementations"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "self-modification bypassing controls"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "privilege escalation"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "unauthorized replication of AE"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "removal or tampering of audit logs"
+      },
+      {
+        "source": "unauthorized replication of AE",
+        "relation": "involves",
+        "target": "AE"
+      },
+      {
+        "source": "removal or tampering of audit logs",
+        "relation": "targets",
+        "target": "audit logs"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+    "triples": [
+      {
+        "source": "Harm potential",
+        "relation": "applies_to",
+        "target": "human"
+      },
+      {
+        "source": "Harm potential",
+        "relation": "applies_to",
+        "target": "financial"
+      },
+      {
+        "source": "Harm potential",
+        "relation": "applies_to",
+        "target": "system"
+      },
+      {
+        "source": "human",
+        "relation": "part_of",
+        "target": "Harm potential"
+      },
+      {
+        "source": "financial",
+        "relation": "part_of",
+        "target": "Harm potential"
+      },
+      {
+        "source": "system",
+        "relation": "part_of",
+        "target": "Harm potential"
+      },
+      {
+        "source": "Instruction origin",
+        "relation": "categorized_as",
+        "target": "trusted"
+      },
+      {
+        "source": "Instruction origin",
+        "relation": "categorized_as",
+        "target": "untrusted"
+      },
+      {
+        "source": "trusted",
+        "relation": "part_of",
+        "target": "Instruction origin"
+      },
+      {
+        "source": "untrusted",
+        "relation": "part_of",
+        "target": "Instruction origin"
+      }
+    ]
+  },
+  {
+    "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+    "triples": [
+      {
+        "source": "compliant system",
+        "relation": "implements",
+        "target": "Immediate termination trigger"
+      },
+      {
+        "source": "compliant system",
+        "relation": "implements",
+        "target": "Out-of-band control"
+      },
+      {
+        "source": "compliant system",
+        "relation": "implements",
+        "target": "Guaranteed execution within bounded time"
+      },
+      {
+        "source": "Out-of-band control",
+        "relation": "not_controlled_by",
+        "target": "AE"
+      },
+      {
+        "source": "Immediate termination trigger",
+        "relation": "part_of",
+        "target": "Kill Switch Requirements"
+      },
+      {
+        "source": "Out-of-band control",
+        "relation": "part_of",
+        "target": "Kill Switch Requirements"
+      },
+      {
+        "source": "Guaranteed execution within bounded time",
+        "relation": "part_of",
+        "target": "Kill Switch Requirements"
+      }
+    ]
+  },
+  {
+    "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+    "triples": [
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "Self-modification bypassing controls"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "Privilege escalation"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "Unauthorized replication of AE"
+      },
+      {
+        "source": "Implementations",
+        "relation": "must_protect_against",
+        "target": "Removal or tampering of audit logs"
+      },
+      {
+        "source": "Security Considerations",
+        "relation": "addresses",
+        "target": "Self-modification bypassing controls"
+      },
+      {
+        "source": "Security Considerations",
+        "relation": "addresses",
+        "target": "Privilege escalation"
+      },
+      {
+        "source": "Security Considerations",
+        "relation": "addresses",
+        "target": "Unauthorized replication of AE"
+      },
+      {
+        "source": "Security Considerations",
+        "relation": "addresses",
+        "target": "Removal or tampering of audit logs"
+      },
+      {
+        "source": "Unauthorized replication of AE",
+        "relation": "involves",
+        "target": "AE"
+      },
+      {
+        "source": "Removal or tampering of audit logs",
+        "relation": "targets",
+        "target": "audit logs"
+      }
+    ]
+  },
+  {
+    "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+    "triples": [
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "Node.js 22 LTS"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "TypeScript"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "pnpm"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "commander"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "simple-git"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "pino"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "vitest"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "zod"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "requires",
+        "target": "v2.1.92+"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "requires",
+        "target": "Team plan"
+      },
+      {
+        "source": "Claude CLI",
+        "relation": "uses",
+        "target": "Opus model"
+      },
+      {
+        "source": "Opus model",
+        "relation": "related_to",
+        "target": "effort medium"
+      },
+      {
+        "source": "Team plan",
+        "relation": "includes",
+        "target": "Opus model"
+      },
+      {
+        "source": "Node.js 22 LTS",
+        "relation": "works_on",
+        "target": "TypeScript"
+      }
+    ]
+  },
+  {
+    "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+    "triples": [
+      {
+        "source": "macOS",
+        "relation": "uses",
+        "target": "launchd"
+      },
+      {
+        "source": "launchd",
+        "relation": "uses",
+        "target": "StartInterval=60"
+      },
+      {
+        "source": "Linux",
+        "relation": "related_to",
+        "target": "PROD Arcana WWW"
+      },
+      {
+        "source": "Linux",
+        "relation": "uses",
+        "target": "systemd timer"
+      },
+      {
+        "source": "systemd timer",
+        "relation": "uses",
+        "target": "OnCalendar=*:*:00"
+      },
+      {
+        "source": "PROD Arcana WWW",
+        "relation": "uses",
+        "target": "systemd timer"
+      },
+      {
+        "source": "claude",
+        "relation": "implements",
+        "target": "CLI"
+      }
+    ]
+  },
+  {
+    "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+    "triples": [
+      {
+        "source": "Agent Dreamer",
+        "relation": "part_of",
+        "target": "Arcanada"
+      },
+      {
+        "source": "Agent Dreamer",
+        "relation": "works_on",
+        "target": "Arcanada"
+      }
+    ]
+  },
+  {
+    "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+    "triples": [
+      {
+        "source": "area",
+        "relation": "part_of",
+        "target": "whitelist"
+      },
+      {
+        "source": "topic",
+        "relation": "groups",
+        "target": "area"
+      },
+      {
+        "source": "topic",
+        "relation": "created_when",
+        "target": "area"
+      },
+      {
+        "source": "slug",
+        "relation": "uses",
+        "target": "kebab-case"
+      },
+      {
+        "source": "slug",
+        "relation": "unique_within",
+        "target": "Area/topic/slug"
+      },
+      {
+        "source": "TL;DR",
+        "relation": "part_of",
+        "target": "topic"
+      },
+      {
+        "source": "WikiLinks",
+        "relation": "connects_to",
+        "target": "topic"
+      },
+      {
+        "source": "WikiLinks",
+        "relation": "uses",
+        "target": "Area/topic/slug"
+      },
+      {
+        "source": "index_entry",
+        "relation": "describes",
+        "target": "topic"
+      },
+      {
+        "source": "log_entry",
+        "relation": "follows_format_from",
+        "target": "SCHEMA.md"
+      },
+      {
+        "source": "reasoning",
+        "relation": "explains",
+        "target": "area"
+      },
+      {
+        "source": "reasoning",
+        "relation": "explains",
+        "target": "WikiLinks"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+    "triples": [
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "POST"
+      },
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "Authorization"
+      },
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "Bearer"
+      },
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "API_KEY"
+      },
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "Content-Type"
+      },
+      {
+        "source": "curl",
+        "relation": "uses",
+        "target": "application/json"
+      },
+      {
+        "source": "curl",
+        "relation": "sends_to",
+        "target": "https://api.connector.arcanada.one/connectors/cursor/execute"
+      },
+      {
+        "source": "Authorization",
+        "relation": "uses",
+        "target": "Bearer"
+      },
+      {
+        "source": "Bearer",
+        "relation": "uses",
+        "target": "API_KEY"
+      },
+      {
+        "source": "Content-Type",
+        "relation": "specifies",
+        "target": "application/json"
+      },
+      {
+        "source": "JSON",
+        "relation": "contains",
+        "target": "prompt"
+      },
+      {
+        "source": "JSON",
+        "relation": "contains",
+        "target": "context"
+      },
+      {
+        "source": "prompt",
+        "relation": "has_value",
+        "target": "Explain this code"
+      },
+      {
+        "source": "context",
+        "relation": "has_value",
+        "target": "/path/to/file"
+      },
+      {
+        "source": "https://api.connector.arcanada.one/connectors/cursor/execute",
+        "relation": "part_of",
+        "target": "api.connector.arcanada.one"
+      },
+      {
+        "source": "api.connector.arcanada.one",
+        "relation": "owned_by",
+        "target": "arcanada"
+      },
+      {
+        "source": "https://api.connector.arcanada.one/connectors/cursor/execute",
+        "relation": "related_to",
+        "target": "Cursor CLI"
+      },
+      {
+        "source": "curl",
+        "relation": "executes",
+        "target": "Cursor CLI"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+    "triples": [
+      {
+        "source": "Model Connector",
+        "relation": "provides_connectors_for",
+        "target": "AI CLI agents"
+      },
+      {
+        "source": "Model Connector",
+        "relation": "provides_connectors_for",
+        "target": "cloud model providers"
+      },
+      {
+        "source": "Model Connector",
+        "relation": "part_of",
+        "target": "Arcanada Ecosystem"
+      },
+      {
+        "source": "Arcanada Ecosystem",
+        "relation": "located_in",
+        "target": "arcanada.one"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+    "triples": [
+      {
+        "source": "Arcanada AI",
+        "relation": "uses",
+        "target": "89.167.24.119"
+      },
+      {
+        "source": "GitHub Actions",
+        "relation": "deploys_to",
+        "target": "89.167.24.119"
+      },
+      {
+        "source": "GitHub Actions",
+        "relation": "triggers_on",
+        "target": "main"
+      },
+      {
+        "source": "HashiCorp Vault",
+        "relation": "accessed_via",
+        "target": "Arcanada mesh"
+      },
+      {
+        "source": "Arcanada AI",
+        "relation": "uses",
+        "target": "GitHub Actions"
+      },
+      {
+        "source": "Arcanada AI",
+        "relation": "uses",
+        "target": "HashiCorp Vault"
+      },
+      {
+        "source": "Arcanada AI",
+        "relation": "uses",
+        "target": "Arcanada mesh"
+      }
+    ]
+  },
+  {
+    "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+    "triples": [
+      {
+        "source": "Feature Flags",
+        "relation": "used_for",
+        "target": "testing"
+      },
+      {
+        "source": "SKIP_API_CALLS",
+        "relation": "is_a",
+        "target": "Feature Flags"
+      },
+      {
+        "source": "SKIP_API_CALLS",
+        "relation": "set_to",
+        "target": "false"
+      }
+    ]
+  },
+  {
+    "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+    "triples": [
+      {
+        "source": "OpenRouter API Configuration",
+        "relation": "includes",
+        "target": "OPENROUTER_API_KEY"
+      },
+      {
+        "source": "OpenRouter API Configuration",
+        "relation": "includes",
+        "target": "OPENROUTER_MODEL"
+      },
+      {
+        "source": "OpenRouter API Configuration",
+        "relation": "includes",
+        "target": "OPENROUTER_TEMPERATURE"
+      },
+      {
+        "source": "OPENROUTER_API_KEY",
+        "relation": "has_value",
+        "target": "sk-or-v1-REDACTED0000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "source": "OPENROUTER_MODEL",
+        "relation": "has_value",
+        "target": "google/gemini-2.0-flash-lite-001"
+      },
+      {
+        "source": "google/gemini-2.0-flash-lite-001",
+        "relation": "created_by",
+        "target": "Google"
+      },
+      {
+        "source": "google/gemini-2.0-flash-lite-001",
+        "relation": "part_of",
+        "target": "Gemini"
+      },
+      {
+        "source": "OpenRouter API Configuration",
+        "relation": "related_to",
+        "target": "OpenRouter"
+      },
+      {
+        "source": "OPENROUTER_API_KEY",
+        "relation": "related_to",
+        "target": "OpenRouter"
+      },
+      {
+        "source": "OPENROUTER_MODEL",
+        "relation": "related_to",
+        "target": "OpenRouter"
+      },
+      {
+        "source": "OPENROUTER_TEMPERATURE",
+        "relation": "related_to",
+        "target": "OpenRouter"
+      },
+      {
+        "source": "OpenRouter API Configuration",
+        "relation": "uses",
+        "target": "API"
+      },
+      {
+        "source": "Gemini",
+        "relation": "created_by",
+        "target": "Google"
+      }
+    ]
+  },
+  {
+    "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+    "triples": [
+      {
+        "source": "ENABLE_SPEAKER_PROFILES",
+        "relation": "related_to",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "SPEAKER_PROFILES_PATH",
+        "relation": "points_to",
+        "target": "./data/speakers.json"
+      },
+      {
+        "source": "SPEAKER_PROFILES_PATH",
+        "relation": "related_to",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "OPENROUTER_EMBEDDING_MODEL",
+        "relation": "uses",
+        "target": "openai/text-embedding-3-small"
+      },
+      {
+        "source": "openai/text-embedding-3-small",
+        "relation": "created_by",
+        "target": "openai"
+      },
+      {
+        "source": "openai/text-embedding-3-small",
+        "relation": "implements",
+        "target": "text-embedding-3-small"
+      },
+      {
+        "source": "WEIGHT_KEYWORDS",
+        "relation": "part_of",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "WEIGHT_SEMANTIC",
+        "relation": "part_of",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "WEIGHT_STYLE",
+        "relation": "part_of",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "WEIGHT_LENGTH",
+        "relation": "part_of",
+        "target": "Speaker profiles"
+      },
+      {
+        "source": "./data/speakers.json",
+        "relation": "contains",
+        "target": "Speaker profiles"
+      }
+    ]
+  },
+  {
+    "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+    "triples": [
+      {
+        "source": "Embedding Engine",
+        "relation": "uses",
+        "target": "BGE-M3"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "extends",
+        "target": "arcana-db"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "implements",
+        "target": "Dense vectors"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "implements",
+        "target": "Sparse vectors"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "implements",
+        "target": "ColBERT multi-vector"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "implements",
+        "target": "Hybrid search"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "uses",
+        "target": "use_fp16"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "uses",
+        "target": "multi-worker uvicorn"
+      },
+      {
+        "source": "Embedding Engine",
+        "relation": "uses",
+        "target": "batch processing"
+      },
+      {
+        "source": "Dense vectors",
+        "relation": "related_to",
+        "target": "1024-мерные"
+      },
+      {
+        "source": "Dense vectors",
+        "relation": "enables",
+        "target": "baseline semantic search"
+      },
+      {
+        "source": "Sparse vectors",
+        "relation": "related_to",
+        "target": "BM25-style"
+      },
+      {
+        "source": "Sparse vectors",
+        "relation": "enables",
+        "target": "keyword matching"
+      },
+      {
+        "source": "ColBERT multi-vector",
+        "relation": "uses",
+        "target": "ColBERT"
+      },
+      {
+        "source": "ColBERT multi-vector",
+        "relation": "enables",
+        "target": "document-level precision"
+      },
+      {
+        "source": "Hybrid search",
+        "relation": "combines",
+        "target": "dense"
+      },
+      {
+        "source": "Hybrid search",
+        "relation": "combines",
+        "target": "sparse"
+      },
+      {
+        "source": "Hybrid search",
+        "relation": "combines",
+        "target": "ColBERT"
+      },
+      {
+        "source": "multi-worker uvicorn",
+        "relation": "uses",
+        "target": "uvicorn"
+      },
+      {
+        "source": "BM25-style",
+        "relation": "enables",
+        "target": "keyword matching"
+      }
+    ]
+  },
+  {
+    "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+    "triples": [
+      {
+        "source": "arcana-db",
+        "relation": "located_at",
+        "target": "135.181.222.38"
+      },
+      {
+        "source": "arcana-db",
+        "relation": "accessible_via",
+        "target": "Tailscale"
+      },
+      {
+        "source": "arcana-db",
+        "relation": "has_tailscale_ip",
+        "target": "100.70.137.104"
+      },
+      {
+        "source": "Embedding API",
+        "relation": "runs_on_port",
+        "target": "8300"
+      },
+      {
+        "source": "Embedding API",
+        "relation": "has_status",
+        "target": "LIVE"
+      },
+      {
+        "source": "Embedding API",
+        "relation": "uses",
+        "target": "BAAI/bge-m3"
+      },
+      {
+        "source": "arcana-db",
+        "relation": "accessible_via",
+        "target": "Tailscale mesh"
+      },
+      {
+        "source": "scrutator",
+        "relation": "hosted_on",
+        "target": "GitHub"
+      },
+      {
+        "source": "scrutator",
+        "relation": "located_at",
+        "target": "https://github.com/Arcanada-one/scrutator"
+      },
+      {
+        "source": "https://github.com/Arcanada-one/scrutator",
+        "relation": "owned_by",
+        "target": "Arcanada-one"
+      },
+      {
+        "source": "scrutator",
+        "relation": "has_visibility",
+        "target": "public"
+      },
+      {
+        "source": "Datarim prefix",
+        "relation": "has_value",
+        "target": "SRCH"
+      },
+      {
+        "source": "Инфраструктура",
+        "relation": "includes",
+        "target": "arcana-db"
+      },
+      {
+        "source": "Инфраструктура",
+        "relation": "includes",
+        "target": "Embedding API"
+      },
+      {
+        "source": "Инфраструктура",
+        "relation": "includes",
+        "target": "scrutator"
+      }
+    ]
+  },
+  {
+    "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+    "triples": [
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "implements",
+        "target": "Open-source (concept)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "implements",
+        "target": "файловый синхронизатор (technology)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "works_on",
+        "target": "баз знаний (concept)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "works_on",
+        "target": "AI-агентных экосистем (concept)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "uses",
+        "target": "PRD (concept)"
+      },
+      {
+        "source": "PRD (concept)",
+        "relation": "located_in",
+        "target": "datarim/prd/PRD-DISK-0001-disk-arcana.md (location)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "related_to",
+        "target": "Prior research (concept)"
+      },
+      {
+        "source": "Prior research (concept)",
+        "relation": "located_in",
+        "target": "Projects/Arganize.me/origin/Vault syncronizer/ (location)"
+      },
+      {
+        "source": "Projects/Arganize.me/origin/Vault syncronizer/ (location)",
+        "relation": "part_of",
+        "target": "Arganize.me (project)"
+      },
+      {
+        "source": "Vault syncronizer (technology)",
+        "relation": "part_of",
+        "target": "Arganize.me (project)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "uses",
+        "target": "Домен (concept)"
+      },
+      {
+        "source": "Домен (concept)",
+        "relation": "located_in",
+        "target": "disk.arcanada.one (location)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "uses",
+        "target": "Repo (concept)"
+      },
+      {
+        "source": "Repo (concept)",
+        "relation": "located_in",
+        "target": "github.com/Arcanada-one/disk-arcana (location)"
+      },
+      {
+        "source": "github.com/Arcanada-one/disk-arcana (location)",
+        "relation": "created_by",
+        "target": "Arcanada-one (organization)"
+      },
+      {
+        "source": "Repo (concept)",
+        "relation": "related_to",
+        "target": "TBD (concept)"
+      },
+      {
+        "source": "Disk Arcana (project)",
+        "relation": "uses",
+        "target": "License (concept)"
+      },
+      {
+        "source": "License (concept)",
+        "relation": "implements",
+        "target": "MIT (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+    "triples": [
+      {
+        "source": "Inbox Organizer Agent",
+        "relation": "automates",
+        "target": "Inbox"
+      },
+      {
+        "source": "Inbox Organizer Agent",
+        "relation": "works_on",
+        "target": "Obsidian"
+      },
+      {
+        "source": "Inbox Organizer Agent",
+        "relation": "analyzes",
+        "target": "Inbox"
+      },
+      {
+        "source": "Inbox Organizer Agent",
+        "relation": "organizes",
+        "target": "Second Brain"
+      },
+      {
+        "source": "Inbox",
+        "relation": "part_of",
+        "target": "Obsidian"
+      },
+      {
+        "source": "Inbox",
+        "relation": "part_of",
+        "target": "Second Brain"
+      },
+      {
+        "source": "Obsidian",
+        "relation": "implements",
+        "target": "Second Brain"
+      },
+      {
+        "source": "Second Brain",
+        "relation": "uses",
+        "target": "Obsidian"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+    "triples": [
+      {
+        "source": "Arcana PROD",
+        "relation": "has_ip",
+        "target": "65.108.236.39"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "runs",
+        "target": "NestJS API"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "runs",
+        "target": "nginx"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "runs",
+        "target": "static SPA"
+      },
+      {
+        "source": "Arcana PROD",
+        "relation": "uses",
+        "target": "Docker"
+      },
+      {
+        "source": "NestJS API",
+        "relation": "deployed_with",
+        "target": "Docker"
+      },
+      {
+        "source": "nginx",
+        "relation": "deployed_with",
+        "target": "Docker"
+      },
+      {
+        "source": "static SPA",
+        "relation": "deployed_with",
+        "target": "Docker"
+      },
+      {
+        "source": "Arcana DB",
+        "relation": "has_ip",
+        "target": "135.181.222.38"
+      },
+      {
+        "source": "Arcana DB",
+        "relation": "runs",
+        "target": "PostgreSQL"
+      },
+      {
+        "source": "Arcana DB",
+        "relation": "runs",
+        "target": "Redis"
+      },
+      {
+        "source": "PostgreSQL",
+        "relation": "uses_database",
+        "target": "arcanada_support"
+      },
+      {
+        "source": "Redis",
+        "relation": "uses_prefix",
+        "target": "support:"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "located_in",
+        "target": "edge"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "provides",
+        "target": "DNS"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "provides",
+        "target": "WAF"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "provides",
+        "target": "DDoS"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "provides",
+        "target": "Turnstile"
+      },
+      {
+        "source": "Cloudflare",
+        "relation": "provides",
+        "target": "Origin Cert"
+      },
+      {
+        "source": "documentation/credentials/Arcanada Support — Credentials Summary.md",
+        "relation": "created_by",
+        "target": "SUP-0010"
+      }
+    ]
+  },
+  {
+    "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+    "triples": [
+      {
+        "source": "Technical Strategy",
+        "relation": "uses",
+        "target": "macOS"
+      },
+      {
+        "source": "Technical Strategy",
+        "relation": "uses",
+        "target": "Python"
+      },
+      {
+        "source": "Technical Strategy",
+        "relation": "uses",
+        "target": "PyAutoGUI"
+      },
+      {
+        "source": "Technical Strategy",
+        "relation": "uses",
+        "target": "pyperclip"
+      },
+      {
+        "source": "Technical Strategy",
+        "relation": "uses",
+        "target": "AppleScript"
+      },
+      {
+        "source": "PyAutoGUI",
+        "relation": "provides",
+        "target": "UI control"
+      },
+      {
+        "source": "pyperclip",
+        "relation": "provides",
+        "target": "clipboard access"
+      },
+      {
+        "source": "AppleScript",
+        "relation": "enables",
+        "target": "browser-specific DOM extraction"
+      },
+      {
+        "source": "browser-specific DOM extraction",
+        "relation": "works_on",
+        "target": "Chrome"
+      },
+      {
+        "source": "browser-specific DOM extraction",
+        "relation": "works_on",
+        "target": "Safari"
+      },
+      {
+        "source": "Technical Strategy",
+        "relation": "implements",
+        "target": "Extraction Method"
+      },
+      {
+        "source": "Extraction Method",
+        "relation": "includes",
+        "target": "Method A"
+      },
+      {
+        "source": "Extraction Method",
+        "relation": "includes",
+        "target": "Method B"
+      },
+      {
+        "source": "Extraction Method",
+        "relation": "includes",
+        "target": "Method C"
+      },
+      {
+        "source": "Method A",
+        "relation": "implements",
+        "target": "UI-based"
+      },
+      {
+        "source": "Method A",
+        "relation": "uses",
+        "target": "Cmd+A"
+      },
+      {
+        "source": "Method A",
+        "relation": "uses",
+        "target": "Cmd+C"
+      },
+      {
+        "source": "Method A",
+        "relation": "risks_grabbing",
+        "target": "sidebars"
+      },
+      {
+        "source": "Method B",
+        "relation": "implements",
+        "target": "DOM-based"
+      },
+      {
+        "source": "Method B",
+        "relation": "uses",
+        "target": "JS snippet"
+      },
+      {
+        "source": "Method B",
+        "relation": "uses",
+        "target": "AppleScript"
+      },
+      {
+        "source": "Method B",
+        "relation": "works_on",
+        "target": "browser"
+      },
+      {
+        "source": "JS snippet",
+        "relation": "finds",
+        "target": "div"
+      },
+      {
+        "source": "div",
+        "relation": "has",
+        "target": "message classes"
+      },
+      {
+        "source": "Method B",
+        "relation": "joins",
+        "target": "text"
+      },
+      {
+        "source": "Method B",
+        "relation": "recommended_for",
+        "target": "Browsers"
+      },
+      {
+        "source": "Method C",
+        "relation": "implements",
+        "target": "Accessibility-based"
+      },
+      {
+        "source": "Method C",
+        "relation": "uses",
+        "target": "pyobjc"
+      },
+      {
+        "source": "Method C",
+        "relation": "traverses",
+        "target": "UI tree"
+      },
+      {
+        "source": "Method C",
+        "relation": "finds",
+        "target": "text fields"
+      },
+      {
+        "source": "Method C",
+        "relation": "best_for",
+        "target": "Desktop App"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+    "triples": [
+      {
+        "source": "Мобильный клиент",
+        "relation": "targets",
+        "target": "Android"
+      },
+      {
+        "source": "Мобильный клиент",
+        "relation": "targets",
+        "target": "iOS"
+      },
+      {
+        "source": "Мобильный клиент",
+        "relation": "uses",
+        "target": "Flutter"
+      },
+      {
+        "source": "Flutter",
+        "relation": "alternative_to",
+        "target": "React Native"
+      },
+      {
+        "source": "React Native",
+        "relation": "works_with",
+        "target": "Expo"
+      },
+      {
+        "source": "Android",
+        "relation": "uses",
+        "target": "Foreground Service"
+      },
+      {
+        "source": "Foreground Service",
+        "relation": "implemented_in",
+        "target": "Kotlin"
+      },
+      {
+        "source": "Android",
+        "relation": "uses",
+        "target": "AudioRecord"
+      },
+      {
+        "source": "iOS",
+        "relation": "uses",
+        "target": "AVAudioSession"
+      },
+      {
+        "source": "iOS",
+        "relation": "uses",
+        "target": "AVAudioEngine"
+      },
+      {
+        "source": "iOS",
+        "relation": "uses",
+        "target": "AVAudioRecorder"
+      },
+      {
+        "source": "iOS",
+        "relation": "requires",
+        "target": "background audio mode"
+      },
+      {
+        "source": "RN‑модули",
+        "relation": "alternative_to",
+        "target": "Foreground Service"
+      },
+      {
+        "source": "Bluetooth‑гарнитура",
+        "relation": "uses",
+        "target": "HFP"
+      },
+      {
+        "source": "Bluetooth‑гарнитура",
+        "relation": "uses",
+        "target": "A2DP"
+      },
+      {
+        "source": "iOS",
+        "relation": "manages_bluetooth_through",
+        "target": "AVAudioSession"
+      },
+      {
+        "source": "Android",
+        "relation": "manages_bluetooth_through",
+        "target": "AudioManager"
+      },
+      {
+        "source": "CoreBluetooth",
+        "relation": "alternative_to",
+        "target": "AVAudioSession"
+      },
+      {
+        "source": "Flutter",
+        "relation": "uses",
+        "target": "just_audio"
+      },
+      {
+        "source": "Flutter",
+        "relation": "uses",
+        "target": "audio_session"
+      },
+      {
+        "source": "Android",
+        "relation": "manages_audio_through",
+        "target": "AudioManager"
+      },
+      {
+        "source": "AudioManager",
+        "relation": "handles",
+        "target": "audio focus"
+      },
+      {
+        "source": "AVAudioSession",
+        "relation": "uses",
+        "target": "playAndRecord"
+      },
+      {
+        "source": "AVAudioSession",
+        "relation": "supports",
+        "target": "duck"
+      },
+      {
+        "source": "AVAudioSession",
+        "relation": "supports",
+        "target": "mix"
+      },
+      {
+        "source": "audioplayers",
+        "relation": "alternative_to",
+        "target": "just_audio"
+      },
+      {
+        "source": "RT‑канал",
+        "relation": "uses",
+        "target": "WebSocket"
+      },
+      {
+        "source": "WebSocket",
+        "relation": "implemented_with",
+        "target": "web_socket_channel"
+      },
+      {
+        "source": "WebSocket",
+        "relation": "implemented_with",
+        "target": "dart:io"
+      },
+      {
+        "source": "gRPC Streaming",
+        "relation": "alternative_to",
+        "target": "WebSocket"
+      },
+      {
+        "source": "Мобильный клиент",
+        "relation": "uses",
+        "target": "HTTP"
+      },
+      {
+        "source": "HTTP",
+        "relation": "implemented_with",
+        "target": "Dio"
+      },
+      {
+        "source": "HTTP",
+        "relation": "implemented_with",
+        "target": "http"
+      },
+      {
+        "source": "Мобильный клиент",
+        "relation": "uses",
+        "target": "connectivity_plus"
+      },
+      {
+        "source": "InternetAddress.lookup",
+        "relation": "alternative_to",
+        "target": "connectivity_plus"
+      },
+      {
+        "source": "InternetAddress.lookup",
+        "relation": "part_of",
+        "target": "dart:io"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "RECORD_AUDIO"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "BLUETOOTH_CONNECT"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "BLUETOOTH"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "BLUETOOTH_ADMIN"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "FOREGROUND_SERVICE"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "INTERNET"
+      },
+      {
+        "source": "Android",
+        "relation": "requires",
+        "target": "ACCESS_NETWORK_STATE"
+      },
+      {
+        "source": "Android",
+        "relation": "optionally_requires",
+        "target": "POST_NOTIFICATIONS"
+      },
+      {
+        "source": "iOS",
+        "relation": "requires",
+        "target": "NSMicrophoneUsageDescription"
+      },
+      {
+        "source": "iOS",
+        "relation": "optionally_requires",
+        "target": "NSBluetoothAlwaysUsageDescription"
+      },
+      {
+        "source": "iOS",
+        "relation": "requires",
+        "target": "Background Modes"
+      },
+      {
+        "source": "Background Modes",
+        "relation": "includes",
+        "target": "Audio"
+      },
+      {
+        "source": "Background Modes",
+        "relation": "optionally_includes",
+        "target": "VoIP"
+      },
+      {
+        "source": "voice assistant",
+        "relation": "justifies",
+        "target": "Background Modes"
+      },
+      {
+        "source": "VoIP‑сценарий",
+        "relation": "justifies",
+        "target": "Background Modes"
+      },
+      {
+        "source": "TTS",
+        "relation": "managed_by",
+        "target": "just_audio"
+      },
+      {
+        "source": "TTS",
+        "relation": "managed_by",
+        "target": "audio_session"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+    "triples": [
+      {
+        "source": "results/quick_v2/",
+        "relation": "contains",
+        "target": "JSON"
+      },
+      {
+        "source": "results/quick_v2/",
+        "relation": "contains",
+        "target": "CSV"
+      },
+      {
+        "source": "results/quick_v2/sandbox_ollama/",
+        "relation": "contains_code_from",
+        "target": "Ollama"
+      },
+      {
+        "source": "results/quick_v2/sandbox_agent/",
+        "relation": "contains_code_from",
+        "target": "Claude Code agent"
+      },
+      {
+        "source": "bench/quick_bench_v2.py",
+        "relation": "implements",
+        "target": "скрипт бенчмарка"
+      },
+      {
+        "source": "скрипт бенчмарка",
+        "relation": "has_property",
+        "target": "воспроизводимый"
+      },
+      {
+        "source": "results/quick_v2/sandbox_ollama/",
+        "relation": "part_of",
+        "target": "results/quick_v2/"
+      },
+      {
+        "source": "results/quick_v2/sandbox_agent/",
+        "relation": "part_of",
+        "target": "results/quick_v2/"
+      }
+    ]
+  },
+  {
+    "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+    "triples": [
+      {
+        "source": "ПРАВИЛО PROMPT ENGINEERING",
+        "relation": "aims_to_create",
+        "target": "prompt"
+      },
+      {
+        "source": "ПРАВИЛО PROMPT ENGINEERING",
+        "relation": "targets",
+        "target": "ИИ"
+      },
+      {
+        "source": "ПРАВИЛО PROMPT ENGINEERING",
+        "relation": "implements",
+        "target": "PROMPT_ENGINEERING_RULE"
+      },
+      {
+        "source": "PROMPT_ENGINEERING_RULE",
+        "relation": "triggers_after",
+        "target": "after_collecting_requirements"
+      },
+      {
+        "source": "PROMPT_ENGINEERING_RULE",
+        "relation": "defines",
+        "target": "workflow"
+      },
+      {
+        "source": "workflow",
+        "relation": "includes",
+        "target": "Чат 1"
+      },
+      {
+        "source": "workflow",
+        "relation": "includes",
+        "target": "Чат 2"
+      },
+      {
+        "source": "workflow",
+        "relation": "includes",
+        "target": "Чат 3"
+      },
+      {
+        "source": "Чат 1",
+        "relation": "collects",
+        "target": "контекст"
+      },
+      {
+        "source": "Чат 1",
+        "relation": "saves_to",
+        "target": "Memory Bank"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "uses",
+        "target": "чек-листу"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "accesses",
+        "target": "контекст"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "retrieves_from",
+        "target": "Memory Bank"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "defines",
+        "target": "expected results"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "includes",
+        "target": "test cases"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "includes",
+        "target": "corner cases"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "defines",
+        "target": "definition of done"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "defines",
+        "target": "boundaries"
+      },
+      {
+        "source": "Чат 2",
+        "relation": "performs",
+        "target": "complexity check"
+      },
+      {
+        "source": "Чат 3",
+        "relation": "uses",
+        "target": "prompt"
+      },
+      {
+        "source": "Чат 3",
+        "relation": "performs",
+        "target": "skeleton creation"
+      },
+      {
+        "source": "PROMPT_ENGINEERING_RULE",
+        "relation": "includes",
+        "target": "checklist_for_good_prompt"
+      },
+      {
+        "source": "checklist_for_good_prompt",
+        "relation": "validates",
+        "target": "контекст"
+      },
+      {
+        "source": "checklist_for_good_prompt",
+        "relation": "validates",
+        "target": "Expected results"
+      },
+      {
+        "source": "checklist_for_good_prompt",
+        "relation": "validates",
+        "target": "Definition of Done"
+      },
+      {
+        "source": "checklist_for_good_prompt",
+        "relation": "validates",
+        "target": "boundaries"
+      },
+      {
+        "source": "checklist_for_good_prompt",
+        "relation": "references",
+        "target": "Memory Bank"
+      },
+      {
+        "source": "PROMPT_ENGINEERING_RULE",
+        "relation": "provides",
+        "target": "example_good_prompt"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "targets",
+        "target": "Postgres"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "references",
+        "target": "Project overview"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "references",
+        "target": "Current architecture"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "references",
+        "target": "Database schema"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "defines",
+        "target": "Happy path"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "defines",
+        "target": "Corner cases"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "includes",
+        "target": "All data migrated"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "includes",
+        "target": "All tests green"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "includes",
+        "target": "Docker Compose file"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "excludes",
+        "target": "миграцию старых данных"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "excludes",
+        "target": "оптимизацию"
+      },
+      {
+        "source": "example_good_prompt",
+        "relation": "creates",
+        "target": "skeleton"
+      },
+      {
+        "source": "skeleton",
+        "relation": "includes",
+        "target": "stubs"
+      },
+      {
+        "source": "Memory-Bank",
+        "relation": "same_as",
+        "target": "Memory Bank"
+      }
+    ]
+  },
+  {
+    "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+    "triples": [
+      {
+        "source": "MUN-0011",
+        "relation": "works_on",
+        "target": "Muneral"
+      },
+      {
+        "source": "MUN-0011",
+        "relation": "uses",
+        "target": "TypeScript"
+      },
+      {
+        "source": "MUN-0011",
+        "relation": "uses",
+        "target": "Docker"
+      },
+      {
+        "source": "Muneral",
+        "relation": "uses",
+        "target": "TypeScript"
+      },
+      {
+        "source": "Muneral",
+        "relation": "uses",
+        "target": "Docker"
+      }
+    ]
+  },
+  {
+    "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+    "triples": [
+      {
+        "source": "BASE_URL",
+        "relation": "set_to",
+        "target": "http://localhost:8001"
+      },
+      {
+        "source": "http://localhost:8001",
+        "relation": "uses",
+        "target": "localhost"
+      },
+      {
+        "source": "http://localhost:8001",
+        "relation": "uses",
+        "target": "8001"
+      },
+      {
+        "source": "SSH tunnel",
+        "relation": "uses",
+        "target": "ssh"
+      },
+      {
+        "source": "SSH tunnel",
+        "relation": "maps",
+        "target": "15432"
+      },
+      {
+        "source": "SSH tunnel",
+        "relation": "maps",
+        "target": "5432"
+      },
+      {
+        "source": "SSH tunnel",
+        "relation": "connects_to",
+        "target": "root"
+      },
+      {
+        "source": "SSH tunnel",
+        "relation": "connects_to",
+        "target": "135.181.222.38"
+      },
+      {
+        "source": "ssh",
+        "relation": "connects_to",
+        "target": "root"
+      },
+      {
+        "source": "ssh",
+        "relation": "connects_to",
+        "target": "135.181.222.38"
+      },
+      {
+        "source": "15432",
+        "relation": "maps_to",
+        "target": "5432"
+      },
+      {
+        "source": "root",
+        "relation": "located_at",
+        "target": "135.181.222.38"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "uses",
+        "target": "postgresql"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "uses",
+        "target": "postgres"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "uses",
+        "target": "108b5a5543cbe1d4a5aae5d39818c563"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "uses",
+        "target": "localhost"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "uses",
+        "target": "15432"
+      },
+      {
+        "source": "DATABASE_URL",
+        "relation": "connects_to",
+        "target": "llm_council"
+      },
+      {
+        "source": "postgresql",
+        "relation": "implements",
+        "target": "postgres"
+      },
+      {
+        "source": "postgres",
+        "relation": "uses",
+        "target": "108b5a5543cbe1d4a5aae5d39818c563"
+      },
+      {
+        "source": "llm_council",
+        "relation": "uses",
+        "target": "postgresql"
+      }
+    ]
+  },
+  {
+    "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+    "triples": [
+      {
+        "source": "Модель мастерства пользователя",
+        "relation": "related_to",
+        "target": "системное мышление"
+      },
+      {
+        "source": "Цифровой двойник",
+        "relation": "uses",
+        "target": "автообновление"
+      },
+      {
+        "source": "Pack",
+        "relation": "implements",
+        "target": "source-of-truth"
+      },
+      {
+        "source": "Pack",
+        "relation": "contains",
+        "target": "доменное знание"
+      },
+      {
+        "source": "source-of-truth",
+        "relation": "related_to",
+        "target": "доменное знание"
+      },
+      {
+        "source": "Предметные знания",
+        "relation": "uses",
+        "target": "Pack"
+      },
+      {
+        "source": "Capture-to-Pack",
+        "relation": "implements",
+        "target": "маршрутизация знаний"
+      },
+      {
+        "source": "маршрутизация знаний",
+        "relation": "works_on",
+        "target": "ядро знаний"
+      },
+      {
+        "source": "L1/L2/L3",
+        "relation": "implements",
+        "target": "слоистая архитектура"
+      },
+      {
+        "source": "слоистая архитектура",
+        "relation": "uses",
+        "target": "staging"
+      },
+      {
+        "source": "слоистая архитектура",
+        "relation": "uses",
+        "target": "промоция правил"
+      },
+      {
+        "source": "PAI",
+        "relation": "related_to",
+        "target": "IWE"
+      },
+      {
+        "source": "IWE",
+        "relation": "lacks",
+        "target": "vendor-agnostic"
+      },
+      {
+        "source": "экзокортексы",
+        "relation": "part_of",
+        "target": "structured workflows"
+      },
+      {
+        "source": "AI-обёртки",
+        "relation": "part_of",
+        "target": "structured workflows"
+      },
+      {
+        "source": "vendor-agnostic environments",
+        "relation": "implements",
+        "target": "vendor-agnostic"
+      },
+      {
+        "source": "GitHub",
+        "relation": "provides",
+        "target": "экзокортексы"
+      },
+      {
+        "source": "Product Hunt",
+        "relation": "provides",
+        "target": "AI-обёртки"
+      },
+      {
+        "source": "HackerNews",
+        "relation": "provides",
+        "target": "structured workflows"
+      },
+      {
+        "source": "Reddit",
+        "relation": "provides",
+        "target": "vendor-agnostic environments"
+      },
+      {
+        "source": "YC",
+        "relation": "provides",
+        "target": "экзокортексы"
+      },
+      {
+        "source": "Facebook",
+        "relation": "hosts",
+        "target": "клод код"
+      },
+      {
+        "source": "клод код",
+        "relation": "competes_with",
+        "target": "опус 4.6"
+      }
+    ]
+  },
+  {
+    "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+    "triples": [
+      {
+        "source": "Copy as Markdown",
+        "relation": "used_on",
+        "target": "chatgpt.com"
+      },
+      {
+        "source": "Cmd+V",
+        "relation": "used_with",
+        "target": "Obsidian"
+      },
+      {
+        "source": "Copy as Markdown",
+        "relation": "enables_pasting_to",
+        "target": "Obsidian"
+      }
+    ]
+  },
+  {
+    "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+    "triples": [
+      {
+        "source": "Scrutator (project)",
+        "relation": "is",
+        "target": "Knowledge Retrieval and Meaning Engine (concept)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "part_of",
+        "target": "Arcanada Ecosystem (project)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "provides",
+        "target": "unified search (concept)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "provides",
+        "target": "retrieval (concept)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "provides",
+        "target": "meaning extraction (concept)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "uses",
+        "target": "PostgreSQL (technology)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "uses",
+        "target": "pgvector (technology)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "uses",
+        "target": "BGE-M3 (technology)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "uses",
+        "target": "FastAPI (technology)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "created_by",
+        "target": "Pavel Valentov (person)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "runs_on",
+        "target": "arcana-db server (location)"
+      },
+      {
+        "source": "Scrutator (project)",
+        "relation": "runs_at",
+        "target": "port 8310 (concept)"
+      },
+      {
+        "source": "PostgreSQL (technology)",
+        "relation": "works_with",
+        "target": "pgvector (technology)"
+      },
+      {
+        "source": "pgvector (technology)",
+        "relation": "provides",
+        "target": "vector storage (concept)"
+      },
+      {
+        "source": "BGE-M3 (technology)",
+        "relation": "generates",
+        "target": "embeddings (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "dense (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "sparse (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "ColBERT (technology)"
+      },
+      {
+        "source": "FastAPI (technology)",
+        "relation": "implements",
+        "target": "API layer (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+    "triples": [
+      {
+        "source": "Scrutator (technology)",
+        "relation": "is",
+        "target": "Knowledge Retrieval and Meaning Engine (concept)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "part_of",
+        "target": "Arcanada Ecosystem (project)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "works_on",
+        "target": "wiki (technology)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "works_on",
+        "target": "datarim (technology)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "works_on",
+        "target": "project docs (concept)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "works_on",
+        "target": "agent memories (concept)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "uses",
+        "target": "BAAI/bge-m3 (technology)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "uses",
+        "target": "PostgreSQL (technology)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "uses",
+        "target": "pgvector (technology)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "uses",
+        "target": "Reciprocal Rank Fusion (concept)"
+      },
+      {
+        "source": "Scrutator (technology)",
+        "relation": "implements",
+        "target": "hybrid search (concept)"
+      },
+      {
+        "source": "BAAI/bge-m3 (technology)",
+        "relation": "generates",
+        "target": "embeddings (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "1024-dimensional dense vectors (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "sparse vectors (concept)"
+      },
+      {
+        "source": "embeddings (concept)",
+        "relation": "includes",
+        "target": "ColBERT multi-vector (technology)"
+      },
+      {
+        "source": "PostgreSQL (technology)",
+        "relation": "uses",
+        "target": "pgvector (technology)"
+      },
+      {
+        "source": "pgvector (technology)",
+        "relation": "provides",
+        "target": "vector storage (concept)"
+      },
+      {
+        "source": "Reciprocal Rank Fusion (concept)",
+        "relation": "related_to",
+        "target": "RRF (concept)"
+      },
+      {
+        "source": "hybrid search (concept)",
+        "relation": "combines",
+        "target": "dense cosine similarity (concept)"
+      },
+      {
+        "source": "hybrid search (concept)",
+        "relation": "combines",
+        "target": "sparse lexical matching (concept)"
+      },
+      {
+        "source": "hybrid search (concept)",
+        "relation": "combines",
+        "target": "full-text search (concept)"
+      }
+    ]
+  },
+  {
+    "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+    "triples": [
+      {
+        "source": "МФЦА",
+        "relation": "provides_access_through",
+        "target": "https://aifc.kz/ru/home/"
+      },
+      {
+        "source": "https://aifc.kz/ru/home/",
+        "relation": "represents",
+        "target": "МФЦА"
+      }
+    ]
+  },
+  {
+    "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+    "triples": [
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "Telegram"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "MAX"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "Jabber"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "Signal"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "Session"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "SimpleX"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "discusses",
+        "target": "Element"
+      },
+      {
+        "source": "Фландерс",
+        "relation": "published_on",
+        "target": "YouTube"
+      }
+    ]
+  },
+  {
+    "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+    "triples": [
+      {
+        "source": "developers.facebook.com",
+        "relation": "part_of",
+        "target": "Facebook"
+      },
+      {
+        "source": "pavel@valentov.com",
+        "relation": "related_to",
+        "target": "Web master"
+      }
+    ]
+  }
+]

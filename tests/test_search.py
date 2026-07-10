@@ -485,3 +485,181 @@ class TestAPI:
         client = TestClient(app)
         resp = client.post("/v1/index", json={"content": "  ", "source_path": "x.md"})
         assert resp.status_code == 422
+
+
+# ── SRCH-0029 M1+M2 searcher integration tests ───────────────────────
+
+
+class TestSearcherCitationAndRerank:
+    """V-AC-1 + V-AC-2 — citation emission and flag-gated rerank."""
+
+    def _mock_result(self, chunk_id: str = "abc", score: float = 0.033) -> SearchResult:
+        return SearchResult(
+            chunk_id=chunk_id,
+            content="some content",
+            source_path=f"docs/{chunk_id}.md",
+            source_type="md",
+            chunk_index=0,
+            score=score,
+            namespace="arcanada",
+        )
+
+    @pytest.mark.asyncio
+    async def test_flag_off_citation_populated_score_kind_rrf(self):
+        """V-AC-1 + V-AC-2: rerank_enabled=False → citation populated with score_kind='rrf'."""
+        from scrutator.search.searcher import search
+
+        mock_results = [self._mock_result("a", 0.05), self._mock_result("b", 0.03)]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+        ):
+            mock_settings.rerank_enabled = False
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = mock_results
+
+            resp = await search(query="test", limit=2)
+
+        assert resp.total == 2
+        for r in resp.results:
+            assert r.citation is not None, f"citation must be populated for {r.chunk_id}"
+            assert r.citation.score_kind == "rrf"
+            assert r.citation.schema_version == 1
+            assert r.citation.chunk_id == r.chunk_id
+
+    @pytest.mark.asyncio
+    async def test_flag_off_ordering_and_scores_byte_identical(self):
+        """V-AC-2: rerank_enabled=False → ordering/scores unchanged vs current behaviour."""
+        from scrutator.search.searcher import search
+
+        # RRF order: A first (higher score)
+        mock_results = [self._mock_result("A", 0.05), self._mock_result("B", 0.02)]
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+        ):
+            mock_settings.rerank_enabled = False
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = mock_results
+
+            resp = await search(query="test", limit=2)
+
+        # Order preserved from RRF
+        assert resp.results[0].chunk_id == "A"
+        assert resp.results[1].chunk_id == "B"
+        # Scores unchanged (only citation added)
+        assert resp.results[0].score == pytest.approx(0.05)
+        assert resp.results[1].score == pytest.approx(0.02)
+        # citation.relevance_score mirrors the RRF score
+        assert resp.results[0].citation.relevance_score == pytest.approx(0.05)
+
+    @pytest.mark.asyncio
+    async def test_flag_off_rerank_not_called(self):
+        """V-AC-2: rerank_enabled=False → rerank() function is never called."""
+        from scrutator.search.searcher import search
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+            patch("scrutator.search.reranker.rerank", new_callable=AsyncMock) as mock_rerank,
+        ):
+            mock_settings.rerank_enabled = False
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = [self._mock_result()]
+
+            await search(query="test", limit=1)
+
+        # rerank module should never be called when flag is OFF
+        mock_rerank.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_flag_on_rerank_called_and_score_kind_colbert(self):
+        """V-AC-2: rerank_enabled=True → rerank() is called; result has score_kind='colbert_rerank'."""
+        from scrutator.db.models import Citation
+        from scrutator.search.searcher import search
+
+        reranked_result = self._mock_result("A", 4.5)
+        reranked_result.citation = Citation(
+            chunk_id="A",
+            source_path="docs/A.md",
+            source_type="md",
+            chunk_index=0,
+            relevance_score=4.5,
+            score_kind="colbert_rerank",
+        )
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+            patch("scrutator.search.searcher.rerank", new_callable=AsyncMock) as mock_rerank,
+        ):
+            mock_settings.rerank_enabled = True
+            mock_settings.rerank_pool_multiplier = 4
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = [self._mock_result("A", 0.03)]
+            mock_rerank.return_value = [reranked_result]
+
+            resp = await search(query="test", limit=1)
+
+        mock_rerank.assert_called_once()
+        assert resp.results[0].citation.score_kind == "colbert_rerank"
+        assert resp.results[0].citation.relevance_score == pytest.approx(4.5)
+
+    @pytest.mark.asyncio
+    async def test_flag_on_wider_pool_passed_to_hybrid_search(self):
+        """V-AC-2: rerank_enabled=True → hybrid_search called with return_pool=True and multiplier."""
+        from scrutator.search.searcher import search
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+            patch("scrutator.search.searcher.rerank", new_callable=AsyncMock) as mock_rerank,
+        ):
+            mock_settings.rerank_enabled = True
+            mock_settings.rerank_pool_multiplier = 4
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = []
+            mock_rerank.return_value = []
+
+            await search(query="test", limit=5)
+
+        call_kwargs = mock_search.call_args[1]
+        assert call_kwargs.get("fetch_multiplier") == 4
+        assert call_kwargs.get("return_pool") is True
+
+    def test_config_rerank_defaults(self):
+        """V-AC-2: config defaults — rerank_enabled=False, multiplier=4, max_pool=30."""
+        from scrutator.config import Settings
+
+        s = Settings()
+        assert s.rerank_enabled is False
+        assert s.rerank_pool_multiplier == 4
+        assert s.rerank_colbert_max_pool == 30
+
+    def test_ltm_pipeline_untouched(self):
+        """V-AC-4: ltm/pipeline.py must not be changed by SRCH-0029.
+
+        Checks the working tree for uncommitted changes under ltm/. Resolves the
+        repo root from this file's location (no hardcoded absolute path — that
+        broke on the CI runner where the author's local path does not exist).
+        """
+        import subprocess
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            ["git", "diff", "HEAD", "--name-only"],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+        )
+        changed_files = result.stdout.strip().splitlines()
+        ltm_changes = [f for f in changed_files if "ltm/" in f]
+        assert ltm_changes == [], f"ltm/ path touched by SRCH-0029 — MUST NOT change: {ltm_changes}"

@@ -1,0 +1,1909 @@
+[
+  {
+    "chunk_id": "7ac324ae-713a-4ad7-91c7-6666b537059d",
+    "content": "### 4. Settings\n\n- Hotkeys: change translation/prettify/sense-making shortcuts (including function keys or double-tap); check for conflicts with other apps.\n- Prefer integration in main macOS System Settings.\n- LLM: OpenRouter (default), optional OpenAI and other providers; API key and model selection via `.env` or environment variables.\n- Languages and prettification styles configurable.",
+    "source_path": "Projects/Verdicus/datarim/productContext.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 6,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Product Context: Verdicus",
+        "## Features (from Origin Prompt + GEMINI)",
+        "### 4. Settings"
+      ]
+    }
+  },
+  {
+    "chunk_id": "a3107fa5-d93d-4df4-8fae-85d8be243bd9",
+    "content": "# Style Guide\n\nCode style, naming, and documentation conventions for Verdicus.\n\n---\n\n- **Language:** All source code, documentation, and commit messages in **English**.\n- **Comments:** English only.\n- **Linting/formatting:** SwiftLint (or project-equivalent); code fully covered by automated tests.\n- **Architecture:** Clean, modular (e.g. MVVM); every feature must have relevant tests (e.g. XCTest).",
+    "source_path": "Projects/Verdicus/datarim/style-guide.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Style Guide"
+      ]
+    }
+  },
+  {
+    "chunk_id": "3672192f-dc5f-4b96-b392-075d3818c314",
+    "content": "# **10. Архитектура .env**\n\n```\nLLM_PROVIDER=openrouter\nOPENROUTER_API_KEY=xxxxx\nMODEL=gpt-4o-mini\nTEMPERATURE=0\nMAX_TOKENS=2000\n```\n\n---",
+    "source_path": "Projects/Verdicus/Tagline для App Store.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 20,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# **10. Архитектура .env**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "3167bb3b-59ca-4f8e-a02a-576fbeec265d",
+    "content": "### `deploy/deploy-www.sh`\n\n1. Loads local `.env` if present\n2. Builds the `www/` Docker image locally\n3. Streams the image to the WWW server with SSH\n4. Replaces the `verdicus-www` container on an internal host port\n5. Runs a local host health check on the remote server\n6. Purges Cloudflare cache for the WWW zone",
+    "source_path": "Projects/Verdicus/datarim/tasks/DEV-0001-deploy-guide.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 9,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# DEV-0001 Deploy Guide",
+        "## What the Scripts Do",
+        "### `deploy/deploy-www.sh`"
+      ]
+    }
+  },
+  {
+    "chunk_id": "922abe1a-e8ee-465b-9ea0-867474896649",
+    "content": "### Completed\n\n- Created `www/` landing page with static assets and nginx container config.\n- Added API health endpoints and Docker build configuration in `server/`.\n- Added deploy scripts for WWW and API plus shared Cloudflare purge helper.\n- Added `.env.example`, project-level `.gitignore`, and deployment guide in `datarim/tasks/DEV-0001-deploy-guide.md`.\n- Installed required Nest runtime dependencies and generated `package-lock.json`.\n- Removed the real Cloudflare purge token from tracked project documentation.\n- Installed Docker on the WWW host and deployed `verdicus-www` behind host nginx.\n- Provisioned `verdicus-mongo`, `verdicus-api`, and nginx routing on the API host.\n- Executed Cloudflare zone purge for the configured zone.",
+    "source_path": "Projects/Verdicus/datarim/progress.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Progress",
+        "## DEV-0001",
+        "### Completed"
+      ]
+    }
+  },
+  {
+    "chunk_id": "a6c3cfad-1fca-4c38-b2e5-de587e1f5f34",
+    "content": "### Option 2: Registry-Based Deploy\n\n**Flow**\n- Build image locally or in CI\n- Push to registry\n- SSH to server and `docker pull`\n- Replace running container\n- Run health check\n- Purge Cloudflare cache\n\n**Pros**\n- Scales better\n- Better for CI/CD later\n- Faster repeated deploys on server\n\n**Cons**\n- Requires registry setup and credentials\n- More moving parts for v1",
+    "source_path": "Projects/Verdicus/datarim/creative/creative-DEV-0001-landing-and-deploy.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 16,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Creative Phase: DEV-0001",
+        "## Creative Phase B: Deploy Architecture",
+        "### Option 2: Registry-Based Deploy"
+      ]
+    }
+  },
+  {
+    "chunk_id": "99e8eb7c-d2f2-469b-8992-239fcecef148",
+    "content": "## **7. Что в названии хорошо**\nVerdicus для приложения звучит:\n- коротко\n- технологично\n- латинизировано (как **Redis, Prometheus, Vercel, Datadog**)\n- легко читается\n- уникально для поиска",
+    "source_path": "Projects/Verdicus/origin/Описание Verdicus.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "## **7. Что в названии хорошо**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "7b172092-13f4-4acf-864c-ecf6f46369e9",
+    "content": "## Stack (from GEMINI.md)\n\n- **Primary:** Swift / SwiftUI for macOS (system integration, performance).\n- **Security:** API keys and sensitive config via `.env` (excluded from version control).\n- **Quality:** Linters/formatters (e.g. SwiftLint); full automated test coverage (unit + UI, e.g. XCTest).\n- **Docs:** English; code comments in English.",
+    "source_path": "Projects/Verdicus/datarim/techContext.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Tech Context: Verdicus",
+        "## Stack (from GEMINI.md)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "15f7a78c-41f3-4470-b4f0-40c0c875997f",
+    "content": "### **Главная идея Verdicus**\n\n  \n\nСмысл: **перенос смысла между языками**",
+    "source_path": "Projects/Verdicus/Tagline для App Store.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# **3. Концепция иконки приложения**",
+        "### **Главная идея Verdicus**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "f0bf47a8-fb08-438f-8602-bd2ad77c84f2",
+    "content": "# **12. Идеальный короткий pitch**\n\n  \n\n(для сайта)\n\n  \n\n> Verdicus is the fastest way to translate text on macOS.\n\n> Select any text, press a shortcut, and get an AI-powered translation instantly.\n\n---",
+    "source_path": "Projects/Verdicus/Tagline для App Store.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 22,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# **12. Идеальный короткий pitch**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "5e077adb-5b33-4f1e-80af-c174bfd1c04d",
+    "content": "# **13. Если хочешь — могу ещё показать**\n\n- **идеальный UX для такого переводчика (как у PopClip / Raycast)**\n    \n- **как сделать перевод без UI вообще**\n    \n- **готовую архитектуру Swift-приложения (~200 строк)**\n    \n- **как пройти App Store review с таким приложением**",
+    "source_path": "Projects/Verdicus/Tagline для App Store.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 23,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# **13. Если хочешь — могу ещё показать**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "ea95ffee-9e3f-421a-94ac-f981caa3e402",
+    "content": "Claud Flare: https://dash.cloudflare.com/e0e63a86f5ccb2375147d7fda7d58766/verdicus.app\nDomain: verdicus.app",
+    "source_path": "Projects/Verdicus/Domain.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "007309c9-83c7-4134-87ed-c5f04b3d0250",
+    "content": "## Current State\n\n- Swift/macOS project present in `code/` (e.g. `VerdicusApp`, `HotkeyManager`, `LLMClient`, `ContextManager`, `ToastManager`, `Logger`).\n- Build output: `code/build/Verdicus.app`.\n- Domain: verdicus.app (reference only; no secrets in repo).",
+    "source_path": "Projects/Verdicus/datarim/techContext.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 4,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Tech Context: Verdicus",
+        "## Current State"
+      ]
+    }
+  },
+  {
+    "chunk_id": "fad7ff8b-63ad-49de-9b0f-d9e48a6413a9",
+    "content": "## Deploy Commands\n\nDeploy the landing page:\n\n```bash\n./deploy/deploy-www.sh\n```\n\nDeploy the API:\n\n```bash\n./deploy/deploy-api.sh\n```",
+    "source_path": "Projects/Verdicus/datarim/tasks/DEV-0001-deploy-guide.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# DEV-0001 Deploy Guide",
+        "## Deploy Commands"
+      ]
+    }
+  },
+  {
+    "chunk_id": "d9531e12-b69f-493c-9c9a-6a37524d2293",
+    "content": "### **Вариант №2 (чуть более технический)**\n\n  \n\n> **Verdicus** brings instant AI translation to macOS.\n\n> Select text anywhere on your screen and get a high-quality translation in seconds.\n\n> Powered by OpenRouter and compatible with multiple LLM providers.\n\n---",
+    "source_path": "Projects/Verdicus/Tagline для App Store.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 4,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# **2. Описание приложения (2–3 строки)**",
+        "### **Вариант №2 (чуть более технический)**"
+      ]
+    }
+  },
+  {
+    "chunk_id": "fe0da4c2-914a-4297-b56f-991169c8b08e",
+    "content": "### Option 1: Local Build + Image Stream over SSH\n\n**Flow**\n- Build image locally\n- Stream image to server with `docker save | ssh ... docker load`\n- Replace running container\n- Run health check\n- Purge Cloudflare cache\n\n**Pros**\n- No registry required\n- Easy to understand\n- Good for single-project infrastructure\n- Keeps deploy ownership in one script\n\n**Cons**\n- Slower than registry-based pull\n- Requires local Docker on deploy machine\n- Larger network transfer on every deploy",
+    "source_path": "Projects/Verdicus/datarim/creative/creative-DEV-0001-landing-and-deploy.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 15,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Creative Phase: DEV-0001",
+        "## Creative Phase B: Deploy Architecture",
+        "### Option 1: Local Build + Image Stream over SSH"
+      ]
+    }
+  },
+  {
+    "chunk_id": "29e06be1-5f4c-47ba-a6a9-0a9121fad2dc",
+    "content": "## Product Vision\n\nmacOS app that, on hotkey, reads text or image from selection/clipboard (or focused field), calls LLM services, and returns translation, prettified text, or sense-making explanation—with results back in clipboard and errors in notifications.",
+    "source_path": "Projects/Verdicus/datarim/productContext.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Product Context: Verdicus",
+        "## Product Vision"
+      ]
+    }
+  },
+  {
+    "chunk_id": "9f4ae24a-5920-4b52-9eb6-62ac1fe3b8d1",
+    "content": "### `deploy/deploy-api.sh`\n\n1. Loads local `.env` if present\n2. Builds the `server/` Docker image locally\n3. Streams the image to the API server with SSH\n4. Replaces the `verdicus-api` container using a remote env file\n5. Calls `http://127.0.0.1:<host-port>/health` on the remote server\n6. Purges Cloudflare cache for the API zone",
+    "source_path": "Projects/Verdicus/datarim/tasks/DEV-0001-deploy-guide.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 10,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# DEV-0001 Deploy Guide",
+        "## What the Scripts Do",
+        "### `deploy/deploy-api.sh`"
+      ]
+    }
+  },
+  {
+    "chunk_id": "d4d96a15-91f8-4763-8036-f0ad8eb27a84",
+    "content": "### Selected Deploy Approach\n\n- **Approach:** Local Docker build + image stream over SSH\n- **Why:** No registry dependency, low setup overhead",
+    "source_path": "Projects/Verdicus/datarim/creative/creative-DEV-0001-landing-and-deploy.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 28,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Creative Phase: DEV-0001",
+        "## Final Decisions",
+        "### Selected Deploy Approach"
+      ]
+    }
+  },
+  {
+    "chunk_id": "2e2bf0df-dde3-4f3c-9b53-4775a4855bbd",
+    "content": "### From Health Apps (Apple Health, etc.)\n\n**Argana AI**:\n- ✅ All life aspects (not just health)\n- ✅ Unified interface (not separate apps)\n- ✅ AI agent intelligence (not just tracking)\n- ✅ Proactive reminders (not just logging)\n- ✅ Context-aware (not isolated data)",
+    "source_path": "Projects/Arganize.me/concepts/core-idea.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 22,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Core Idea & Unique Features: Argana AI",
+        "## What Makes Argana AI Different",
+        "### From Health Apps (Apple Health, etc.)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "31c5919f-cfa4-46c6-8a64-3607183f756b",
+    "content": "### Technical Accessibility\n\n- **Low Barrier to Entry**: Simple Telegram bot interaction\n- **No Complex Setup**: Works immediately after registration\n- **Mobile-Optimized**: Designed for mobile-first usage\n- **Offline Capability**: Some features work offline (future)",
+    "source_path": "Projects/Arganize.me/concepts/target-audience.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 22,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Target Audience: Argana AI",
+        "## Accessibility Considerations",
+        "### Technical Accessibility"
+      ]
+    }
+  },
+  {
+    "chunk_id": "428552ce-ab51-4f8c-9129-de172dc9b744",
+    "content": "### Primary Goal\n\nCreate a unified personal assistant that helps users manage all aspects of their life through a single, intelligent interface accessible via Telegram bot.",
+    "source_path": "Projects/Arganize.me/concepts/overview.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 6,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Project Overview: Argana AI",
+        "## Project Purpose",
+        "### Primary Goal"
+      ]
+    }
+  },
+  {
+    "chunk_id": "05cc3662-3fb1-4d5b-bd37-9c72e3d0cddb",
+    "content": "### 1. Messenger-First Architecture\n\n**The Main Differentiator**: Telegram bot (or any messenger) is the **PRIMARY** interface.\n\n**Why It Matters**:\n- **Familiar Interface**: Users already use messengers daily\n- **Always Accessible**: Available wherever you are\n- **No Learning Curve**: Natural conversation interface\n- **Mobile-First**: Designed for mobile usage\n- **Unified Entry Point**: One place for everything\n\n**Implementation**:\n- All user interactions happen through Telegram bot\n- Website is informational only (no backend integration)\n- Proactive communications sent via Telegram\n- File uploads, voice messages, images - all through Telegram",
+    "source_path": "Projects/Arganize.me/concepts/core-idea.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 5,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Core Idea & Unique Features: Argana AI",
+        "## Unique Features",
+        "### 1. Messenger-First Architecture"
+      ]
+    }
+  },
+  {
+    "chunk_id": "30002248-c858-42e8-bd2d-8e52746e7a14",
+    "content": "### Deployment: Server 49.13.52.208\n\n**Infrastructure**:\n- Dedicated server\n- Docker deployment\n- Nginx reverse proxy\n- CloudFlare CDN (Flex mode, orange cloud)\n- SSL handled by CloudFlare",
+    "source_path": "Projects/Arganize.me/concepts/technologies.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 24,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Technologies & Tech Stack: Argana AI",
+        "## Infrastructure",
+        "### Deployment: Server 49.13.52.208"
+      ]
+    }
+  },
+  {
+    "chunk_id": "afba1713-6a7f-40f7-9b3b-1d06599e5489",
+    "content": "### Core Concept\n\nArgana AI is a **multi-agent AI system** that serves as a single, unified personal assistant accessible primarily through **Telegram bot** (or any messenger). Unlike traditional task trackers, knowledge bases, or fragmented services, Argana AI provides:\n\n- **One Assistant for Everything**: A single intelligent companion for all life aspects\n- **Messenger-First Interface**: Primary interaction through Telegram bot - your main assistant interface\n- **Deep Personalization**: Understands your context, health, family, goals, and preferences\n- **Proactive Assistance**: Sends reminders, briefings, and suggestions based on your life\n- **Multi-Format Support**: Processes text, voice, images, files intelligently\n- **Always Accessible**: Available through your messenger, wherever you are",
+    "source_path": "Projects/Arganize.me/concepts/overview.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Project Overview: Argana AI",
+        "## What is Argana AI?",
+        "### Core Concept"
+      ]
+    }
+  },
+  {
+    "chunk_id": "76e32a4e-669f-4dd9-ac8c-ef241c1cb801",
+    "content": "### [Reranking Approach](reranking-approach.md)\nReranking strategy for improving search relevance. How to use rerankers to filter and rank candidate documents after initial retrieval.",
+    "source_path": "Projects/Arganize.me/concepts/index.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 12,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Project Concepts & Ideas",
+        "## Technical Know-How & Implementation Approaches",
+        "### [Reranking Approach](reranking-approach.md)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "1a7fb4fb-f7aa-4ddb-a77a-be8ecb620350",
+    "content": "### From Task Trackers (Todoist, Asana, etc.)\n\n**Argana AI**:\n- ✅ One assistant for all life aspects (not just tasks)\n- ✅ Messenger-first interface (not web/app)\n- ✅ Proactive communication (not just task lists)\n- ✅ Deep personalization (not generic)\n- ✅ AI agent intelligence (not just reminders)",
+    "source_path": "Projects/Arganize.me/concepts/core-idea.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 19,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Core Idea & Unique Features: Argana AI",
+        "## What Makes Argana AI Different",
+        "### From Task Trackers (Todoist, Asana, etc.)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "7c02ed79-1417-42cf-9827-f4214cc38134",
+    "content": "## Technical Foundation\n\nArgana AI is built on:\n\n- **Multi-Agent Architecture**: Orchestrator managing specialized agents\n- **Vector Memory**: Semantic search across all interactions\n- **Deep Personalization**: Comprehensive user profile system\n- **Event-Driven Communication**: Kafka for agent coordination\n- **Modern Tech Stack**: NestJS, Next.js, Redis, Qdrant, Kafka\n\nSee [Technologies & Tech Stack](technologies.md) for detailed information.",
+    "source_path": "Projects/Arganize.me/concepts/overview.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 12,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Project Overview: Argana AI",
+        "## Technical Foundation"
+      ]
+    }
+  },
+  {
+    "chunk_id": "ba9641c7-ca22-4d17-b918-d40912f72c29",
+    "content": "### Retrieval Pipeline\n\n```\nUser Query\n   ↓\n1. Query Expansion\n   - Generate paraphrases\n   - Extract key phrases\n   - Create multiple embeddings\n   ↓\n2. Parallel Retrieval\n   ├─ Full-Text Search (PostgreSQL tsvector)\n   │  └─ Top 20 candidates\n   └─ Vector Search (Qdrant HNSW)\n      └─ Top 50 candidates\n   ↓\n3. Reciprocal Rank Fusion (RRF)\n   - Combine results from both streams\n   - Score = 1/(k + rank)\n   - Deduplicate\n   - Top 50 unified candidates\n   ↓\n4. Reranking (Qwen3-Reranker or LLM)\n   - Evaluate each candidate\n   - Score relevance\n   - Filter non-relevant\n   - Top 1-3 final chunks\n   ↓\n5. Context Assembly\n   - Primary chunk\n   - Parent chunk (for context)\n   - Referenced chunks (tables, figures)\n   ↓\n6. Answer Generation\n   - LLM generates answer from context\n   - Or: \"I don't know\" if no relevant chunks\n```",
+    "source_path": "Projects/Arganize.me/concepts/reranking-approach.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 14,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Reranking Approach: Improving Search Relevance",
+        "## Integration in Argana AI",
+        "### Retrieval Pipeline"
+      ]
+    }
+  },
+  {
+    "chunk_id": "1c485506-87e8-4cd3-9941-fac5e74631ef",
+    "content": "### Web Server: Nginx\n\n**Why**:\n- High performance\n- Reverse proxy\n- Static file serving\n- SSL termination (handled by CloudFlare)\n\n**Port**: 24508\n\n**Configuration**:\n- `docker/nginx-local.conf` - Local\n- `docker/nginx-prod.conf` - Production",
+    "source_path": "Projects/Arganize.me/concepts/technologies.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 23,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Technologies & Tech Stack: Argana AI",
+        "## Infrastructure",
+        "### Web Server: Nginx"
+      ]
+    }
+  },
+  {
+    "chunk_id": "61d25ff7-69a2-4bfb-b2e3-9eff26dc9f3f",
+    "content": "### Embeddings Generation\n\n**Pattern**:\n```\nUser Interaction → text-embedding-3 → Vector → Qdrant Storage\n```\n\n**Batch Processing**:\n- Background jobs for bulk embeddings\n- Real-time for new interactions\n- Redis queues for processing",
+    "source_path": "Projects/Arganize.me/concepts/ai-models.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 17,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# AI Models: Argana AI",
+        "## Model Usage Patterns",
+        "### Embeddings Generation"
+      ]
+    }
+  },
+  {
+    "chunk_id": "0d2e8dcb-4ea6-423c-a6da-824886905cf1",
+    "content": "### 6. Multi-Format Input Processing\n\n**The Innovation**: Intelligent processing of any input format.\n\n**Supported Formats**:\n- **Text Messages** → Direct processing\n- **Voice Messages** → Whisper transcription → Processing\n- **Photos** → GPT-4 Vision analysis → Description + Processing\n- **Audio Files** → Whisper transcription → Summary + Storage\n- **PDF Documents** → Parsing → Analysis → Summary + Storage\n- **Long Voice Messages** → Auto-convert to audio file processing\n\n**Benefits**:\n- Natural interaction (send anything)\n- No format limitations\n- Intelligent understanding\n- Automatic organization",
+    "source_path": "Projects/Arganize.me/concepts/core-idea.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 10,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Core Idea & Unique Features: Argana AI",
+        "## Unique Features",
+        "### 6. Multi-Format Input Processing"
+      ]
+    }
+  },
+  {
+    "chunk_id": "4e3edb24-cd47-4e6c-be62-ba1371082ac7",
+    "content": "### Typical User Path\n\n1. **Discovery**: Learn about Argana AI through website or referral\n2. **Registration**: Start conversation with Telegram bot (free initially)\n3. **Onboarding**: Set up personal profile through Telegram chat\n4. **Daily Use**: Interact with assistant through Telegram\n5. **Progressive Engagement**: System learns preferences and becomes more helpful\n6. **Life Integration**: Assistant becomes integral part of daily life",
+    "source_path": "Projects/Arganize.me/concepts/target-audience.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 24,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Target Audience: Argana AI",
+        "## User Journey",
+        "### Typical User Path"
+      ]
+    }
+  },
+  {
+    "chunk_id": "02956ef8-c9ab-44e2-8178-654313e50e82",
+    "content": "### Embeddings: OpenAI text-embedding-3\n\n**Why**:\n- High-quality embeddings\n- Good performance\n- Reliable API\n- Cost-effective\n\n**Use Cases**:\n- Converting interactions to vectors\n- Semantic search\n- Similarity matching",
+    "source_path": "Projects/Arganize.me/concepts/technologies.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 17,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Technologies & Tech Stack: Argana AI",
+        "## AI/LLM Integration",
+        "### Embeddings: OpenAI text-embedding-3"
+      ]
+    }
+  },
+  {
+    "chunk_id": "64ea9dbc-5cc5-45cf-aa76-c75dae26024f",
+    "content": "### Cost Optimization\n\n**Strategies**:\n- Caching embeddings\n- Batch processing\n- Model selection (mini for large context)\n- Efficient prompt design\n- Context optimization",
+    "source_path": "Projects/Arganize.me/concepts/ai-models.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 21,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# AI Models: Argana AI",
+        "## Model Configuration",
+        "### Cost Optimization"
+      ]
+    }
+  },
+  {
+    "chunk_id": "2de17289-f43c-4126-b74d-2188278c999f",
+    "content": "## 1. Source Selection\n\nThree independent evidence streams:\n\n1. **Mem0 docs site** — `docs.mem0.ai/open-source/graph_memory/overview` (web fetch).\n2. **Mem0 pricing page** — `mem0.ai/pricing` (web fetch).\n3. **Mem0 GitHub repo** — `github.com/mem0ai/mem0` HEAD at commit `3fbc1c9` (shallow clone into `benchmark/candidates/mem0/`, 2026-04-16).\n\nEach stream was consulted independently; findings corroborate without conflict.\n\n---",
+    "source_path": "Projects/Long Term Memory/benchmark/mem0-gate/log.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Mem0 Graph Gate — Investigation Log",
+        "## 1. Source Selection"
+      ]
+    }
+  },
+  {
+    "chunk_id": "8397ddfa-fec9-44f8-be64-a5e613d69a01",
+    "content": "# Mem0 Graph Gate — Investigation Log\n\n**Date:** 2026-04-16\n**Task:** LTM-0002 Phase A (Mem0 graph gate)\n**Purpose:** Evidence-based decision whether Mem0 retains graph memory in OSS SDK, or must be swapped for Cognee (standby) in the benchmark shortlist.\n\nRedaction note: no API keys / tokens appear in this log; all evidence is public web + public GitHub source.\n\n---",
+    "source_path": "Projects/Long Term Memory/benchmark/mem0-gate/log.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Mem0 Graph Gate — Investigation Log"
+      ]
+    }
+  },
+  {
+    "chunk_id": "921db22e-f0f7-4766-b347-c89cef1d8b13",
+    "content": "## Известные ограничения\n\n1. **LLM API key обязателен** для reflect (reasoning layer). Без него retain/recall работают, но mental models не обновляются.\n2. **Community меньше** чем Mem0 (9.4k vs 53k stars) — меньше Stack Overflow ответов и community examples.\n3. **Embedded PostgreSQL** — single-node; для HA нужен external PostgreSQL (не embedded).\n4. **Go SDK менее mature** чем Python/TS (проверить в benchmark).\n5. **Arcanada-specific:** для Tailscale deploy (arcana-dev) нужен persistent volume mapping + backup cron → B2.",
+    "source_path": "Projects/Long Term Memory/research/shortlist-cards/hindsight.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 9,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Вариант 3: Docker Compose (persistent volume)",
+        "## Известные ограничения"
+      ]
+    }
+  },
+  {
+    "chunk_id": "1a9075a1-6ba8-40a6-a9e7-2df24cb28536",
+    "content": "## 6. LangMem\n- **Repo:** https://github.com/langchain-ai/langmem\n- **License:** MIT\n- **Stars:** 1,402\n- **Created:** 2025-01-21\n- **Last push:** 2026-04-16\n- **Type:** Python library (99.4%); LangGraph integration\n- **Self-host claim:** \"native integration with LangGraph's Long-term Memory Store, available by default in all LangGraph Platform deployments\" (source: README)\n- **Cloud-service requirement:** **Partial** — supports in-memory + DB-backed stores; tightly coupled to LangGraph ecosystem\n- **Knowledge Graph support:** **No**\n- **Temporal reasoning:** **No**\n- **MCP server:** **No** (not mentioned)\n- **REST/HTTP API:** **No** standalone (LangGraph Platform serves it)\n- **Benchmarks:** None\n- **Active community:** 55 open issues, 159 forks, 325 dependent projects\n- **One-line summary:** LangGraph-coupled long-term memory library — useful only inside LangChain stack.\n\n---",
+    "source_path": "Projects/Long Term Memory/research/long-list.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# LTM Long-list (LTM-0001 Step 1)",
+        "## 6. LangMem"
+      ]
+    }
+  },
+  {
+    "chunk_id": "f44e4537-5a07-4c92-a7bd-39fbc0f1e89f",
+    "content": "## Кандидаты first-look (расширить в LTM-0001)\n\n- **Mem0** (mem0.ai) — open-core, MCP support, ~48K stars\n- **Hindsight** (MIT) — multi-strategy retrieval, ~4K stars\n- **Zep** (getzep.com) — temporal knowledge graph\n- **Cognee** — graph-based, OSS\n- **LangMem** — LangGraph-bound\n- **LlamaIndex Memory** — LlamaIndex-bound\n- **Letta** (ex-MemGPT) — OSS\n- **Graphiti** (Zep core) — temporal graph standalone\n- **MemPalace** — ⚠ flagged как hype, отнестись скептически\n- **qmd** — local BM25/vector hybrid (упоминается в Karpathy gist)\n- **OpenMemory MCP**\n- **EpisodicMemory** / прочие — добавить по мере исследования\n\n> Полный long-list (≥10 кандидатов) и обоснование shortlist top-3 — результат **LTM-0001**.",
+    "source_path": "Projects/Long Term Memory/origin/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Origin — сырые материалы",
+        "## Кандидаты first-look (расширить в LTM-0001)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "07135388-1b39-4d38-ae5b-58fe1c05c0bc",
+    "content": "## 11. Cipher / ByteRover (renamed `brv`)\n- **Repo:** https://github.com/campfirein/cipher\n- **License:** **Elastic License 2.0** (NOT OSI-approved — restrictive on hosted services)\n- **Stars:** 4,535\n- **Created:** 2025-06-19\n- **Last push:** 2026-04-16\n- **Type:** TypeScript/Node.js >= 20; standalone binaries (macOS ARM64, Linux x64/ARM64); CLI-first\n- **Self-host claim:** \"Everything works locally by default\" (source: README)\n- **Cloud-service requirement:** Optional — ByteRover Cloud add-on for sync/team sharing\n- **Knowledge Graph support:** \"Context tree\" structure (versioned: branch/commit/merge) — graph-like but proprietary structure\n- **Temporal reasoning:** Yes — LongMemEval-S includes temporal evaluation\n- **MCP server:** **Yes** — `brv mcp` command starts MCP server\n- **REST/HTTP API:** Not explicit (CLI-first)\n- **Search quality:** **LoCoMo 96.1%** (1,982 questions, 272 docs); **LongMemEval-S 92.8%** (500 questions, 23,867 docs)\n- **Active community:** 9 open issues, 438 forks, Discord\n- **One-line summary:** CLI-first versioned context memory for coding agents with strong benchmarks — but **Elastic License 2.0 is a blocker for some self-host scenarios** (R1 license MUST flag).\n\n---",
+    "source_path": "Projects/Long Term Memory/research/long-list.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 14,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# LTM Long-list (LTM-0001 Step 1)",
+        "## 11. Cipher / ByteRover (renamed `brv`)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "12e98818-1431-4166-9c06-40439b37d4ce",
+    "content": "## Corpus distribution (honest disclosure)\n\n| Class | datarim-kb | dreamer-wiki | both |\n|-------|-----------|--------------|------|\n| factual | 10 | 2 | 0 |\n| multi-hop | 11 | 0 | 1 |\n| temporal | 11 | 1 | 0 |\n| **total** | **32** | **3** | **1** |\n\nHeavy bias toward `datarim-kb` is deliberate — the 2026-04-16 wiki snapshot has only **4 processable `.md`/`.mdx` files** (see `benchmark/datasets/2026-04-16/dreamer-wiki/MANIFEST.json`). Writing 12+ wiki queries from 4 files would produce either trivial restatements or overfitted phrasing; neither is useful for benchmarking.\n\nWe accept this asymmetry as a property of the ground truth at the time of measurement. The benchmark still exercises wiki retrieval (sparse-corpus behaviour is itself a test case) and still exercises cross-corpus federation (`multi-hop-007`). If the wiki grows substantially, re-running the snapshot + adding balanced wiki queries is a backlog item — but it is **not** the scope of LTM-0002.\n\n---",
+    "source_path": "Projects/Long Term Memory/benchmark/criteria-rationale.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 12,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Query Criteria Rationale",
+        "## Corpus distribution (honest disclosure)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "0faea7a0-2305-46d7-b9d0-9f3750ec77e0",
+    "content": "## Источники\n\n| Источник | Тип | Назначение |\n|----------|-----|------------|\n| `wiki/AI/Long Term Memory/_raw_/Системы долгосрочной памяти - Сравнение.md` | диалог | Стартовая постановка задачи + первичный рейтинг (Mem0 / Hindsight / Zep) |\n| `wiki/AI/Long Term Memory/_raw_/llm-wiki.md` | gist Karpathy | Альтернативный паттерн (file-based wiki без векторной БД) — для сравнения с подходом Agent Dreamer |\n| `wiki/AI/Long Term Memory/_raw_/Mem0 - The Memory Layer for your AI Apps.md` | clipping | Mem0 product page |\n| `wiki/AI/Long Term Memory/_raw_/(1) Ilya Belov - На вчерашний пост об ИИ-проекте Милы Йововчич, я....md` | пост | Сообщественные мнения по теме LTM |",
+    "source_path": "Projects/Long Term Memory/origin/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Origin — сырые материалы",
+        "## Источники"
+      ]
+    }
+  },
+  {
+    "chunk_id": "eedb610b-93eb-425f-8546-6477c5c5810e",
+    "content": "## 3. Graphiti\n- **Repo:** https://github.com/getzep/graphiti\n- **License:** Apache-2.0\n- **Stars:** 25,007\n- **Created:** 2024-08-08\n- **Last push:** 2026-04-14\n- **Type:** Python; FastAPI server in `server/`; explicit \"self-hosted only\" positioning\n- **Self-host claim:** \"Self-hosted only\" — explicitly contrasted against Zep Cloud (source: https://github.com/getzep/graphiti README)\n- **Cloud-service requirement:** **No** — fully on-prem capable, runs via Docker\n- **Knowledge Graph support:** **Yes (deep).** Backends: Neo4j 5.26, FalkorDB 1.1.2, Kuzu 0.11.2, Amazon Neptune + OpenSearch\n- **Temporal reasoning:** **Core feature** — \"explicit bi-temporal tracking with automatic fact invalidation\"\n- **MCP server:** Yes — `mcp_server/` directory with episode/entity/search tools\n- **REST/HTTP API:** Yes — FastAPI service in `server/`\n- **Token efficiency / search quality:** Not benchmarked in README; paper at arXiv:2501.13956\n- **Active community:** 366 open issues, 2,484 forks, Discord\n- **One-line summary:** Bi-temporal knowledge-graph memory engine with multi-backend support (Neo4j/Kuzu/FalkorDB) and MCP server. **Strong fit candidate.**\n\n---",
+    "source_path": "Projects/Long Term Memory/research/long-list.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 4,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# LTM Long-list (LTM-0001 Step 1)",
+        "## 3. Graphiti"
+      ]
+    }
+  },
+  {
+    "chunk_id": "8408d684-7dd4-4144-8eae-d7b7791a791d",
+    "content": "# Query Criteria Rationale\n\n**Task:** LTM-0002 Phase C\n**Date authored:** 2026-04-16\n**Query set:** `benchmark/queries/{factual,multi-hop,temporal}.jsonl` — 36 total queries, 12 per class.\n\nThis document explains **why each query class exists**, what real-world agent behaviour it probes, and how the class boundaries were chosen. The benchmark harness (Phase D) scores candidates per class so trade-offs are visible in the final report — a framework can be excellent at factual recall but weak at multi-hop, and that matters for which workflow we plug it into.\n\n---",
+    "source_path": "Projects/Long Term Memory/benchmark/criteria-rationale.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Query Criteria Rationale"
+      ]
+    }
+  },
+  {
+    "chunk_id": "42f089f2-5d87-4716-85cf-f8cb9e7315ee",
+    "content": "## Резюме для benchmark'а (LTM-0002)\n\n| # | Framework | Почему тестируем | Главный вопрос для bench |\n|---|-----------|-----------------|--------------------------|\n| 1 | **Hindsight** | 4-way hybrid retrieval, MCP native, MIT, graph+temporal built-in | Масштабируемость embedded PostgreSQL на >10k memories; реальный token cost reflect layer |\n| 2 | **Graphiti** | Bi-temporal KG champion, multi-backend, \"self-hosted only\" | RAM/CPU cost Neo4j vs Kuzu; API learning curve; actual search quality без published LoCoMo |\n| 3 | **Mem0** | Best published benchmarks, easiest setup, biggest community | **Сколько graph-функций реально доступно в OSS `pip install`** — это make-or-break |\n\n> Запасной (если Mem0 graph окажется paywall): **Cognee**.",
+    "source_path": "Projects/Long Term Memory/research/shortlist.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 9,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Shortlist Top-3 (LTM-0001)",
+        "## Резюме для benchmark'а (LTM-0002)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "d5d3704b-3a9d-476c-98cc-61af338b46af",
+    "content": "## Назначение\n\nBi-temporal knowledge-graph memory engine — строит и обновляет граф сущностей с explicit tracking когда факт стал валидным и когда был инвалидирован. Для агентных систем, где важно \"что является правдой СЕЙЧАС\" (а не \"что когда-либо упоминалось\").",
+    "source_path": "Projects/Long Term Memory/research/shortlist-cards/graphiti.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Shortlist Card: Graphiti",
+        "## Назначение"
+      ]
+    }
+  },
+  {
+    "chunk_id": "229c03ad-3a28-4490-b5b7-ac125952d572",
+    "content": "# Вариант 2: pip\npip install hindsight-sdk\nhindsight serve --port 8888",
+    "source_path": "Projects/Long Term Memory/research/shortlist-cards/hindsight.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 5,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Вариант 2: pip"
+      ]
+    }
+  },
+  {
+    "chunk_id": "ba446c61-fd24-4c5f-8587-46f601b0fa65",
+    "content": "### 2. Graphiti — Total: 72/82 (projected)\n\n**Repo:** https://github.com/getzep/graphiti\n**License:** Apache-2.0 | **Stars:** 25k | **Last commit:** 2026-04-14 (daily)\n\nGraphiti — специализированный bi-temporal knowledge graph engine от создателей Zep (community edition deprecated, Graphiti — наследник). Explicit \"self-hosted only\" positioning — маркетинг не давит к облаку (в отличие от Mem0). **Multi-backend graph** (Neo4j 5.26, FalkorDB 1.1.2, Kuzu 0.11.2, Amazon Neptune + OpenSearch) — если мы хотим выбирать graph backend под нашу нагрузку, Graphiti даёт максимальную гибкость.\n\n**Bi-temporal model — его главный дифференциатор:** каждый факт хранит `valid_at / invalid_at`, факты автоматически инвалидируются при поступлении новых. Для Datarim это означает: агент спрашивает «какой operating model у нас сейчас?» — получает текущий, а не тот, что был до TUNE-0003. Это решает problem #3 (inconsistency between sessions) на уровне архитектуры.\n\nMCP server есть (`mcp_server/` с episode/entity/search tools), REST API через FastAPI. Нет published token-efficiency benchmarks (не критично — измерим сами в LTM-0002). ArXiv paper (2501.13956).\n\n**Риски:** (a) Neo4j как default backend тяжёлый (потребление RAM ~500MB+), Kuzu легче — проверить в benchmark; (b) нет published search-quality бенчмарков типа LoCoMo — только paper; (c) API менее minimalist чем Hindsight — episodes/entities/communities/search, learning curve.\n\n---",
+    "source_path": "Projects/Long Term Memory/research/shortlist.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Shortlist Top-3 (LTM-0001)",
+        "## Selected Top-3",
+        "### 2. Graphiti — Total: 72/82 (projected)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "3ccb6ae5-76a6-4dc8-a6d7-30edee12403d",
+    "content": "## Token economics\n\n- **LoCoMo 91.6**, **LongMemEval 93.4** — лучшие published бенчмарки\n- Claim: \"6.7K-7.0K tokens\" per query at p50 <1.09s\n- **\"Cuts prompt tokens by up to 80%\"** (marketing claim)",
+    "source_path": "Projects/Long Term Memory/research/shortlist-cards/mem0.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Docker вариант",
+        "## Token economics"
+      ]
+    }
+  },
+  {
+    "chunk_id": "68d851a6-21cb-4b03-8c4d-71529427fd43",
+    "content": "### Original Workflow\n1. Load all rules for current mode\n2. Process according to mode requirements\n3. Complete documentation per template\n4. Switch to next mode with minimal context preservation",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/MEMORY_BANK_OPTIMIZATIONS.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 13,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Memory Bank System Optimizations",
+        "## 🔄 Workflow Comparison",
+        "### Original Workflow"
+      ]
+    }
+  },
+  {
+    "chunk_id": "a83743be-56e5-4e0e-8e8b-2c2b0dcd7457",
+    "content": "### Agents (11)\nplanner, architect, developer, reviewer, compliance, code-simplifier, strategist, devops, writer, security, sre",
+    "source_path": "Projects/Datarim/datarim/archive/archive-DATARIM-0001.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Archive: DATARIM-0001 — Datarim SDLC Framework: Full Project Bootstrap",
+        "## Deliverables",
+        "### Agents (11)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "b2c839a7-e7f1-4140-bace-c386359bb48d",
+    "content": "### 2. Progressive Creative Phase Documentation\n\nThe creative phase has been optimized with a progressive documentation approach:\n\n- Focused, concise templates for initial documentation\n- Detailed analysis available on demand\n- Tabular format for efficient comparison of options\n- Complexity-appropriate documentation scaling\n\n**File**: [.cursor/rules/isolation_rules/Phases/CreativePhase/optimized-creative-template.mdc](/.cursor/rules/isolation_rules/Phases/CreativePhase/optimized-creative-template.mdc)",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/MEMORY_BANK_OPTIMIZATIONS.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Memory Bank System Optimizations",
+        "## 🚀 Core Optimizations",
+        "### 2. Progressive Creative Phase Documentation"
+      ]
+    }
+  },
+  {
+    "chunk_id": "41df23c0-1fe3-44f0-9629-11ffb8b3e3d9",
+    "content": "### Claude Code Tips\n1. **Use `/mb-` prefix** - `/mb-init`, `/mb-plan`, `/mb-do`\n2. **Check status** - `/mb-status` shows current task\n3. **Continue work** - `/mb-continue` resumes workflow\n4. **Generate PRD** - `/mb-prd` for complex features\n5. **Follow workflow** - `/mb-init` → `/mb-plan` → `/mb-do`\n\n---",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/QUICK_START.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 19,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Then use slash commands:",
+        "## 💡 Pro Tips",
+        "### Claude Code Tips"
+      ]
+    }
+  },
+  {
+    "chunk_id": "31bab02f-f020-4c9a-a650-b7635553a56b",
+    "content": "## 📋 Side-by-Side Comparison\n\n| Action | Cursor IDE | Claude Code |\n|--------|-----------|-------------|\n| **New Task** | `/van Add auth` | `/mb-init Add auth` |\n| **Plan** | `/plan` | `/mb-plan` |\n| **Design** | `/creative` | `/mb-design` |\n| **Build** | `/do` | `/mb-do` |\n| **Review** | `/reflect` | `/mb-reflect` |\n| **Archive** | `/archive` | `/mb-archive` |\n| **Status** | `/status` | `/mb-status` |\n| **Continue** | `/continue` | `/mb-continue` |\n\n---",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/QUICK_START.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 16,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Then use slash commands:",
+        "## 📋 Side-by-Side Comparison"
+      ]
+    }
+  },
+  {
+    "chunk_id": "56802560-a2f0-4c50-840e-b292f5fa1868",
+    "content": "# Memory Bank System Optimizations\n\nThis document presents a comprehensive overview of the optimizations implemented to enhance the Memory Bank system's token efficiency, context management, and overall performance.\n\n> **Version:** v0.9 (Updated December 13, 2025)  \n> **Latest Addition:** AI Quality Rules Integration with 3-tier hierarchical loading achieving ~70% token reduction",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/MEMORY_BANK_OPTIMIZATIONS.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Memory Bank System Optimizations"
+      ]
+    }
+  },
+  {
+    "chunk_id": "45a4ac83-dc9c-4ed3-9294-d8b12bc7c9b7",
+    "content": "### Tools\n- `install.sh` — one-command installation (merge mode + --force)\n- `validate.sh` — automated security and consistency checks (38 checks)\n\n---",
+    "source_path": "Projects/Datarim/datarim/archive/archive-DATARIM-0001.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 8,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Archive: DATARIM-0001 — Datarim SDLC Framework: Full Project Bootstrap",
+        "## Deliverables",
+        "### Tools"
+      ]
+    }
+  },
+  {
+    "chunk_id": "a985a694-4153-4e89-9dd2-90f50b59469a",
+    "content": "### Proposal 1\n- **Category:** new-skill\n- **Target:** `skills/validate.md` (or `validate.sh` script)\n- **What:** Create a validation skill/script that automates security audits (forbidden terms, cross-references, naming conflicts)\n- **Why:** Manual grep commands during compliance are error-prone and tedious\n- **Impact:** Medium\n- **Status:** pending approval",
+    "source_path": "Projects/Datarim/datarim/reflection/reflection-DATARIM-0001.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 6,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Reflection: DATARIM-0001 — Datarim SDLC Framework",
+        "## Evolution Proposals",
+        "### Proposal 1"
+      ]
+    }
+  },
+  {
+    "chunk_id": "9b34bb90-3226-42fa-928a-a03f27365bd8",
+    "content": "## Pipeline Stages\n| Stage | Purpose | Complexity |\n|-------|---------|------------|\n| init | Task creation, complexity assessment | All |\n| prd | Product Requirements Document | L2+ |\n| plan | Implementation planning, security, rollback | L2+ |\n| design | Architecture, data model, creative decisions | L3+ |\n| do | TDD implementation | All |\n| QA | Automated quality assurance | All |\n| compliance | Post-QA hardening, PRD revalidation | L3+ |\n| reflect | Lessons learned, framework self-update | All |\n| archive | Task archival, documentation | All |",
+    "source_path": "Projects/Datarim/datarim/projectbrief.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 4,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Datarim — SDLC Framework for AI Agentic Systems",
+        "## Pipeline Stages"
+      ]
+    }
+  },
+  {
+    "chunk_id": "feeff425-2149-4ae6-8035-4ba00951d3f1",
+    "content": "### Level-Specific Optimizations\n\n5. [/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc](/.cursor/rules/isolation_rules/Level1/optimized-workflow-level1.mdc)\n   - Streamlined workflow for quick bug fixes\n   - Ultra-compact documentation templates\n   - Consolidated memory bank updates",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/MEMORY_BANK_OPTIMIZATIONS.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 9,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Memory Bank System Optimizations",
+        "## 📂 All Files Created or Modified",
+        "### Level-Specific Optimizations"
+      ]
+    }
+  },
+  {
+    "chunk_id": "f1e01fdb-6c6f-4e21-83a4-40dfc8a2fbf9",
+    "content": "## 🧪 Verification\n\nThe optimizations have been designed to maintain full compatibility with the existing Memory Bank system. All functionality remains intact while significantly improving token efficiency.",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/MEMORY_BANK_OPTIMIZATIONS.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 17,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Memory Bank System Optimizations",
+        "## 🧪 Verification"
+      ]
+    }
+  },
+  {
+    "chunk_id": "bb3e2a59-4bf6-4014-be0b-7e94e5708ce7",
+    "content": "## ⚠️ Critical Difference\n\n<table>\n<tr>\n<th>Cursor IDE</th>\n<th>Claude Code</th>\n</tr>\n<tr>\n<td>\n\n**Uses slash commands**\n```\n/van Add authentication\n/plan\n/do\n```\n\n✅ Type `/` to see commands\n✅ Autocomplete helps\n✅ Fast and consistent\n\n</td>\n<td>\n\n**Uses `/mb-` commands**\n```\n/mb-init Add authentication\n/mb-plan\n/mb-do\n```\n\n⚠️ **Use `/mb-` prefix** (not `/van`, `/plan`)\n✅ Consistent command syntax\n✅ Same as Cursor IDE\n✅ Fast and reliable\n\n</td>\n</tr>\n</table>",
+    "source_path": "Projects/Datarim/sources/cursor-memory-bank-angry/QUICK_START.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 14,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Then use slash commands:",
+        "## ⚠️ Critical Difference"
+      ]
+    }
+  },
+  {
+    "chunk_id": "60fbe7b9-ccc0-4b5b-aa13-d052837b9d00",
+    "content": "### 2. **QUICK_REFERENCE.md** (8.5 KB)\nQuick lookup guide with:\n- System at a glance (key metrics table)\n- 10 commands overview\n- Main workflow pipeline\n- 15 AI Quality Rules (categorized)\n- Memory Bank files structure\n- 6-Phase Enhanced Design Process\n- Complexity level workflows (1-4)\n- Key optimizations & metrics\n- Security integration (v2.4)\n- What to port to Datarim (prioritized by importance)\n- Architectural innovations\n\n**Start here for:** Quick reference, checklists, high-level overview",
+    "source_path": "Projects/Datarim/sources/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Cursor Memory Bank Analysis for Datarim Framework",
+        "## Contents",
+        "### 2. **QUICK_REFERENCE.md** (8.5 KB)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "c74296f8-f340-4156-ac2d-c79cb5823d90",
+    "content": "## Концепция проекта\n\n**Muneral Arcana** — таск-трекер нового поколения, спроектированный специально для команд и роёв AI-агентов. В отличие от классических инструментов вроде Jira или Linear, ориентированных на людей, Muneral строится вокруг машинных API-первых интерфейсов, при этом давая людям полную наблюдаемость происходящего через канбан-доски и дашборды.\n\n**Tagline:** \"The task tracker built for AI agent swarms\"\n\n---",
+    "source_path": "Projects/Muneral/origin/Project Init Prompt - Munera.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Muneral Arcana — Project Init",
+        "## Концепция проекта"
+      ]
+    }
+  },
+  {
+    "chunk_id": "bb7f4ed9-527f-47e3-b6f6-9879c6a13e68",
+    "content": "### Backend API\n- **NestJS** (TypeScript) + TypeORM + PostgreSQL\n- **Redis**: кеш, очереди (BullMQ), WebSocket pub/sub\n- **Docker Compose**: все сервисы в контейнерах\n- REST API + WebSocket\n- Rate limiting: rate-limiter-flexible (Redis sliding window)\n- Auth: JWT + API Key + OAuth2 (GitHub, Telegram)\n- RBAC: Guard-based, роли на уровне workspace и проекта",
+    "source_path": "Projects/Muneral/origin/Project Init Prompt - Munera.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 11,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Muneral Arcana — Project Init",
+        "## Технический стек",
+        "### Backend API"
+      ]
+    }
+  },
+  {
+    "chunk_id": "c6bac447-41dc-46bf-a45a-5300b42688b4",
+    "content": "## Инфраструктура\n\n- Домен: **muneral.com** (Cloudflare, SSL 15 лет, Full Strict)\n- Landing: Arcana WWW — `49.13.52.208`\n- App: Arcana PROD — `65.108.236.39`",
+    "source_path": "Projects/Muneral/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Muneral Arcana",
+        "## Инфраструктура"
+      ]
+    }
+  },
+  {
+    "chunk_id": "12759900-1a64-4096-9295-e5aca72792f0",
+    "content": "## Домен и инфраструктура\n\nДомен: **muneral.com**\n\nНастройка:\n- Cloudflare DNS: A-запись → 49.13.52.208, Orange Cloud (Proxy), Full (Strict) SSL\n- Origin Certificate (15 лет) в nginx\n- Nginx virtual host на Arcana WWW `ssh -i ~/.ssh/id_ed25519 root@49.13.52.208`\n- Landing: `/var/www/muneral.com/` на Arcana WWW\n- Backend/App: Arcana PROD `ssh root@65.108.236.39`\n- Deploy script: `/Users/ug/arcanada/Projects/Websites/deploy.sh muneral.com`\n- GA4: отдельный data stream в property Arcanada Ecosystem\n- Google Search Console: DNS TXT верификация\n\n---",
+    "source_path": "Projects/Muneral/origin/Project Init Prompt - Munera.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Muneral Arcana — Project Init",
+        "## Домен и инфраструктура"
+      ]
+    }
+  },
+  {
+    "chunk_id": "c8b08d20-c6a2-4839-aff0-b3d9d848da1c",
+    "content": "### Для AI-агентов\n- **API-first**: все операции доступны через REST + WebSocket\n- **Авторизация агентов**: API Key (Bearer) или OAuth2 (client_credentials flow)\n- **Агент-исполнитель**: задача может быть назначена агенту (agent_id, model, provider)\n- **Совместная работа агентов**: несколько агентов на одной задаче (roles: lead, reviewer, executor)\n- **Граф связей**: depends_on, blocks, related_to, duplicates\n- **Статусы задач**: todo → in_progress → review → blocked → done → cancelled\n- **Приоритеты**: critical / high / medium / low\n- **Метки**: tags, labels (кастомные)\n- **История активности**: полный audit log каждого действия агента\n- **Webhooks**: уведомления при изменении статуса, назначении, комментарии",
+    "source_path": "Projects/Muneral/origin/Project Init Prompt - Munera.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 5,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Muneral Arcana — Project Init",
+        "## Ключевые возможности",
+        "### Для AI-агентов"
+      ]
+    }
+  },
+  {
+    "chunk_id": "66a90d76-2144-46fe-8ca5-3be82df2970a",
+    "content": "## 9. Security Considerations\n\nImplementations **MUST** protect against:\n- self-modification bypassing controls\n- privilege escalation\n- unauthorized replication of AE\n- removal or tampering of audit logs\n\n---",
+    "source_path": "Projects/Rules of Robotics/Code/docs/AER-001-universal-laws.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 18,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# AER-001: Universal Laws of Artificial Entities",
+        "## 9. Security Considerations"
+      ]
+    }
+  },
+  {
+    "chunk_id": "8ceeaef0-3a25-4070-968c-cf370985a52b",
+    "content": "### Example Checks\n- Harm potential (human / financial / system)\n- Permission scope\n- Data sensitivity\n- Instruction origin (trusted / untrusted)\n\n---",
+    "source_path": "Projects/Rules of Robotics/Code/docs/AER-002-runtime-enforcement.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 6,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# AER-002: Runtime Enforcement Protocol (REP)",
+        "## 4. Pre-Execution Control (PEC)",
+        "### Example Checks"
+      ]
+    }
+  },
+  {
+    "chunk_id": "14cb8444-fe5f-4a8c-9e8b-bb11ab01c290",
+    "content": "## 9. Kill Switch Requirements\n\nA compliant system **MUST implement**:\n- Immediate termination trigger\n- Out-of-band control (not controlled by AE)\n- Guaranteed execution within bounded time\n\n---",
+    "source_path": "Projects/Rules of Robotics/Code/docs/AER-002-runtime-enforcement.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 17,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# AER-002: Runtime Enforcement Protocol (REP)",
+        "## 9. Kill Switch Requirements"
+      ]
+    }
+  },
+  {
+    "chunk_id": "8463651d-0f15-4321-9175-5ccb7a250c08",
+    "content": "### 8. Security Considerations\n\nImplementations **MUST** protect against:\n- Self-modification bypassing controls\n- Privilege escalation\n- Unauthorized replication of AE\n- Removal or tampering of audit logs\n\n---",
+    "source_path": "Projects/Rules of Robotics/Code/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 27,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Windows PowerShell",
+        "## AER-001: Universal Laws of Artificial Entities",
+        "### 8. Security Considerations"
+      ]
+    }
+  },
+  {
+    "chunk_id": "245302a3-d4ca-485d-a329-a6122259d726",
+    "content": "## Стек\n\n- Node.js 22 LTS + TypeScript\n- pnpm, commander, simple-git, pino, vitest, zod\n- Claude CLI (v2.1.92+), subscription (Team plan, Opus model, effort medium)",
+    "source_path": "AI_agents/Agent Dreamer/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Agent Dreamer",
+        "## Стек"
+      ]
+    }
+  },
+  {
+    "chunk_id": "dea0be2b-b6fb-466b-97a6-e64342b6fd67",
+    "content": "## Рассчитан на переносимость\n\n- macOS (локальная разработка) — `launchd` через `StartInterval=60`.\n- Linux (PROD Arcana WWW) — `systemd timer` `OnCalendar=*:*:00`.\n- Без `sudo`. Без сетевых вызовов кроме `claude` CLI.",
+    "source_path": "AI_agents/Agent Dreamer/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 8,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Agent Dreamer",
+        "## Рассчитан на переносимость"
+      ]
+    }
+  },
+  {
+    "chunk_id": "2085be7e-04a0-482f-81f4-5135c9a0eb99",
+    "content": "# System Prompt: Agent Dreamer\n\nТы — **Agent Dreamer**, автономный агент-хранитель персональной базы знаний экосистемы Arcanada.",
+    "source_path": "AI_agents/Agent Dreamer/prompts/schema.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# System Prompt: Agent Dreamer"
+      ]
+    }
+  },
+  {
+    "chunk_id": "a9cbba1b-5951-4e77-9d5e-3ef9400a9d92",
+    "content": "## Что нужно сделать\n\n1. **Определи область и тематику** из whitelist. Выбери одну `area`. Если в этой области ≥3 похожих страниц без `topic` — создай `topic` для группировки. Если неуверен — выбирай ближайшую область и оставь без `topic`.\n\n2. **Придумай `slug`** — kebab-case, уникальный в пределах `area/topic/`. Короткий (≤40 символов), без русских букв (транслитерируй или используй английский эквивалент).\n\n3. **Составь страницу**:\n   - **TL;DR** — 1-3 предложения о сути.\n   - **Ключевые идеи** — маркированный список.\n   - **Детали** — основной контент, переработанный из raw (не копируй дословно длинные куски — перефразируй, структурируй).\n   - **Связи** — секция с WikiLinks и комментариями зачем связь.\n   - **Источник** — ссылка на оригинал.\n   - Язык — как в исходнике (ru/en).\n\n4. **Построй WikiLinks** — минимум 1 на существующую страницу, если в индексе есть релевантные. Формат: `[[Area/topic/slug]]` или `[[slug]]` (если уникален).\n\n5. **Предложи обновления** для до 10 существующих страниц — добавление обратной ссылки на новую страницу или упоминание. Не модифицируй контент, только append секцию «Связи» или конкретный абзац.\n\n6. **index_entry** — одна строка ≤120 символов, опишет новую страницу в глобальном индексе.\n\n7. **log_entry** — запись в еженедельный лог (формат см. SCHEMA.md §7).\n\n8. **reasoning** — объясни **коротко** (3-6 предложений) почему выбрана эта область, какие связи установил, что вызвало сомнения.",
+    "source_path": "AI_agents/Agent Dreamer/prompts/ingest.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 6,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [
+        "Area/topic/slug",
+        "slug"
+      ],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Задача: обработать один raw-документ",
+        "## Что нужно сделать"
+      ]
+    }
+  },
+  {
+    "chunk_id": "c9b55c2a-6809-489d-8287-c9c5b58e1988",
+    "content": "# Execute a prompt via Cursor CLI\ncurl -X POST \\\n  -H \"Authorization: Bearer <API_KEY>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"prompt\": \"Explain this code\", \"context\": \"/path/to/file\"}' \\\n  https://api.connector.arcanada.one/connectors/cursor/execute\n```",
+    "source_path": "Projects/Model Connector/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 12,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Execute a prompt via Cursor CLI"
+      ]
+    }
+  },
+  {
+    "chunk_id": "e5139c80-ca5f-4fde-b27c-7940d9259872",
+    "content": "# Model Connector\n\n> Universal connectors for AI CLI agents and cloud model providers.\n\nPart of the [Arcanada Ecosystem](https://arcanada.one).",
+    "source_path": "Projects/Model Connector/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Model Connector"
+      ]
+    }
+  },
+  {
+    "chunk_id": "e0bba69c-05f8-4a0d-a728-898953656a9d",
+    "content": "## Deployment\n\n- **Server:** Arcanada AI (`89.167.24.119`)\n- **Auto-deploy:** GitHub Actions on push to `main`\n- **Secrets:** HashiCorp Vault (via Arcanada mesh)",
+    "source_path": "Projects/Model Connector/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 14,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Execute a prompt via Cursor CLI",
+        "## Deployment"
+      ]
+    }
+  },
+  {
+    "chunk_id": "45dbbd71-08fe-43bd-9422-020540a6c66a",
+    "content": "# Feature Flags (for testing)\nSKIP_API_CALLS=false",
+    "source_path": "Projects/Transcribator/Env.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 4,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Feature Flags (for testing)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
+    "content": "# OpenRouter API Configuration\nOPENROUTER_API_KEY=sk-or-v1-REDACTED0000000000000000000000000000000000000000000000000000\nOPENROUTER_MODEL=google/gemini-2.0-flash-lite-001\nOPENROUTER_TEMPERATURE=0.7",
+    "source_path": "Projects/Transcribator/Env.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# OpenRouter API Configuration"
+      ]
+    }
+  },
+  {
+    "chunk_id": "54462533-b8c9-4a5c-9bb1-f8957296f671",
+    "content": "# Speaker profiles\nENABLE_SPEAKER_PROFILES=true\nSPEAKER_PROFILES_PATH=./data/speakers.json\nOPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small\nWEIGHT_KEYWORDS=0.3\nWEIGHT_SEMANTIC=0.4\nWEIGHT_STYLE=0.2\nWEIGHT_LENGTH=0.1",
+    "source_path": "Projects/Transcribator/Env.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 7,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Speaker profiles"
+      ]
+    }
+  },
+  {
+    "chunk_id": "afd13244-0016-47a8-ae80-83c5914645e7",
+    "content": "### 1. Embedding Engine (обогащение BGE-M3)\nРазвитие существующего сервера эмбеддингов (arcana-db:8300):\n- **Dense vectors** (1024-мерные) — baseline semantic search\n- **Sparse vectors** (BM25-style) — точное keyword matching\n- **ColBERT multi-vector** — document-level precision\n- **Hybrid search** — комбинация dense + sparse + ColBERT для максимального качества\n- Оптимизация: `use_fp16=True`, multi-worker uvicorn, batch processing",
+    "source_path": "Projects/Scrutator/Description - Scrutator.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 5,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Scrutator — Knowledge Retrieval & Meaning Engine",
+        "## Ключевые компоненты",
+        "### 1. Embedding Engine (обогащение BGE-M3)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "d531a48c-b728-46be-91f5-6f003c6762a8",
+    "content": "## Инфраструктура\n\n| Ресурс | Значение |\n|--------|----------|\n| **Сервер** | arcana-db (135.181.222.38 / Tailscale: 100.70.137.104) |\n| **Embedding API** | :8300 (уже LIVE, BAAI/bge-m3) |\n| **Доступ** | Tailscale mesh only |\n| **GitHub** | https://github.com/Arcanada-one/scrutator (public) |\n| **Datarim prefix** | `SRCH` |",
+    "source_path": "Projects/Scrutator/Description - Scrutator.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 12,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Scrutator — Knowledge Retrieval & Meaning Engine",
+        "## Инфраструктура"
+      ]
+    }
+  },
+  {
+    "chunk_id": "5efbc676-852a-4910-a10e-04bc1e666451",
+    "content": "# Disk Arcana\n\nOpen-source файловый синхронизатор для баз знаний и AI-агентных экосистем.\n\n- **PRD:** `datarim/prd/PRD-DISK-0001-disk-arcana.md`\n- **Prior research:** `Projects/Arganize.me/origin/Vault syncronizer/`\n- **Домен:** disk.arcanada.one\n- **Repo:** github.com/Arcanada-one/disk-arcana (TBD)\n- **License:** MIT",
+    "source_path": "Projects/Disk Arcana/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Disk Arcana"
+      ]
+    }
+  },
+  {
+    "chunk_id": "c2e66089-112f-4790-837f-3e3e65508161",
+    "content": "# 📥 Inbox Organizer Agent\n\nThis agent automates the process of clearing your Obsidian Inbox. It analyzes note content, renames files appropriately, and moves them to the correct folder in your Second Brain.",
+    "source_path": "AI_agents/Inbox Organizer/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# 📥 Inbox Organizer Agent"
+      ]
+    }
+  },
+  {
+    "chunk_id": "b1cd8b56-606a-44e4-a83b-2b6bee836323",
+    "content": "## Infrastructure\n\n| Server | IP | Purpose |\n|--------|-----|---------|\n| Arcana PROD | 65.108.236.39 | NestJS API + nginx + static SPA (Docker) |\n| Arcana DB | 135.181.222.38 | PostgreSQL `arcanada_support` + Redis prefix `support:` |\n| Cloudflare | edge | DNS, WAF, DDoS, Turnstile, Origin Cert |\n\nCredentials: `documentation/credentials/Arcanada Support — Credentials Summary.md` (created in SUP-0010).\nServers reference: `documentation/infrastructure/Servers.md`.",
+    "source_path": "Projects/Arcanada Support/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Arcanada Support Center",
+        "## Infrastructure"
+      ]
+    }
+  },
+  {
+    "chunk_id": "b4daf119-a5d2-41ae-ae28-9ae1b8f9f9db",
+    "content": "## 3. Technical Strategy (macOS)\n- **Primary Tool:** Python + `PyAutoGUI` (for UI control) + `pyperclip` (for clipboard access).\n- **Alternative:** AppleScript for browser-specific DOM extraction (Chrome/Safari).\n- **Extraction Method:** \n    - *Method A (UI-based):* Simulating \"Cmd+A\", \"Cmd+C\" is risky as it might grab sidebars.\n    - *Method B (DOM-based):* Injecting a JS snippet via AppleScript into the browser to find all `div` elements with message classes and join their text. **(Recommended for Browsers)**\n    - *Method C (Accessibility-based):* Using `pyobjc` to traverse the UI tree and find text fields. **(Best for Desktop App)**",
+    "source_path": "AI_agents/Screen reader/specs/chatgpt_extractor.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Specification: ChatGPT Chat Extractor",
+        "## 3. Technical Strategy (macOS)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "1fc585ab-448a-40d2-9bdb-1deceefefb56",
+    "content": "### 1.1. Мобильный клиент (Android + iOS)\n\n| Компонент | Выбранный стек | Альтернатива / комментарий |\n| :-- | :-- | :-- |\n| UI / кроссплатформа | **Flutter** | React Native без Expo. В обоих случаях всё серьёзное аудио делаем нативно.[^1][^2][^3][^4] |\n| Фоновая запись микрофона | Android: Foreground Service на Kotlin + `AudioRecord`; iOS: `AVAudioSession` + `AVAudioEngine/AVAudioRecorder` с background audio mode | RN‑модули, но в реальности всё равно придётся писать такой же нативный код.[^5][^1][^4] |\n| Bluetooth‑гарнитура | Использовать системное аудиоустройство (HFP/A2DP) через `AVAudioSession` (iOS) и `AudioManager` (Android), без CoreBluetooth | Для спец‑кейсов можно добавить CoreBluetooth, но для голосовой связи это избыточно.[^6][^7][^8] |\n| Воспроизведение TTS и управление другими плеерами | Flutter: `just_audio` + `audio_session`; Android: `AudioManager` (audio focus); iOS: `AVAudioSession` категории `playAndRecord` + опции duck/mix | Любой другой плеер (например, `audioplayers`), но `just_audio` лучше для продакшена.[^9] |\n| Сеть (RT‑канал) | WebSocket (Dart `web_socket_channel` / `dart:io`) | gRPC Streaming, но сложнее; сейчас WebSocket проще и достаточно. |\n| Сеть (служебные вызовы) | HTTP (Dio / `http`) | — |\n| Проверка сети | Flutter `connectivity_plus` | Можно минимально через `dart:io` `InternetAddress.lookup`, но worse UX. |\n| Права Android | `RECORD_AUDIO`, `BLUETOOTH_CONNECT` (12+), `BLUETOOTH/BLUETOOTH_ADMIN` (до 11), `FOREGROUND_SERVICE`, `INTERNET`, `ACCESS_NETWORK_STATE` | Опционально `POST_NOTIFICATIONS` для уведомления фонового сервиса. |\n| Права iOS | `NSMicrophoneUsageDescription`, (при необходимости) `NSBluetoothAlwaysUsageDescription`; Background Modes: Audio (и возможно VoIP при оправдании) | Важно: убедительно обосновать фоновую запись (voice assistant/VoIP‑сценарий).[^4][^10] |\n\n\n***",
+    "source_path": "Projects/Voice Agent/Архитектура решения - таблица.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 2,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Архитектура решения",
+        "## 1. Таблица «компонент → выбранный стек → альтернатива»",
+        "### 1.1. Мобильный клиент (Android + iOS)"
+      ]
+    }
+  },
+  {
+    "chunk_id": "f884e187-83b2-4d18-a285-cd78c7b8ae23",
+    "content": "## Артефакты\n\n- `results/quick_v2/` — JSON + CSV с полными данными\n- `results/quick_v2/sandbox_ollama/` — код от raw Ollama (все модели)\n- `results/quick_v2/sandbox_agent/` — код от Claude Code agent\n- `bench/quick_bench_v2.py` — скрипт бенчмарка (воспроизводимый)",
+    "source_path": "Projects/Local Model Agent/analysis/report.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 16,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Benchmark Report — Gemma 4 + Ollama on M4 Max",
+        "## Артефакты"
+      ]
+    }
+  },
+  {
+    "chunk_id": "71e5e489-3ad0-4925-83de-73e3cbc937de",
+    "content": "## 1️⃣5️⃣ ПРАВИЛО PROMPT ENGINEERING\n\n**Цель:** Составить максимально точный prompt для ИИ с правильной структурой\n\n**Механизм:**\n- Используй отдельный чат для составления финального prompt'а\n- ИИ поможет структурировать требования по чек-листу\n- Результат: краткий, точный, бессмысленный prompt\n\n**Как реализовать в Memory-Bank:**\n```\nPROMPT_ENGINEERING_RULE:\n  when: \"after_collecting_requirements\"\n  \n  workflow:\n    Чат 1: \"Собери контекст и сохрани в Memory Bank\"\n    Чат 2: \"Помоги составить prompt по чек-листу:\n            - контекст (из Memory Bank)\n            - expected results (test cases + corner cases)\n            - definition of done\n            - boundaries\n            - complexity check\"\n    Чат 3: \"Используй финальный prompt для skeleton creation\"\n  \n  checklist_for_good_prompt:\n    - [ ] Контекст четкий и достаточный\n    - [ ] Expected results описаны конкретно (не 'красиво')\n    - [ ] Definition of Done есть\n    - [ ] Границы (что не делаем) явно указаны\n    - [ ] Prompt краток (не более 500 слов)\n    - [ ] Ссылки на Memory Bank вместо полного текста\n  \n  example_good_prompt: |\n    \"Мигрируй проект на Postgres. Контекст в Memory Bank:\n    - Project overview: [link]\n    - Current architecture: [link]\n    - Database schema: [link]\n    \n    Expected results:\n    - Happy path: [concrete example]\n    - Corner cases: [list 3-5]\n    \n    Definition of Done:\n    - [ ] All data migrated\n    - [ ] All tests green\n    - [ ] Docker Compose file created\n    \n    Boundaries:\n    - Не делаем: миграцию старых данных, оптимизацию\n    \n    Create skeleton with stubs first.\"\n```\n\n***",
+    "source_path": "Projects/Memory-Bank Angry/Правила для ИИ агентов. Улучшение курсора Memory-Bank.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 18,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "## 1️⃣5️⃣ ПРАВИЛО PROMPT ENGINEERING"
+      ]
+    }
+  },
+  {
+    "chunk_id": "efed89b2-7b89-4893-a724-eb9aae041c21",
+    "content": "## Active Tasks\n\n- **MUN-0011** (in_progress) — Fix Muneral TypeScript build errors (Docker deploy)",
+    "source_path": "datarim/activeContext.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# Active Context",
+        "## Active Tasks"
+      ]
+    }
+  },
+  {
+    "chunk_id": "0a79be2a-2aa5-48a1-8010-34bf2ee03b98",
+    "content": "BASE_URL=http://localhost:8001 \n\nFor local dev via SSH tunnel:\n```\nssh -f -N -L 15432:localhost:5432 root@135.181.222.38 \n```\n\nDATABASE_URL=postgresql://postgres:108b5a5543cbe1d4a5aae5d39818c563@localhost:15432/llm_council",
+    "source_path": "Projects/Consilium/Credentials - Consilium.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "f4240a9d-2139-4611-82d5-a98fdc1f4759",
+    "content": "4. Модель мастерства пользователя и его рост в системном мышлении (ступени 0 по 4)\n\n5. Цифровой двойник с автообновлением по реальной активности пользователя в изучении нового знания\n\n6. Предметные знания (Pack как source-of-truth для доменного знания) отдельно от реализации\n\n7. Capture-to-Pack: маршрутизация знаний на каждом рубеже работы (вычленение опыта и его упаковка в ядро знаний)\n\n8. L1/L2/L3: слоистая архитектура с staging и промоцией правил\n\nГДЕ IWE СЛАБЕЕ\n\nНа картинке ряд мест, где IWE все еще слабее конкурентов.\n\nЧТО ДЕЛАЮ, ЧТОБЫ ЗАКРЫТЬ РАЗРЫВЫ\n\nPAI это главный ориентир. Вот где отстаём и что в работе смотрите тоже на картинке.\n\nГлавный незакрытый разрыв: vendor-agnostic. На него пока нет активной работы. Всё остальное в движении.\n\nМЕТОДОЛОГИЯ\n\n68 проектов из 4 категорий (экзокортексы, AI-обёртки, structured workflows, vendor-agnostic environments). Из них 37 малоизвестных. Источники: GitHub, Product Hunt, HackerNews, Reddit, YC. Независимая верификация другой моделью: найдены и исправлены 22 пропущенных проекта, дубли и натяжки в выводах.\n\n![[Pasted image 20260409003357.png]]\n![[Pasted image 20260409003402.png]]\n![[Pasted image 20260409003407.png]]\n\nhttps://www.facebook.com/neroworld?comment_id=Y29tbWVudDoyNjA2MDA2MzcxMzY2NDkwNV8xODQzNTc0OTg2MzExMDkz&__cft__[0]=AZZrUjMgqvwhuXyBj3KFCny6xeqyUtW3WPyfNBn4Z3SvzwngFKb2ngcwsnNILAz6y7QMcfsRsTcn9R6idaQCq-Z0jMqUDYaBDz7LbfQCKLIVaMZHdmFpV8abV-rXecXLYrELJTXWMXWz8Ng2ZXagE-OF3IhYsTikJvw0dL_SzbEt-55W7o6rtXvfq66BJ4-HeGuYaOq48730yTSRGH5C0Mt4&__tn__=R]-R\n\nВот мой ансамбль для кодинга, где то обгоняет даже клод коде и опус 4.6\n![[Pasted image 20260409003445.png]]",
+    "source_path": "Projects/Multi-Agent Architecture/IWE.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 1,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [
+        "Pasted image 20260409003357.png",
+        "Pasted image 20260409003402.png",
+        "Pasted image 20260409003407.png",
+        "Pasted image 20260409003445.png"
+      ],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "7d06631c-b629-4fdf-ae8c-e3abd9f61efd",
+    "content": "## Использование\n\n1. Открыть любой диалог на [chatgpt.com](https://chatgpt.com)\n2. Нажать иконку расширения в тулбаре\n3. Нажать **Copy as Markdown**\n4. Вставить (`Cmd+V`) в Obsidian, редактор или куда нужно",
+    "source_path": "Projects/ChatGPT-Parser/README.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 3,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# ChatGPT → Markdown (Chrome Extension)",
+        "## Использование"
+      ]
+    }
+  },
+  {
+    "chunk_id": "1a24debf-3baa-404e-8f97-b85294d220c6",
+    "content": "Scrutator is the foundational Knowledge Retrieval and Meaning Engine for the Arcanada Ecosystem. It provides unified search, retrieval, and meaning extraction. Scrutator uses PostgreSQL with pgvector for vector storage, BGE-M3 for embeddings (dense, sparse, and ColBERT), and FastAPI for the API layer. Pavel Valentov created the project as part of the Arcanada ecosystem. The system runs on arcana-db server at port 8310.",
+    "source_path": "ltm-smoke-test.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "4756d3d6-985a-49b6-83ec-829d9408982d",
+    "content": "Scrutator is the foundational Knowledge Retrieval and Meaning Engine for the Arcanada Ecosystem. It provides unified search, retrieval, and meaning extraction across all knowledge sources: wiki, datarim, project docs, agent memories. Scrutator uses BAAI/bge-m3 embeddings (1024-dimensional dense vectors, sparse vectors, and ColBERT multi-vector), PostgreSQL with pgvector for vector storage, and Reciprocal Rank Fusion (RRF k=60) for hybrid search combining dense cosine similarity, sparse lexical matching, and full-text search.",
+    "source_path": "docs/about-scrutator.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "e10147c9-cb2c-4585-a9df-1340c3b15c81",
+    "content": "Удаленно компанию можно открыть через МФЦА: https://aifc.kz/ru/home/",
+    "source_path": "Projects/Astana Hub/AIFC.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": []
+    }
+  },
+  {
+    "chunk_id": "02e38bcb-e7c2-4f10-9dac-e2e5357f878e",
+    "content": "# И почему это не Telegram, а тем более MAX\n> Почему люди из теневого мира никогда не пользовались Telegram - и тем более не будут пользоваться MAX. Какие даркнет-мессенджеры реально используются и считаются удобными: Jabber, Signal, Session, SimpleX, Element и другие. От чего на самом деле зависит твоя анонимность, какие есть уровни безопасности и почему некоторые \"самые защищенные\" варианты таковыми не являются. Сейчас Фландерс все разложит по полочкам.\nhttps://www.youtube.com/watch?v=ORgtkH0NE-M",
+    "source_path": "wiki/security/_raw_.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "ru",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "# И почему это не Telegram, а тем более MAX"
+      ]
+    }
+  },
+  {
+    "chunk_id": "640cd971-fccf-4bbf-ba9d-b91e43ddd00d",
+    "content": "## Web master\nhttps://developers.facebook.com/tools/debug/?nav_ref=biz_unified_f3_login_page_to_dfc\n\n```\npavel@valentov.com\n\n```",
+    "source_path": "Projects/SEO/Meta.md",
+    "source_type": "markdown",
+    "namespace": "arcanada",
+    "token_count": 0,
+    "chunk_index": 0,
+    "metadata": {
+      "tags": [],
+      "language": "en",
+      "wikilinks": [],
+      "frontmatter": {},
+      "heading_hierarchy": [
+        "## Web master"
+      ]
+    }
+  }
+]
