@@ -7,6 +7,30 @@ on:
     branches: [main]
 
 jobs:
+  secrets-gate:
+    # TRANS-0029: OPSBOT_API_KEY is NOT currently set for this repo (highest-
+    # priority gap in the 2026-04-28 ecosystem audit — confirmed still true).
+    # This job is authored to match the TRANS-0027 (transcribator-api) hard-fail
+    # pattern, but deliberately NOT wired into `deploy`'s `needs:` yet: doing so
+    # today would hard-block every future deploy on push to main until the
+    # secret exists. Provisioning `gh secret set OPSBOT_API_KEY --repo
+    # Arcanada-one/scrutator` (`agent register --name scrutator` first) is a
+    # credential-provisioning action outside this sweep's reversible scope —
+    # once the operator sets it, flip `deploy.needs` to `[network-exposure,
+    # lint-and-test, secrets-gate]` to close this gap.
+    if: false
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - name: Assert OPSBOT_API_KEY is set
+        env:
+          OPSBOT_API_KEY: ${{ secrets.OPSBOT_API_KEY }}
+        run: |
+          if [ -z "${OPSBOT_API_KEY:-}" ]; then
+            echo "::error::OPSBOT_API_KEY secret is missing or empty — alerting path to ops.arcanada.one would silently fail. Restore via OpsBot CLI (\`agent register --name scrutator\`) and \`gh secret set OPSBOT_API_KEY --repo Arcanada-one/scrutator\`."
+            exit 1
+          fi
+          echo "OPSBOT_API_KEY present (length=${#OPSBOT_API_KEY})."
+
   network-exposure:
     # Mandatory per documentation/mandates/cicd-convention.md § 5. This repo's harness code
     # (SRCH-0015) makes outbound-only calls (no new listener) — wired anyway per repo-wide
@@ -66,4 +90,4 @@ jobs:
           curl -fsS -X POST https://ops.arcanada.ai/events \
             -H "Authorization: Bearer ${{ secrets.OPSBOT_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"category":"fatal","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'
+            -d '{"category":"fatal","agent":"scrutator","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'
