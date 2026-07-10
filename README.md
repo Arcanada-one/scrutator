@@ -100,6 +100,31 @@ python benchmark/recall-gate/recall_gate.py --report <path> --update-baseline
 
 **Baseline recalibration:** after an intentional change that improves recall, run `--update-baseline` on the arcana-db runner with a fresh report, review the diff in the PR, then merge. The baseline seeded in `baseline.json` was captured from the 2026-04-26 `with-entities` run (36 queries); recalibrate from a `no-entities` run on first clean CI pass.
 
+## Index Freshness Detection (SRCH-0036)
+
+`scrutator.tools.index_freshness` compares the `source_path`s currently indexed for a namespace against the current corpus (filesystem scan or an ingest manifest), and reports:
+
+- **STALE** — indexed but no longer present in the corpus (deleted/moved on disk). This is the drift that dragged the recall gate below baseline in SRCH-0031 (12/77 `datarim-kb` sources had moved).
+- **MISSING** — present in the corpus but never indexed.
+
+The tool is **read-only**: it enumerates and reports, and can emit a dry-run re-index **plan** (`--plan`) describing the delete/re-ingest actions a future run would take. It never executes those actions — actually deleting stale chunks or re-ingesting missing sources against a live namespace is a separate, hard-gated operator step.
+
+```bash
+# Report-only (default), scanning a filesystem corpus root:
+python -m scrutator.tools.index_freshness --namespace arcanada --corpus-root /path/to/kb
+
+# Same, but also emit a dry-run re-index plan (still not executed):
+python -m scrutator.tools.index_freshness --namespace arcanada --corpus-root /path/to/kb --plan
+
+# Using an ingest manifest instead of a filesystem scan, writing the JSON report to a file:
+python -m scrutator.tools.index_freshness --namespace arcanada --manifest ingest-manifest.json --output report.json
+
+# CI use — exit 1 if anything is stale or missing:
+python -m scrutator.tools.index_freshness --namespace arcanada --corpus-root /path/to/kb --fail-on-stale
+```
+
+By default it reads `SCRUTATOR_DATABASE_URL` via `scrutator.config.settings` (override with `--database-url`). `--probe-url` optionally does a read-only `GET /health` check before detection.
+
 ## Quick Start
 
 ```bash
