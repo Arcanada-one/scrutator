@@ -568,7 +568,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=5, group_by="document")
+            resp = await search(query="test", namespace_id=1, limit=5, group_by="document")
 
         assert resp.total == 1
         group = resp.results[0]
@@ -597,7 +597,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=3, group_by="section")
+            resp = await search(query="test", namespace_id=1, limit=3, group_by="section")
 
         assert resp.total == 2
         keys = {g.group_key for g in resp.results}
@@ -619,7 +619,7 @@ class TestGroupBy:
             mock_sparse.return_value = None
             mock_search.return_value = mock_results
 
-            resp = await search(query="test", limit=1)
+            resp = await search(query="test", namespace_id=1, limit=1)
 
         assert resp.results[0].chunk_id == "c1"
         assert not hasattr(resp.results[0], "member_count")
@@ -663,14 +663,14 @@ class TestSearchDefaultPathUnchanged:
             patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
             patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
-            patch("scrutator.search.searcher.upsert_namespace", new_callable=AsyncMock) as mock_ns,
         ):
             mock_embed.return_value = [0.1] * 1024
             mock_sparse.return_value = [{"tok": 0.5}]
             mock_search.return_value = mock_results
-            mock_ns.return_value = 1
 
-            resp = await search(query="baseline query", namespace="arcanada", limit=5)
+            # SRCH-0023: namespace_id is now mandatory (int); the removed upsert_namespace
+            # patch is obsolete (read path never provisions a namespace).
+            resp = await search(query="baseline query", namespace_id=1, limit=5)
 
         data = resp.model_dump()
         data.pop("search_time_ms", None)
