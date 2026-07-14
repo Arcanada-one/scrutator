@@ -177,9 +177,7 @@ async def delete_source_endpoint(
         )
         if not valid_scheduled_token and not valid_operator_token:
             raise HTTPException(status_code=401, detail="rollback credential required")
-        scheduled_scope = {
-            n.strip() for n in settings.rollback_namespaces.split(",") if n.strip()
-        }
+        scheduled_scope = {n.strip() for n in settings.rollback_namespaces.split(",") if n.strip()}
         if valid_scheduled_token and request.namespace not in scheduled_scope:
             raise HTTPException(status_code=403, detail="namespace outside rollback scope")
         pool = await get_pool()

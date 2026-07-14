@@ -68,7 +68,8 @@ def test_scheduled_rollback_token_rejects_namespace_outside_scope():
     try:
         with override_tenant_context(app, anonymous), TestClient(app) as client:
             response = client.request(
-                "DELETE", "/v1/index",
+                "DELETE",
+                "/v1/index",
                 json={"namespace": "ecosystem-core", "source_path": "a.md"},
                 headers={"X-KB-Rollback-Token": "test-rollback-secret"},
             )
@@ -95,7 +96,8 @@ def test_operator_rollback_token_can_target_other_namespace():
             pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
             get_pool.return_value = pool
             response = client.request(
-                "DELETE", "/v1/index",
+                "DELETE",
+                "/v1/index",
                 json={"namespace": "ecosystem-core", "source_path": "a.md"},
                 headers={"X-KB-Rollback-Token": "operator-secret"},
             )
