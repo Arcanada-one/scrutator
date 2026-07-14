@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     # log only, never rejects. MUST stay False until the operator explicitly flips it in prod.
     # env_prefix below makes this SCRUTATOR_AUTH_ENFORCE.
     auth_enforce: bool = False
+    # SRCH-0048 co-located Feeder tombstone credential. This is separate from
+    # reader grants and is accepted only by DELETE /v1/index.
+    rollback_token: str = ""
 
     # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
     rls_enabled: bool = False
