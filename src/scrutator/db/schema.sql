@@ -42,8 +42,14 @@ CREATE TABLE IF NOT EXISTS chunks (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     indexed_at TIMESTAMPTZ,
-    UNIQUE(source_path, chunk_index)
+    UNIQUE(namespace_id, source_path, chunk_index)
 );
+
+-- SRCH-0048: source identity is tenant-scoped. Older deployments created a
+-- global uniqueness constraint which allowed one namespace to replace another.
+ALTER TABLE chunks DROP CONSTRAINT IF EXISTS chunks_source_path_chunk_index_key;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_chunks_namespace_source_chunk
+    ON chunks(namespace_id, source_path, chunk_index);
 
 -- HNSW for cosine similarity (dense vectors)
 CREATE INDEX IF NOT EXISTS idx_chunks_dense ON chunks
