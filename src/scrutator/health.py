@@ -1,9 +1,10 @@
 """Health check endpoint + API routers — minimal FastAPI app."""
 
 import logging
+import secrets
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 
 from scrutator import __version__
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
@@ -141,9 +142,24 @@ async def index_endpoint(request: IndexRequest, ctx: TenantContext = Depends(req
 async def delete_source_endpoint(
     request: DeleteSourceRequest,
     ctx: TenantContext = Depends(require_tenant_context),
+    x_kb_rollback_token: str | None = Header(default=None),
 ) -> DeleteSourceResponse:
     """Tombstone one source inside a namespace granted to the caller."""
-    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
+    if ctx.allowed_namespace_ids:
+        namespace_id = await resolve_namespace_selector(ctx, request.namespace)
+    else:
+        valid_local_token = (
+            bool(settings.rollback_token)
+            and bool(x_kb_rollback_token)
+            and secrets.compare_digest(settings.rollback_token, x_kb_rollback_token)
+        )
+        if not valid_local_token:
+            raise HTTPException(status_code=401, detail="rollback credential required")
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            namespace_id = await conn.fetchval("SELECT id FROM namespaces WHERE name=$1", request.namespace)
+        if namespace_id is None:
+            raise HTTPException(status_code=404, detail="namespace not found")
     try:
         deleted = await delete_by_source(request.source_path, namespace_id)
         return DeleteSourceResponse(
