@@ -59,7 +59,7 @@ async def index_document(
     project_id = await upsert_project(namespace_id, project) if project else None
 
     # 4. Delete old chunks for this source (re-index)
-    await delete_by_source(source_path)
+    await delete_by_source(source_path, namespace_id)
 
     # 5. Store chunks with embeddings
     chunk_dicts = [
@@ -88,7 +88,7 @@ async def index_document(
     # 6. Get sparse embeddings and store them
     try:
         sparse_weights = await embed_sparse(texts)
-        chunk_ids = await get_chunk_ids_by_source(source_path)
+        chunk_ids = await get_chunk_ids_by_source(source_path, namespace_id)
         if chunk_ids and sparse_weights:
             await insert_sparse_vectors(chunk_ids, sparse_weights)
     except Exception:

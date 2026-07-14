@@ -14,6 +14,8 @@ from scrutator.config import settings
 from scrutator.db.connection import apply_schema, close_pool, get_pool
 from scrutator.db.models import (
     ChunkLookupResult,
+    DeleteSourceRequest,
+    DeleteSourceResponse,
     IndexRequest,
     IndexResponse,
     IndexStats,
@@ -25,6 +27,7 @@ from scrutator.db.models import (
     SectionContext,
 )
 from scrutator.db.repository import (
+    delete_by_source,
     delete_edges_by_creator,
     get_chunks_by_source_path,
     get_edges_for_chunk,
@@ -132,6 +135,24 @@ async def index_endpoint(request: IndexRequest, ctx: TenantContext = Depends(req
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
+
+
+@app.delete("/v1/index", response_model=DeleteSourceResponse)
+async def delete_source_endpoint(
+    request: DeleteSourceRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> DeleteSourceResponse:
+    """Tombstone one source inside a namespace granted to the caller."""
+    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
+    try:
+        deleted = await delete_by_source(request.source_path, namespace_id)
+        return DeleteSourceResponse(
+            namespace=request.namespace,
+            source_path=request.source_path,
+            chunks_deleted=deleted,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Delete failed: {e}") from e
 
 
 @app.post("/v1/search", response_model=SearchResponse)
