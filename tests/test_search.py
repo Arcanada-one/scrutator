@@ -281,7 +281,7 @@ class TestIndexer:
             assert result.source_path == "test.md"
             mock_ns.assert_called_once_with("arcanada")
             mock_proj.assert_called_once_with(1, "scrutator")
-            mock_del.assert_called_once_with("test.md")
+            mock_del.assert_called_once_with("test.md", 1)
 
     @pytest.mark.asyncio
     async def test_index_empty_content_returns_zero(self):

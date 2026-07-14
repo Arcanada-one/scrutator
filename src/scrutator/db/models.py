@@ -69,6 +69,19 @@ class IndexResponse(BaseModel):
     strategy_used: str
 
 
+class DeleteSourceRequest(BaseModel):
+    """Namespace-scoped tombstone request used by the audited Feeder."""
+
+    namespace: str
+    source_path: str
+
+
+class DeleteSourceResponse(BaseModel):
+    namespace: str
+    source_path: str
+    chunks_deleted: int
+
+
 _MAX_SEARCH_LIMIT = 50
 
 

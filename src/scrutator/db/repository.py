@@ -71,7 +71,7 @@ async def insert_chunks(
                     chunk_index, parent_id, content, content_hash,
                     embedding_dense, metadata, token_count, indexed_at
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, NOW())
-                ON CONFLICT (source_path, chunk_index)
+                ON CONFLICT (namespace_id, source_path, chunk_index)
                 DO UPDATE SET
                     content = EXCLUDED.content,
                     content_hash = EXCLUDED.content_hash,
@@ -119,22 +119,33 @@ async def insert_sparse_vectors(chunk_ids: list[str], sparse_weights: list[dict[
     return inserted
 
 
-async def get_chunk_ids_by_source(source_path: str) -> list[str]:
+async def get_chunk_ids_by_source(source_path: str, namespace_id: int | None = None) -> list[str]:
     """Get chunk IDs for a source path, ordered by chunk_index."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT id::text AS chunk_id FROM chunks WHERE source_path = $1 ORDER BY chunk_index",
-            source_path,
-        )
+        if namespace_id is None:
+            rows = await conn.fetch(
+                "SELECT id::text AS chunk_id FROM chunks WHERE source_path = $1 ORDER BY chunk_index",
+                source_path,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT id::text AS chunk_id FROM chunks WHERE namespace_id=$1 AND source_path=$2 ORDER BY chunk_index",
+                namespace_id,
+                source_path,
+            )
     return [row["chunk_id"] for row in rows]
 
 
-async def delete_by_source(source_path: str) -> int:
+async def delete_by_source(source_path: str, namespace_id: int) -> int:
     """Delete all chunks for a given source path. Returns deleted count."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        result = await conn.execute("DELETE FROM chunks WHERE source_path = $1", source_path)
+        result = await conn.execute(
+            "DELETE FROM chunks WHERE namespace_id=$1 AND source_path=$2",
+            namespace_id,
+            source_path,
+        )
         return int(result.split()[-1])
 
 
