@@ -7,25 +7,21 @@ from scrutator.health import app
 from tests.conftest import make_tenant_context, override_tenant_context
 
 
-def test_delete_source_uses_granted_namespace_id():
+def test_delete_source_rejects_read_principal_without_rollback_token():
     with (
         override_tenant_context(app, make_tenant_context(frozenset({7}), frozenset({"wiki"}))),
-        patch("scrutator.health.resolve_namespace_selector", new_callable=AsyncMock, return_value=7),
-        patch("scrutator.health.delete_by_source", new_callable=AsyncMock, return_value=3) as delete,
         TestClient(app) as client,
     ):
         response = client.request("DELETE", "/v1/index", json={"namespace": "wiki", "source_path": "wiki/a.md"})
 
-    assert response.status_code == 200
-    assert response.json()["chunks_deleted"] == 3
-    delete.assert_awaited_once_with("wiki/a.md", 7)
+    assert response.status_code == 401
 
 
-def test_delete_source_rejects_namespace_outside_grant():
+def test_delete_source_rejects_read_principal_outside_grant_without_rollback_token():
     ctx = make_tenant_context(frozenset({7}), frozenset({"wiki"}))
     with override_tenant_context(app, ctx), TestClient(app) as client:
         response = client.request("DELETE", "/v1/index", json={"namespace": "ecosystem-core", "source_path": "a.md"})
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_delete_source_accepts_dedicated_rollback_token():
