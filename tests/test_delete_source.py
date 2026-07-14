@@ -31,7 +31,9 @@ def test_delete_source_rejects_namespace_outside_grant():
 def test_delete_source_accepts_dedicated_rollback_token():
     anonymous = make_tenant_context(frozenset(), frozenset(), principal_id="anonymous")
     original = settings.rollback_token
+    original_scope = settings.rollback_namespaces
     settings.rollback_token = "test-rollback-secret"
+    settings.rollback_namespaces = "wiki"
     try:
         with (
             override_tenant_context(app, anonymous),
@@ -55,3 +57,50 @@ def test_delete_source_accepts_dedicated_rollback_token():
         delete.assert_awaited_once_with("wiki/new.md", 9)
     finally:
         settings.rollback_token = original
+        settings.rollback_namespaces = original_scope
+
+
+def test_scheduled_rollback_token_rejects_namespace_outside_scope():
+    anonymous = make_tenant_context(frozenset(), frozenset(), principal_id="anonymous")
+    original = (settings.rollback_token, settings.rollback_namespaces)
+    settings.rollback_token = "test-rollback-secret"
+    settings.rollback_namespaces = "wiki"
+    try:
+        with override_tenant_context(app, anonymous), TestClient(app) as client:
+            response = client.request(
+                "DELETE",
+                "/v1/index",
+                json={"namespace": "ecosystem-core", "source_path": "a.md"},
+                headers={"X-KB-Rollback-Token": "test-rollback-secret"},
+            )
+        assert response.status_code == 403
+    finally:
+        settings.rollback_token, settings.rollback_namespaces = original
+
+
+def test_operator_rollback_token_can_target_other_namespace():
+    anonymous = make_tenant_context(frozenset(), frozenset(), principal_id="anonymous")
+    original = settings.operator_rollback_token
+    settings.operator_rollback_token = "operator-secret"
+    try:
+        with (
+            override_tenant_context(app, anonymous),
+            patch("scrutator.health.get_pool", new_callable=AsyncMock) as get_pool,
+            patch("scrutator.health.delete_by_source", new_callable=AsyncMock, return_value=1),
+            TestClient(app) as client,
+        ):
+            conn = AsyncMock()
+            conn.fetchval.return_value = 8
+            pool = MagicMock()
+            pool.acquire.return_value.__aenter__ = AsyncMock(return_value=conn)
+            pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
+            get_pool.return_value = pool
+            response = client.request(
+                "DELETE",
+                "/v1/index",
+                json={"namespace": "ecosystem-core", "source_path": "a.md"},
+                headers={"X-KB-Rollback-Token": "operator-secret"},
+            )
+        assert response.status_code == 200
+    finally:
+        settings.operator_rollback_token = original
