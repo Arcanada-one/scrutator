@@ -78,7 +78,11 @@ class Settings(BaseSettings):
     auth_enforce: bool = False
     # SRCH-0048 co-located Feeder tombstone credential. This is separate from
     # reader grants and is accepted only by DELETE /v1/index.
+    feeder_token: str = ""
+    feeder_namespaces: str = ""
     rollback_token: str = ""
+    rollback_namespaces: str = ""
+    operator_rollback_token: str = ""
 
     # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
     rls_enabled: bool = False
