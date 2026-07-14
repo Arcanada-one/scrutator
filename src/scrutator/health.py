@@ -122,7 +122,24 @@ async def chunk_endpoint(request: ChunkRequest, ctx: TenantContext = Depends(req
 
 
 @app.post("/v1/index", response_model=IndexResponse)
-async def index_endpoint(request: IndexRequest, ctx: TenantContext = Depends(require_tenant_context)) -> IndexResponse:
+async def index_endpoint(
+    request: IndexRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+    x_kb_feeder_token: str | None = Header(default=None),
+) -> IndexResponse:
+    if ctx.allowed_namespace_ids:
+        await resolve_namespace_selector(ctx, request.namespace)
+    else:
+        valid_feeder = (
+            bool(settings.feeder_token)
+            and bool(x_kb_feeder_token)
+            and secrets.compare_digest(settings.feeder_token, x_kb_feeder_token)
+        )
+        if not valid_feeder:
+            raise HTTPException(status_code=401, detail="feeder credential required")
+        allowed = {n.strip() for n in settings.feeder_namespaces.split(",") if n.strip()}
+        if request.namespace not in allowed:
+            raise HTTPException(status_code=403, detail="namespace outside feeder scope")
     try:
         return await index_document(
             content=request.content,
@@ -148,13 +165,23 @@ async def delete_source_endpoint(
     if ctx.allowed_namespace_ids:
         namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     else:
-        valid_local_token = (
+        valid_scheduled_token = (
             bool(settings.rollback_token)
             and bool(x_kb_rollback_token)
             and secrets.compare_digest(settings.rollback_token, x_kb_rollback_token)
         )
-        if not valid_local_token:
+        valid_operator_token = (
+            bool(settings.operator_rollback_token)
+            and bool(x_kb_rollback_token)
+            and secrets.compare_digest(settings.operator_rollback_token, x_kb_rollback_token)
+        )
+        if not valid_scheduled_token and not valid_operator_token:
             raise HTTPException(status_code=401, detail="rollback credential required")
+        scheduled_scope = {
+            n.strip() for n in settings.rollback_namespaces.split(",") if n.strip()
+        }
+        if valid_scheduled_token and request.namespace not in scheduled_scope:
+            raise HTTPException(status_code=403, detail="namespace outside rollback scope")
         pool = await get_pool()
         async with pool.acquire() as conn:
             namespace_id = await conn.fetchval("SELECT id FROM namespaces WHERE name=$1", request.namespace)
