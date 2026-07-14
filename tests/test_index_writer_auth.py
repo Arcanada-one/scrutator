@@ -22,6 +22,18 @@ def test_index_rejects_anonymous_writer_without_feeder_token():
     assert response.status_code == 401
 
 
+def test_index_rejects_read_principal_without_feeder_token():
+    reader = TenantContext(
+        principal_id="control-reader",
+        principal_type="service",
+        allowed_namespace_ids=frozenset({7}),
+        allowed_namespace_names=frozenset({"wiki"}),
+    )
+    with override_tenant_context(app, reader), TestClient(app) as client:
+        response = client.post("/v1/index", json=BODY)
+    assert response.status_code == 401
+
+
 def test_index_accepts_scoped_feeder_token():
     original = (settings.feeder_token, settings.feeder_namespaces)
     settings.feeder_token = "feeder-secret"
