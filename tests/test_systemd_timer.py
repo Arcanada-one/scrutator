@@ -6,7 +6,9 @@ import os
 import shutil
 import stat
 import subprocess
+from ipaddress import ip_address
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -16,10 +18,46 @@ SERVICE = DEPLOY / "muneral-kb-sync.service"
 TIMER = DEPLOY / "muneral-kb-sync.timer"
 RUNNER = DEPLOY / "muneral-kb-sync-run.sh"
 INSTALLER = DEPLOY / "install-muneral-kb-sync.sh"
+RUNTIME_REQUIREMENTS = DEPLOY / "requirements-muneral-kb-sync.txt"
+PILOT_TASK_ID = "7d2c0e8a-4b7e-4c01-8d33-100000000004"
 
 
 def _run(command: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, text=True, capture_output=True, check=False, **kwargs)
+
+
+@pytest.fixture
+def source_repo(tmp_path: Path) -> Path:
+    source = tmp_path / "source"
+    shutil.copytree(REPO / "src" / "scrutator", source / "src" / "scrutator")
+    shutil.copytree(REPO / "tools" / "muneral_sync", source / "tools" / "muneral_sync")
+    (source / "tools" / "__init__.py").write_text("")
+    (source / "deploy").mkdir()
+    for artifact in (SERVICE, TIMER, RUNNER):
+        shutil.copy2(artifact, source / "deploy" / artifact.name)
+    shutil.copy2(RUNTIME_REQUIREMENTS, source / "deploy" / RUNTIME_REQUIREMENTS.name)
+    _run(["git", "init", "-q", "-b", "main"], cwd=source)
+    _run(["git", "config", "user.name", "Timer Test"], cwd=source)
+    _run(["git", "config", "user.email", "timer-test@example.invalid"], cwd=source)
+    _run(["git", "add", "."], cwd=source)
+    committed = _run(["git", "commit", "-q", "-m", "fixture"], cwd=source)
+    assert committed.returncode == 0, committed.stdout + committed.stderr
+    return source
+
+
+def _head(source: Path) -> str:
+    result = _run(["git", "rev-parse", "HEAD"], cwd=source)
+    assert result.returncode == 0
+    return result.stdout.strip()
+
+
+def _next_commit(source: Path, marker: str) -> str:
+    marker_file = source / "src" / "scrutator" / "release_marker.py"
+    marker_file.write_text(f'MARKER = "{marker}"\n')
+    _run(["git", "add", str(marker_file)], cwd=source)
+    result = _run(["git", "commit", "-q", "-m", f"fixture {marker}"], cwd=source)
+    assert result.returncode == 0, result.stdout + result.stderr
+    return _head(source)
 
 
 def test_service_has_exact_identity_credentials_and_incremental_entrypoint():
@@ -125,6 +163,30 @@ def test_runner_passes_only_credential_paths_and_preserves_full_mode_args(tmp_pa
     assert "writer-secret-sentinel" not in combined
 
 
+def test_release_runtime_requirements_are_fully_pinned():
+    lines = [line for line in RUNTIME_REQUIREMENTS.read_text().splitlines() if line and not line.startswith("#")]
+    assert lines
+    assert all("==" in line and not line.startswith(("-", ".")) for line in lines)
+
+
+def test_runner_defaults_to_the_release_internal_python():
+    body = RUNNER.read_text()
+    assert "MUNERAL_KB_SYNC_PYTHON:-${release_root}/venv/bin/python" in body
+
+
+def test_runner_default_endpoint_is_the_colocated_loopback_service(tmp_path):
+    env, args_file = _runner_fixture(tmp_path)
+    env.pop("MUNERAL_KB_SYNC_ENDPOINT", None)
+    output = _run([str(RUNNER), "--incremental"], env=env)
+    assert output.returncode == 0, output.stdout + output.stderr
+    arguments = args_file.read_text().splitlines()
+    endpoint = arguments[arguments.index("--endpoint") + 1]
+    parsed = urlsplit(endpoint)
+    assert parsed.hostname == "127.0.0.1"
+    assert ip_address(parsed.hostname).is_loopback
+    assert endpoint == "http://127.0.0.1:8310/v1/ltm/ingest"
+
+
 @pytest.mark.parametrize("flag", ["--dsn-credential", "--writer-credential", "--cursor-file", "--endpoint"])
 def test_runner_rejects_overrides_of_wrapper_controlled_paths(tmp_path, flag):
     env, _ = _runner_fixture(tmp_path)
@@ -159,18 +221,18 @@ def test_runner_uses_one_nonblocking_lock_for_all_modes(tmp_path):
     assert second.returncode == 75
 
 
-def _install(root: Path, sha: str, *extra: str, source: Path = REPO, env=None):
+def _install(root: Path, source: Path, sha: str | None = None, *extra: str, env=None):
+    sha = sha or _head(source)
     return _run(
         [str(INSTALLER), "install", "--root", str(root), "--sha", sha, "--source", str(source), *extra],
         env=env,
     )
 
 
-def test_installer_creates_immutable_release_and_atomic_current_previous(tmp_path):
+def test_installer_creates_self_contained_release_and_atomic_links(tmp_path, source_repo):
     root = tmp_path / "root"
-    first_sha = "1" * 40
-    second_sha = "2" * 40
-    first = _install(root, first_sha)
+    first_sha = _head(source_repo)
+    first = _install(root, source_repo)
     assert first.returncode == 0, first.stdout + first.stderr
     opt = root / "opt/muneral-kb-sync"
     first_release = opt / "releases" / first_sha
@@ -178,19 +240,69 @@ def test_installer_creates_immutable_release_and_atomic_current_previous(tmp_pat
     assert not (root / "var/lib/muneral-kb-sync/timer-enabled").exists()
     assert stat.S_IMODE((first_release / "bin/muneral-kb-sync").stat().st_mode) == 0o555
     assert stat.S_IMODE(first_release.stat().st_mode) == 0o555
+    assert (first_release / "RELEASE_SHA").read_text() == f"{first_sha}\n"
+    assert (first_release / "PAYLOAD_SHA256SUMS").is_file()
+    smoke = _run(
+        [
+            str(first_release / "venv/bin/python"),
+            "-c",
+            "import asyncpg,httpx,tools.muneral_sync.cli",
+        ],
+        env={**os.environ, "PYTHONPATH": f"{first_release / 'src'}:{first_release}"},
+    )
+    assert smoke.returncode == 0, smoke.stdout + smoke.stderr
 
-    second = _install(root, second_sha)
+    second_sha = _next_commit(source_repo, "second")
+    second = _install(root, source_repo, second_sha)
     assert second.returncode == 0, second.stdout + second.stderr
     assert (opt / "current").resolve() == (opt / "releases" / second_sha).resolve()
     assert (opt / "previous").resolve() == first_release.resolve()
 
 
-def test_installer_rollback_atomically_swaps_current_and_previous(tmp_path):
+def test_installer_rejects_fabricated_sha_and_dirty_tracked_source(tmp_path, source_repo):
     root = tmp_path / "root"
-    first_sha = "3" * 40
-    second_sha = "4" * 40
-    assert _install(root, first_sha).returncode == 0
-    assert _install(root, second_sha).returncode == 0
+    fabricated = _install(root, source_repo, "f" * 40)
+    assert fabricated.returncode != 0
+    tracked = source_repo / "deploy" / RUNNER.name
+    tracked.write_text(tracked.read_text() + "# dirty\n")
+    dirty = _install(root, source_repo, _head(source_repo))
+    assert dirty.returncode != 0
+    assert not (root / "opt/muneral-kb-sync/current").exists()
+
+
+def test_installer_rejects_tampered_existing_release(tmp_path, source_repo):
+    root = tmp_path / "root"
+    sha = _head(source_repo)
+    assert _install(root, source_repo, sha).returncode == 0
+    release = root / "opt/muneral-kb-sync/releases" / sha
+    target = release / "tools/muneral_sync/cli.py"
+    target.chmod(0o644)
+    target.write_text(target.read_text() + "# tampered\n")
+    rejected = _install(root, source_repo, sha)
+    assert rejected.returncode != 0
+
+
+def test_rollback_rejects_tampered_previous_release(tmp_path, source_repo):
+    root = tmp_path / "root"
+    first_sha = _head(source_repo)
+    assert _install(root, source_repo, first_sha).returncode == 0
+    second_sha = _next_commit(source_repo, "tamper-rollback")
+    assert _install(root, source_repo, second_sha).returncode == 0
+    previous_file = root / "opt/muneral-kb-sync/releases" / first_sha / "tools/muneral_sync/cli.py"
+    previous_file.chmod(0o644)
+    previous_file.write_text(previous_file.read_text() + "# tampered\n")
+    rejected = _run([str(INSTALLER), "rollback", "--root", str(root)])
+    assert rejected.returncode != 0
+    current = root / "opt/muneral-kb-sync/current"
+    assert current.resolve() == (root / "opt/muneral-kb-sync/releases" / second_sha).resolve()
+
+
+def test_installer_rollback_atomically_swaps_current_and_previous(tmp_path, source_repo):
+    root = tmp_path / "root"
+    first_sha = _head(source_repo)
+    assert _install(root, source_repo).returncode == 0
+    second_sha = _next_commit(source_repo, "rollback")
+    assert _install(root, source_repo, second_sha).returncode == 0
     result = _run([str(INSTALLER), "rollback", "--root", str(root)])
     assert result.returncode == 0, result.stdout + result.stderr
     opt = root / "opt/muneral-kb-sync"
@@ -198,43 +310,112 @@ def test_installer_rollback_atomically_swaps_current_and_previous(tmp_path):
     assert (opt / "previous").resolve() == (opt / "releases" / second_sha).resolve()
 
 
-def test_installer_requires_explicit_flag_and_pilot_marker_before_timer_enable(tmp_path):
+def _write_pilot_proof(path: Path, release_sha: str, *, lines: list[str] | None = None) -> None:
+    canonical = lines or [
+        f"task_id={PILOT_TASK_ID}",
+        f"release_sha={release_sha}",
+        "principal=muneral-kb-sync",
+        "graph_proven=true",
+        "recall_proven=true",
+        "idempotent=true",
+    ]
+    path.write_text("\n".join(canonical) + "\n")
+    path.chmod(0o600)
+
+
+def test_installer_requires_exact_root_controlled_pilot_proof_before_timer_enable(tmp_path, source_repo):
     root = tmp_path / "root"
-    sha = "5" * 40
-    denied = _install(root, sha, "--enable-timer-after-pilot")
+    sha = _head(source_repo)
+    denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
     assert denied.returncode != 0
     state = root / "var/lib/muneral-kb-sync"
     state.mkdir(parents=True, exist_ok=True)
-    (state / "pilot-proven").write_text("LTM-0025 pilot graph proven\n")
-    still_denied = _install(root, sha, "--enable-timer-after-pilot")
+    _write_pilot_proof(state / "pilot-proven", sha)
+    still_denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
     assert still_denied.returncode != 0
     credentials = root / "etc/muneral-kb-sync"
     for name in ("muneral-db-dsn", "ltm-writer-token"):
         credential = credentials / name
         credential.write_text("test-only-secret\n")
         credential.chmod(0o600)
-    allowed = _install(root, sha, "--enable-timer-after-pilot")
+    forged_with_credentials = _install(root, source_repo, sha, "--enable-timer-after-pilot")
+    assert forged_with_credentials.returncode != 0
+    (state / "pilot-proven").unlink()
+    proof = credentials / "pilot-proven"
+    _write_pilot_proof(proof, sha)
+    allowed = _install(root, source_repo, sha, "--enable-timer-after-pilot")
     assert allowed.returncode == 0, allowed.stdout + allowed.stderr
     assert (state / "timer-enabled").exists()
 
 
-def test_installer_removes_partial_staging_on_failure(tmp_path):
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda lines: lines[:-1],
+        lambda lines: [*lines, "extra=true"],
+        lambda lines: [*lines, lines[-1]],
+        lambda lines: [*lines[:3], "graph_proven=false", *lines[4:]],
+        lambda lines: [*lines[:1], "release_sha=" + "0" * 40, *lines[2:]],
+        lambda lines: [lines[1], lines[0], *lines[2:]],
+    ],
+)
+def test_installer_rejects_malformed_or_unbound_pilot_proof(tmp_path, source_repo, mutate):
+    root = tmp_path / "root"
+    sha = _head(source_repo)
+    assert _install(root, source_repo, sha).returncode == 0
+    credentials = root / "etc/muneral-kb-sync"
+    for name in ("muneral-db-dsn", "ltm-writer-token"):
+        credential = credentials / name
+        credential.write_text("test-only-secret\n")
+        credential.chmod(0o600)
+    canonical = [
+        f"task_id={PILOT_TASK_ID}",
+        f"release_sha={sha}",
+        "principal=muneral-kb-sync",
+        "graph_proven=true",
+        "recall_proven=true",
+        "idempotent=true",
+    ]
+    _write_pilot_proof(credentials / "pilot-proven", sha, lines=mutate(canonical))
+    denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
+    assert denied.returncode != 0
+    assert not (root / "var/lib/muneral-kb-sync/timer-enabled").exists()
+
+
+def test_installer_rejects_pilot_proof_with_non_private_mode(tmp_path, source_repo):
+    root = tmp_path / "root"
+    sha = _head(source_repo)
+    assert _install(root, source_repo, sha).returncode == 0
+    credentials = root / "etc/muneral-kb-sync"
+    for name in ("muneral-db-dsn", "ltm-writer-token"):
+        credential = credentials / name
+        credential.write_text("test-only-secret\n")
+        credential.chmod(0o600)
+    proof = credentials / "pilot-proven"
+    _write_pilot_proof(proof, sha)
+    proof.chmod(0o644)
+    denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
+    assert denied.returncode != 0
+
+
+def test_installer_removes_partial_staging_on_failure(tmp_path, source_repo):
     root = tmp_path / "root"
     env = {**os.environ, "MUNERAL_KB_SYNC_TEST_FAIL_AFTER_COPY": "1"}
-    failed = _install(root, "6" * 40, env=env)
+    sha = _head(source_repo)
+    failed = _install(root, source_repo, sha, env=env)
     assert failed.returncode != 0
     release_dir = root / "opt/muneral-kb-sync/releases"
     assert not list(release_dir.glob(".*.tmp.*"))
-    assert not (release_dir / ("6" * 40)).exists()
+    assert not (release_dir / sha).exists()
 
 
-def test_installer_restores_links_and_removes_new_release_on_activation_failure(tmp_path):
+def test_installer_restores_links_and_removes_new_release_on_activation_failure(tmp_path, source_repo):
     root = tmp_path / "root"
-    first_sha = "7" * 40
-    failed_sha = "8" * 40
-    assert _install(root, first_sha).returncode == 0
+    first_sha = _head(source_repo)
+    assert _install(root, source_repo, first_sha).returncode == 0
+    failed_sha = _next_commit(source_repo, "failed")
     env = {**os.environ, "MUNERAL_KB_SYNC_TEST_FAIL_AFTER_SWITCH": "1"}
-    failed = _install(root, failed_sha, env=env)
+    failed = _install(root, source_repo, failed_sha, env=env)
     assert failed.returncode != 0
     opt = root / "opt/muneral-kb-sync"
     assert (opt / "current").resolve() == (opt / "releases" / first_sha).resolve()

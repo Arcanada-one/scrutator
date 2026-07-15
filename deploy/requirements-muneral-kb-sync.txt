@@ -1,0 +1,9 @@
+# Exact runtime closure for the isolated Muneral sync release.
+asyncpg==0.31.0
+httpx==0.28.1
+anyio==4.14.2
+certifi==2026.6.17
+httpcore==1.0.9
+idna==3.18
+h11==0.16.0
+typing_extensions==4.16.0

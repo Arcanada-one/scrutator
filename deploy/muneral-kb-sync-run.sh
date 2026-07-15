@@ -8,8 +8,11 @@ readonly credentials_dir="${CREDENTIALS_DIRECTORY:-/etc/muneral-kb-sync}"
 readonly dsn_credential="${credentials_dir}/muneral-db-dsn"
 readonly writer_credential="${credentials_dir}/ltm-writer-token"
 readonly cursor_file="${state_dir}/cursor.json"
-readonly endpoint="${MUNERAL_KB_SYNC_ENDPOINT:-https://kb.arcanada.ai/v1/ltm/ingest}"
-readonly python_bin="${MUNERAL_KB_SYNC_PYTHON:-/usr/bin/python3}"
+readonly endpoint="${MUNERAL_KB_SYNC_ENDPOINT:-http://127.0.0.1:8310/v1/ltm/ingest}"
+
+release_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+readonly release_root
+readonly python_bin="${MUNERAL_KB_SYNC_PYTHON:-${release_root}/venv/bin/python}"
 
 if [[ $# -eq 0 ]]; then
     echo "usage: muneral-kb-sync MODE [OPTIONS]" >&2
@@ -40,8 +43,6 @@ if [[ ! -d "$state_dir" || -L "$state_dir" ]]; then
     exit 73
 fi
 
-release_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-readonly release_root
 if [[ ! -f "$release_root/tools/muneral_sync/cli.py" ]]; then
     echo "release payload is incomplete" >&2
     exit 70
