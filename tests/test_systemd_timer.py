@@ -67,7 +67,7 @@ def test_service_has_exact_identity_credentials_and_incremental_entrypoint():
     assert body.count("LoadCredential=") == 2
     assert "LoadCredential=muneral-db-dsn:/etc/muneral-kb-sync/muneral-db-dsn" in body
     assert "LoadCredential=ltm-writer-token:/etc/muneral-kb-sync/ltm-writer-token" in body
-    assert "StateDirectory=muneral-kb-sync" in body
+    assert "StateDirectory=muneral-kb-sync/runtime" in body
     assert "ExecStart=/opt/muneral-kb-sync/current/bin/muneral-kb-sync --incremental --timer" in body
 
 
@@ -77,7 +77,7 @@ def test_service_hardening_and_retry_are_bounded():
         "ProtectSystem=strict",
         "ProtectHome=yes",
         "NoNewPrivileges=yes",
-        "ReadWritePaths=/var/lib/muneral-kb-sync",
+        "ReadWritePaths=/var/lib/muneral-kb-sync/runtime",
         "TimeoutStartSec=10min",
         "Restart=on-failure",
         "RestartSec=30s",
@@ -164,14 +164,18 @@ def test_runner_passes_only_credential_paths_and_preserves_full_mode_args(tmp_pa
 
 
 def test_release_runtime_requirements_are_fully_pinned():
-    lines = [line for line in RUNTIME_REQUIREMENTS.read_text().splitlines() if line and not line.startswith("#")]
-    assert lines
-    assert all("==" in line and not line.startswith(("-", ".")) for line in lines)
+    blocks = [block for block in RUNTIME_REQUIREMENTS.read_text().split("\n\n") if not block.startswith("#")]
+    assert blocks
+    assert all("==" in block and "--hash=sha256:" in block for block in blocks)
+    installer = INSTALLER.read_text()
+    assert "--require-hashes" in installer
+    assert "--only-binary=:all:" in installer
 
 
 def test_runner_defaults_to_the_release_internal_python():
     body = RUNNER.read_text()
     assert "MUNERAL_KB_SYNC_PYTHON:-${release_root}/venv/bin/python" in body
+    assert "MUNERAL_KB_SYNC_STATE_DIR:-/var/lib/muneral-kb-sync/runtime" in body
 
 
 def test_runner_default_endpoint_is_the_colocated_loopback_service(tmp_path):
@@ -229,6 +233,53 @@ def _install(root: Path, source: Path, sha: str | None = None, *extra: str, env=
     )
 
 
+def test_installer_rejects_symlinked_or_writable_canonical_directory(tmp_path, source_repo):
+    root = tmp_path / "root"
+    target = tmp_path / "redirect"
+    target.mkdir()
+    (root / "opt").mkdir(parents=True)
+    (root / "opt/muneral-kb-sync").symlink_to(target, target_is_directory=True)
+    assert _install(root, source_repo).returncode != 0
+
+    (root / "opt/muneral-kb-sync").unlink()
+    canonical = root / "opt/muneral-kb-sync"
+    canonical.mkdir()
+    canonical.chmod(0o777)
+    assert _install(root, source_repo).returncode != 0
+
+
+def test_installer_account_validation_is_fail_closed():
+    body = INSTALLER.read_text()
+    for contract in ("uid -ne 0", "gid -ne 0", "/usr/sbin/nologin", "supplementary", "primary_gid"):
+        assert contract in body
+
+
+def test_installer_global_lock_rejects_concurrent_transaction(tmp_path, source_repo):
+    root = tmp_path / "root"
+    hold = tmp_path / "hold"
+    hold.touch()
+    env = {**os.environ, "MUNERAL_KB_SYNC_TEST_HOLD_LOCK_FILE": str(hold)}
+    first = subprocess.Popen(
+        [str(INSTALLER), "rollback", "--root", str(root)],
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    ready = Path(f"{hold}.ready")
+    for _ in range(100):
+        if ready.exists():
+            break
+        import time
+
+        time.sleep(0.02)
+    assert ready.exists()
+    second = _install(root, source_repo)
+    assert second.returncode == 75
+    hold.unlink()
+    first.communicate(timeout=5)
+
+
 def test_installer_creates_self_contained_release_and_atomic_links(tmp_path, source_repo):
     root = tmp_path / "root"
     first_sha = _head(source_repo)
@@ -237,7 +288,7 @@ def test_installer_creates_self_contained_release_and_atomic_links(tmp_path, sou
     opt = root / "opt/muneral-kb-sync"
     first_release = opt / "releases" / first_sha
     assert (opt / "current").resolve() == first_release.resolve()
-    assert not (root / "var/lib/muneral-kb-sync/timer-enabled").exists()
+    assert not (root / "var/lib/muneral-kb-sync/runtime/timer-enabled").exists()
     assert stat.S_IMODE((first_release / "bin/muneral-kb-sync").stat().st_mode) == 0o555
     assert stat.S_IMODE(first_release.stat().st_mode) == 0o555
     assert (first_release / "RELEASE_SHA").read_text() == f"{first_sha}\n"
@@ -280,6 +331,23 @@ def test_installer_rejects_tampered_existing_release(tmp_path, source_repo):
     target.write_text(target.read_text() + "# tampered\n")
     rejected = _install(root, source_repo, sha)
     assert rejected.returncode != 0
+
+
+@pytest.mark.parametrize("tamper", ["directory-mode", "executable-mode", "special-node"])
+def test_installer_rejects_release_metadata_or_node_tamper(tmp_path, source_repo, tamper):
+    root = tmp_path / "root"
+    sha = _head(source_repo)
+    assert _install(root, source_repo, sha).returncode == 0
+    release = root / "opt/muneral-kb-sync/releases" / sha
+    if tamper == "directory-mode":
+        release.chmod(0o575)
+    elif tamper == "executable-mode":
+        (release / "bin/muneral-kb-sync").chmod(0o455)
+    else:
+        release.chmod(0o755)
+        os.mkfifo(release / "unexpected-fifo")
+        release.chmod(0o555)
+    assert _install(root, source_repo, sha).returncode != 0
 
 
 def test_rollback_rejects_tampered_previous_release(tmp_path, source_repo):
@@ -328,7 +396,7 @@ def test_installer_requires_exact_root_controlled_pilot_proof_before_timer_enabl
     sha = _head(source_repo)
     denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
     assert denied.returncode != 0
-    state = root / "var/lib/muneral-kb-sync"
+    state = root / "var/lib/muneral-kb-sync/runtime"
     state.mkdir(parents=True, exist_ok=True)
     _write_pilot_proof(state / "pilot-proven", sha)
     still_denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
@@ -379,7 +447,7 @@ def test_installer_rejects_malformed_or_unbound_pilot_proof(tmp_path, source_rep
     _write_pilot_proof(credentials / "pilot-proven", sha, lines=mutate(canonical))
     denied = _install(root, source_repo, sha, "--enable-timer-after-pilot")
     assert denied.returncode != 0
-    assert not (root / "var/lib/muneral-kb-sync/timer-enabled").exists()
+    assert not (root / "var/lib/muneral-kb-sync/runtime/timer-enabled").exists()
 
 
 def test_installer_rejects_pilot_proof_with_non_private_mode(tmp_path, source_repo):
@@ -421,3 +489,32 @@ def test_installer_restores_links_and_removes_new_release_on_activation_failure(
     assert (opt / "current").resolve() == (opt / "releases" / first_sha).resolve()
     assert not (opt / "previous").exists()
     assert not (opt / "releases" / failed_sha).exists()
+
+
+def test_installer_restores_units_and_timer_state_after_enable_failure(tmp_path, source_repo):
+    root = tmp_path / "root"
+    first_sha = _head(source_repo)
+    assert _install(root, source_repo, first_sha).returncode == 0
+    unit_dir = root / "etc/systemd/system"
+    legacy_service = b"legacy service bytes\n"
+    legacy_timer = b"legacy timer bytes\n"
+    (unit_dir / SERVICE.name).write_bytes(legacy_service)
+    (unit_dir / TIMER.name).write_bytes(legacy_timer)
+    state = root / "var/lib/muneral-kb-sync/runtime"
+    (state / "timer-enabled").touch()
+    (state / "timer-active").touch()
+
+    failed_sha = _next_commit(source_repo, "enable-failure")
+    credentials = root / "etc/muneral-kb-sync"
+    for name in ("muneral-db-dsn", "ltm-writer-token"):
+        credential = credentials / name
+        credential.write_text("test-only-secret\n")
+        credential.chmod(0o600)
+    _write_pilot_proof(credentials / "pilot-proven", failed_sha)
+    env = {**os.environ, "MUNERAL_KB_SYNC_TEST_FAIL_AFTER_ENABLE": "1"}
+    failed = _install(root, source_repo, failed_sha, "--enable-timer-after-pilot", env=env)
+    assert failed.returncode != 0
+    assert (unit_dir / SERVICE.name).read_bytes() == legacy_service
+    assert (unit_dir / TIMER.name).read_bytes() == legacy_timer
+    assert (state / "timer-enabled").exists()
+    assert (state / "timer-active").exists()
