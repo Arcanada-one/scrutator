@@ -399,12 +399,36 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
             source_path,
         )
         entity_rows = await conn.fetch(
-            "SELECT entity_id::text AS entity_id FROM entity_sources WHERE namespace_id = $1 AND source_path = $2",
+            """
+            SELECT candidate.entity_id::text AS entity_id
+            FROM (
+                SELECT es.entity_id
+                FROM entity_sources es
+                WHERE es.namespace_id = $1 AND es.source_path = $2
+                UNION
+                SELECT e.id
+                FROM entities e
+                JOIN chunks c ON c.id = e.source_chunk_id
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+            ) candidate
+            """,
             namespace_id,
             source_path,
         )
         edge_rows = await conn.fetch(
-            "SELECT edge_id FROM entity_edge_sources WHERE namespace_id = $1 AND source_path = $2",
+            """
+            SELECT candidate.edge_id
+            FROM (
+                SELECT ees.edge_id
+                FROM entity_edge_sources ees
+                WHERE ees.namespace_id = $1 AND ees.source_path = $2
+                UNION
+                SELECT ee.id
+                FROM entity_edges ee
+                JOIN chunks c ON c.id = ee.source_chunk_id
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+            ) candidate
+            """,
             namespace_id,
             source_path,
         )
@@ -437,6 +461,7 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
                 """
                 DELETE FROM entity_edges ee
                 WHERE ee.id = ANY($1::int[])
+                  AND ee.source_chunk_id IS NULL
                   AND NOT EXISTS (
                       SELECT 1 FROM entity_edge_sources ees WHERE ees.edge_id = ee.id
                   )

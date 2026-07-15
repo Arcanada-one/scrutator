@@ -170,15 +170,31 @@ class _StatefulDeleteConnection:
     async def fetch(self, sql, *args):
         namespace_id, source_path = args
         if "FROM entity_sources" in sql:
-            return [
+            provenance = [
                 {"entity_id": item[0]}
                 for item in self.state["entity_sources"]
                 if item[1:] == (namespace_id, source_path)
             ]
+            legacy = []
+            if "JOIN chunks" in sql:
+                legacy = [
+                    {"entity_id": entity_id}
+                    for entity_id, entity in self.state["entities"].items()
+                    if (entity["source_chunk_id"], namespace_id, source_path) in self.state["chunks"]
+                ]
+            return list({row["entity_id"]: row for row in (*provenance, *legacy)}.values())
         if "FROM entity_edge_sources" in sql:
-            return [
+            provenance = [
                 {"edge_id": item[0]} for item in self.state["edge_sources"] if item[1:] == (namespace_id, source_path)
             ]
+            legacy = []
+            if "JOIN chunks" in sql:
+                legacy = [
+                    {"edge_id": edge_id}
+                    for edge_id, chunk_id in self.state["edge_source_chunks"].items()
+                    if (chunk_id, namespace_id, source_path) in self.state["chunks"]
+                ]
+            return list({row["edge_id"]: row for row in (*provenance, *legacy)}.values())
         raise AssertionError(sql)
 
     async def execute(self, sql, *args):
@@ -212,12 +228,21 @@ class _StatefulDeleteConnection:
             for entity in self.state["entities"].values():
                 if entity["source_chunk_id"] in doomed_ids:
                     entity["source_chunk_id"] = None
+            for edge_id, chunk_id in self.state["edge_source_chunks"].items():
+                if chunk_id in doomed_ids:
+                    self.state["edge_source_chunks"][edge_id] = None
             return f"DELETE {len(doomed)}"
         if compact.startswith("DELETE FROM entity_edges"):
             candidate_ids = set(args[0])
             remaining_sources = {x[0] for x in self.state["edge_sources"]}
-            doomed = candidate_ids - remaining_sources
+            doomed = {
+                edge_id
+                for edge_id in candidate_ids - remaining_sources
+                if self.state["edge_source_chunks"].get(edge_id) is None
+            }
             self.state["edges"] -= doomed
+            for edge_id in doomed:
+                self.state["edge_source_chunks"].pop(edge_id, None)
             return f"DELETE {len(doomed)}"
         if compact.startswith("DELETE FROM entities"):
             candidate_ids = set(args[0])
@@ -261,6 +286,7 @@ def _state():
         },
         "edges": {11},
         "edge_endpoints": {11: ("task", "shared")},
+        "edge_source_chunks": {11: "chunk-a"},
         "edge_sources": {
             (11, 7, "muneral://task/a"),
             (11, 7, "muneral://task/b"),
@@ -337,3 +363,53 @@ async def test_repository_deletes_last_edge_provenance_then_unreferenced_nodes()
     assert result["entities_deleted"] == 3
     assert state["edges"] == set()
     assert state["entities"] == {}
+
+
+@pytest.mark.asyncio
+async def test_repository_deletes_chunk_only_legacy_entity_and_edge():
+    from scrutator.db.repository import delete_ltm_source
+
+    state = {
+        "chunks": {("legacy-chunk", 7, "muneral://task/legacy")},
+        "hashes": {(7, "muneral://task/legacy")},
+        "entities": {
+            "legacy-source": {"source_chunk_id": "legacy-chunk"},
+            "legacy-target": {"source_chunk_id": "legacy-chunk"},
+        },
+        "entity_sources": set(),
+        "edges": {22},
+        "edge_endpoints": {22: ("legacy-source", "legacy-target")},
+        "edge_source_chunks": {22: "legacy-chunk"},
+        "edge_sources": set(),
+    }
+    conn = _StatefulDeleteConnection(state)
+    with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=_Pool(conn)):
+        result = await delete_ltm_source(7, "muneral://task/legacy")
+
+    assert result == {
+        "chunks_deleted": 1,
+        "entity_sources_deleted": 0,
+        "edge_sources_deleted": 0,
+        "edges_deleted": 1,
+        "entities_deleted": 2,
+        "idempotent_noop": False,
+    }
+    assert state["edges"] == set()
+    assert state["entities"] == {}
+
+
+@pytest.mark.asyncio
+async def test_repository_preserves_association_edge_with_surviving_legacy_chunk_owner():
+    from scrutator.db.repository import delete_ltm_source
+
+    state = _state()
+    state["edge_sources"] = {(11, 7, "muneral://task/a")}
+    state["edge_source_chunks"][11] = "other-source-chunk"
+    conn = _StatefulDeleteConnection(state)
+    with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=_Pool(conn)):
+        result = await delete_ltm_source(7, "muneral://task/a")
+
+    assert result["edge_sources_deleted"] == 1
+    assert result["edges_deleted"] == 0
+    assert 11 in state["edges"]
+    assert state["edge_source_chunks"][11] == "other-source-chunk"
