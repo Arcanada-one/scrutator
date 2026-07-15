@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
@@ -209,7 +210,7 @@ def test_additive_gitleaks_scans_exact_body_and_redacts_secret(monkeypatch):
         source = Path(command[command.index("--source") + 1])
         seen.append(source.read_text())
         report = json.dumps([{"RuleID": "generic-api-key", "Secret": "never-return-this", "StartLine": 1}])
-        return SimpleNamespace(stdout=report)
+        return SimpleNamespace(stdout=report, returncode=1)
 
     monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: "/usr/bin/gitleaks")
     monkeypatch.setattr("tools.muneral_sync.secretscan.subprocess.run", fake_run)
@@ -222,6 +223,24 @@ def test_additive_gitleaks_scans_exact_body_and_redacts_secret(monkeypatch):
 def test_gitleaks_absent_keeps_python_fallback(monkeypatch):
     monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: None)
     assert scan_serialized("PGPASSWORD=still-blocked").verdict == VERDICT_CRITICAL
+
+
+@pytest.mark.parametrize(
+    "runner",
+    [
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(subprocess.TimeoutExpired("gitleaks", 60)),
+        lambda *_args, **_kwargs: SimpleNamespace(stdout="not-json-with-secret-output", returncode=0),
+        lambda *_args, **_kwargs: SimpleNamespace(stdout="[]", stderr="sensitive operational error", returncode=2),
+    ],
+    ids=["timeout", "malformed-report", "operational-nonzero"],
+)
+def test_installed_gitleaks_operational_failures_block_without_output(monkeypatch, runner):
+    monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: "/usr/bin/gitleaks")
+    monkeypatch.setattr("tools.muneral_sync.secretscan.subprocess.run", runner)
+    with pytest.raises(ScanError) as raised:
+        scan_serialized('{"description":"safe"}')
+    assert str(raised.value) == "gitleaks scan failed closed"
+    assert "secret" not in str(raised.value).lower()
 
 
 @pytest.mark.asyncio
