@@ -124,6 +124,25 @@ class TestStructuredGraph:
         with pytest.raises(ValidationError):
             StructuredGraph.model_validate(self._payload(edges=[edge] * 5001))
 
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("graph_extra", True),
+            ("entity_extra", True),
+            ("edge_extra", True),
+        ],
+    )
+    def test_rejects_unknown_fields_at_every_envelope_level(self, field, value):
+        payload = self._payload()
+        if field == "graph_extra":
+            payload[field] = value
+        elif field == "entity_extra":
+            payload["entities"][0][field] = value
+        else:
+            payload["edges"][0][field] = value
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            StructuredGraph.model_validate(payload)
+
 
 class TestIngestResponse:
     def test_creation(self):
