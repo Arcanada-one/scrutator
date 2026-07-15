@@ -100,4 +100,102 @@ VALUES (
 )
 ON CONFLICT DO NOTHING;
 
+-- ON CONFLICT is idempotent only when an existing deterministic row has the
+-- exact pilot identity. Any collision or drift aborts and rolls back all rows.
+DO $pilot_identity$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM users
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000001'
+          AND name = 'LTM-0025 Pilot Agent'
+          AND github_id IS NULL
+          AND telegram_id IS NULL
+          AND avatar_url IS NULL
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+          AND updated_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR NOT EXISTS (
+        SELECT 1 FROM workspaces
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000002'
+          AND slug = 'ltm-0025-pilot'
+          AND name = 'LTM-0025 Pilot'
+          AND owner_id = '7d2c0e8a-4b7e-4c01-8d33-100000000001'
+          AND subscription_tier = 'free'
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR NOT EXISTS (
+        SELECT 1 FROM projects
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000003'
+          AND workspace_id = '7d2c0e8a-4b7e-4c01-8d33-100000000002'
+          AND slug = 'long-term-memory'
+          AND name = 'Long Term Memory'
+          AND description = 'Deterministic Muneral to KB graph-merge pilot project.'
+          AND repo_url IS NULL
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR NOT EXISTS (
+        SELECT 1 FROM tasks
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+          AND project_id = '7d2c0e8a-4b7e-4c01-8d33-100000000003'
+          AND sprint_id IS NULL
+          AND parent_id IS NULL
+          AND title = 'LTM-0025 Muneral to KB graph-merge pilot'
+          AND description = 'Prove deterministic task graph ingestion, recall, and idempotent replay.'
+          AND status = 'in_progress'
+          AND priority = 'high'
+          AND due_date IS NULL
+          AND estimate_hours = 2.00
+          AND created_by_id = '7d2c0e8a-4b7e-4c01-8d33-100000000001'
+          AND actor_type = 'agent'
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+          AND updated_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR (
+        SELECT count(*) FROM task_tags
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) <> 2 OR NOT EXISTS (
+        SELECT 1 FROM task_tags
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004' AND tag = 'graph-merge'
+    ) OR NOT EXISTS (
+        SELECT 1 FROM task_tags
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004' AND tag = 'pilot'
+    ) OR NOT EXISTS (
+        SELECT 1 FROM task_checklists
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000005'
+          AND task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+          AND text = 'Pilot task graph is proven in the KB through the granted principal'
+          AND checked = false
+          AND position = 1
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR (
+        SELECT count(*) FROM task_checklists
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) <> 1 OR NOT EXISTS (
+        SELECT 1 FROM activity_log
+        WHERE id = '7d2c0e8a-4b7e-4c01-8d33-100000000006'
+          AND task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+          AND workspace_id = '7d2c0e8a-4b7e-4c01-8d33-100000000002'
+          AND actor_type = 'agent'
+          AND actor_id = '7d2c0e8a-4b7e-4c01-8d33-100000000001'
+          AND action = 'task.created'
+          AND payload = '{"source":"LTM-0025","mode":"pilot"}'::jsonb
+          AND created_at = '2026-07-15T00:00:00Z'::timestamptz
+    ) OR (
+        SELECT count(*) FROM activity_log
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) <> 1 OR EXISTS (
+        SELECT 1 FROM task_dependencies
+        WHERE from_task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+           OR to_task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) OR EXISTS (
+        SELECT 1 FROM task_agents
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) OR EXISTS (
+        SELECT 1 FROM task_git_refs
+        WHERE task_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) OR EXISTS (
+        SELECT 1 FROM tasks
+        WHERE parent_id = '7d2c0e8a-4b7e-4c01-8d33-100000000004'
+    ) THEN
+        RAISE EXCEPTION 'pilot seed identity mismatch';
+    END IF;
+END;
+$pilot_identity$;
+
 COMMIT;

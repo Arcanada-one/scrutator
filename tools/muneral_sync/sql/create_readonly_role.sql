@@ -1,11 +1,7 @@
--- Provision the fixed source-reader login. Supply the password only through
--- the connection-local custom setting before executing this file:
---
---   SELECT set_config('muneral.role_password', '<secret>', false);
---   \ir create_readonly_role.sql
---
--- Do not use psql echo-all/error-verbosity modes while provisioning secrets.
--- The password is never embedded in this repository or returned by the script.
+-- Provision the fixed source-reader login. Run provision_readonly_role.py;
+-- it reads mode-0600 credential files, binds the password on this connection,
+-- executes this SQL, and clears the connection-local setting in a finally block.
+-- Do not execute this file directly or place the password in argv/environment.
 --
 -- SECURITY IMPACT: PostgreSQL PUBLIC privileges are additive, so denying TEMP
 -- and CREATE to this login requires the database-wide PUBLIC revocations below.
@@ -80,5 +76,3 @@ GRANT SELECT ON TABLE public.task_agents TO muneral_kb_reader;
 GRANT SELECT ON TABLE public.agents TO muneral_kb_reader;
 GRANT SELECT ON TABLE public.activity_log TO muneral_kb_reader;
 GRANT SELECT ON TABLE public.muneral_kb_task_changes TO muneral_kb_reader;
-
-SELECT set_config('muneral.role_password', '', false);
