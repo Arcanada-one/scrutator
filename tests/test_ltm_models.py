@@ -54,6 +54,19 @@ class TestIngestRequest:
         req = IngestRequest(content="text", source_path="p.md")
         assert req.structured_graph is None
 
+    def test_misspelled_structured_graph_field_is_rejected(self):
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            IngestRequest(
+                content="text",
+                source_path="p.md",
+                structured_grah={
+                    "schema_version": 1,
+                    "content_hash": "a" * 64,
+                    "entities": [],
+                    "edges": [],
+                },
+            )
+
 
 class TestStructuredGraph:
     @staticmethod
