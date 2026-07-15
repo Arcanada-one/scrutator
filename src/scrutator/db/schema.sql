@@ -121,8 +121,8 @@ CREATE INDEX IF NOT EXISTS idx_entity_edges_target ON entity_edges(target_entity
 
 -- LTM-0025: per-source ownership for deterministic structured graph convergence.
 CREATE TABLE IF NOT EXISTS entity_sources (
-    entity_id UUID REFERENCES entities(id) ON DELETE CASCADE,
-    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    entity_id UUID REFERENCES entities(id) ON DELETE CASCADE NOT NULL,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
     source_path TEXT NOT NULL,
     content_hash TEXT NOT NULL,
     source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
@@ -136,8 +136,8 @@ CREATE INDEX IF NOT EXISTS idx_entity_sources_source
     ON entity_sources(source_path);
 
 CREATE TABLE IF NOT EXISTS entity_edge_sources (
-    edge_id INT REFERENCES entity_edges(id) ON DELETE CASCADE,
-    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    edge_id INT REFERENCES entity_edges(id) ON DELETE CASCADE NOT NULL,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
     source_path TEXT NOT NULL,
     content_hash TEXT NOT NULL,
     source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
@@ -151,7 +151,7 @@ CREATE INDEX IF NOT EXISTS idx_entity_edge_sources_source
     ON entity_edge_sources(source_path);
 
 CREATE TABLE IF NOT EXISTS structured_graph_sources (
-    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
     source_path TEXT NOT NULL,
     content_hash TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

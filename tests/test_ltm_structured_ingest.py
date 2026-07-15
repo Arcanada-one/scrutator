@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -26,6 +28,18 @@ GRAPH = {
     ],
     "edges": [{"source": "MUN:1", "target": "MUN:2", "relation": "depends_on"}],
 }
+
+
+def test_provenance_schema_keys_are_not_nullable():
+    schema = (Path(__file__).parents[1] / "src/scrutator/db/schema.sql").read_text()
+    for column in (
+        "entity_id UUID REFERENCES entities(id) ON DELETE CASCADE NOT NULL",
+        "edge_id INT REFERENCES entity_edges(id) ON DELETE CASCADE NOT NULL",
+        "namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL",
+        "source_path TEXT NOT NULL",
+        "content_hash TEXT NOT NULL",
+    ):
+        assert column in schema
 
 
 @asynccontextmanager
@@ -160,6 +174,8 @@ async def test_repository_converges_source_associations_and_deletes_only_orphan_
     assert result == {"entities_upserted": 2, "edges_upserted": 1, "idempotent_noop": False}
     sql = "\n".join(str(call.args[0]) for call in [*conn.execute.await_args_list, *conn.fetch.await_args_list])
     assert "pg_advisory_xact_lock" in sql
+    lock_sql = conn.execute.await_args_list[0].args[0]
+    assert "hashtextextended($1::text || ':' || $2, 0)" in lock_sql
     assert "INSERT INTO entity_sources" in sql
     assert "INSERT INTO entity_edge_sources" in sql
     assert "DELETE FROM entity_sources" in sql and "NOT (entity_id = ANY" in sql
@@ -246,3 +262,172 @@ async def test_source_provenance_lookup_is_namespace_scoped():
     assert "c.namespace_id = $1" in sql
     assert namespace_id == 7
     assert source_path == "same.md"
+
+
+class _StateTransaction:
+    def __init__(self, conn):
+        self.conn = conn
+        self.snapshot = None
+
+    async def __aenter__(self):
+        self.snapshot = deepcopy(self.conn.state)
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if exc_type is not None:
+            self.conn.state = self.snapshot
+        return False
+
+
+class _StateConnection:
+    """Small asyncpg state fake for behavioral convergence/rollback tests."""
+
+    def __init__(self):
+        self.state = {
+            "hashes": {},
+            "entities": {},
+            "edges": {},
+            "entity_sources": set(),
+            "edge_sources": set(),
+            "next_entity": 1,
+            "next_edge": 1,
+        }
+        self.fail_on = None
+
+    def transaction(self):
+        return _StateTransaction(self)
+
+    def _fail(self, sql):
+        if self.fail_on and self.fail_on in sql:
+            raise RuntimeError("injected graph write failure")
+
+    async def fetchval(self, sql, namespace_id, source_path):
+        return self.state["hashes"].get((namespace_id, source_path))
+
+    async def fetchrow(self, sql, *args):
+        self._fail(sql)
+        if "INSERT INTO entities" in sql:
+            namespace_id, name, entity_type = args[:3]
+            key = (namespace_id, name, entity_type)
+            entity_id = self.state["entities"].get(key)
+            if entity_id is None:
+                entity_id = f"00000000-0000-0000-0000-{self.state['next_entity']:012d}"
+                self.state["next_entity"] += 1
+                self.state["entities"][key] = entity_id
+            return {"id": entity_id}
+        if "INSERT INTO entity_edges" in sql:
+            source_id, target_id, relation = args[:3]
+            key = (source_id, target_id, relation)
+            edge_id = self.state["edges"].get(key)
+            if edge_id is None:
+                edge_id = self.state["next_edge"]
+                self.state["next_edge"] += 1
+                self.state["edges"][key] = edge_id
+            return {"id": edge_id}
+        raise AssertionError(f"unexpected fetchrow SQL: {sql}")
+
+    async def execute(self, sql, *args):
+        self._fail(sql)
+        if "pg_advisory_xact_lock" in sql:
+            return "SELECT 1"
+        if "INSERT INTO entity_sources" in sql and "SELECT id" not in sql:
+            entity_id, namespace_id, source_path = args[:3]
+            self.state["entity_sources"].add((entity_id, namespace_id, source_path))
+        elif "INSERT INTO entity_edge_sources" in sql and "SELECT ee.id" not in sql:
+            edge_id, namespace_id, source_path = args[:3]
+            self.state["edge_sources"].add((edge_id, namespace_id, source_path))
+        elif "DELETE FROM entity_sources" in sql:
+            namespace_id, source_path, current_ids = args
+            self.state["entity_sources"] = {
+                assoc
+                for assoc in self.state["entity_sources"]
+                if assoc[1:3] != (namespace_id, source_path) or assoc[0] in current_ids
+            }
+        elif "DELETE FROM entity_edges ee" in sql:
+            removed_ids = set(args[0])
+            shared_ids = {assoc[0] for assoc in self.state["edge_sources"]}
+            deleted_ids = removed_ids - shared_ids
+            self.state["edges"] = {
+                key: edge_id for key, edge_id in self.state["edges"].items() if edge_id not in deleted_ids
+            }
+        elif "INSERT INTO structured_graph_sources" in sql:
+            namespace_id, source_path, content_hash = args
+            self.state["hashes"][(namespace_id, source_path)] = content_hash
+        return "OK"
+
+    async def fetch(self, sql, namespace_id, source_path, current_ids):
+        self._fail(sql)
+        removed = [
+            assoc
+            for assoc in self.state["edge_sources"]
+            if assoc[1:3] == (namespace_id, source_path) and assoc[0] not in current_ids
+        ]
+        self.state["edge_sources"].difference_update(removed)
+        return [{"edge_id": assoc[0]} for assoc in removed]
+
+
+def _state_pool(conn):
+    pool = MagicMock()
+    acquire = MagicMock()
+    acquire.__aenter__ = AsyncMock(return_value=conn)
+    acquire.__aexit__ = AsyncMock(return_value=False)
+    pool.acquire.return_value = acquire
+    return pool
+
+
+@pytest.mark.asyncio
+async def test_behavioral_shared_edge_convergence_retains_entities_and_isolates_namespace():
+    from scrutator.db.repository import apply_structured_graph
+
+    conn = _StateConnection()
+    pool = _state_pool(conn)
+    entities = GRAPH["entities"]
+    edges = GRAPH["edges"]
+    with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=pool):
+        await apply_structured_graph(7, "shared.md", "a" * 64, entities, edges)
+        await apply_structured_graph(7, "other.md", "b" * 64, entities, edges)
+        await apply_structured_graph(8, "shared.md", "c" * 64, entities, edges)
+
+        # Removing source A leaves the namespace-7 shared edge owned by source B.
+        await apply_structured_graph(7, "shared.md", "d" * 64, entities, [])
+        namespace_7_edge_ids = {
+            edge_id
+            for key, edge_id in conn.state["edges"].items()
+            if key[0] in {entity_id for (ns, _, _), entity_id in conn.state["entities"].items() if ns == 7}
+        }
+        assert any(assoc[0] in namespace_7_edge_ids and assoc[2] == "other.md" for assoc in conn.state["edge_sources"])
+
+        # Removing the final namespace-7 owner deletes only that edge.
+        await apply_structured_graph(7, "other.md", "e" * 64, entities, [])
+
+    assert not any(edge_id in namespace_7_edge_ids for edge_id in conn.state["edges"].values())
+    namespace_8_entity_ids = {
+        entity_id for (namespace_id, _, _), entity_id in conn.state["entities"].items() if namespace_id == 8
+    }
+    assert any(key[0] in namespace_8_entity_ids for key in conn.state["edges"]), (
+        "same source_path in another namespace is untouched"
+    )
+    assert len(conn.state["entities"]) == 4, "entities are retained after all source edges are removed"
+    assert conn.state["hashes"][(8, "shared.md")] == "c" * 64
+
+
+@pytest.mark.asyncio
+async def test_behavioral_transaction_rollback_restores_graph_and_prior_hash():
+    from scrutator.db.repository import apply_structured_graph
+
+    conn = _StateConnection()
+    pool = _state_pool(conn)
+    with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=pool):
+        await apply_structured_graph(7, "rollback.md", "a" * 64, GRAPH["entities"], GRAPH["edges"])
+        committed = deepcopy(conn.state)
+        conn.fail_on = "INSERT INTO entity_edge_sources"
+        with pytest.raises(RuntimeError, match="injected graph write failure"):
+            await apply_structured_graph(
+                7,
+                "rollback.md",
+                "b" * 64,
+                GRAPH["entities"],
+                [{"source": "MUN:2", "target": "MUN:1", "relation": "blocks"}],
+            )
+
+    assert conn.state == committed
+    assert conn.state["hashes"][(7, "rollback.md")] == "a" * 64

@@ -199,7 +199,11 @@ async def apply_structured_graph(
     """Atomically upsert and converge a deterministic graph for one source."""
     pool = await get_pool()
     async with pool.acquire() as conn, conn.transaction():
-        await conn.execute("SELECT pg_advisory_xact_lock($1, hashtext($2))", namespace_id, source_path)
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
         current_hash = await conn.fetchval(
             "SELECT content_hash FROM structured_graph_sources WHERE namespace_id = $1 AND source_path = $2",
             namespace_id,
