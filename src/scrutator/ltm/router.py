@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
 from scrutator.auth.models import TenantContext
@@ -42,12 +43,29 @@ def _create_llm_client() -> LtmLlmClient:
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant_context)) -> IngestResponse:
+async def ingest(
+    req: IngestRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+    x_ltm_writer_token: str | None = Header(default=None),
+) -> IngestResponse:
     """Ingest a document: chunk, embed, extract entities/edges.
 
     Write path — namespace auto-provisioning (`upsert_namespace`) is intentional here (SRCH-0023
     Step 3 keeps it only at write/ingest sites).
     """
+    # Reader grants never imply mutation authority. Both generic and
+    # structured LTM ingest require this dedicated writer credential.
+    valid_writer = (
+        bool(settings.ltm_writer_token)
+        and bool(x_ltm_writer_token)
+        and secrets.compare_digest(settings.ltm_writer_token, x_ltm_writer_token)
+    )
+    if not valid_writer:
+        raise HTTPException(status_code=401, detail="LTM writer credential required")
+    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
+    if req.namespace not in allowed_namespaces:
+        raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
+
     namespace_id = await repository.upsert_namespace(req.namespace)
     if req.project:
         await repository.upsert_project(namespace_id, req.project)
