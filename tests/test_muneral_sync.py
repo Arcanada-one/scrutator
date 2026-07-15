@@ -273,10 +273,54 @@ async def test_client_scans_exact_serialized_bytes_immediately_before_post(tmp_p
     "body",
     [
         {"edges_upserted": 0, "idempotent_noop": False},
-        {"entities_upserted": True, "edges_upserted": 0, "idempotent_noop": False},
-        {"entities_upserted": -1, "edges_upserted": 0, "idempotent_noop": False},
-        {"entities_upserted": 0, "edges_upserted": "1", "idempotent_noop": False},
-        {"entities_upserted": 0, "edges_upserted": 1, "idempotent_noop": 0},
+        {
+            "job_id": "job-1",
+            "status": "done",
+            "entities_upserted": True,
+            "edges_upserted": 0,
+            "idempotent_noop": False,
+        },
+        {
+            "job_id": "job-1",
+            "status": "done",
+            "entities_upserted": -1,
+            "edges_upserted": 0,
+            "idempotent_noop": False,
+        },
+        {
+            "job_id": "job-1",
+            "status": "done",
+            "entities_upserted": 0,
+            "edges_upserted": "1",
+            "idempotent_noop": False,
+        },
+        {
+            "job_id": "job-1",
+            "status": "done",
+            "entities_upserted": 0,
+            "edges_upserted": 1,
+            "idempotent_noop": 0,
+        },
+        {
+            "job_id": "",
+            "status": "done",
+            "entities_upserted": 0,
+            "edges_upserted": 0,
+            "idempotent_noop": False,
+        },
+        {
+            "job_id": "job-1",
+            "status": "failed",
+            "entities_upserted": 0,
+            "edges_upserted": 0,
+            "idempotent_noop": False,
+        },
+        {
+            "job_id": "job-1",
+            "entities_upserted": 0,
+            "edges_upserted": 0,
+            "idempotent_noop": False,
+        },
     ],
 )
 @pytest.mark.asyncio
@@ -448,7 +492,13 @@ async def test_malformed_http_success_does_not_advance_incremental_cursor(aggreg
     source.fetch_task.return_value = aggregate
     response = MagicMock()
     response.raise_for_status.return_value = None
-    response.json.return_value = {"entities_upserted": 1, "edges_upserted": 1}
+    response.json.return_value = {
+        "job_id": "job-failed",
+        "status": "failed",
+        "entities_upserted": 1,
+        "edges_upserted": 1,
+        "idempotent_noop": False,
+    }
     http = AsyncMock()
     http.post.return_value = response
     client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http)
