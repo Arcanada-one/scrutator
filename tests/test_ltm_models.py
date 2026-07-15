@@ -22,6 +22,7 @@ from scrutator.ltm.models import (
     ReflectRequest,
     ReflectResponse,
     ReflectRunSummary,
+    StructuredGraph,
 )
 
 
@@ -49,12 +50,124 @@ class TestIngestRequest:
         assert req.namespace == "custom"
         assert req.project == "proj"
 
+    def test_structured_graph_is_optional(self):
+        req = IngestRequest(content="text", source_path="p.md")
+        assert req.structured_graph is None
+
+    def test_misspelled_structured_graph_field_is_rejected(self):
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            IngestRequest(
+                content="text",
+                source_path="p.md",
+                structured_grah={
+                    "schema_version": 1,
+                    "content_hash": "a" * 64,
+                    "entities": [],
+                    "edges": [],
+                },
+            )
+
+
+class TestStructuredGraph:
+    @staticmethod
+    def _payload(**overrides):
+        payload = {
+            "schema_version": 1,
+            "content_hash": "a" * 64,
+            "entities": [
+                {"name": "MUN:task-1", "entity_type": "task", "properties": {}},
+                {"name": "MUN-PROJECT:project-1", "entity_type": "project", "properties": {}},
+            ],
+            "edges": [
+                {
+                    "source": "MUN:task-1",
+                    "target": "MUN-PROJECT:project-1",
+                    "relation": "belongs-to-project",
+                }
+            ],
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_accepts_schema_version_one_and_defaults_edge_weight(self):
+        graph = StructuredGraph.model_validate(self._payload())
+        assert graph.schema_version == 1
+        assert graph.edges[0].weight == 1.0
+
+    @pytest.mark.parametrize("schema_version", [0, 2])
+    def test_rejects_other_schema_versions(self, schema_version):
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(schema_version=schema_version))
+
+    @pytest.mark.parametrize("content_hash", ["a" * 63, "a" * 65, "A" * 64, "g" * 64])
+    def test_rejects_noncanonical_content_hash(self, content_hash):
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(content_hash=content_hash))
+
+    def test_rejects_duplicate_entity_names(self):
+        entity = {"name": "MUN:task-1", "entity_type": "task", "properties": {}}
+        with pytest.raises(ValidationError, match="entity names must be unique"):
+            StructuredGraph.model_validate(self._payload(entities=[entity, entity]))
+
+    @pytest.mark.parametrize("endpoint", ["source", "target"])
+    def test_rejects_unresolved_edge_endpoint(self, endpoint):
+        edge = self._payload()["edges"][0] | {endpoint: "MUN:missing"}
+        with pytest.raises(ValidationError, match="edge endpoints must reference declared entities"):
+            StructuredGraph.model_validate(self._payload(edges=[edge]))
+
+    @pytest.mark.parametrize("weight", [False, True, 0.0, 0.5, 2.0])
+    def test_rejects_noncanonical_edge_weight(self, weight):
+        edge = self._payload()["edges"][0] | {"weight": weight}
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(edges=[edge]))
+
+    @pytest.mark.parametrize("relation", ["", "   ", "has whitespace", "bad/relation"])
+    def test_rejects_invalid_relation_syntax(self, relation):
+        edge = self._payload()["edges"][0] | {"relation": relation}
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(edges=[edge]))
+
+    def test_rejects_more_than_1000_entities(self):
+        entities = [{"name": f"MUN:{i}", "entity_type": "task"} for i in range(1001)]
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(entities=entities, edges=[]))
+
+    def test_rejects_more_than_5000_edges(self):
+        edge = self._payload()["edges"][0]
+        with pytest.raises(ValidationError):
+            StructuredGraph.model_validate(self._payload(edges=[edge] * 5001))
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("graph_extra", True),
+            ("entity_extra", True),
+            ("edge_extra", True),
+        ],
+    )
+    def test_rejects_unknown_fields_at_every_envelope_level(self, field, value):
+        payload = self._payload()
+        if field == "graph_extra":
+            payload[field] = value
+        elif field == "entity_extra":
+            payload["entities"][0][field] = value
+        else:
+            payload["edges"][0][field] = value
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            StructuredGraph.model_validate(payload)
+
 
 class TestIngestResponse:
     def test_creation(self):
         resp = IngestResponse(job_id="abc-123", status=JobStatus.PENDING)
         assert resp.job_id == "abc-123"
         assert resp.status == JobStatus.PENDING
+
+    def test_structured_counts_default_for_backward_compatibility(self):
+        resp = IngestResponse(job_id="abc-123", status=JobStatus.DONE)
+        assert resp.entities_upserted == 0
+        assert resp.edges_upserted == 0
+        assert resp.idempotent_noop is False
 
 
 class TestEntity:

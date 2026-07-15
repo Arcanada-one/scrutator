@@ -4,16 +4,20 @@
 
 service: scrutator
 
-# [to-be-confirmed]: set to the Auth Arcana release that ships the OpenFGA consumer-check
-# endpoint used by src/scrutator/auth/rebac_client.py, once the live endpoint from plan
-# Step 0 is confirmed. Until then this service runs against the principal_namespace_grants
-# FK-cache fallback (degraded RBAC facade per mandate §5) — see rebac.fallback below.
-auth_arcana_min_version: "[to-be-confirmed]"
+# Auth 0.5.0 publishes the dedicated Scrutator LTM resource and reader scope.
+# OpenFGA remains on the explicit FK-cache fallback documented below.
+auth_arcana_min_version: "0.5.0"
+last_validated: "2026-07-15"
 
 identity:
   # No bespoke Scrutator key system (mandate §4) — callers present either credential shape.
   service_token_prefix: "arc_api_"
+  oidc_issuer: "https://auth.arcanada.ai"
   oidc_jwks_url: "https://auth.arcanada.ai/.well-known/jwks.json"
+  resource_audience: "urn:arcanada:scrutator:ltm"
+  m2m_client_id: "muneral-kb-sync"
+  m2m_algorithms:
+    - "EdDSA"
 
 rebac:
   # Auth Arcana OpenFGA is the source of truth; tuple shape per authz/model.fga:
@@ -28,6 +32,7 @@ rebac:
   fallback_table: principal_namespace_grants
 
 scopes_consumed:
+  - kb:ltm.read
   - namespace:read
   - namespace:create
 
