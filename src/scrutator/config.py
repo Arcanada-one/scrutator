@@ -76,6 +76,10 @@ class Settings(BaseSettings):
     # log only, never rejects. MUST stay False until the operator explicitly flips it in prod.
     # env_prefix below makes this SCRUTATOR_AUTH_ENFORCE.
     auth_enforce: bool = False
+    # LTM-0025 structured/generic ingest credential. This is separate from
+    # both reader grants and the /v1/index Feeder credential.
+    ltm_writer_token: str = ""
+    ltm_writer_namespaces: str = ""
     # SRCH-0048 co-located Feeder tombstone credential. This is separate from
     # reader grants and is accepted only by DELETE /v1/index.
     feeder_token: str = ""
