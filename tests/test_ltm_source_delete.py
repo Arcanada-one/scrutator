@@ -1,5 +1,6 @@
 import copy
 import json
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -23,6 +24,12 @@ ANONYMOUS = TenantContext(
     allowed_namespace_names=frozenset(),
 )
 BODY = {"namespace": "muneral", "source_path": "muneral://task/task-2"}
+
+
+def test_env_example_documents_fail_closed_source_prefix_policy():
+    example = (Path(__file__).resolve().parents[1] / ".env.example").read_text()
+    assert 'SCRUTATOR_LTM_WRITER_SOURCE_PREFIXES={"muneral":["muneral://task/"]}' in example
+    assert "DELETE /v1/ltm/source fails closed" in example
 
 
 def _delete(*, token=None, body=None, ctx=READER):
