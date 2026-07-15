@@ -56,6 +56,14 @@ def test_vendored_harness_snapshot_is_complete_and_pinned():
     assert Path(module.QUERIES_DIR) == VENDOR_DIR / "queries"
     assert Path(module.REPORTS_DIR_V4) == VENDOR_DIR / "reports/v4/scrutator"
 
+    gate_spec = importlib.util.spec_from_file_location("recall_gate", GATE_SCRIPT)
+    assert gate_spec is not None and gate_spec.loader is not None
+    gate_module = importlib.util.module_from_spec(gate_spec)
+    gate_spec.loader.exec_module(gate_module)
+    assert gate_module.reports_dir_for_harness(VENDOR_DIR / "ltm-bench-query.py") == (
+        VENDOR_DIR / "reports/v4/scrutator"
+    )
+
     workflow = (GATE_DIR.parent.parent / ".github/workflows/recall-regression.yml").read_text()
     assert "HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py" in workflow
     assert "/home/ci-runner/arcanada/" not in workflow
