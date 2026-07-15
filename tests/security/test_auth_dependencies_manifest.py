@@ -18,6 +18,12 @@ class TestAuthDependenciesManifest:
         manifest = repo_root / "auth.dependencies.yaml"
         data = yaml.safe_load(manifest.read_text())
         assert data["service"] == "scrutator"
-        assert "auth_arcana_min_version" in data
+        assert data["auth_arcana_min_version"] == "0.5.0"
+        assert data["last_validated"] == "2026-07-15"
+        assert data["identity"]["oidc_issuer"] == "https://auth.arcanada.ai"
+        assert data["identity"]["resource_audience"] == "urn:arcanada:scrutator:ltm"
+        assert data["identity"]["m2m_client_id"] == "muneral-kb-sync"
+        assert data["identity"]["m2m_algorithms"] == ["EdDSA"]
+        assert "kb:ltm.read" in data["scopes_consumed"]
         assert data["grace_period"]["flag"] == "SCRUTATOR_AUTH_ENFORCE"
         assert data["grace_period"]["default"] is False
