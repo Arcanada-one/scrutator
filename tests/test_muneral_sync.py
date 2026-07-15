@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from tools.muneral_sync.cli import FULL_BACKFILL_GO, RunMode, execute, parse_args, read_cursor, write_cursor_atomic
-from tools.muneral_sync.client import LtmClient
+from tools.muneral_sync.client import LtmClient, ProtocolError
 from tools.muneral_sync.graph import build_ingest_payload, canonical_hash
 from tools.muneral_sync.secretscan import (
     VERDICT_CLEAN,
@@ -23,6 +23,7 @@ from tools.muneral_sync.secretscan import (
 from tools.muneral_sync.source import ChangeRow, MuneralSource
 
 FIXTURE = Path(__file__).parent / "fixtures/muneral_task_aggregate.json"
+INGEST_RESPONSE_FIXTURE = Path(__file__).parent / "fixtures/scrutator_structured_ingest_response.testclient.json"
 
 
 @pytest.fixture
@@ -250,7 +251,9 @@ async def test_client_scans_exact_serialized_bytes_immediately_before_post(tmp_p
     payload = {"namespace": "muneral", "content": "safe", "structured_graph": {"entities": [], "edges": []}}
     response = MagicMock()
     response.raise_for_status.return_value = None
-    response.json.return_value = {"entities_upserted": 0, "edges_upserted": 0, "idempotent_noop": False}
+    recorded = json.loads(INGEST_RESPONSE_FIXTURE.read_text())
+    assert recorded["fixture_metadata"]["live_deploy_confirmed"] is False
+    response.json.return_value = recorded["response"]
     http = AsyncMock()
     http.post.return_value = response
     seen: list[bytes] = []
@@ -264,6 +267,30 @@ async def test_client_scans_exact_serialized_bytes_immediately_before_post(tmp_p
     sent = http.post.await_args.kwargs["content"]
     assert seen == [sent]
     assert http.post.await_args.kwargs["headers"]["X-LTM-Writer-Token"] == "writer-token"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"edges_upserted": 0, "idempotent_noop": False},
+        {"entities_upserted": True, "edges_upserted": 0, "idempotent_noop": False},
+        {"entities_upserted": -1, "edges_upserted": 0, "idempotent_noop": False},
+        {"entities_upserted": 0, "edges_upserted": "1", "idempotent_noop": False},
+        {"entities_upserted": 0, "edges_upserted": 1, "idempotent_noop": 0},
+    ],
+)
+@pytest.mark.asyncio
+async def test_client_rejects_malformed_ingest_success_without_echoing_body(tmp_path, body):
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = body
+    http = AsyncMock()
+    http.post.return_value = response
+    with pytest.raises(ProtocolError) as raised:
+        await LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http).ingest({"content": "safe"})
+    assert str(raised.value) == "invalid LTM success response"
 
 
 @pytest.mark.asyncio
@@ -290,7 +317,14 @@ async def test_client_tombstone_uses_writer_credential_and_source_path(tmp_path)
     credential.write_text("writer-token")
     response = MagicMock()
     response.raise_for_status.return_value = None
-    response.json.return_value = {"chunks_deleted": 3}
+    response.json.return_value = {
+        "chunks_deleted": 3,
+        "entity_sources_deleted": 2,
+        "edge_sources_deleted": 1,
+        "edges_deleted": 1,
+        "entities_deleted": 0,
+        "idempotent_noop": False,
+    }
     http = AsyncMock()
     http.request.return_value = response
     scanned = []
@@ -301,7 +335,7 @@ async def test_client_tombstone_uses_writer_credential_and_source_path(tmp_path)
 
     client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http, scanner=scanner)
     result = await client.tombstone("muneral", "muneral://task/task-2")
-    assert result == {"chunks_deleted": 3}
+    assert result == response.json.return_value
     request = http.request.await_args
     assert request.args[:2] == ("DELETE", "https://kb.example/v1/ltm/source")
     assert json.loads(request.kwargs["content"]) == {
@@ -310,6 +344,43 @@ async def test_client_tombstone_uses_writer_credential_and_source_path(tmp_path)
     }
     assert scanned == [request.kwargs["content"].decode()]
     assert request.kwargs["headers"]["X-LTM-Writer-Token"] == "writer-token"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"chunks_deleted": 0, "idempotent_noop": True},
+        {
+            "chunks_deleted": False,
+            "entity_sources_deleted": 0,
+            "edge_sources_deleted": 0,
+            "edges_deleted": 0,
+            "entities_deleted": 0,
+            "idempotent_noop": True,
+        },
+        {
+            "chunks_deleted": 0,
+            "entity_sources_deleted": -1,
+            "edge_sources_deleted": 0,
+            "edges_deleted": 0,
+            "entities_deleted": 0,
+            "idempotent_noop": True,
+        },
+    ],
+)
+@pytest.mark.asyncio
+async def test_client_rejects_malformed_tombstone_success(tmp_path, body):
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = body
+    http = AsyncMock()
+    http.request.return_value = response
+    with pytest.raises(ProtocolError, match="^invalid LTM success response$"):
+        await LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http).tombstone(
+            "muneral", "muneral://task/task-2"
+        )
 
 
 def test_cli_modes_and_full_backfill_gate():
@@ -362,6 +433,49 @@ async def test_incremental_cursor_advances_only_after_whole_batch_success(aggreg
     client.ingest.side_effect = [{"entities_upserted": 2, "edges_upserted": 1}] * 2
     await execute(args, source=source, client=client)
     assert read_cursor(cursor) == {"task-1": 2, "task-2": 9}
+
+
+@pytest.mark.asyncio
+async def test_malformed_http_success_does_not_advance_incremental_cursor(aggregate, tmp_path):
+    cursor = tmp_path / "cursor.json"
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id=aggregate["task"]["id"], revision=8, changed_at="now", deleted=False)
+    ]
+    source.fetch_task.return_value = aggregate
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"entities_upserted": 1, "edges_upserted": 1}
+    http = AsyncMock()
+    http.post.return_value = response
+    client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http)
+    with pytest.raises(ProtocolError):
+        await execute(args, source=source, client=client)
+    assert not cursor.exists()
+
+
+@pytest.mark.asyncio
+async def test_malformed_tombstone_success_does_not_advance_incremental_cursor(tmp_path):
+    cursor = tmp_path / "cursor.json"
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id="task-deleted", revision=9, changed_at="now", deleted=True)
+    ]
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"chunks_deleted": 1, "idempotent_noop": False}
+    http = AsyncMock()
+    http.request.return_value = response
+    client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http)
+    with pytest.raises(ProtocolError):
+        await execute(args, source=source, client=client)
+    assert not cursor.exists()
 
 
 @pytest.mark.asyncio
