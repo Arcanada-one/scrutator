@@ -30,6 +30,7 @@ LTM_M2M_ISSUER = "https://auth.arcanada.ai"
 LTM_M2M_AUDIENCE = "urn:arcanada:scrutator:ltm"
 LTM_M2M_SCOPE = "kb:ltm.read"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
+LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
 _LTM_REQUIRED_CLAIMS = ("exp", "iat", "nbf", "iss", "aud", "sub", "client_id", "scope")
 
 
@@ -133,8 +134,8 @@ def _is_ltm_m2m_candidate(token: str, claims: dict) -> bool:
         header.get("alg") == "EdDSA"
         or LTM_M2M_AUDIENCE in audiences
         or LTM_M2M_SCOPE in scopes
-        or claims.get("client_id") == LTM_M2M_CLIENT_ID
-        or claims.get("sub") == LTM_M2M_CLIENT_ID
+        or claims.get("client_id") in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID}
+        or claims.get("sub") in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID}
     )
 
 
@@ -166,7 +167,8 @@ async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
         raise Unauthenticated("LTM M2M token scope mismatch")
     subject = claims.get("sub")
     client_id = claims.get("client_id")
-    if subject != client_id or client_id != settings.auth_ltm_client_id:
+    allowed_clients = {settings.auth_ltm_client_id, settings.auth_ltm_observer_client_id}
+    if subject != client_id or client_id not in allowed_clients:
         raise Unauthenticated("LTM M2M token client binding mismatch")
     issued_at = claims.get("iat")
     not_before = claims.get("nbf")

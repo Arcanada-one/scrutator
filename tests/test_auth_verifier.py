@@ -21,6 +21,7 @@ LTM_M2M_ISSUER = "https://auth.arcanada.ai"
 LTM_M2M_AUDIENCE = "urn:arcanada:scrutator:ltm"
 LTM_M2M_SCOPE = "kb:ltm.read"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
+LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
 
 
 def _ltm_claims(**overrides):
@@ -251,6 +252,11 @@ class TestLtmM2mJwksVerification:
         assert await _verify_ltm_claims(_ltm_claims()) == (LTM_M2M_CLIENT_ID, "service")
 
     @pytest.mark.asyncio
+    async def test_valid_observer_profile_returns_separate_service_principal(self):
+        claims = _ltm_claims(sub=LTM_M2M_OBSERVER_CLIENT_ID, client_id=LTM_M2M_OBSERVER_CLIENT_ID)
+        assert await _verify_ltm_claims(claims) == (LTM_M2M_OBSERVER_CLIENT_ID, "service")
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ("claim", "value"),
         [
@@ -353,6 +359,7 @@ class TestLtmM2mSettings:
         assert configured.auth_ltm_audience == LTM_M2M_AUDIENCE
         assert configured.auth_ltm_scope == LTM_M2M_SCOPE
         assert configured.auth_ltm_client_id == LTM_M2M_CLIENT_ID
+        assert configured.auth_ltm_observer_client_id == LTM_M2M_OBSERVER_CLIENT_ID
         assert configured.auth_ltm_max_token_lifetime_seconds == 300
 
     @pytest.mark.parametrize(
@@ -362,6 +369,7 @@ class TestLtmM2mSettings:
             ("auth_ltm_audience", "https://auth.arcanada.ai/api/v1/admin"),
             ("auth_ltm_scope", "namespace:read"),
             ("auth_ltm_client_id", "other-service"),
+            ("auth_ltm_observer_client_id", "other-service"),
             ("auth_ltm_max_token_lifetime_seconds", 3600),
         ],
     )

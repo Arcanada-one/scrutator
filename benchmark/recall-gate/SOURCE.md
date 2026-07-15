@@ -30,7 +30,9 @@ If the runner is sandboxed to the Scrutator repo checkout only and cannot read `
 - Query source path: `Projects/Long Term Memory/benchmark/queries/`
 - Source commit: `270a3c0843d5c41d2a61feedadc5477d56bd4f45`
 - Copied at: `2026-07-15`
-- Harness SHA-256: `6a31f688301a7fab8d2412500d1ecf22daa638fb22a291605d4a0c2cda1a7b81`
+- Harness adaptation: only `QUERIES_DIR` and report directories were made
+  relative to the vendored script directory; benchmark logic is unchanged.
+- Vendored harness SHA-256: `a9c0e304435b25b1d90d3bc31f791735cf72ed9658c0353ad4356d160d2cee5c`
 - Factual SHA-256: `66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767`
 - Multi-hop SHA-256: `136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f`
 - Temporal SHA-256: `14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032`
