@@ -72,11 +72,18 @@ def _normalize_checklists(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "id": str(item["id"]),
             "text": str(item["text"]),
             "checked": bool(item["checked"]),
-            "position": int(item["position"]),
+            "position": int(item["position"]) if item.get("position") is not None else None,
         }
         for item in items
     ]
-    return sorted(normalized, key=lambda item: (item["position"], item["id"]))
+    return sorted(
+        normalized,
+        key=lambda item: (
+            item["position"] is None,
+            item["position"] if item["position"] is not None else 0,
+            item["id"],
+        ),
+    )
 
 
 def _normalize_agents(items: list[dict[str, Any]]) -> list[dict[str, str]]:
@@ -146,6 +153,32 @@ def _entity(
     return entity
 
 
+def _identity_entity(
+    name: str,
+    entity_type: str,
+    source_ref: str,
+    *,
+    description: str | None = None,
+    **properties: Any,
+) -> dict[str, Any]:
+    identity = {"entity_type": entity_type, "source_ref": source_ref, **properties}
+    identity_hash = hashlib.sha256(
+        json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return _entity(
+        name,
+        entity_type,
+        source_ref,
+        identity_hash,
+        description=description,
+        **properties,
+    )
+
+
+def _task_stub(task_id: str) -> dict[str, Any]:
+    return {"name": f"MUN:{task_id}", "entity_type": "task", "properties": {"muneral_id": task_id}}
+
+
 def _render_content(snapshot: dict[str, Any]) -> str:
     task = snapshot["task"]
     project = snapshot["project"]
@@ -201,11 +234,10 @@ def _add_project_and_parent(
     project = snapshot["project"]
     if project["id"]:
         project_name = f"MUN-PROJECT:{project['id']}"
-        entities[project_name] = _entity(
+        entities[project_name] = _identity_entity(
             project_name,
             "project",
-            source_ref,
-            content_hash,
+            f"muneral://project/{project['id']}",
             description=str(project["name"]),
             muneral_id=project["id"],
             display_name=project["name"],
@@ -214,7 +246,7 @@ def _add_project_and_parent(
 
     if task["parent_id"]:
         parent_name = f"MUN:{task['parent_id']}"
-        entities[parent_name] = _entity(parent_name, "task", source_ref, content_hash, muneral_id=task["parent_id"])
+        entities[parent_name] = _task_stub(str(task["parent_id"]))
         edges.add((task_name, parent_name, "subtask-of"))
 
 
@@ -229,11 +261,10 @@ def _add_tags_and_actors(
     task_name = f"MUN:{task['id']}"
     for tag in snapshot["tags"]:
         tag_name = f"MUN-TAG:{tag}"
-        entities[tag_name] = _entity(
+        entities[tag_name] = _identity_entity(
             tag_name,
             "tag",
-            source_ref,
-            content_hash,
+            f"muneral://tag/{tag}",
             description=tag,
             muneral_id=tag,
             display_name=tag,
@@ -243,11 +274,10 @@ def _add_tags_and_actors(
     if task["created_by_id"]:
         actor_type = normalize_token(str(task["actor_type"] or "unknown"))
         actor_name = f"MUN-ACTOR:{actor_type}:{task['created_by_id']}"
-        entities[actor_name] = _entity(
+        entities[actor_name] = _identity_entity(
             actor_name,
             "actor",
-            source_ref,
-            content_hash,
+            f"muneral://actor/{actor_type}/{task['created_by_id']}",
             muneral_id=task["created_by_id"],
             actor_type=actor_type,
         )
@@ -255,11 +285,10 @@ def _add_tags_and_actors(
 
     for assignment in snapshot["agents"]:
         actor_name = f"MUN-ACTOR:agent:{assignment['agent_id']}"
-        entities[actor_name] = _entity(
+        entities[actor_name] = _identity_entity(
             actor_name,
             "actor",
-            source_ref,
-            content_hash,
+            f"muneral://actor/agent/{assignment['agent_id']}",
             muneral_id=assignment["agent_id"],
             actor_type="agent",
         )
@@ -276,12 +305,8 @@ def _add_dependencies(
     for dependency in snapshot["dependencies"]:
         source = f"MUN:{dependency['from_task_id']}"
         target = f"MUN:{dependency['to_task_id']}"
-        entities.setdefault(
-            source, _entity(source, "task", source_ref, content_hash, muneral_id=dependency["from_task_id"])
-        )
-        entities.setdefault(
-            target, _entity(target, "task", source_ref, content_hash, muneral_id=dependency["to_task_id"])
-        )
+        entities.setdefault(source, _task_stub(str(dependency["from_task_id"])))
+        entities.setdefault(target, _task_stub(str(dependency["to_task_id"])))
         relation = _DEPENDENCY_RELATIONS.get(dependency["type"])
         if relation is None:
             raise ValueError(f"unsupported dependency type: {dependency['type']}")
