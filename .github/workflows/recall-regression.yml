@@ -20,6 +20,46 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Mint short-lived benchmark reader token
+        env:
+          KB_OBSERVER_CLIENT_SECRET: ${{ secrets.KB_OBSERVER_CLIENT_SECRET }}
+          TOKEN_FILE: ${{ runner.temp }}/scrutator-recall-reader.jwt
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          secret = os.environ.get("KB_OBSERVER_CLIENT_SECRET", "")
+          if not secret:
+              raise SystemExit("KB_OBSERVER_CLIENT_SECRET is not configured")
+          credentials = base64.b64encode(f"kb-observer:{secret}".encode()).decode()
+          body = urllib.parse.urlencode({
+              "grant_type": "client_credentials",
+              "scope": "kb:ltm.read",
+              "resource": "urn:arcanada:scrutator:ltm",
+          }).encode()
+          request = urllib.request.Request(
+              "https://auth.arcanada.ai/oidc/token",
+              data=body,
+              headers={
+                  "Authorization": f"Basic {credentials}",
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "User-Agent": "Arcanada-Scrutator-Recall-Gate/1.0",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              token = json.load(response).get("access_token", "")
+          if not token:
+              raise SystemExit("token endpoint returned no access_token")
+          token_path = Path(os.environ["TOKEN_FILE"])
+          token_path.write_text(token)
+          token_path.chmod(0o600)
+          PY
+
       - name: Run recall@k regression gate
         run: |
           # Gate mode: with-entities (--expand-entities).
@@ -32,8 +72,12 @@ jobs:
             --baseline benchmark/recall-gate/baseline.json \
             --thresholds benchmark/recall-gate/thresholds.json
         env:
-          # Harness lives in the synced ~/arcanada tree on arcana-db (Disk Arcana pull follower).
-          # The arcana-db self-hosted runner can read this path directly (no vendoring needed).
-          # If the synced tree is unavailable, vendor the harness under benchmark/recall-gate/vendor/
-          # and update this path accordingly. See benchmark/recall-gate/SOURCE.md for vendoring notes.
-          HARNESS_PATH: /home/ci-runner/arcanada/Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py
+          # INFRA-0322 renamed the host and the runner no longer carries the
+          # historical ~/arcanada follower path. Use the reviewed vendored
+          # harness/query snapshot so the regression gate is checkout-local.
+          HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py
+          SCRUTATOR_BEARER_TOKEN_FILE: ${{ runner.temp }}/scrutator-recall-reader.jwt
+
+      - name: Remove benchmark reader token
+        if: always()
+        run: rm -f "${{ runner.temp }}/scrutator-recall-reader.jwt"

@@ -68,6 +68,14 @@ class Settings(BaseSettings):
 
     # SRCH-0023: tenant isolation — Auth Arcana identity + authorization
     auth_arcana_jwks_url: str = "https://auth.arcanada.ai/.well-known/jwks.json"
+    # LTM-0026 dedicated M2M reader profile. Literals make environment drift
+    # fail at startup instead of silently widening the accepted trust domain.
+    auth_ltm_issuer: Literal["https://auth.arcanada.ai"] = "https://auth.arcanada.ai"
+    auth_ltm_audience: Literal["urn:arcanada:scrutator:ltm"] = "urn:arcanada:scrutator:ltm"
+    auth_ltm_scope: Literal["kb:ltm.read"] = "kb:ltm.read"
+    auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
+    auth_ltm_observer_client_id: Literal["kb-observer"] = "kb-observer"
+    auth_ltm_max_token_lifetime_seconds: Literal[300] = 300
     auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
     auth_arcana_openfga_store_id: str = ""
@@ -76,6 +84,13 @@ class Settings(BaseSettings):
     # log only, never rejects. MUST stay False until the operator explicitly flips it in prod.
     # env_prefix below makes this SCRUTATOR_AUTH_ENFORCE.
     auth_enforce: bool = False
+    # LTM-0025 structured/generic ingest credential. This is separate from
+    # both reader grants and the /v1/index Feeder credential.
+    ltm_writer_token: str = ""
+    ltm_writer_namespaces: str = ""
+    # JSON object mapping each writable namespace to one or more protected
+    # source URI prefixes accepted by DELETE /v1/ltm/source.
+    ltm_writer_source_prefixes: str = ""
     # SRCH-0048 co-located Feeder tombstone credential. This is separate from
     # reader grants and is accepted only by DELETE /v1/index.
     feeder_token: str = ""

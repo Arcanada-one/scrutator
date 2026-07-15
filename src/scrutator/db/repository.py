@@ -31,6 +31,13 @@ async def upsert_namespace(name: str, description: str | None = None) -> int:
         return row["id"]
 
 
+async def get_namespace_id(name: str) -> int | None:
+    """Resolve an existing namespace without mutating it."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval("SELECT id FROM namespaces WHERE name = $1", name)
+
+
 async def upsert_project(namespace_id: int, name: str, description: str | None = None) -> int:
     """Create project if not exists, return its id."""
     pool = await get_pool()
@@ -135,6 +142,367 @@ async def get_chunk_ids_by_source(source_path: str, namespace_id: int | None = N
                 source_path,
             )
     return [row["chunk_id"] for row in rows]
+
+
+async def get_structured_graph_hash(namespace_id: int, source_path: str) -> str | None:
+    """Return the last committed structured graph hash for one namespace/source."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT content_hash FROM structured_graph_sources WHERE namespace_id = $1 AND source_path = $2",
+            namespace_id,
+            source_path,
+        )
+
+
+async def get_source_graph_provenance(namespace_id: int, source_path: str) -> dict[str, list]:
+    """Snapshot legacy graph IDs before reindexing removes their source chunks."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            WITH source_chunks AS (
+                SELECT id
+                FROM chunks c
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+            )
+            SELECT
+                COALESCE((
+                    SELECT array_agg(e.id::text ORDER BY e.id::text)
+                    FROM entities e
+                    WHERE e.namespace_id = $1 AND e.source_chunk_id IN (SELECT id FROM source_chunks)
+                ), ARRAY[]::text[]) AS entity_ids,
+                COALESCE((
+                    SELECT array_agg(ee.id ORDER BY ee.id)
+                    FROM entity_edges ee
+                    JOIN entities source_entity ON source_entity.id = ee.source_entity_id
+                    WHERE source_entity.namespace_id = $1
+                      AND ee.source_chunk_id IN (SELECT id FROM source_chunks)
+                ), ARRAY[]::int[]) AS edge_ids
+            """,
+            namespace_id,
+            source_path,
+        )
+    return {"entity_ids": list(row["entity_ids"]), "edge_ids": list(row["edge_ids"])}
+
+
+async def apply_structured_graph(
+    namespace_id: int,
+    source_path: str,
+    content_hash: str,
+    entities: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    source_chunk_id: str | None = None,
+    prior_entity_ids: list[str] | None = None,
+    prior_edge_ids: list[int] | None = None,
+) -> dict[str, int | bool]:
+    """Atomically upsert and converge a deterministic graph for one source."""
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
+        current_hash = await conn.fetchval(
+            "SELECT content_hash FROM structured_graph_sources WHERE namespace_id = $1 AND source_path = $2",
+            namespace_id,
+            source_path,
+        )
+        if current_hash == content_hash:
+            return {"entities_upserted": 0, "edges_upserted": 0, "idempotent_noop": True}
+
+        # Seed provenance captured before chunk replacement, including legacy rows
+        # that predate the source-association tables.
+        if prior_entity_ids:
+            await conn.execute(
+                """
+                INSERT INTO entity_sources (
+                    entity_id, namespace_id, source_path, content_hash, source_chunk_id, updated_at
+                )
+                SELECT id, $1, $2, $3, NULL, NOW()
+                FROM entities
+                WHERE namespace_id = $1 AND id = ANY($4::uuid[])
+                ON CONFLICT (entity_id, source_path) DO NOTHING
+                """,
+                namespace_id,
+                source_path,
+                current_hash or content_hash,
+                prior_entity_ids,
+            )
+        if prior_edge_ids:
+            await conn.execute(
+                """
+                INSERT INTO entity_edge_sources (
+                    edge_id, namespace_id, source_path, content_hash, source_chunk_id, updated_at
+                )
+                SELECT ee.id, $1, $2, $3, NULL, NOW()
+                FROM entity_edges ee
+                JOIN entities source_entity ON source_entity.id = ee.source_entity_id
+                WHERE source_entity.namespace_id = $1 AND ee.id = ANY($4::int[])
+                ON CONFLICT (edge_id, source_path) DO NOTHING
+                """,
+                namespace_id,
+                source_path,
+                current_hash or content_hash,
+                prior_edge_ids,
+            )
+
+        entity_ids_by_name: dict[str, str] = {}
+        for entity in entities:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO entities (
+                    namespace_id, name, entity_type, description, properties, source_chunk_id
+                )
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6::uuid)
+                ON CONFLICT (namespace_id, name, entity_type)
+                DO UPDATE SET
+                    description = COALESCE(EXCLUDED.description, entities.description),
+                    properties = COALESCE(entities.properties, '{}'::jsonb) || EXCLUDED.properties,
+                    source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entities.source_chunk_id),
+                    updated_at = NOW()
+                RETURNING id::text AS id
+                """,
+                namespace_id,
+                entity["name"],
+                entity["entity_type"],
+                entity.get("description"),
+                json.dumps(entity.get("properties") or {}),
+                source_chunk_id,
+            )
+            entity_id = row["id"]
+            entity_ids_by_name[entity["name"]] = entity_id
+            await conn.execute(
+                """
+                INSERT INTO entity_sources (
+                    entity_id, namespace_id, source_path, content_hash, source_chunk_id, updated_at
+                ) VALUES ($1::uuid, $2, $3, $4, $5::uuid, NOW())
+                ON CONFLICT (entity_id, source_path) DO UPDATE SET
+                    namespace_id = EXCLUDED.namespace_id,
+                    content_hash = EXCLUDED.content_hash,
+                    source_chunk_id = EXCLUDED.source_chunk_id,
+                    updated_at = NOW()
+                """,
+                entity_id,
+                namespace_id,
+                source_path,
+                content_hash,
+                source_chunk_id,
+            )
+
+        edge_ids: list[int] = []
+        for edge in edges:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO entity_edges (
+                    source_entity_id, target_entity_id, relation, weight, source_chunk_id
+                ) VALUES ($1::uuid, $2::uuid, $3, 1.0, $4::uuid)
+                ON CONFLICT (source_entity_id, target_entity_id, relation)
+                DO UPDATE SET
+                    weight = 1.0,
+                    source_chunk_id = COALESCE(EXCLUDED.source_chunk_id, entity_edges.source_chunk_id)
+                RETURNING id
+                """,
+                entity_ids_by_name[edge["source"]],
+                entity_ids_by_name[edge["target"]],
+                edge["relation"],
+                source_chunk_id,
+            )
+            edge_id = row["id"]
+            edge_ids.append(edge_id)
+            await conn.execute(
+                """
+                INSERT INTO entity_edge_sources (
+                    edge_id, namespace_id, source_path, content_hash, source_chunk_id, updated_at
+                ) VALUES ($1, $2, $3, $4, $5::uuid, NOW())
+                ON CONFLICT (edge_id, source_path) DO UPDATE SET
+                    namespace_id = EXCLUDED.namespace_id,
+                    content_hash = EXCLUDED.content_hash,
+                    source_chunk_id = EXCLUDED.source_chunk_id,
+                    updated_at = NOW()
+                """,
+                edge_id,
+                namespace_id,
+                source_path,
+                content_hash,
+                source_chunk_id,
+            )
+
+        current_entity_ids = list(entity_ids_by_name.values())
+        await conn.execute(
+            """
+            DELETE FROM entity_sources
+            WHERE namespace_id = $1 AND source_path = $2
+              AND NOT (entity_id = ANY($3::uuid[]))
+            """,
+            namespace_id,
+            source_path,
+            current_entity_ids,
+        )
+        removed_edge_rows = await conn.fetch(
+            """
+            DELETE FROM entity_edge_sources
+            WHERE namespace_id = $1 AND source_path = $2
+              AND NOT (edge_id = ANY($3::int[]))
+            RETURNING edge_id
+            """,
+            namespace_id,
+            source_path,
+            edge_ids,
+        )
+        removed_edge_ids = [row["edge_id"] for row in removed_edge_rows]
+        if removed_edge_ids:
+            await conn.execute(
+                """
+                DELETE FROM entity_edges ee
+                WHERE ee.id = ANY($1::int[])
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_edge_sources ees WHERE ees.edge_id = ee.id
+                  )
+                """,
+                removed_edge_ids,
+            )
+
+        # Publish the hash only after every graph mutation succeeds.
+        await conn.execute(
+            """
+            INSERT INTO structured_graph_sources (namespace_id, source_path, content_hash, updated_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (namespace_id, source_path) DO UPDATE SET
+                content_hash = EXCLUDED.content_hash,
+                updated_at = NOW()
+            """,
+            namespace_id,
+            source_path,
+            content_hash,
+        )
+        return {
+            "entities_upserted": len(entities),
+            "edges_upserted": len(edges),
+            "idempotent_noop": False,
+        }
+
+
+def _command_count(status: str) -> int:
+    """Extract asyncpg's affected-row count from a command status."""
+    return int(status.rsplit(" ", 1)[-1])
+
+
+async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, int | bool]:
+    """Atomically remove one source while preserving shared graph ownership."""
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
+        entity_rows = await conn.fetch(
+            """
+            SELECT candidate.entity_id::text AS entity_id
+            FROM (
+                SELECT es.entity_id
+                FROM entity_sources es
+                WHERE es.namespace_id = $1 AND es.source_path = $2
+                UNION
+                SELECT e.id
+                FROM entities e
+                JOIN chunks c ON c.id = e.source_chunk_id
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+            ) candidate
+            """,
+            namespace_id,
+            source_path,
+        )
+        edge_rows = await conn.fetch(
+            """
+            SELECT candidate.edge_id
+            FROM (
+                SELECT ees.edge_id
+                FROM entity_edge_sources ees
+                WHERE ees.namespace_id = $1 AND ees.source_path = $2
+                UNION
+                SELECT ee.id
+                FROM entity_edges ee
+                JOIN chunks c ON c.id = ee.source_chunk_id
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+            ) candidate
+            """,
+            namespace_id,
+            source_path,
+        )
+        candidate_entity_ids = [row["entity_id"] for row in entity_rows]
+        candidate_edge_ids = [row["edge_id"] for row in edge_rows]
+
+        edge_sources_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM entity_edge_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        entity_sources_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM entity_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        chunks_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM chunks WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        edges_deleted = _command_count(
+            await conn.execute(
+                """
+                DELETE FROM entity_edges ee
+                WHERE ee.id = ANY($1::int[])
+                  AND ee.source_chunk_id IS NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_edge_sources ees WHERE ees.edge_id = ee.id
+                  )
+                """,
+                candidate_edge_ids,
+            )
+        )
+        entities_deleted = _command_count(
+            await conn.execute(
+                """
+                DELETE FROM entities e
+                WHERE e.id = ANY($1::uuid[])
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_sources es WHERE es.entity_id = e.id
+                  )
+                  AND e.source_chunk_id IS NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_edges ee
+                      WHERE ee.source_entity_id = e.id OR ee.target_entity_id = e.id
+                  )
+                """,
+                candidate_entity_ids,
+            )
+        )
+        # The structured hash is the committed source marker. Remove it only
+        # after every associated graph/chunk mutation has succeeded.
+        hashes_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM structured_graph_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        counts = {
+            "chunks_deleted": chunks_deleted,
+            "entity_sources_deleted": entity_sources_deleted,
+            "edge_sources_deleted": edge_sources_deleted,
+            "edges_deleted": edges_deleted,
+            "entities_deleted": entities_deleted,
+        }
+        return {**counts, "idempotent_noop": not any((*counts.values(), hashes_deleted))}
 
 
 async def delete_by_source(source_path: str, namespace_id: int) -> int:

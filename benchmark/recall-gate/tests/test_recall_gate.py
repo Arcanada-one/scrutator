@@ -9,6 +9,8 @@ Tests cover:
 - Baseline-load: missing file -> SystemExit with informative message
 """
 
+import hashlib
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +21,7 @@ GATE_SCRIPT = GATE_DIR / "recall_gate.py"
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 BASELINE = GATE_DIR / "baseline.json"
 THRESHOLDS = GATE_DIR / "thresholds.json"
+VENDOR_DIR = GATE_DIR / "vendor"
 
 
 def run_gate(*args) -> subprocess.CompletedProcess:
@@ -33,6 +36,29 @@ def run_gate(*args) -> subprocess.CompletedProcess:
         *args,
     ]
     return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def test_vendored_harness_snapshot_is_complete_and_pinned():
+    expected = {
+        VENDOR_DIR / "ltm-bench-query.py": "a9c0e304435b25b1d90d3bc31f791735cf72ed9658c0353ad4356d160d2cee5c",
+        VENDOR_DIR / "queries/factual.jsonl": "66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767",
+        VENDOR_DIR / "queries/multi-hop.jsonl": "136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f",
+        VENDOR_DIR / "queries/temporal.jsonl": "14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032",
+    }
+    for path, digest in expected.items():
+        assert path.is_file(), f"missing vendored recall input: {path}"
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
+
+    spec = importlib.util.spec_from_file_location("vendored_ltm_bench", VENDOR_DIR / "ltm-bench-query.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert Path(module.QUERIES_DIR) == VENDOR_DIR / "queries"
+    assert Path(module.REPORTS_DIR_V4) == VENDOR_DIR / "reports/v4/scrutator"
+
+    workflow = (GATE_DIR.parent.parent / ".github/workflows/recall-regression.yml").read_text()
+    assert "HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py" in workflow
+    assert "/home/ci-runner/arcanada/" not in workflow
 
 
 class TestGreenReport:

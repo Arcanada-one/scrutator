@@ -75,7 +75,21 @@ jobs:
       group: deploy-scrutator
       cancel-in-progress: false
     steps:
+      - name: Pre-deploy host readiness
+        id: preflight
+        uses: Arcanada-one/datarim/.github/actions/preflight-check@f01ab2034ee99321fe627b76e98641b672e12c0b # v1, immutable pin
+        with:
+          target-host: arcana-kb
+          service-name: scrutator
+          extra-checks: |
+            vault
+            tailscale
+            time-skew
+            docker-pressure
+          ops-bot-key: ${{ secrets.OPSBOT_API_KEY }}
+
       - name: Deploy
+        if: steps.preflight.outputs.status != 'fail'
         run: |
           set -e
           cd /srv/apps/scrutator

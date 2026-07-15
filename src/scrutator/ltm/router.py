@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
 from scrutator.auth.models import TenantContext
@@ -22,6 +24,8 @@ from scrutator.ltm.models import (
     RecallResult,
     ReflectRequest,
     ReflectResponse,
+    SourceDeleteRequest,
+    SourceDeleteResponse,
 )
 from scrutator.ltm.pipeline import IngestPipeline, RecallPipeline
 from scrutator.ltm.reflect import ReflectBudget, ReflectJob
@@ -30,6 +34,36 @@ from scrutator.search.searcher import search
 log = logging.getLogger("scrutator.ltm.router")
 
 router = APIRouter(prefix="/v1/ltm", tags=["ltm"])
+
+
+def _has_valid_writer_token(supplied_token: str | None) -> bool:
+    try:
+        configured = settings.ltm_writer_token.encode("ascii")
+        supplied = supplied_token.encode("ascii") if supplied_token else b""
+    except UnicodeEncodeError:
+        return False
+    return bool(configured) and bool(supplied) and secrets.compare_digest(configured, supplied)
+
+
+def _source_prefixes_for(namespace: str) -> tuple[str, ...] | None:
+    """Parse the destructive-path allowlist, returning None on any invalid config."""
+    try:
+        mapping = json.loads(settings.ltm_writer_source_prefixes)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(mapping, dict) or not mapping:
+        return None
+    for key, prefixes in mapping.items():
+        if (
+            not isinstance(key, str)
+            or not key.strip()
+            or not isinstance(prefixes, list)
+            or not prefixes
+            or any(not isinstance(prefix, str) or not prefix for prefix in prefixes)
+        ):
+            return None
+    configured = mapping.get(namespace)
+    return tuple(configured) if configured is not None else ()
 
 
 def _create_llm_client() -> LtmLlmClient:
@@ -42,13 +76,39 @@ def _create_llm_client() -> LtmLlmClient:
 
 
 @router.post("/ingest", response_model=IngestResponse)
-async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant_context)) -> IngestResponse:
+async def ingest(
+    req: IngestRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+    x_ltm_writer_token: str | None = Header(default=None),
+) -> IngestResponse:
     """Ingest a document: chunk, embed, extract entities/edges.
 
     Write path — namespace auto-provisioning (`upsert_namespace`) is intentional here (SRCH-0023
     Step 3 keeps it only at write/ingest sites).
     """
-    namespace_id = await repository.upsert_namespace(req.namespace)
+    # Reader grants never imply mutation authority. Both generic and
+    # structured LTM ingest require this dedicated writer credential.
+    if not _has_valid_writer_token(x_ltm_writer_token):
+        raise HTTPException(status_code=401, detail="LTM writer credential required")
+    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
+    if req.namespace not in allowed_namespaces:
+        raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
+
+    if req.structured_graph is not None:
+        namespace_id = await repository.get_namespace_id(req.namespace)
+        if namespace_id is not None:
+            current_hash = await repository.get_structured_graph_hash(namespace_id, req.source_path)
+            if current_hash == req.structured_graph.content_hash:
+                return IngestResponse(
+                    job_id=f"noop:{current_hash}",
+                    status=JobStatus.DONE,
+                    idempotent_noop=True,
+                )
+        else:
+            namespace_id = await repository.upsert_namespace(req.namespace)
+    else:
+        namespace_id = await repository.upsert_namespace(req.namespace)
+
     if req.project:
         await repository.upsert_project(namespace_id, req.project)
 
@@ -58,6 +118,9 @@ async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant
     from scrutator.search.indexer import index_document
 
     try:
+        prior_provenance = None
+        if req.structured_graph is not None:
+            prior_provenance = await repository.get_source_graph_provenance(namespace_id, req.source_path)
         await repository.update_ltm_job(job_id, status="chunking", current_step="chunking")
         index_result = await index_document(
             content=req.content,
@@ -67,6 +130,28 @@ async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant
         )
         total_chunks = index_result.chunks_indexed
 
+        if req.structured_graph is not None:
+            chunk_ids = await repository.get_chunk_ids_by_source(req.source_path, namespace_id)
+            graph = req.structured_graph
+            result = await repository.apply_structured_graph(
+                namespace_id=namespace_id,
+                source_path=req.source_path,
+                content_hash=graph.content_hash,
+                entities=[entity.model_dump() for entity in graph.entities],
+                edges=[edge.model_dump() for edge in graph.edges],
+                source_chunk_id=chunk_ids[0] if chunk_ids else None,
+                prior_entity_ids=prior_provenance["entity_ids"],
+                prior_edge_ids=prior_provenance["edge_ids"],
+            )
+            await repository.update_ltm_job(
+                job_id,
+                status="done",
+                current_step="complete",
+                total_chunks=total_chunks,
+                processed_chunks=total_chunks,
+            )
+            return IngestResponse(job_id=job_id, status=JobStatus.DONE, **result)
+
         await repository.update_ltm_job(
             job_id,
             status="extracting",
@@ -75,7 +160,7 @@ async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant
         )
 
         # Get chunk IDs for the indexed document
-        chunk_ids = await repository.get_chunk_ids_by_source(req.source_path)
+        chunk_ids = await repository.get_chunk_ids_by_source(req.source_path, namespace_id)
 
         # Sequential entity/edge extraction per chunk
         llm = _create_llm_client()
@@ -112,6 +197,37 @@ async def ingest(req: IngestRequest, ctx: TenantContext = Depends(require_tenant
         raise HTTPException(status_code=500, detail="Ingest failed") from exc
 
     return IngestResponse(job_id=job_id, status=JobStatus.DONE)
+
+
+@router.delete("/source", response_model=SourceDeleteResponse)
+async def delete_source(
+    req: SourceDeleteRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+    x_ltm_writer_token: str | None = Header(default=None),
+) -> SourceDeleteResponse:
+    """Remove one configured source without disturbing shared graph provenance."""
+    if not _has_valid_writer_token(x_ltm_writer_token):
+        raise HTTPException(status_code=401, detail="LTM writer credential required")
+    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
+    if req.namespace not in allowed_namespaces:
+        raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
+    prefixes = _source_prefixes_for(req.namespace)
+    if prefixes is None:
+        raise HTTPException(status_code=503, detail="LTM source-prefix policy is not configured")
+    if not prefixes or not req.source_path.startswith(prefixes):
+        raise HTTPException(status_code=403, detail="source path outside LTM writer scope")
+
+    namespace_id = await repository.get_namespace_id(req.namespace)
+    if namespace_id is None:
+        return SourceDeleteResponse(
+            chunks_deleted=0,
+            entity_sources_deleted=0,
+            edge_sources_deleted=0,
+            edges_deleted=0,
+            entities_deleted=0,
+            idempotent_noop=True,
+        )
+    return SourceDeleteResponse(**await repository.delete_ltm_source(namespace_id, req.source_path))
 
 
 @router.get("/jobs/{job_id}", response_model=LtmJob)

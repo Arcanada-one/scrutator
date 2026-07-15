@@ -2,14 +2,89 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _MAX_CONTENT_LENGTH = 500_000
 _MAX_RECALL_LIMIT = 50
+_MAX_STRUCTURED_ENTITIES = 1_000
+_MAX_STRUCTURED_EDGES = 5_000
+
+
+class StructuredGraphEntity(BaseModel):
+    """A caller-supplied entity in a deterministic graph envelope."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    entity_type: str
+    description: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("name", "entity_type")
+    @classmethod
+    def required_strings(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must not be empty")
+        return v.strip()
+
+
+class StructuredGraphEdge(BaseModel):
+    """A caller-supplied relationship in a deterministic graph envelope."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: str
+    target: str
+    relation: str
+    weight: Literal[1.0] = 1.0
+
+    @field_validator("weight", mode="before")
+    @classmethod
+    def weight_is_exactly_one(cls, v: object) -> float:
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or v != 1.0:
+            raise ValueError("weight must equal 1.0")
+        return 1.0
+
+    @field_validator("source", "target")
+    @classmethod
+    def endpoint_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("edge endpoint must not be empty")
+        return v.strip()
+
+    @field_validator("relation")
+    @classmethod
+    def relation_syntax(cls, v: str) -> str:
+        v = v.strip()
+        if not v or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]*", v) is None:
+            raise ValueError("relation has invalid syntax")
+        return v
+
+
+class StructuredGraph(BaseModel):
+    """Versioned deterministic graph supplied with an LTM ingest request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal[1]
+    content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entities: list[StructuredGraphEntity] = Field(default_factory=list, max_length=_MAX_STRUCTURED_ENTITIES)
+    edges: list[StructuredGraphEdge] = Field(default_factory=list, max_length=_MAX_STRUCTURED_EDGES)
+
+    @model_validator(mode="after")
+    def validate_references(self) -> StructuredGraph:
+        names = [entity.name for entity in self.entities]
+        if len(names) != len(set(names)):
+            raise ValueError("entity names must be unique")
+        declared = set(names)
+        if any(edge.source not in declared or edge.target not in declared for edge in self.edges):
+            raise ValueError("edge endpoints must reference declared entities")
+        return self
 
 
 class JobStatus(StrEnum):
@@ -24,10 +99,13 @@ class JobStatus(StrEnum):
 class IngestRequest(BaseModel):
     """Request for POST /v1/ltm/ingest."""
 
+    model_config = ConfigDict(extra="forbid")
+
     content: str
     source_path: str
     namespace: str = "arcanada"
     project: str | None = None
+    structured_graph: StructuredGraph | None = None
 
     @field_validator("content")
     @classmethod
@@ -52,6 +130,36 @@ class IngestResponse(BaseModel):
 
     job_id: str
     status: JobStatus
+    entities_upserted: int = 0
+    edges_upserted: int = 0
+    idempotent_noop: bool = False
+
+
+class SourceDeleteRequest(BaseModel):
+    """Canonical identity of one source to remove from LTM storage."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    namespace: str
+    source_path: str
+
+    @field_validator("namespace", "source_path")
+    @classmethod
+    def required_strings(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must not be empty")
+        return v.strip()
+
+
+class SourceDeleteResponse(BaseModel):
+    """Source-scoped deletion counts."""
+
+    chunks_deleted: int = Field(ge=0)
+    entity_sources_deleted: int = Field(ge=0)
+    edge_sources_deleted: int = Field(ge=0)
+    edges_deleted: int = Field(ge=0)
+    entities_deleted: int = Field(ge=0)
+    idempotent_noop: bool
 
 
 class Entity(BaseModel):
