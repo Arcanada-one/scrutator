@@ -70,7 +70,21 @@ async def ingest(
     if req.namespace not in allowed_namespaces:
         raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
 
-    namespace_id = await repository.upsert_namespace(req.namespace)
+    if req.structured_graph is not None:
+        namespace_id = await repository.get_namespace_id(req.namespace)
+        if namespace_id is not None:
+            current_hash = await repository.get_structured_graph_hash(namespace_id, req.source_path)
+            if current_hash == req.structured_graph.content_hash:
+                return IngestResponse(
+                    job_id=f"noop:{current_hash}",
+                    status=JobStatus.DONE,
+                    idempotent_noop=True,
+                )
+        else:
+            namespace_id = await repository.upsert_namespace(req.namespace)
+    else:
+        namespace_id = await repository.upsert_namespace(req.namespace)
+
     if req.project:
         await repository.upsert_project(namespace_id, req.project)
 
@@ -80,6 +94,9 @@ async def ingest(
     from scrutator.search.indexer import index_document
 
     try:
+        prior_provenance = None
+        if req.structured_graph is not None:
+            prior_provenance = await repository.get_source_graph_provenance(namespace_id, req.source_path)
         await repository.update_ltm_job(job_id, status="chunking", current_step="chunking")
         index_result = await index_document(
             content=req.content,
@@ -89,6 +106,28 @@ async def ingest(
         )
         total_chunks = index_result.chunks_indexed
 
+        if req.structured_graph is not None:
+            chunk_ids = await repository.get_chunk_ids_by_source(req.source_path, namespace_id)
+            graph = req.structured_graph
+            result = await repository.apply_structured_graph(
+                namespace_id=namespace_id,
+                source_path=req.source_path,
+                content_hash=graph.content_hash,
+                entities=[entity.model_dump() for entity in graph.entities],
+                edges=[edge.model_dump() for edge in graph.edges],
+                source_chunk_id=chunk_ids[0] if chunk_ids else None,
+                prior_entity_ids=prior_provenance["entity_ids"],
+                prior_edge_ids=prior_provenance["edge_ids"],
+            )
+            await repository.update_ltm_job(
+                job_id,
+                status="done",
+                current_step="complete",
+                total_chunks=total_chunks,
+                processed_chunks=total_chunks,
+            )
+            return IngestResponse(job_id=job_id, status=JobStatus.DONE, **result)
+
         await repository.update_ltm_job(
             job_id,
             status="extracting",
@@ -97,7 +136,7 @@ async def ingest(
         )
 
         # Get chunk IDs for the indexed document
-        chunk_ids = await repository.get_chunk_ids_by_source(req.source_path)
+        chunk_ids = await repository.get_chunk_ids_by_source(req.source_path, namespace_id)
 
         # Sequential entity/edge extraction per chunk
         llm = _create_llm_client()
