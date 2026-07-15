@@ -26,13 +26,19 @@ _TOMBSTONE_COUNTS = (
 )
 
 
-def _decode_success(response: Any, count_fields: tuple[str, ...]) -> dict[str, int | bool]:
+def _decode_success(
+    response: Any, count_fields: tuple[str, ...], *, require_completed_job: bool = False
+) -> dict[str, int | bool]:
     try:
         body = response.json()
     except Exception:
         raise ProtocolError("invalid LTM success response") from None
     if not isinstance(body, dict):
         raise ProtocolError("invalid LTM success response")
+    if require_completed_job:
+        job_id = body.get("job_id")
+        if type(job_id) is not str or not job_id.strip() or body.get("status") != "done":
+            raise ProtocolError("invalid LTM success response")
     decoded: dict[str, int | bool] = {}
     for field in count_fields:
         value = body.get(field)
@@ -90,7 +96,7 @@ class LtmClient:
             headers={"Content-Type": "application/json", "X-LTM-Writer-Token": token},
         )
         response.raise_for_status()
-        return _decode_success(response, _INGEST_COUNTS)
+        return _decode_success(response, _INGEST_COUNTS, require_completed_job=True)
 
     async def tombstone(self, namespace: str, source_path: str) -> dict[str, int | bool]:
         token = self._token()
