@@ -104,6 +104,12 @@ def test_readonly_role_is_fail_closed_and_documents_database_wide_revocations() 
     assert "GRANT ALL" not in sql
     assert "SELECT set_config('muneral.role_password', '<secret>'" not in sql
     assert "SELECT set_config('muneral.role_password', '', false)" not in sql
+    assert "REVOKE EXECUTE ON FUNCTION public.muneral_kb_touch_task(uuid, boolean) FROM PUBLIC" in sql
+    assert "REVOKE EXECUTE ON FUNCTION public.muneral_kb_tasks_changed() FROM PUBLIC" in sql
+    assert "REVOKE EXECUTE ON FUNCTION public.muneral_kb_task_child_changed() FROM PUBLIC" in sql
+    assert "REVOKE EXECUTE ON FUNCTION public.muneral_kb_task_dependency_changed() FROM PUBLIC" in sql
+    assert "REVOKE EXECUTE ON FUNCTION public.muneral_kb_project_changed() FROM PUBLIC" in sql
+    assert "legitimate roles" in sql.lower()
 
 
 def _muneral_migrations() -> list[Path]:
@@ -291,6 +297,29 @@ async def test_pilot_sql_against_disposable_pg18_with_live_due_date_signature(tm
         await _assert_permission_denied(reader, "CREATE TABLE public.reader_escape (id integer)")
         await _assert_permission_denied(reader, "CREATE TEMP TABLE reader_escape (id integer)")
         await _assert_permission_denied(reader, "SELECT * FROM task_field_state")
+        assert not await admin.fetchval(
+            "SELECT has_function_privilege("
+            "'muneral_kb_reader', 'public.muneral_kb_touch_task(uuid,boolean)', 'EXECUTE')"
+        )
+        await _assert_permission_denied(
+            reader,
+            f"SELECT public.muneral_kb_touch_task('{PILOT_TASK_ID}'::uuid, false)",
+        )
+
+        # Trigger invocation does not require direct EXECUTE. A normal domain
+        # writer can still mutate a task and the registry trigger records it.
+        revision_before = await admin.fetchval(
+            "SELECT revision FROM muneral_kb_task_changes WHERE task_id = $1", PILOT_TASK_ID
+        )
+        await admin.execute("GRANT UPDATE ON TABLE tasks TO muneral_kb_reader")
+        try:
+            await reader.execute("UPDATE tasks SET updated_at = updated_at WHERE id = $1", PILOT_TASK_ID)
+        finally:
+            await admin.execute("REVOKE UPDATE ON TABLE tasks FROM muneral_kb_reader")
+        revision_after = await admin.fetchval(
+            "SELECT revision FROM muneral_kb_task_changes WHERE task_id = $1", PILOT_TASK_ID
+        )
+        assert revision_after == revision_before + 1
 
         # A later non-pilot child makes rollback fail closed. Because the
         # rollback is one transaction, none of the pilot graph is deleted.
