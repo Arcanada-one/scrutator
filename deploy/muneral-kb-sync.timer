@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Muneral to Scrutator graph sync every five minutes
+
+[Timer]
+Unit=muneral-kb-sync.service
+OnBootSec=5min
+OnUnitInactiveSec=5min
+RandomizedDelaySec=30s
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target
