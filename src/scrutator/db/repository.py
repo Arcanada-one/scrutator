@@ -384,6 +384,102 @@ async def apply_structured_graph(
         }
 
 
+def _command_count(status: str) -> int:
+    """Extract asyncpg's affected-row count from a command status."""
+    return int(status.rsplit(" ", 1)[-1])
+
+
+async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, int | bool]:
+    """Atomically remove one source while preserving shared graph ownership."""
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
+        entity_rows = await conn.fetch(
+            "SELECT entity_id::text AS entity_id FROM entity_sources WHERE namespace_id = $1 AND source_path = $2",
+            namespace_id,
+            source_path,
+        )
+        edge_rows = await conn.fetch(
+            "SELECT edge_id FROM entity_edge_sources WHERE namespace_id = $1 AND source_path = $2",
+            namespace_id,
+            source_path,
+        )
+        candidate_entity_ids = [row["entity_id"] for row in entity_rows]
+        candidate_edge_ids = [row["edge_id"] for row in edge_rows]
+
+        edge_sources_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM entity_edge_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        entity_sources_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM entity_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        chunks_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM chunks WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        edges_deleted = _command_count(
+            await conn.execute(
+                """
+                DELETE FROM entity_edges ee
+                WHERE ee.id = ANY($1::int[])
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_edge_sources ees WHERE ees.edge_id = ee.id
+                  )
+                """,
+                candidate_edge_ids,
+            )
+        )
+        entities_deleted = _command_count(
+            await conn.execute(
+                """
+                DELETE FROM entities e
+                WHERE e.id = ANY($1::uuid[])
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_sources es WHERE es.entity_id = e.id
+                  )
+                  AND e.source_chunk_id IS NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM entity_edges ee
+                      WHERE ee.source_entity_id = e.id OR ee.target_entity_id = e.id
+                  )
+                """,
+                candidate_entity_ids,
+            )
+        )
+        # The structured hash is the committed source marker. Remove it only
+        # after every associated graph/chunk mutation has succeeded.
+        hashes_deleted = _command_count(
+            await conn.execute(
+                "DELETE FROM structured_graph_sources WHERE namespace_id = $1 AND source_path = $2",
+                namespace_id,
+                source_path,
+            )
+        )
+        counts = {
+            "chunks_deleted": chunks_deleted,
+            "entity_sources_deleted": entity_sources_deleted,
+            "edge_sources_deleted": edge_sources_deleted,
+            "edges_deleted": edges_deleted,
+            "entities_deleted": entities_deleted,
+        }
+        return {**counts, "idempotent_noop": not any((*counts.values(), hashes_deleted))}
+
+
 async def delete_by_source(source_path: str, namespace_id: int) -> int:
     """Delete all chunks for a given source path. Returns deleted count."""
     pool = await get_pool()

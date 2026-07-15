@@ -135,6 +135,33 @@ class IngestResponse(BaseModel):
     idempotent_noop: bool = False
 
 
+class SourceDeleteRequest(BaseModel):
+    """Canonical identity of one source to remove from LTM storage."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    namespace: str
+    source_path: str
+
+    @field_validator("namespace", "source_path")
+    @classmethod
+    def required_strings(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must not be empty")
+        return v.strip()
+
+
+class SourceDeleteResponse(BaseModel):
+    """Source-scoped deletion counts."""
+
+    chunks_deleted: int = Field(ge=0)
+    entity_sources_deleted: int = Field(ge=0)
+    edge_sources_deleted: int = Field(ge=0)
+    edges_deleted: int = Field(ge=0)
+    entities_deleted: int = Field(ge=0)
+    idempotent_noop: bool
+
+
 class Entity(BaseModel):
     """An extracted named entity."""
 
