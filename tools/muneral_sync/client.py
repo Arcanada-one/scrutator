@@ -12,6 +12,40 @@ import httpx
 from .secretscan import ScanError, ScanResult, scan_serialized
 
 
+class ProtocolError(RuntimeError):
+    """A 2xx LTM response did not satisfy the success envelope contract."""
+
+
+_INGEST_COUNTS = ("entities_upserted", "edges_upserted")
+_TOMBSTONE_COUNTS = (
+    "chunks_deleted",
+    "entity_sources_deleted",
+    "edge_sources_deleted",
+    "edges_deleted",
+    "entities_deleted",
+)
+
+
+def _decode_success(response: Any, count_fields: tuple[str, ...]) -> dict[str, int | bool]:
+    try:
+        body = response.json()
+    except Exception:
+        raise ProtocolError("invalid LTM success response") from None
+    if not isinstance(body, dict):
+        raise ProtocolError("invalid LTM success response")
+    decoded: dict[str, int | bool] = {}
+    for field in count_fields:
+        value = body.get(field)
+        if type(value) is not int or value < 0:
+            raise ProtocolError("invalid LTM success response")
+        decoded[field] = value
+    idempotent_noop = body.get("idempotent_noop")
+    if type(idempotent_noop) is not bool:
+        raise ProtocolError("invalid LTM success response")
+    decoded["idempotent_noop"] = idempotent_noop
+    return decoded
+
+
 class LtmClient:
     def __init__(
         self,
@@ -56,14 +90,9 @@ class LtmClient:
             headers={"Content-Type": "application/json", "X-LTM-Writer-Token": token},
         )
         response.raise_for_status()
-        body = response.json()
-        return {
-            "entities_upserted": int(body.get("entities_upserted", 0)),
-            "edges_upserted": int(body.get("edges_upserted", 0)),
-            "idempotent_noop": bool(body.get("idempotent_noop", False)),
-        }
+        return _decode_success(response, _INGEST_COUNTS)
 
-    async def tombstone(self, namespace: str, source_path: str) -> dict[str, int]:
+    async def tombstone(self, namespace: str, source_path: str) -> dict[str, int | bool]:
         token = self._token()
         serialized = self._serialize_and_scan({"namespace": namespace, "source_path": source_path})
         endpoint = self.endpoint.removesuffix("/ingest") + "/source"
@@ -74,4 +103,4 @@ class LtmClient:
             headers={"Content-Type": "application/json", "X-LTM-Writer-Token": token},
         )
         response.raise_for_status()
-        return {"chunks_deleted": int(response.json().get("chunks_deleted", 0))}
+        return _decode_success(response, _TOMBSTONE_COUNTS)

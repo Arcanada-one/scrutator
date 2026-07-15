@@ -1,0 +1,15 @@
+{
+  "fixture_metadata": {
+    "captured_at": "2026-07-15T16:35:00Z",
+    "provenance": "FastAPI TestClient POST /v1/ltm/ingest response captured from the current Scrutator branch through the real router and IngestResponse wrapper; repository hash lookup was a deterministic test double selecting the no-op path",
+    "live_deploy_confirmed": false,
+    "replacement_gate": "Confirm or replace with a live structured-ingest response after server deployment"
+  },
+  "response": {
+    "job_id": "noop:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": "done",
+    "entities_upserted": 0,
+    "edges_upserted": 0,
+    "idempotent_noop": true
+  }
+}
