@@ -48,6 +48,7 @@ jobs:
               headers={
                   "Authorization": f"Basic {credentials}",
                   "Content-Type": "application/x-www-form-urlencoded",
+                  "User-Agent": "Arcanada-Scrutator-Recall-Gate/1.0",
               },
           )
           with urllib.request.urlopen(request, timeout=15) as response:
