@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import secrets
 import time
@@ -23,6 +24,8 @@ from scrutator.ltm.models import (
     RecallResult,
     ReflectRequest,
     ReflectResponse,
+    SourceDeleteRequest,
+    SourceDeleteResponse,
 )
 from scrutator.ltm.pipeline import IngestPipeline, RecallPipeline
 from scrutator.ltm.reflect import ReflectBudget, ReflectJob
@@ -31,6 +34,36 @@ from scrutator.search.searcher import search
 log = logging.getLogger("scrutator.ltm.router")
 
 router = APIRouter(prefix="/v1/ltm", tags=["ltm"])
+
+
+def _has_valid_writer_token(supplied_token: str | None) -> bool:
+    try:
+        configured = settings.ltm_writer_token.encode("ascii")
+        supplied = supplied_token.encode("ascii") if supplied_token else b""
+    except UnicodeEncodeError:
+        return False
+    return bool(configured) and bool(supplied) and secrets.compare_digest(configured, supplied)
+
+
+def _source_prefixes_for(namespace: str) -> tuple[str, ...] | None:
+    """Parse the destructive-path allowlist, returning None on any invalid config."""
+    try:
+        mapping = json.loads(settings.ltm_writer_source_prefixes)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(mapping, dict) or not mapping:
+        return None
+    for key, prefixes in mapping.items():
+        if (
+            not isinstance(key, str)
+            or not key.strip()
+            or not isinstance(prefixes, list)
+            or not prefixes
+            or any(not isinstance(prefix, str) or not prefix for prefix in prefixes)
+        ):
+            return None
+    configured = mapping.get(namespace)
+    return tuple(configured) if configured is not None else ()
 
 
 def _create_llm_client() -> LtmLlmClient:
@@ -55,16 +88,7 @@ async def ingest(
     """
     # Reader grants never imply mutation authority. Both generic and
     # structured LTM ingest require this dedicated writer credential.
-    try:
-        configured_token = settings.ltm_writer_token.encode("ascii")
-        supplied_token = x_ltm_writer_token.encode("ascii") if x_ltm_writer_token else b""
-    except UnicodeEncodeError:
-        valid_writer = False
-    else:
-        valid_writer = (
-            bool(configured_token) and bool(supplied_token) and secrets.compare_digest(configured_token, supplied_token)
-        )
-    if not valid_writer:
+    if not _has_valid_writer_token(x_ltm_writer_token):
         raise HTTPException(status_code=401, detail="LTM writer credential required")
     allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
     if req.namespace not in allowed_namespaces:
@@ -173,6 +197,37 @@ async def ingest(
         raise HTTPException(status_code=500, detail="Ingest failed") from exc
 
     return IngestResponse(job_id=job_id, status=JobStatus.DONE)
+
+
+@router.delete("/source", response_model=SourceDeleteResponse)
+async def delete_source(
+    req: SourceDeleteRequest,
+    ctx: TenantContext = Depends(require_tenant_context),
+    x_ltm_writer_token: str | None = Header(default=None),
+) -> SourceDeleteResponse:
+    """Remove one configured source without disturbing shared graph provenance."""
+    if not _has_valid_writer_token(x_ltm_writer_token):
+        raise HTTPException(status_code=401, detail="LTM writer credential required")
+    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
+    if req.namespace not in allowed_namespaces:
+        raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
+    prefixes = _source_prefixes_for(req.namespace)
+    if prefixes is None:
+        raise HTTPException(status_code=503, detail="LTM source-prefix policy is not configured")
+    if not prefixes or not req.source_path.startswith(prefixes):
+        raise HTTPException(status_code=403, detail="source path outside LTM writer scope")
+
+    namespace_id = await repository.get_namespace_id(req.namespace)
+    if namespace_id is None:
+        return SourceDeleteResponse(
+            chunks_deleted=0,
+            entity_sources_deleted=0,
+            edge_sources_deleted=0,
+            edges_deleted=0,
+            entities_deleted=0,
+            idempotent_noop=True,
+        )
+    return SourceDeleteResponse(**await repository.delete_ltm_source(namespace_id, req.source_path))
 
 
 @router.get("/jobs/{job_id}", response_model=LtmJob)

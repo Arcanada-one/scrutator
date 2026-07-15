@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     # both reader grants and the /v1/index Feeder credential.
     ltm_writer_token: str = ""
     ltm_writer_namespaces: str = ""
+    # JSON object mapping each writable namespace to one or more protected
+    # source URI prefixes accepted by DELETE /v1/ltm/source.
+    ltm_writer_source_prefixes: str = ""
     # SRCH-0048 co-located Feeder tombstone credential. This is separate from
     # reader grants and is accepted only by DELETE /v1/index.
     feeder_token: str = ""
