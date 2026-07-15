@@ -68,6 +68,13 @@ class Settings(BaseSettings):
 
     # SRCH-0023: tenant isolation — Auth Arcana identity + authorization
     auth_arcana_jwks_url: str = "https://auth.arcanada.ai/.well-known/jwks.json"
+    # LTM-0026 dedicated M2M reader profile. Literals make environment drift
+    # fail at startup instead of silently widening the accepted trust domain.
+    auth_ltm_issuer: Literal["https://auth.arcanada.ai"] = "https://auth.arcanada.ai"
+    auth_ltm_audience: Literal["urn:arcanada:scrutator:ltm"] = "urn:arcanada:scrutator:ltm"
+    auth_ltm_scope: Literal["kb:ltm.read"] = "kb:ltm.read"
+    auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
+    auth_ltm_max_token_lifetime_seconds: Literal[300] = 300
     auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
     auth_arcana_openfga_store_id: str = ""
