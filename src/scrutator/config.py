@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     ltm_connector: str = "openrouter"
     ltm_model: str = "google/gemini-2.5-flash"
-    ltm_mc_url: str = "http://100.121.155.54:3900"
+    ltm_mc_url: str = "https://connector.arcanada.ai"
     ltm_mc_api_key: str = ""
     ltm_max_entities_per_chunk: int = 10
     ltm_dedup_similarity: float = 0.85

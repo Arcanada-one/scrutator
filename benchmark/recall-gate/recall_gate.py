@@ -43,6 +43,12 @@ DEFAULT_HARNESS = Path.home() / "arcanada/Projects/Long Term Memory/benchmark/sc
 CLASSES = ["factual", "multi-hop", "temporal"]
 
 
+def reports_dir_for_harness(harness_path: Path) -> Path:
+    """Resolve the report root for canonical or checkout-local vendored harnesses."""
+    harness_root = harness_path.parent if (harness_path.parent / "queries").is_dir() else harness_path.parent.parent
+    return harness_root / "reports" / "v4" / "scrutator"
+
+
 def load_json(path: Path, label: str) -> dict:
     """Load and parse a JSON file; exit with informative message on failure."""
     if not path.exists():
@@ -104,7 +110,7 @@ def run_harness(harness_path: Path) -> dict:
 
     # The harness writes its report to a dated file under reports/v4/scrutator/.
     # With --expand-entities the filename suffix is .with-entities.json.
-    harness_reports_dir = harness_path.parent.parent / "reports" / "v4" / "scrutator"
+    harness_reports_dir = reports_dir_for_harness(harness_path)
     if not harness_reports_dir.exists():
         print(f"ERROR: harness reports dir not found: {harness_reports_dir}", file=sys.stderr)
         sys.exit(2)
