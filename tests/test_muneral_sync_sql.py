@@ -9,6 +9,8 @@ from urllib.parse import unquote, urlsplit
 import asyncpg
 import pytest
 
+from tools.muneral_sync.sql.provision_readonly_role import provision_from_files
+
 ROOT = Path(__file__).parents[1]
 SQL_DIR = ROOT / "tools" / "muneral_sync" / "sql"
 SEED = SQL_DIR / "pilot_seed.sql"
@@ -45,6 +47,7 @@ def test_pilot_seed_is_deterministic_idempotent_and_complete() -> None:
     assert "'pilot'" in sql
     assert "task_checklists" in sql
     assert "activity_log" in sql
+    assert "pilot seed identity mismatch" in sql
 
 
 def test_pilot_rollback_is_fk_safe_scoped_and_preserves_registry_tombstone() -> None:
@@ -64,6 +67,9 @@ def test_pilot_rollback_is_fk_safe_scoped_and_preserves_registry_tombstone() -> 
     assert "DELETE FROM muneral_kb_task_changes" not in sql
     assert "7d2c0e8a-4b7e-4c01-8d33-10000000000" in sql
     assert "WHERE id =" in sql
+    assert "pilot rollback identity mismatch" in sql
+    assert "non-pilot dependents" in sql
+    assert sql.count("IS NOT DISTINCT FROM") >= 10
 
 
 def test_readonly_role_is_fail_closed_and_documents_database_wide_revocations() -> None:
@@ -96,6 +102,8 @@ def test_readonly_role_is_fail_closed_and_documents_database_wide_revocations() 
     }
     assert "GRANT SELECT ON ALL TABLES" not in sql
     assert "GRANT ALL" not in sql
+    assert "SELECT set_config('muneral.role_password', '<secret>'" not in sql
+    assert "SELECT set_config('muneral.role_password', '', false)" not in sql
 
 
 def _muneral_migrations() -> list[Path]:
@@ -115,10 +123,10 @@ async def _assert_permission_denied(connection: asyncpg.Connection, sql: str) ->
 
 
 @pytest.mark.asyncio
-async def test_pilot_sql_against_disposable_production_faithful_postgres() -> None:
+async def test_pilot_sql_against_disposable_pg18_with_live_due_date_signature(tmp_path: Path) -> None:
     dsn = os.environ.get("MUNERAL_TEST_DATABASE_URL")
     if not dsn:
-        pytest.skip("no disposable PG18 MUNERAL_TEST_DATABASE_URL; live raw-SQL gate is environment-gated")
+        pytest.skip("no disposable PG18 MUNERAL_TEST_DATABASE_URL; raw-SQL gate is environment-gated")
 
     admin = await asyncpg.connect(dsn)
     reader: asyncpg.Connection | None = None
@@ -129,6 +137,31 @@ async def test_pilot_sql_against_disposable_production_faithful_postgres() -> No
 
         for migration in _muneral_migrations():
             await admin.execute(migration.read_text())
+        # The committed initial migration is stale (TEXT), while the 2026-07-15
+        # live Muneral schema probe reported tasks.due_date as DATE. Reproduce
+        # and assert that exact live signature without touching production.
+        await admin.execute("ALTER TABLE tasks ALTER COLUMN due_date TYPE DATE USING due_date::date")
+        assert (
+            await admin.fetchval(
+                """SELECT data_type FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'tasks' AND column_name = 'due_date'"""
+            )
+            == "date"
+        )
+
+        # A deterministic-ID collision must abort the whole seed and preserve
+        # the pre-existing row without creating any pilot descendants.
+        await admin.execute(
+            """INSERT INTO users (id, name, created_at, updated_at)
+            VALUES ($1, 'Collision fixture', '2026-07-15T00:00:00Z', '2026-07-15T00:00:00Z')""",
+            PILOT_USER_ID,
+        )
+        with pytest.raises(asyncpg.RaiseError, match="pilot seed identity mismatch"):
+            await admin.execute(SEED.read_text())
+        await admin.execute("ROLLBACK")
+        assert await admin.fetchval("SELECT name FROM users WHERE id = $1", PILOT_USER_ID) == "Collision fixture"
+        assert await admin.fetchval("SELECT count(*) FROM workspaces WHERE id = $1", PILOT_WORKSPACE_ID) == 0
+        await admin.execute("DELETE FROM users WHERE id = $1", PILOT_USER_ID)
 
         unrelated_user = "d96f5d01-4e1e-4b00-9000-000000000001"
         unrelated_workspace = "d96f5d01-4e1e-4b00-9000-000000000002"
@@ -208,9 +241,35 @@ async def test_pilot_sql_against_disposable_production_faithful_postgres() -> No
         )
         assert tuple(second_counts) == tuple(first_counts)
 
-        role_password = uuid.uuid4().hex
-        await admin.execute("SELECT set_config('muneral.role_password', $1, false)", role_password)
-        await admin.execute(READONLY_ROLE.read_text())
+        # Identity drift blocks rollback before its first DELETE.
+        await admin.execute("UPDATE task_checklists SET text = 'Collision fixture' WHERE id = $1", PILOT_CHECKLIST_ID)
+        with pytest.raises(asyncpg.RaiseError, match="pilot rollback identity mismatch"):
+            await admin.execute(ROLLBACK.read_text())
+        await admin.execute("ROLLBACK")
+        assert await admin.fetchval("SELECT count(*) FROM tasks WHERE id = $1", PILOT_TASK_ID) == 1
+        assert await admin.fetchval("SELECT count(*) FROM activity_log WHERE id = $1", PILOT_ACTIVITY_ID) == 1
+        assert await admin.fetchval("SELECT text FROM task_checklists WHERE id = $1", PILOT_CHECKLIST_ID) == (
+            "Collision fixture"
+        )
+        await admin.execute(
+            """UPDATE task_checklists
+            SET text = 'Pilot task graph is proven in the KB through the granted principal'
+            WHERE id = $1""",
+            PILOT_CHECKLIST_ID,
+        )
+
+        supplied_dsn_file = os.environ.get("MUNERAL_TEST_ADMIN_DSN_FILE")
+        supplied_password_file = os.environ.get("MUNERAL_TEST_ROLE_PASSWORD_FILE")
+        dsn_file = Path(supplied_dsn_file) if supplied_dsn_file else tmp_path / "admin-dsn"
+        password_file = Path(supplied_password_file) if supplied_password_file else tmp_path / "reader-password"
+        if not supplied_dsn_file:
+            dsn_file.write_text(dsn + "\n")
+            dsn_file.chmod(0o600)
+        if not supplied_password_file:
+            password_file.write_text(uuid.uuid4().hex + "\n")
+            password_file.chmod(0o600)
+        role_password = password_file.read_text().strip()
+        await provision_from_files(dsn_file, password_file)
 
         parsed = urlsplit(dsn)
         reader = await asyncpg.connect(
@@ -232,6 +291,22 @@ async def test_pilot_sql_against_disposable_production_faithful_postgres() -> No
         await _assert_permission_denied(reader, "CREATE TABLE public.reader_escape (id integer)")
         await _assert_permission_denied(reader, "CREATE TEMP TABLE reader_escape (id integer)")
         await _assert_permission_denied(reader, "SELECT * FROM task_field_state")
+
+        # A later non-pilot child makes rollback fail closed. Because the
+        # rollback is one transaction, none of the pilot graph is deleted.
+        later_child_id = "d96f5d01-4e1e-4b00-9000-000000000005"
+        await admin.execute(
+            "INSERT INTO task_git_refs (id, task_id, type, url) VALUES ($1, $2, 'commit', 'https://example.invalid')",
+            later_child_id,
+            PILOT_TASK_ID,
+        )
+        with pytest.raises(asyncpg.RaiseError, match="non-pilot dependents"):
+            await admin.execute(ROLLBACK.read_text())
+        await admin.execute("ROLLBACK")
+        assert await admin.fetchval("SELECT count(*) FROM tasks WHERE id = $1", PILOT_TASK_ID) == 1
+        assert await admin.fetchval("SELECT count(*) FROM activity_log WHERE id = $1", PILOT_ACTIVITY_ID) == 1
+        assert await admin.fetchval("SELECT count(*) FROM task_git_refs WHERE id = $1", later_child_id) == 1
+        await admin.execute("DELETE FROM task_git_refs WHERE id = $1", later_child_id)
 
         await admin.execute(ROLLBACK.read_text())
         assert await admin.fetchval("SELECT count(*) FROM tasks WHERE id = $1", PILOT_TASK_ID) == 0
