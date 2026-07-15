@@ -99,6 +99,8 @@ class JobStatus(StrEnum):
 class IngestRequest(BaseModel):
     """Request for POST /v1/ltm/ingest."""
 
+    model_config = ConfigDict(extra="forbid")
+
     content: str
     source_path: str
     namespace: str = "arcanada"
