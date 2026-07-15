@@ -62,15 +62,24 @@ root_path() {
 opt_root="$(root_path /opt/muneral-kb-sync)"
 readonly opt_root
 readonly releases_dir="$opt_root/releases"
-state_dir="$(root_path /var/lib/muneral-kb-sync)"
+state_base="$(root_path /var/lib/muneral-kb-sync)"
+readonly state_base
+state_dir="$state_base/runtime"
 readonly state_dir
 credential_dir="$(root_path /etc/muneral-kb-sync)"
 readonly credential_dir
 unit_dir="$(root_path /etc/systemd/system)"
 readonly unit_dir
+lock_dir="$(root_path /run/muneral-kb-sync-install)"
+readonly lock_dir
+readonly lock_file="$lock_dir/transaction.lock"
 staging=""
 created_release=""
 activation_started=false
+transaction_snapshot_started=false
+transaction_backup=""
+timer_was_enabled=false
+timer_was_active=false
 original_current=""
 original_previous=""
 original_current_present=false
@@ -79,6 +88,9 @@ original_previous_present=false
 cleanup_staging() {
     local status=$?
     if [[ $status -ne 0 ]]; then
+        if [[ "$transaction_snapshot_started" == true ]]; then
+            restore_transaction_state || true
+        fi
         if [[ "$activation_started" == true ]]; then
             if [[ "$original_current_present" == true ]]; then
                 atomic_link "$original_current" "$opt_root/current"
@@ -100,6 +112,9 @@ cleanup_staging() {
             rm -rf -- "$created_release"
         fi
     fi
+    if [[ -n "$transaction_backup" && -d "$transaction_backup" ]]; then
+        rm -rf -- "$transaction_backup"
+    fi
     return "$status"
 }
 trap cleanup_staging EXIT
@@ -118,6 +133,104 @@ atomic_link() {
     mv -Tf -- "$temporary" "$link"
 }
 
+expected_root_uid() {
+    if [[ "$root" == "/" ]]; then printf '0\n'; else id -u; fi
+}
+
+validate_secure_directory() {
+    local path="$1" expected_uid="$2" mode owner
+    [[ -d "$path" && ! -L "$path" ]] || return 1
+    owner="$(stat -c '%u' "$path")"
+    mode=$((8#$(stat -c '%a' "$path")))
+    [[ "$owner" == "$expected_uid" && $((mode & 8#022)) -eq 0 ]]
+}
+
+validate_existing_canonical_paths() {
+    local expected_uid path
+    expected_uid="$(expected_root_uid)"
+    for path in "$opt_root" "$releases_dir" "$state_base" "$credential_dir" "$unit_dir" "$lock_dir"; do
+        if [[ -e "$path" || -L "$path" ]]; then
+            validate_secure_directory "$path" "$expected_uid" || return 1
+        fi
+    done
+}
+
+validate_service_account() {
+    local passwd_record group_record uid gid primary_gid home shell supplementary
+    group_record="$(getent group "$service_name")" || return 1
+    IFS=: read -r _ _ gid _ <<<"$group_record"
+    passwd_record="$(getent passwd "$service_name")" || return 1
+    IFS=: read -r _ _ uid primary_gid _ home shell <<<"$passwd_record"
+    [[ "$uid" =~ ^[0-9]+$ && "$gid" =~ ^[0-9]+$ && "$primary_gid" =~ ^[0-9]+$ ]] || return 1
+    [[ $uid -ne 0 && $gid -ne 0 && "$primary_gid" == "$gid" ]] || return 1
+    [[ "$home" == "/var/lib/$service_name" && "$shell" == "/usr/sbin/nologin" ]] || return 1
+    supplementary="$(id -G "$service_name")" || return 1
+    [[ "$supplementary" == "$primary_gid" ]]
+}
+
+acquire_global_lock() {
+    local expected_uid mode owner
+    expected_uid="$(expected_root_uid)"
+    if [[ -e "$lock_dir" || -L "$lock_dir" ]]; then
+        validate_secure_directory "$lock_dir" "$expected_uid" || {
+            echo "installer lock directory is insecure" >&2
+            exit 73
+        }
+    else
+        install -d -m 0700 "$lock_dir"
+    fi
+    [[ ! -L "$lock_file" ]] || { echo "installer lock file must not be a symlink" >&2; exit 73; }
+    exec 8>"$lock_file"
+    chmod 0600 "$lock_file"
+    owner="$(stat -c '%u' "$lock_file")"
+    mode="$(stat -c '%a' "$lock_file")"
+    [[ "$owner" == "$expected_uid" && "$mode" == "600" ]] || exit 73
+    flock --nonblock 8 || { echo "another install or rollback transaction is running" >&2; exit 75; }
+    if [[ "$root" != "/" && -n "${MUNERAL_KB_SYNC_TEST_HOLD_LOCK_FILE:-}" ]]; then
+        : >"${MUNERAL_KB_SYNC_TEST_HOLD_LOCK_FILE}.ready"
+        while [[ -e "${MUNERAL_KB_SYNC_TEST_HOLD_LOCK_FILE}" ]]; do sleep 0.05; done
+    fi
+}
+
+snapshot_transaction_state() {
+    transaction_backup="$opt_root/.transaction-backup.$$"
+    install -d -m 0700 "$transaction_backup"
+    for unit in "$service_name.service" "$service_name.timer"; do
+        [[ ! -L "$unit_dir/$unit" ]] || { echo "unit file must not be a symlink" >&2; return 73; }
+        if [[ -f "$unit_dir/$unit" && ! -L "$unit_dir/$unit" ]]; then
+            cp --preserve=mode,timestamps -- "$unit_dir/$unit" "$transaction_backup/$unit"
+        fi
+    done
+    if [[ "$root" == "/" ]]; then
+        if systemctl is-enabled --quiet "$service_name.timer"; then timer_was_enabled=true; fi
+        if systemctl is-active --quiet "$service_name.timer"; then timer_was_active=true; fi
+    else
+        [[ -e "$state_dir/timer-enabled" ]] && timer_was_enabled=true
+        [[ -e "$state_dir/timer-active" ]] && timer_was_active=true
+    fi
+    transaction_snapshot_started=true
+}
+
+restore_transaction_state() {
+    local unit
+    for unit in "$service_name.service" "$service_name.timer"; do
+        if [[ -f "$transaction_backup/$unit" ]]; then
+            install -m "$(stat -c '%a' "$transaction_backup/$unit")" "$transaction_backup/$unit" "$unit_dir/$unit"
+        else
+            rm -f -- "$unit_dir/$unit"
+        fi
+    done
+    if [[ "$root" == "/" ]]; then
+        systemctl daemon-reload
+        if [[ "$timer_was_enabled" == true ]]; then systemctl enable "$service_name.timer"; else systemctl disable "$service_name.timer"; fi
+        if [[ "$timer_was_active" == true ]]; then systemctl start "$service_name.timer"; else systemctl stop "$service_name.timer"; fi
+    else
+        if [[ "$timer_was_enabled" == true ]]; then : >"$state_dir/timer-enabled"; else rm -f -- "$state_dir/timer-enabled"; fi
+        if [[ "$timer_was_active" == true ]]; then : >"$state_dir/timer-active"; else rm -f -- "$state_dir/timer-active"; fi
+    fi
+    transaction_snapshot_started=false
+}
+
 validate_release_target() {
     local target="$1"
     [[ "$target" =~ ^releases/[0-9a-f]{40}$ ]] || return 1
@@ -129,7 +242,25 @@ validate_release_integrity() {
     local expected_sha="$2"
     local recorded_sha
     local -a release_sha_lines
+    local expected_uid path mode
     [[ -d "$release" && ! -L "$release" ]] || return 1
+    expected_uid="$(expected_root_uid)"
+    validate_secure_directory "$opt_root" "$expected_uid" || return 1
+    validate_secure_directory "$releases_dir" "$expected_uid" || return 1
+    if find "$release" ! -type f ! -type d -print -quit | grep -q .; then
+        return 1
+    fi
+    while IFS= read -r path; do
+        [[ "$(stat -c '%u' "$path")" == "$expected_uid" ]] || return 1
+        mode="$(stat -c '%a' "$path")"
+        if [[ -d "$path" ]]; then
+            [[ "$mode" == "555" ]] || return 1
+        elif [[ "$path" == "$release/bin/muneral-kb-sync" || "$path" == "$release"/venv/bin/python* ]]; then
+            [[ "$mode" == "555" ]] || return 1
+        else
+            [[ "$mode" == "444" ]] || return 1
+        fi
+    done < <(find "$release" -type d -o -type f)
     [[ -f "$release/RELEASE_SHA" && ! -L "$release/RELEASE_SHA" ]] || return 1
     [[ -f "$release/$manifest_name" && ! -L "$release/$manifest_name" ]] || return 1
     if find "$release" -type l -print -quit | grep -q .; then
@@ -194,20 +325,29 @@ validate_runtime_credentials() {
 }
 
 install_accounts_and_directories() {
+    validate_existing_canonical_paths || { echo "canonical install path is insecure" >&2; exit 73; }
     if [[ "$root" == "/" ]]; then
         getent group "$service_name" >/dev/null || groupadd --system "$service_name"
         if ! id -u "$service_name" >/dev/null 2>&1; then
             useradd --system --gid "$service_name" --home-dir "/var/lib/$service_name" \
                 --shell /usr/sbin/nologin "$service_name"
         fi
+        validate_service_account || { echo "existing service account or group violates the isolation contract" >&2; exit 77; }
         install -d -m 0755 -o root -g root "$opt_root" "$releases_dir" "$unit_dir"
+        install -d -m 0755 -o root -g root "$state_base"
         install -d -m 0750 -o "$service_name" -g "$service_name" "$state_dir"
         install -d -m 0700 -o root -g root "$credential_dir"
     else
         install -d -m 0755 "$opt_root" "$releases_dir" "$unit_dir"
+        install -d -m 0755 "$state_base"
         install -d -m 0750 "$state_dir"
         install -d -m 0700 "$credential_dir"
     fi
+    local expected_uid
+    expected_uid="$(expected_root_uid)"
+    for path in "$opt_root" "$releases_dir" "$state_base" "$credential_dir" "$unit_dir"; do
+        validate_secure_directory "$path" "$expected_uid" || { echo "canonical install path validation failed" >&2; exit 73; }
+    done
 }
 
 install_release() {
@@ -260,6 +400,8 @@ install_release() {
             --disable-pip-version-check \
             --no-input \
             --no-deps \
+            --require-hashes \
+            --only-binary=:all: \
             --requirement "$staging/deploy/requirements-muneral-kb-sync.txt"
         PYTHONPATH="$staging/src:$staging" "$staging/venv/bin/python" -c \
             'import asyncpg, httpx, tools.muneral_sync.cli'
@@ -293,6 +435,7 @@ install_release() {
         echo "new release failed integrity validation" >&2
         return 65
     }
+    snapshot_transaction_state
     install -m 0644 "$final_release/deploy/muneral-kb-sync.service" "$unit_dir/muneral-kb-sync.service"
     install -m 0644 "$final_release/deploy/muneral-kb-sync.timer" "$unit_dir/muneral-kb-sync.timer"
 
@@ -329,11 +472,17 @@ install_release() {
             systemctl enable --now muneral-kb-sync.timer
         else
             : >"$state_dir/timer-enabled"
+            : >"$state_dir/timer-active"
+            if [[ "${MUNERAL_KB_SYNC_TEST_FAIL_AFTER_ENABLE:-}" == "1" ]]; then
+                echo "injected dry-root post-enable failure" >&2
+                return 70
+            fi
         fi
     fi
     staging=""
     created_release=""
     activation_started=false
+    transaction_snapshot_started=false
 }
 
 rollback_release() {
@@ -349,6 +498,8 @@ rollback_release() {
     atomic_link "$previous_target" "$opt_root/current"
     atomic_link "$current_target" "$opt_root/previous"
 }
+
+acquire_global_lock
 
 case "$action" in
     install) install_release ;;

@@ -3,7 +3,7 @@ set -euo pipefail
 
 umask 077
 
-readonly state_dir="${MUNERAL_KB_SYNC_STATE_DIR:-/var/lib/muneral-kb-sync}"
+readonly state_dir="${MUNERAL_KB_SYNC_STATE_DIR:-/var/lib/muneral-kb-sync/runtime}"
 readonly credentials_dir="${CREDENTIALS_DIRECTORY:-/etc/muneral-kb-sync}"
 readonly dsn_credential="${credentials_dir}/muneral-db-dsn"
 readonly writer_credential="${credentials_dir}/ltm-writer-token"
