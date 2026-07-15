@@ -118,7 +118,9 @@ def test_valid_scoped_writer_token_enters_existing_generic_ingest_pipeline():
             patch("scrutator.ltm.router.repository.upsert_namespace", new_callable=AsyncMock, return_value=7) as upsert,
             patch("scrutator.ltm.router.repository.create_ltm_job", new_callable=AsyncMock, return_value="job-1"),
             patch("scrutator.ltm.router.repository.update_ltm_job", new_callable=AsyncMock),
-            patch("scrutator.ltm.router.repository.get_chunk_ids_by_source", new_callable=AsyncMock, return_value=[]),
+            patch(
+                "scrutator.ltm.router.repository.get_chunk_ids_by_source", new_callable=AsyncMock, return_value=[]
+            ) as get_chunk_ids,
             patch(
                 "scrutator.ltm.router.repository.get_entity_names_for_namespace",
                 new_callable=AsyncMock,
@@ -142,6 +144,13 @@ def test_valid_scoped_writer_token_enters_existing_generic_ingest_pipeline():
         settings.ltm_writer_token, settings.ltm_writer_namespaces = original
 
     assert response.status_code == 200
-    assert response.json() == {"job_id": "job-1", "status": "done"}
+    assert response.json() == {
+        "job_id": "job-1",
+        "status": "done",
+        "entities_upserted": 0,
+        "edges_upserted": 0,
+        "idempotent_noop": False,
+    }
     upsert.assert_awaited_once_with("muneral")
+    get_chunk_ids.assert_awaited_once_with("muneral://task/1", 7)
     index_document.assert_awaited_once()

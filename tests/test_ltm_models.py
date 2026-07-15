@@ -163,6 +163,12 @@ class TestIngestResponse:
         assert resp.job_id == "abc-123"
         assert resp.status == JobStatus.PENDING
 
+    def test_structured_counts_default_for_backward_compatibility(self):
+        resp = IngestResponse(job_id="abc-123", status=JobStatus.DONE)
+        assert resp.entities_upserted == 0
+        assert resp.edges_upserted == 0
+        assert resp.idempotent_noop is False
+
 
 class TestEntity:
     def test_valid(self):

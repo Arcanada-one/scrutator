@@ -130,6 +130,9 @@ class IngestResponse(BaseModel):
 
     job_id: str
     status: JobStatus
+    entities_upserted: int = 0
+    edges_upserted: int = 0
+    idempotent_noop: bool = False
 
 
 class Entity(BaseModel):

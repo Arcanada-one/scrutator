@@ -119,6 +119,48 @@ CREATE TABLE IF NOT EXISTS entity_edges (
 CREATE INDEX IF NOT EXISTS idx_entity_edges_source ON entity_edges(source_entity_id);
 CREATE INDEX IF NOT EXISTS idx_entity_edges_target ON entity_edges(target_entity_id);
 
+-- LTM-0025: per-source ownership for deterministic structured graph convergence.
+CREATE TABLE IF NOT EXISTS entity_sources (
+    entity_id UUID REFERENCES entities(id) ON DELETE CASCADE,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    source_path TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(entity_id, source_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_entity_sources_namespace_source
+    ON entity_sources(namespace_id, source_path);
+CREATE INDEX IF NOT EXISTS idx_entity_sources_source
+    ON entity_sources(source_path);
+
+CREATE TABLE IF NOT EXISTS entity_edge_sources (
+    edge_id INT REFERENCES entity_edges(id) ON DELETE CASCADE,
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    source_path TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    source_chunk_id UUID REFERENCES chunks(id) ON DELETE SET NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(edge_id, source_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_entity_edge_sources_namespace_source
+    ON entity_edge_sources(namespace_id, source_path);
+CREATE INDEX IF NOT EXISTS idx_entity_edge_sources_source
+    ON entity_edge_sources(source_path);
+
+CREATE TABLE IF NOT EXISTS structured_graph_sources (
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE,
+    source_path TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(namespace_id, source_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_structured_graph_sources_source
+    ON structured_graph_sources(source_path);
+
 -- LTM: Pipeline job state (resume on failure)
 CREATE TABLE IF NOT EXISTS ltm_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
