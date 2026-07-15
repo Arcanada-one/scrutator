@@ -8,16 +8,19 @@ Outputs JSON report compatible with existing benchmark report format.
 """
 
 import json
+import os
+import stat
 import sys
 import time
 import urllib.request
 from pathlib import Path
 
 SCRUTATOR = "http://100.70.137.104:8310"
-QUERIES_DIR = str(Path(__file__).parent.parent / "queries")
+VENDOR_ROOT = Path(__file__).parent
+QUERIES_DIR = str(VENDOR_ROOT / "queries")
 DEFAULT_NS = "ltm-bench-datarim-kb"
-REPORTS_DIR_V4 = str(Path(__file__).parent.parent / "reports/v4/scrutator")
-REPORTS_DIR_V5 = str(Path(__file__).parent.parent / "reports/v5/scrutator")
+REPORTS_DIR_V4 = str(VENDOR_ROOT / "reports/v4/scrutator")
+REPORTS_DIR_V5 = str(VENDOR_ROOT / "reports/v5/scrutator")
 
 
 def recall(query: str, namespace: str, expand_entities: bool, limit: int = 20) -> dict:
@@ -27,10 +30,19 @@ def recall(query: str, namespace: str, expand_entities: bool, limit: int = 20) -
         "limit": limit,
         "expand_entities": expand_entities,
     }).encode()
+    token_file = os.environ.get("SCRUTATOR_BEARER_TOKEN_FILE")
+    if not token_file:
+        raise RuntimeError("SCRUTATOR_BEARER_TOKEN_FILE is required")
+    token_path = Path(token_file)
+    if stat.S_IMODE(token_path.stat().st_mode) != 0o600:
+        raise RuntimeError("bearer token file must have mode 0600")
+    token = token_path.read_text().strip()
+    if not token:
+        raise RuntimeError("bearer token file is empty")
     req = urllib.request.Request(
         f"{SCRUTATOR}/v1/ltm/recall",
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
     )
     t0 = time.time()
     resp = urllib.request.urlopen(req, timeout=120)

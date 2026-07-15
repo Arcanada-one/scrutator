@@ -10,6 +10,7 @@ Tests cover:
 """
 
 import hashlib
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -39,7 +40,7 @@ def run_gate(*args) -> subprocess.CompletedProcess:
 
 def test_vendored_harness_snapshot_is_complete_and_pinned():
     expected = {
-        VENDOR_DIR / "ltm-bench-query.py": "6a31f688301a7fab8d2412500d1ecf22daa638fb22a291605d4a0c2cda1a7b81",
+        VENDOR_DIR / "ltm-bench-query.py": "a9c0e304435b25b1d90d3bc31f791735cf72ed9658c0353ad4356d160d2cee5c",
         VENDOR_DIR / "queries/factual.jsonl": "66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767",
         VENDOR_DIR / "queries/multi-hop.jsonl": "136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f",
         VENDOR_DIR / "queries/temporal.jsonl": "14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032",
@@ -47,6 +48,13 @@ def test_vendored_harness_snapshot_is_complete_and_pinned():
     for path, digest in expected.items():
         assert path.is_file(), f"missing vendored recall input: {path}"
         assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
+
+    spec = importlib.util.spec_from_file_location("vendored_ltm_bench", VENDOR_DIR / "ltm-bench-query.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert Path(module.QUERIES_DIR) == VENDOR_DIR / "queries"
+    assert Path(module.REPORTS_DIR_V4) == VENDOR_DIR / "reports/v4/scrutator"
 
     workflow = (GATE_DIR.parent.parent / ".github/workflows/recall-regression.yml").read_text()
     assert "HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py" in workflow
