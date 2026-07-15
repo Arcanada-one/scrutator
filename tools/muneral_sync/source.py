@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from dataclasses import dataclass
 from typing import Any
 
 import asyncpg
+
+
+@dataclass(frozen=True)
+class ChangeRow:
+    task_id: str
+    revision: int
+    changed_at: Any
+    deleted: bool
 
 
 class MuneralSource:
@@ -15,14 +23,12 @@ class MuneralSource:
         dsn: str,
         *,
         activity_limit: int = 100,
-        overlap_seconds: int = 300,
         connect: Callable[..., Awaitable[Any]] = asyncpg.connect,
     ) -> None:
         if not 1 <= activity_limit <= 500:
             raise ValueError("activity_limit must be between 1 and 500")
         self.dsn = dsn
         self.activity_limit = activity_limit
-        self.overlap_seconds = overlap_seconds
         self._connect = connect
         self._connection: Any | None = None
 
@@ -60,7 +66,7 @@ class MuneralSource:
         )
         checklists = await conn.fetch(
             """SELECT id, text, checked, position FROM task_checklists
-               WHERE task_id = $1::uuid ORDER BY position, id""",
+               WHERE task_id = $1::uuid ORDER BY position NULLS LAST, id""",
             task_id,
         )
         agents = await conn.fetch(
@@ -106,22 +112,24 @@ class MuneralSource:
             rows = await conn.fetch("SELECT id FROM tasks ORDER BY id")
         return [str(row["id"]) for row in rows]
 
-    async def list_incremental_task_ids(self, cursor: str) -> tuple[list[str], str]:
+    async def list_incremental_changes(self, revisions: dict[str, int]) -> list[ChangeRow]:
         conn = await self._get_connection()
         async with conn.transaction(isolation="repeatable_read", readonly=True):
             rows = await conn.fetch(
                 """
-                SELECT id, updated_at
-                FROM tasks
-                WHERE updated_at >= $1::timestamptz - ($2 * interval '1 second')
-                ORDER BY updated_at, id
-                """,
-                cursor,
-                self.overlap_seconds,
+                SELECT task_id, revision, changed_at, deleted
+                FROM muneral_kb_task_changes
+                ORDER BY task_id
+                """
             )
-        if not rows:
-            return [], cursor
-        current = datetime.fromisoformat(cursor.replace("Z", "+00:00"))
-        latest = rows[-1]["updated_at"]
-        next_cursor = latest.isoformat() if latest > current else cursor
-        return [str(row["id"]) for row in rows], next_cursor
+        changes = [
+            ChangeRow(
+                task_id=str(row["task_id"]),
+                revision=int(row["revision"]),
+                changed_at=row["changed_at"],
+                deleted=bool(row["deleted"]),
+            )
+            for row in rows
+            if revisions.get(str(row["task_id"])) != int(row["revision"])
+        ]
+        return changes

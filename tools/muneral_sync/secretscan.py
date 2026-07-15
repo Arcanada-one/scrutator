@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import os
 import re
+import shutil
+import subprocess
+import tempfile
 from dataclasses import dataclass, field
 
 SEV_CRITICAL = "CRITICAL"
@@ -70,6 +75,16 @@ class ScanResult:
         return {"verdict": self.verdict, "findings": [finding.as_dict() for finding in self.findings]}
 
 
+def _set_verdict(result: ScanResult) -> None:
+    result.verdict = (
+        VERDICT_CRITICAL
+        if any(finding.severity == SEV_CRITICAL for finding in result.findings)
+        else VERDICT_INFO
+        if result.findings
+        else VERDICT_CLEAN
+    )
+
+
 def scan_text(text: str, *, info_patterns: list[str] | None = None) -> ScanResult:
     """Scan text without retaining or returning any matched cleartext."""
     compiled_info = []
@@ -94,11 +109,57 @@ def scan_text(text: str, *, info_patterns: list[str] | None = None) -> ScanResul
         for pattern in compiled_info:
             for match in pattern.finditer(line):
                 findings.append(Finding("info-pattern", SEV_INFO, line_number, _sha256(match.group(0))))
-    verdict = (
-        VERDICT_CRITICAL
-        if any(finding.severity == SEV_CRITICAL for finding in findings)
-        else VERDICT_INFO
-        if findings
-        else VERDICT_CLEAN
-    )
-    return ScanResult(findings=findings, verdict=verdict)
+    result = ScanResult(findings=findings)
+    _set_verdict(result)
+    return result
+
+
+def _run_gitleaks(text: str) -> list[Finding]:
+    """Run optional gitleaks over the exact serialized body; errors leave the Python gate active."""
+    gitleaks_path = shutil.which("gitleaks")
+    if gitleaks_path is None:
+        return []
+    descriptor, temporary_name = tempfile.mkstemp(prefix="muneral-ltm-payload-", suffix=".json", text=True)
+    try:
+        with os.fdopen(descriptor, "w") as handle:
+            handle.write(text)
+        try:
+            process = subprocess.run(  # noqa: S603 - fixed executable and arguments, no shell
+                [
+                    gitleaks_path,
+                    "detect",
+                    "--no-git",
+                    "--source",
+                    temporary_name,
+                    "--report-format",
+                    "json",
+                    "--report-path",
+                    "/dev/stdout",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            data = json.loads((process.stdout or "[]").strip() or "[]")
+        except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+            return []
+    finally:
+        os.unlink(temporary_name)
+    return [
+        Finding(
+            rule=f"gitleaks:{item.get('RuleID') or item.get('Description') or 'gitleaks'}",
+            severity=SEV_CRITICAL,
+            line=int(item.get("StartLine") or item.get("Line") or 0),
+            span_hash=_sha256(str(item.get("Secret") or item.get("Match") or "")),
+        )
+        for item in data
+        if isinstance(item, dict)
+    ]
+
+
+def scan_serialized(text: str, *, info_patterns: list[str] | None = None) -> ScanResult:
+    """Apply the always-on Python scan plus optional gitleaks to exact wire text."""
+    result = scan_text(text, info_patterns=info_patterns)
+    result.findings.extend(_run_gitleaks(text))
+    _set_verdict(result)
+    return result

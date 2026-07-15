@@ -2,18 +2,24 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tools.muneral_sync.cli import FULL_BACKFILL_GO, RunMode, execute, parse_args, write_cursor_atomic
+from tools.muneral_sync.cli import FULL_BACKFILL_GO, RunMode, execute, parse_args, read_cursor, write_cursor_atomic
 from tools.muneral_sync.client import LtmClient
 from tools.muneral_sync.graph import build_ingest_payload, canonical_hash
-from tools.muneral_sync.secretscan import VERDICT_CLEAN, VERDICT_CRITICAL, VERDICT_INFO, ScanError, scan_text
-from tools.muneral_sync.source import MuneralSource
+from tools.muneral_sync.secretscan import (
+    VERDICT_CLEAN,
+    VERDICT_CRITICAL,
+    VERDICT_INFO,
+    ScanError,
+    scan_serialized,
+    scan_text,
+)
+from tools.muneral_sync.source import ChangeRow, MuneralSource
 
 FIXTURE = Path(__file__).parent / "fixtures/muneral_task_aggregate.json"
 
@@ -81,6 +87,40 @@ def test_tag_normalization_preserves_non_ascii_identity(aggregate):
     assert "MUN-TAG:граф-знаний" in entity_names
 
 
+def test_nullable_checklist_position_is_preserved_and_sorted_last(aggregate):
+    aggregate["checklists"][0]["position"] = None
+    snapshot = build_ingest_payload(aggregate)["content"]
+    assert snapshot.index("Scan payload") < snapshot.index("Prove recall")
+
+
+def test_shared_entities_are_task_order_independent_and_stubs_do_not_clobber_owned_task(aggregate):
+    other = deepcopy(aggregate)
+    owner_id = aggregate["task"]["id"]
+    other_id = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+    other["task"]["id"] = other_id
+    other["task"]["title"] = "Other task"
+    other["task"]["created_by_id"] = aggregate["task"]["created_by_id"]
+    other["task"]["parent_id"] = owner_id
+    other["dependencies"] = []
+    first = build_ingest_payload(aggregate)["structured_graph"]["entities"]
+    second = build_ingest_payload(other)["structured_graph"]["entities"]
+    shared_names = {
+        f"MUN-PROJECT:{aggregate['project']['id']}",
+        "MUN-TAG:graph-merge",
+        f"MUN-ACTOR:agent:{aggregate['task']['created_by_id']}",
+    }
+    by_name_first = {entity["name"]: entity for entity in first}
+    by_name_second = {entity["name"]: entity for entity in second}
+    assert {name: by_name_first[name] for name in shared_names} == {name: by_name_second[name] for name in shared_names}
+    owner = by_name_first[f"MUN:{owner_id}"]
+    stub = by_name_second[f"MUN:{owner_id}"]
+    merged_owner_then_stub = {**owner["properties"], **stub["properties"]}
+    merged_stub_then_owner = {**stub["properties"], **owner["properties"]}
+    assert "source_ref" not in stub["properties"] and "content_hash" not in stub["properties"]
+    assert merged_owner_then_stub["source_ref"] == merged_stub_then_owner["source_ref"] == f"muneral://task/{owner_id}"
+    assert merged_owner_then_stub["content_hash"] == merged_stub_then_owner["content_hash"]
+
+
 class _Transaction:
     def __init__(self):
         self.entered = False
@@ -128,6 +168,22 @@ async def test_source_reads_plural_live_tables_in_read_only_repeatable_read_orde
     await source.close()
 
 
+@pytest.mark.asyncio
+async def test_incremental_source_reads_revision_registry_deterministically_and_filters_mismatches():
+    conn = AsyncMock()
+    transaction = _Transaction()
+    conn.transaction = MagicMock(return_value=transaction)
+    conn.fetch.return_value = [
+        {"task_id": "task-1", "revision": 2, "changed_at": "later", "deleted": False},
+        {"task_id": "task-2", "revision": 7, "changed_at": "later", "deleted": True},
+    ]
+    source = MuneralSource("postgresql://redacted", connect=AsyncMock(return_value=conn))
+    changes = await source.list_incremental_changes({"task-1": 2, "task-2": 6})
+    assert changes == [ChangeRow(task_id="task-2", revision=7, changed_at="later", deleted=True)]
+    sql = conn.fetch.await_args.args[0]
+    assert "muneral_kb_task_changes" in sql and "ORDER BY task_id" in sql
+
+
 def test_scanner_clean_info_critical_and_never_exposes_matched_text():
     assert scan_text('{"title":"pilot"}').verdict == VERDICT_CLEAN
     info = scan_text("service at 100.70.137.104", info_patterns=[r"\b100\.(?:\d{1,3}\.){2}\d{1,3}\b"])
@@ -143,6 +199,29 @@ def test_scanner_detects_high_entropy_assignment_in_exact_compact_json():
     result = scan_text('{"api_key":"V7cH2rQ9xN4mK8pL5sT1wZ6yB3dF0gJ2"}')
     assert result.verdict == VERDICT_CRITICAL
     assert result.findings[0].rule == "generic-entropy"
+
+
+def test_additive_gitleaks_scans_exact_body_and_redacts_secret(monkeypatch):
+    body = '{"description":"safe"}'
+    seen = []
+
+    def fake_run(command, **_kwargs):
+        source = Path(command[command.index("--source") + 1])
+        seen.append(source.read_text())
+        report = json.dumps([{"RuleID": "generic-api-key", "Secret": "never-return-this", "StartLine": 1}])
+        return SimpleNamespace(stdout=report)
+
+    monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: "/usr/bin/gitleaks")
+    monkeypatch.setattr("tools.muneral_sync.secretscan.subprocess.run", fake_run)
+    result = scan_serialized(body)
+    assert seen == [body] and result.verdict == VERDICT_CRITICAL
+    assert "never-return-this" not in json.dumps(result.as_dict())
+    assert result.findings[-1].rule == "gitleaks:generic-api-key"
+
+
+def test_gitleaks_absent_keeps_python_fallback(monkeypatch):
+    monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: None)
+    assert scan_serialized("PGPASSWORD=still-blocked").verdict == VERDICT_CRITICAL
 
 
 @pytest.mark.asyncio
@@ -186,6 +265,34 @@ async def test_client_fails_closed_on_critical_or_scanner_exception(tmp_path):
     http.post.assert_not_awaited()
 
 
+@pytest.mark.asyncio
+async def test_client_tombstone_uses_writer_credential_and_source_path(tmp_path):
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"chunks_deleted": 3}
+    http = AsyncMock()
+    http.request.return_value = response
+    scanned = []
+
+    def scanner(body):
+        scanned.append(body)
+        return SimpleNamespace(verdict=VERDICT_CLEAN, is_critical=False, findings=[])
+
+    client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http, scanner=scanner)
+    result = await client.tombstone("muneral", "muneral://task/task-2")
+    assert result == {"chunks_deleted": 3}
+    request = http.request.await_args
+    assert request.args[:2] == ("DELETE", "https://kb.example/v1/ltm/source")
+    assert json.loads(request.kwargs["content"]) == {
+        "namespace": "muneral",
+        "source_path": "muneral://task/task-2",
+    }
+    assert scanned == [request.kwargs["content"].decode()]
+    assert request.kwargs["headers"]["X-LTM-Writer-Token"] == "writer-token"
+
+
 def test_cli_modes_and_full_backfill_gate():
     assert parse_args(["--task-id", "11111111-1111-4111-8111-111111111111"]).mode is RunMode.TASK
     assert parse_args(["--incremental"]).mode is RunMode.INCREMENTAL
@@ -201,13 +308,19 @@ def test_cli_modes_and_full_backfill_gate():
 async def test_dry_run_never_posts_and_reports_counts_hashes_only(aggregate, tmp_path):
     args = parse_args(["--all", "--dry-run", "--dsn-credential", str(tmp_path / "dsn")])
     source = AsyncMock()
-    source.list_all_task_ids.return_value = [aggregate["task"]["id"]]
-    source.fetch_task.return_value = aggregate
+    other = deepcopy(aggregate)
+    other["task"]["id"] = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+    source.list_all_task_ids.return_value = [aggregate["task"]["id"], other["task"]["id"]]
+    source.fetch_task.side_effect = [aggregate, other]
     client = AsyncMock()
     report = await execute(args, source=source, client=client)
     client.ingest.assert_not_awaited()
-    assert report["tasks"] == 1 and report["entities"] > 1 and report["edges"] > 1
-    assert report["hashes"] == [canonical_hash(aggregate)]
+    graphs = [build_ingest_payload(item)["structured_graph"] for item in (aggregate, other)]
+    expected_entities = len({(e["name"], e["entity_type"]) for graph in graphs for e in graph["entities"]})
+    expected_edges = len({(e["source"], e["target"], e["relation"]) for graph in graphs for e in graph["edges"]})
+    assert report["tasks"] == 2 and report["projects"] == 1
+    assert report["entities"] == expected_entities and report["edges"] == expected_edges
+    assert report["hashes"] == [canonical_hash(aggregate), canonical_hash(other)]
     assert "content" not in json.dumps(report)
 
 
@@ -216,7 +329,11 @@ async def test_incremental_cursor_advances_only_after_whole_batch_success(aggreg
     cursor = tmp_path / "cursor.json"
     args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
     source = AsyncMock()
-    source.list_incremental_task_ids.return_value = (["task-1", "task-2"], "2026-07-15T12:00:00+00:00")
+    changes = [
+        ChangeRow(task_id="task-1", revision=2, changed_at="now", deleted=False),
+        ChangeRow(task_id="task-2", revision=9, changed_at="now", deleted=False),
+    ]
+    source.list_incremental_changes.return_value = changes
     source.fetch_task.return_value = aggregate
     client = AsyncMock()
     client.ingest.side_effect = [{"entities_upserted": 2, "edges_upserted": 1}, RuntimeError("network")]
@@ -225,18 +342,23 @@ async def test_incremental_cursor_advances_only_after_whole_batch_success(aggreg
     assert not cursor.exists()
     client.ingest.side_effect = [{"entities_upserted": 2, "edges_upserted": 1}] * 2
     await execute(args, source=source, client=client)
-    assert json.loads(cursor.read_text()) == {"updated_at": "2026-07-15T12:00:00+00:00"}
+    assert read_cursor(cursor) == {"task-1": 2, "task-2": 9}
 
 
 @pytest.mark.asyncio
-async def test_incremental_overlap_never_regresses_cursor():
-    conn = AsyncMock()
-    transaction = _Transaction()
-    conn.transaction = MagicMock(return_value=transaction)
-    conn.fetch.return_value = [{"id": "task-1", "updated_at": datetime(2026, 7, 15, 11, 59, tzinfo=UTC)}]
-    source = MuneralSource("postgresql://redacted", connect=AsyncMock(return_value=conn))
-    _task_ids, next_cursor = await source.list_incremental_task_ids("2026-07-15T12:00:00+00:00")
-    assert next_cursor == "2026-07-15T12:00:00+00:00"
+async def test_incremental_deleted_row_tombstones_without_fetching(aggregate, tmp_path):
+    cursor = tmp_path / "cursor.json"
+    args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id="task-deleted", revision=4, changed_at="now", deleted=True)
+    ]
+    client = AsyncMock()
+    client.tombstone.return_value = {"chunks_deleted": 1}
+    report = await execute(args, source=source, client=client)
+    source.fetch_task.assert_not_awaited()
+    client.tombstone.assert_awaited_once_with("muneral", "muneral://task/task-deleted")
+    assert report["tombstones"] == 1 and read_cursor(cursor) == {"task-deleted": 4}
 
 
 @pytest.mark.asyncio
@@ -253,7 +375,9 @@ async def test_incremental_dry_run_does_not_advance_cursor(aggregate, tmp_path):
         ]
     )
     source = AsyncMock()
-    source.list_incremental_task_ids.return_value = ([aggregate["task"]["id"]], "2026-07-15T12:00:00+00:00")
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id=aggregate["task"]["id"], revision=1, changed_at="now", deleted=False)
+    ]
     source.fetch_task.return_value = aggregate
     await execute(args, source=source, client=None)
     assert not cursor.exists()
@@ -262,6 +386,6 @@ async def test_incremental_dry_run_does_not_advance_cursor(aggregate, tmp_path):
 def test_cursor_write_is_atomic_rename(tmp_path):
     target = tmp_path / "state" / "cursor.json"
     with patch("tools.muneral_sync.cli.os.replace") as replace:
-        write_cursor_atomic(target, "2026-07-15T12:00:00+00:00")
+        write_cursor_atomic(target, {"task-1": 3})
     replace.assert_called_once()
     assert replace.call_args.args[1] == target

@@ -14,10 +14,10 @@ from typing import Any
 
 from .client import LtmClient
 from .graph import build_ingest_payload
-from .source import MuneralSource
+from .source import ChangeRow, MuneralSource
 
 FULL_BACKFILL_GO = "FULL-MUNERAL-BACKFILL"
-DEFAULT_CURSOR = "1970-01-01T00:00:00+00:00"
+CURSOR_SCHEMA_VERSION = 1
 
 
 class RunMode(StrEnum):
@@ -71,18 +71,28 @@ def parse_args(argv: list[str] | None = None) -> Arguments:
     )
 
 
-def read_cursor(path: Path) -> str:
+def read_cursor(path: Path) -> dict[str, int]:
     if not path.exists():
-        return DEFAULT_CURSOR
-    value = json.loads(path.read_text()).get("updated_at")
-    if not isinstance(value, str) or not value:
-        raise ValueError("cursor file has no updated_at string")
-    return value
+        return {}
+    value = json.loads(path.read_text())
+    if value.get("schema_version") != CURSOR_SCHEMA_VERSION or not isinstance(value.get("revisions"), dict):
+        raise ValueError("cursor file has unsupported schema")
+    revisions = value["revisions"]
+    if any(not isinstance(task_id, str) or not isinstance(revision, int) for task_id, revision in revisions.items()):
+        raise ValueError("cursor revisions must map task IDs to integers")
+    return revisions
 
 
-def write_cursor_atomic(path: Path, updated_at: str) -> None:
+def write_cursor_atomic(path: Path, revisions: dict[str, int]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    body = json.dumps({"updated_at": updated_at}, sort_keys=True, separators=(",", ":")) + "\n"
+    body = (
+        json.dumps(
+            {"schema_version": CURSOR_SCHEMA_VERSION, "revisions": revisions},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent, text=True)
     try:
         with os.fdopen(descriptor, "w") as handle:
@@ -96,33 +106,56 @@ def write_cursor_atomic(path: Path, updated_at: str) -> None:
             os.unlink(temporary_name)
 
 
-async def execute(args: Arguments, *, source: Any, client: Any | None) -> dict[str, Any]:
-    next_cursor: str | None = None
+async def _work_items(args: Arguments, source: Any) -> tuple[list[ChangeRow], dict[str, int]]:
     if args.mode is RunMode.TASK:
-        task_ids = [args.task_id]
-    elif args.mode is RunMode.ALL:
+        return [ChangeRow(str(args.task_id), 0, None, False)], {}
+    if args.mode is RunMode.ALL:
         task_ids = await source.list_all_task_ids()
-    else:
-        task_ids, next_cursor = await source.list_incremental_task_ids(read_cursor(args.cursor_file))
+        return [ChangeRow(task_id, 0, None, False) for task_id in task_ids], {}
+    revisions = read_cursor(args.cursor_file)
+    return await source.list_incremental_changes(revisions), revisions
 
-    report: dict[str, Any] = {
+
+def _empty_report(args: Arguments) -> dict[str, Any]:
+    return {
         "mode": args.mode.value,
         "dry_run": args.dry_run,
         "tasks": 0,
+        "projects": 0,
         "entities": 0,
         "edges": 0,
+        "tombstones": 0,
         "hashes": [],
         "entities_upserted": 0,
         "edges_upserted": 0,
         "idempotent_noops": 0,
     }
-    for task_id in task_ids:
-        aggregate = await source.fetch_task(task_id)
+
+
+async def execute(args: Arguments, *, source: Any, client: Any | None) -> dict[str, Any]:
+    changes, revisions = await _work_items(args, source)
+    next_revisions = dict(revisions)
+    entity_keys: set[tuple[str, str]] = set()
+    edge_keys: set[tuple[str, str, str]] = set()
+    project_ids: set[str] = set()
+    report = _empty_report(args)
+    for change in changes:
+        report["tasks"] += 1
+        if change.deleted:
+            report["tombstones"] += 1
+            if not args.dry_run:
+                if client is None:
+                    raise RuntimeError("live sync requires an LTM client")
+                await client.tombstone("muneral", f"muneral://task/{change.task_id}")
+            next_revisions[change.task_id] = change.revision
+            continue
+        aggregate = await source.fetch_task(change.task_id)
         payload = build_ingest_payload(aggregate)
         graph = payload["structured_graph"]
-        report["tasks"] += 1
-        report["entities"] += len(graph["entities"])
-        report["edges"] += len(graph["edges"])
+        entity_keys.update((entity["name"], entity["entity_type"]) for entity in graph["entities"])
+        edge_keys.update((edge["source"], edge["target"], edge["relation"]) for edge in graph["edges"])
+        if payload.get("project"):
+            project_ids.add(str(payload["project"]))
         report["hashes"].append(graph["content_hash"])
         if not args.dry_run:
             if client is None:
@@ -131,8 +164,12 @@ async def execute(args: Arguments, *, source: Any, client: Any | None) -> dict[s
             report["entities_upserted"] += result["entities_upserted"]
             report["edges_upserted"] += result["edges_upserted"]
             report["idempotent_noops"] += int(result.get("idempotent_noop", False))
-    if args.mode is RunMode.INCREMENTAL and next_cursor is not None and not args.dry_run:
-        write_cursor_atomic(args.cursor_file, next_cursor)
+        next_revisions[change.task_id] = change.revision
+    report["projects"] = len(project_ids)
+    report["entities"] = len(entity_keys)
+    report["edges"] = len(edge_keys)
+    if args.mode is RunMode.INCREMENTAL and not args.dry_run:
+        write_cursor_atomic(args.cursor_file, next_revisions)
     return report
 
 
