@@ -14,6 +14,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from pydantic import ValidationError
 
+import scrutator.auth.verifier as verifier_module
 from scrutator.auth.verifier import Unauthenticated, verify_bearer_token
 from scrutator.config import Settings
 
@@ -157,6 +158,19 @@ class TestServiceTokenIntrospection:
 
 
 class TestOidcJwksVerification:
+    def test_jwks_fetch_identifies_scrutator_to_edge_policy(self):
+        with patch("scrutator.auth.verifier.PyJWKClient") as client_type:
+            verifier_module._jwks_client = None
+            verifier_module._jwks_client_url = None
+            verifier_module._get_jwks_client("https://auth.arcanada.ai/.well-known/jwks.json")
+
+        client_type.assert_called_once_with(
+            "https://auth.arcanada.ai/.well-known/jwks.json",
+            cache_keys=True,
+            lifespan=300,
+            headers={"User-Agent": "Arcanada-Scrutator-JWKS/1.0"},
+        )
+
     @pytest.mark.asyncio
     async def test_valid_oidc_token_returns_principal(self):
         signing_key = MagicMock()
