@@ -163,6 +163,7 @@ class _StatefulDeleteConnection:
     def __init__(self, state, *, fail_on=None):
         self.state = state
         self.fail_on = fail_on
+        self.lock_sql = None
 
     def transaction(self):
         return _Transaction(self)
@@ -202,6 +203,7 @@ class _StatefulDeleteConnection:
         if self.fail_on and self.fail_on in compact:
             raise RuntimeError("injected failure")
         if "pg_advisory_xact_lock(hashtextextended" in compact:
+            self.lock_sql = compact
             return "SELECT 1"
         if compact.startswith("DELETE FROM entity_edge_sources"):
             namespace_id, source_path = args[:2]
@@ -312,6 +314,7 @@ async def test_repository_delete_preserves_shared_provenance_and_is_idempotent()
         "entities_deleted": 1,
         "idempotent_noop": False,
     }
+    assert "hashtextextended($1::int::text || ':' || $2, 0)" in conn.lock_sql
     assert second == {
         "chunks_deleted": 0,
         "entity_sources_deleted": 0,
