@@ -4,6 +4,8 @@ set -euo pipefail
 umask 077
 
 readonly service_name="muneral-kb-sync"
+readonly pilot_task_id="7d2c0e8a-4b7e-4c01-8d33-100000000004"
+readonly manifest_name="PAYLOAD_SHA256SUMS"
 
 usage() {
     echo "usage: $0 install --sha SHA --source DIR [--root DIR] [--enable-timer-after-pilot]" >&2
@@ -90,6 +92,7 @@ cleanup_staging() {
             fi
         fi
         if [[ -n "$staging" && -d "$staging" ]]; then
+            chmod -R u+w "$staging" 2>/dev/null || true
             rm -rf -- "$staging"
         fi
         if [[ -n "$created_release" && -d "$created_release" ]]; then
@@ -117,7 +120,65 @@ atomic_link() {
 
 validate_release_target() {
     local target="$1"
-    [[ "$target" =~ ^releases/[0-9a-f]{40}$ && -d "$opt_root/$target" ]]
+    [[ "$target" =~ ^releases/[0-9a-f]{40}$ ]] || return 1
+    validate_release_integrity "$opt_root/$target" "${target#releases/}"
+}
+
+validate_release_integrity() {
+    local release="$1"
+    local expected_sha="$2"
+    local recorded_sha
+    local -a release_sha_lines
+    [[ -d "$release" && ! -L "$release" ]] || return 1
+    [[ -f "$release/RELEASE_SHA" && ! -L "$release/RELEASE_SHA" ]] || return 1
+    [[ -f "$release/$manifest_name" && ! -L "$release/$manifest_name" ]] || return 1
+    if find "$release" -type l -print -quit | grep -q .; then
+        return 1
+    fi
+    mapfile -t release_sha_lines <"$release/RELEASE_SHA"
+    [[ ${#release_sha_lines[@]} -eq 1 ]] || return 1
+    recorded_sha="${release_sha_lines[0]}"
+    [[ "$recorded_sha" == "$expected_sha" ]] || return 1
+    (
+        cd "$release"
+        diff -q \
+            <(LC_ALL=C find . -type f ! -path "./$manifest_name" -print | LC_ALL=C sort) \
+            <(sed -E 's/^[0-9a-f]{64}  //' "$manifest_name" | LC_ALL=C sort) \
+            >/dev/null
+        sha256sum --check --strict "$manifest_name" >/dev/null
+    )
+}
+
+validate_source_repo() {
+    local top_level actual_sha
+    source_root="$(realpath -e -- "$source_root")"
+    [[ -d "$source_root" && ! -L "$source_root" ]] || return 1
+    top_level="$(git -C "$source_root" rev-parse --show-toplevel 2>/dev/null)" || return 1
+    [[ "$(realpath -e -- "$top_level")" == "$source_root" ]] || return 1
+    actual_sha="$(git -C "$source_root" rev-parse --verify HEAD 2>/dev/null)" || return 1
+    [[ "$actual_sha" == "$release_sha" ]] || return 1
+    git -C "$source_root" diff --quiet -- || return 1
+    git -C "$source_root" diff --cached --quiet -- || return 1
+}
+
+validate_pilot_proof() {
+    local proof="$credential_dir/pilot-proven"
+    local mode
+    local -a proof_lines
+    [[ -f "$proof" && ! -L "$proof" ]] || return 1
+    mode="$(stat -c '%a' "$proof")"
+    [[ "$mode" == "600" ]] || return 1
+    if [[ "$root" == "/" ]]; then
+        [[ "$(stat -c '%u' "$proof")" == "0" ]] || return 1
+    fi
+    mapfile -t proof_lines <"$proof"
+    [[ ${#proof_lines[@]} -eq 6 ]] || return 1
+    [[ "${proof_lines[0]}" == "task_id=$pilot_task_id" ]] || return 1
+    [[ "${proof_lines[1]}" == "release_sha=$release_sha" ]] || return 1
+    [[ "${proof_lines[2]}" == "principal=$service_name" ]] || return 1
+    [[ "${proof_lines[3]}" == "graph_proven=true" ]] || return 1
+    [[ "${proof_lines[4]}" == "recall_proven=true" ]] || return 1
+    [[ "${proof_lines[5]}" == "idempotent=true" ]] || return 1
 }
 
 validate_runtime_credentials() {
@@ -152,14 +213,7 @@ install_accounts_and_directories() {
 install_release() {
     [[ "$release_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "--sha must be a lowercase 40-character commit SHA" >&2; exit 64; }
     [[ -n "$source_root" && -d "$source_root" && ! -L "$source_root" ]] || { echo "--source must be a real directory" >&2; exit 66; }
-    for required in \
-        "$source_root/src/scrutator" \
-        "$source_root/tools/muneral_sync" \
-        "$source_root/deploy/muneral-kb-sync-run.sh" \
-        "$source_root/deploy/muneral-kb-sync.service" \
-        "$source_root/deploy/muneral-kb-sync.timer"; do
-        [[ -e "$required" && ! -L "$required" ]] || { echo "release source is incomplete or contains a top-level symlink" >&2; exit 66; }
-    done
+    validate_source_repo || { echo "source must be the clean tracked worktree at the requested HEAD SHA" >&2; exit 66; }
 
     install_accounts_and_directories
     local final_release="$releases_dir/$release_sha"
@@ -167,13 +221,27 @@ install_release() {
     staging="$releases_dir/.${release_sha}.tmp.$$"
 
     if [[ ! -d "$final_release" ]]; then
-        install -d -m 0755 "$staging/bin" "$staging/src" "$staging/tools"
-        cp -a -- "$source_root/src/scrutator" "$staging/src/"
-        cp -a -- "$source_root/tools/muneral_sync" "$staging/tools/"
-        if [[ -f "$source_root/tools/__init__.py" ]]; then
-            install -m 0444 "$source_root/tools/__init__.py" "$staging/tools/__init__.py"
-        fi
-        install -m 0555 "$source_root/deploy/muneral-kb-sync-run.sh" "$staging/bin/muneral-kb-sync"
+        install -d -m 0755 "$staging"
+        git -C "$source_root" archive --format=tar "$release_sha" -- \
+            src/scrutator \
+            tools/__init__.py \
+            tools/muneral_sync \
+            deploy/muneral-kb-sync-run.sh \
+            deploy/muneral-kb-sync.service \
+            deploy/muneral-kb-sync.timer \
+            deploy/requirements-muneral-kb-sync.txt \
+            | tar -x -C "$staging"
+        for required in \
+            "$staging/src/scrutator" \
+            "$staging/tools/muneral_sync/cli.py" \
+            "$staging/deploy/muneral-kb-sync-run.sh" \
+            "$staging/deploy/muneral-kb-sync.service" \
+            "$staging/deploy/muneral-kb-sync.timer" \
+            "$staging/deploy/requirements-muneral-kb-sync.txt"; do
+            [[ -e "$required" && ! -L "$required" ]] || { echo "committed release source is incomplete" >&2; return 66; }
+        done
+        install -d -m 0755 "$staging/bin"
+        install -m 0555 "$staging/deploy/muneral-kb-sync-run.sh" "$staging/bin/muneral-kb-sync"
         printf '%s\n' "$release_sha" >"$staging/RELEASE_SHA"
 
         if [[ "$root" != "/" && "${MUNERAL_KB_SYNC_TEST_FAIL_AFTER_COPY:-}" == "1" ]]; then
@@ -184,16 +252,49 @@ install_release() {
             echo "release payload must not contain symlinks" >&2
             return 66
         fi
+        python3 -m venv --copies "$staging/venv"
+        if [[ -L "$staging/venv/lib64" ]]; then
+            rm -- "$staging/venv/lib64"
+        fi
+        "$staging/venv/bin/python" -m pip install \
+            --disable-pip-version-check \
+            --no-input \
+            --no-deps \
+            --requirement "$staging/deploy/requirements-muneral-kb-sync.txt"
+        PYTHONPATH="$staging/src:$staging" "$staging/venv/bin/python" -c \
+            'import asyncpg, httpx, tools.muneral_sync.cli'
+        PYTHONPATH="$staging/src:$staging" "$staging/venv/bin/python" -m tools.muneral_sync.cli --help >/dev/null
+        if find "$staging" -type l -print -quit | grep -q .; then
+            echo "release payload must not contain symlinks" >&2
+            return 66
+        fi
+        (
+            cd "$staging"
+            LC_ALL=C find . -type f ! -path "./$manifest_name" -print \
+                | LC_ALL=C sort \
+                | while IFS= read -r payload_file; do sha256sum "$payload_file"; done \
+                >"$manifest_name"
+        )
         chmod -R a-w "$staging"
         find "$staging" -type d -exec chmod 0555 {} +
         find "$staging" -type f -exec chmod 0444 {} +
         chmod 0555 "$staging/bin/muneral-kb-sync"
+        find "$staging/venv/bin" -maxdepth 1 -type f -name 'python*' -exec chmod 0555 {} +
         mv -- "$staging" "$final_release"
         created_release="$final_release"
+    else
+        validate_release_integrity "$final_release" "$release_sha" || {
+            echo "existing release failed integrity validation" >&2
+            return 65
+        }
     fi
 
-    install -m 0644 "$source_root/deploy/muneral-kb-sync.service" "$unit_dir/muneral-kb-sync.service"
-    install -m 0644 "$source_root/deploy/muneral-kb-sync.timer" "$unit_dir/muneral-kb-sync.timer"
+    validate_release_integrity "$final_release" "$release_sha" || {
+        echo "new release failed integrity validation" >&2
+        return 65
+    }
+    install -m 0644 "$final_release/deploy/muneral-kb-sync.service" "$unit_dir/muneral-kb-sync.service"
+    install -m 0644 "$final_release/deploy/muneral-kb-sync.timer" "$unit_dir/muneral-kb-sync.timer"
 
     local current_target=""
     if [[ -L "$opt_root/current" ]]; then
@@ -222,8 +323,7 @@ install_release() {
         systemctl daemon-reload
     fi
     if [[ "$enable_timer" == true ]]; then
-        local proof="$state_dir/pilot-proven"
-        [[ -f "$proof" && ! -L "$proof" && -s "$proof" ]] || { echo "timer enable denied: pilot proof marker is absent" >&2; return 78; }
+        validate_pilot_proof || { echo "timer enable denied: exact root-controlled pilot proof is absent or invalid" >&2; return 78; }
         validate_runtime_credentials || { echo "timer enable denied: root-owned mode-0600 credentials are not ready" >&2; return 78; }
         if [[ "$root" == "/" ]]; then
             systemctl enable --now muneral-kb-sync.timer
