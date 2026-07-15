@@ -99,22 +99,22 @@ def test_units_pass_systemd_analyze_verify_when_available(tmp_path):
     analyzer = shutil.which("systemd-analyze")
     if analyzer is None:
         pytest.skip("systemd-analyze is not installed")
-    root = tmp_path / "root"
-    unit_dir = root / "etc/systemd/system"
-    executable = root / "opt/muneral-kb-sync/current/bin/muneral-kb-sync"
-    unit_dir.mkdir(parents=True)
-    executable.parent.mkdir(parents=True)
-    executable.write_text("#!/bin/sh\nexit 0\n")
-    executable.chmod(0o755)
-    shutil.copytree("/usr/lib/systemd/system", root / "usr/lib/systemd/system", symlinks=True)
+    unit_dir = tmp_path / "units"
+    unit_dir.mkdir()
     shutil.copy2(SERVICE, unit_dir / SERVICE.name)
     shutil.copy2(TIMER, unit_dir / TIMER.name)
+    service_path = unit_dir / SERVICE.name
+    service_path.write_text(
+        service_path.read_text().replace(
+            "/opt/muneral-kb-sync/current/bin/muneral-kb-sync",
+            shutil.which("true") or "/bin/true",
+        )
+    )
     output = _run(
         [
             analyzer,
-            f"--root={root}",
             "verify",
-            str(unit_dir / SERVICE.name),
+            str(service_path),
             str(unit_dir / TIMER.name),
         ]
     )
