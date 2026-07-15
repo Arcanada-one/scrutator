@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import re
 import shutil
 import subprocess
@@ -115,22 +114,23 @@ def scan_text(text: str, *, info_patterns: list[str] | None = None) -> ScanResul
 
 
 def _run_gitleaks(text: str) -> list[Finding]:
-    """Run optional gitleaks over the exact serialized body; errors leave the Python gate active."""
+    """Run optional gitleaks over the exact body and fail closed on operational errors."""
     gitleaks_path = shutil.which("gitleaks")
     if gitleaks_path is None:
         return []
-    descriptor, temporary_name = tempfile.mkstemp(prefix="muneral-ltm-payload-", suffix=".json", text=True)
     try:
-        with os.fdopen(descriptor, "w") as handle:
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="muneral-ltm-payload-", suffix=".json", encoding="utf-8"
+        ) as handle:
             handle.write(text)
-        try:
+            handle.flush()
             process = subprocess.run(  # noqa: S603 - fixed executable and arguments, no shell
                 [
                     gitleaks_path,
                     "detect",
                     "--no-git",
                     "--source",
-                    temporary_name,
+                    handle.name,
                     "--report-format",
                     "json",
                     "--report-path",
@@ -140,11 +140,16 @@ def _run_gitleaks(text: str) -> list[Finding]:
                 text=True,
                 timeout=60,
             )
-            data = json.loads((process.stdout or "[]").strip() or "[]")
-        except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
-            return []
-    finally:
-        os.unlink(temporary_name)
+    except (OSError, subprocess.SubprocessError):
+        raise ScanError("gitleaks scan failed closed") from None
+    try:
+        data = json.loads((process.stdout or "[]").strip() or "[]")
+    except json.JSONDecodeError:
+        raise ScanError("gitleaks scan failed closed") from None
+    if not isinstance(data, list) or any(not isinstance(item, dict) for item in data):
+        raise ScanError("gitleaks scan failed closed")
+    if not ((process.returncode == 0 and not data) or (process.returncode == 1 and data)):
+        raise ScanError("gitleaks scan failed closed")
     return [
         Finding(
             rule=f"gitleaks:{item.get('RuleID') or item.get('Description') or 'gitleaks'}",
@@ -153,7 +158,6 @@ def _run_gitleaks(text: str) -> list[Finding]:
             span_hash=_sha256(str(item.get("Secret") or item.get("Match") or "")),
         )
         for item in data
-        if isinstance(item, dict)
     ]
 
 
