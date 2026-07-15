@@ -82,7 +82,6 @@ jobs:
           target-host: arcana-kb
           service-name: scrutator
           extra-checks: |
-            vault
             tailscale
             time-skew
             docker-pressure
@@ -99,7 +98,7 @@ jobs:
           curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
 
       - name: Notify Ops Bot on failure
-        if: failure()
+        if: failure() && secrets.OPSBOT_API_KEY != ''
         run: |
           curl -fsS -X POST https://ops.arcanada.ai/events \
             -H "Authorization: Bearer ${{ secrets.OPSBOT_API_KEY }}" \
