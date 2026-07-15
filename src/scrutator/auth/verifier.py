@@ -38,7 +38,12 @@ def _get_jwks_client(jwks_url: str) -> PyJWKClient:
     """Return a cached PyJWKClient for the given URL, recreating it if the URL changes."""
     global _jwks_client, _jwks_client_url  # noqa: PLW0603
     if _jwks_client is None or _jwks_client_url != jwks_url:
-        _jwks_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=300)
+        _jwks_client = PyJWKClient(
+            jwks_url,
+            cache_keys=True,
+            lifespan=300,
+            headers={"User-Agent": "Arcanada-Scrutator-JWKS/1.0"},
+        )
         _jwks_client_url = jwks_url
     return _jwks_client
 
