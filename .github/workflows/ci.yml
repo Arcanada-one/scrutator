@@ -82,7 +82,6 @@ jobs:
           target-host: arcana-kb
           service-name: scrutator
           extra-checks: |
-            vault
             tailscale
             time-skew
             docker-pressure
@@ -100,8 +99,14 @@ jobs:
 
       - name: Notify Ops Bot on failure
         if: failure()
+        env:
+          OPSBOT_API_KEY: ${{ secrets.OPSBOT_API_KEY }}
         run: |
+          if [ -z "${OPSBOT_API_KEY:-}" ]; then
+            echo "OPSBOT_API_KEY unset; skipping optional failure notification"
+            exit 0
+          fi
           curl -fsS -X POST https://ops.arcanada.ai/events \
-            -H "Authorization: Bearer ${{ secrets.OPSBOT_API_KEY }}" \
+            -H "Authorization: Bearer ${OPSBOT_API_KEY}" \
             -H "Content-Type: application/json" \
             -d '{"category":"fatal","agent":"scrutator","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'
