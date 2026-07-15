@@ -175,7 +175,7 @@ async def test_repository_converges_source_associations_and_deletes_only_orphan_
     sql = "\n".join(str(call.args[0]) for call in [*conn.execute.await_args_list, *conn.fetch.await_args_list])
     assert "pg_advisory_xact_lock" in sql
     lock_sql = conn.execute.await_args_list[0].args[0]
-    assert "hashtextextended($1::text || ':' || $2, 0)" in lock_sql
+    assert "hashtextextended($1::int::text || ':' || $2, 0)" in lock_sql
     assert "INSERT INTO entity_sources" in sql
     assert "INSERT INTO entity_edge_sources" in sql
     assert "DELETE FROM entity_sources" in sql and "NOT (entity_id = ANY" in sql

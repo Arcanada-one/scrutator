@@ -200,7 +200,7 @@ async def apply_structured_graph(
     pool = await get_pool()
     async with pool.acquire() as conn, conn.transaction():
         await conn.execute(
-            "SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2, 0))",
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
             namespace_id,
             source_path,
         )
@@ -394,7 +394,7 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
     pool = await get_pool()
     async with pool.acquire() as conn, conn.transaction():
         await conn.execute(
-            "SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2, 0))",
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
             namespace_id,
             source_path,
         )
