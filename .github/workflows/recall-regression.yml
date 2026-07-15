@@ -32,8 +32,7 @@ jobs:
             --baseline benchmark/recall-gate/baseline.json \
             --thresholds benchmark/recall-gate/thresholds.json
         env:
-          # Harness lives in the synced ~/arcanada tree on arcana-db (Disk Arcana pull follower).
-          # The arcana-db self-hosted runner can read this path directly (no vendoring needed).
-          # If the synced tree is unavailable, vendor the harness under benchmark/recall-gate/vendor/
-          # and update this path accordingly. See benchmark/recall-gate/SOURCE.md for vendoring notes.
-          HARNESS_PATH: /home/ci-runner/arcanada/Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py
+          # INFRA-0322 renamed the host and the runner no longer carries the
+          # historical ~/arcanada follower path. Use the reviewed vendored
+          # harness/query snapshot so the regression gate is checkout-local.
+          HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py

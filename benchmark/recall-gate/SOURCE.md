@@ -2,11 +2,15 @@
 
 ## Harness invocation strategy
 
-The gate uses **Option A (path invocation)** — the harness is invoked by absolute path on the arcana-db self-hosted runner, pointing to the Disk Arcana-synced `~/arcanada` tree.
+The gate uses the documented vendoring fallback because the arcana-kb
+self-hosted runner no longer has the historical `~/arcanada` follower path.
+The harness and its three query files are committed beneath
+`benchmark/recall-gate/vendor/`, making the gate checkout-local.
 
-**CI env var:** `HARNESS_PATH=/home/ci-runner/arcanada/Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py`
+**CI env var:** `HARNESS_PATH=benchmark/recall-gate/vendor/ltm-bench-query.py`
 
-The arcana-db runner has the Mac-synced Arcanada KB tree available at `~/arcanada/` (pull follower via Disk Arcana, per ADR-0001). The harness and its query JSONL files (`benchmark/queries/*.jsonl`) are already present there. No vendoring is needed.
+Update the snapshot deliberately when the canonical harness changes; do not
+silently fall back to a host path.
 
 ## Vendoring fallback (Option A unavailable)
 
@@ -20,11 +24,16 @@ If the runner is sandboxed to the Scrutator repo checkout only and cannot read `
 2. Update `HARNESS_PATH` in `recall-regression.yml` to `benchmark/recall-gate/vendor/ltm-bench-query.py`
 3. Update this file with the source commit SHA and copy date.
 
-**Vendored copy provenance (fill in if vendoring is activated):**
+**Vendored copy provenance:**
 - Source repo: `arcanada` (root KB git repo)
 - Source path: `Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py`
-- Source commit: _TBD_
-- Copied at: _TBD_
+- Query source path: `Projects/Long Term Memory/benchmark/queries/`
+- Source commit: `270a3c0843d5c41d2a61feedadc5477d56bd4f45`
+- Copied at: `2026-07-15`
+- Harness SHA-256: `6a31f688301a7fab8d2412500d1ecf22daa638fb22a291605d4a0c2cda1a7b81`
+- Factual SHA-256: `66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767`
+- Multi-hop SHA-256: `136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f`
+- Temporal SHA-256: `14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032`
 
 ## Gate mode: with-entities (expand_entities=true)
 
