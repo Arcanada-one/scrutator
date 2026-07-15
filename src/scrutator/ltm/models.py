@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _MAX_CONTENT_LENGTH = 500_000
 _MAX_RECALL_LIMIT = 50
@@ -17,6 +17,8 @@ _MAX_STRUCTURED_EDGES = 5_000
 
 class StructuredGraphEntity(BaseModel):
     """A caller-supplied entity in a deterministic graph envelope."""
+
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     entity_type: str
@@ -33,6 +35,8 @@ class StructuredGraphEntity(BaseModel):
 
 class StructuredGraphEdge(BaseModel):
     """A caller-supplied relationship in a deterministic graph envelope."""
+
+    model_config = ConfigDict(extra="forbid")
 
     source: str
     target: str
@@ -64,6 +68,8 @@ class StructuredGraphEdge(BaseModel):
 
 class StructuredGraph(BaseModel):
     """Versioned deterministic graph supplied with an LTM ingest request."""
+
+    model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal[1]
     content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")

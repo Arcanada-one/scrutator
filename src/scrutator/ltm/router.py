@@ -55,11 +55,15 @@ async def ingest(
     """
     # Reader grants never imply mutation authority. Both generic and
     # structured LTM ingest require this dedicated writer credential.
-    valid_writer = (
-        bool(settings.ltm_writer_token)
-        and bool(x_ltm_writer_token)
-        and secrets.compare_digest(settings.ltm_writer_token, x_ltm_writer_token)
-    )
+    try:
+        configured_token = settings.ltm_writer_token.encode("ascii")
+        supplied_token = x_ltm_writer_token.encode("ascii") if x_ltm_writer_token else b""
+    except UnicodeEncodeError:
+        valid_writer = False
+    else:
+        valid_writer = (
+            bool(configured_token) and bool(supplied_token) and secrets.compare_digest(configured_token, supplied_token)
+        )
     if not valid_writer:
         raise HTTPException(status_code=401, detail="LTM writer credential required")
     allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}

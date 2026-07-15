@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -56,6 +57,17 @@ def test_bad_writer_token_is_rejected_before_namespace_upsert():
     upsert.assert_not_awaited()
 
 
+def test_non_ascii_writer_token_is_rejected_instead_of_crashing():
+    original = settings.ltm_writer_token
+    settings.ltm_writer_token = "correct-secret"
+    try:
+        response, upsert = _post(READER, token=b"\xff")
+    finally:
+        settings.ltm_writer_token = original
+    assert response.status_code == 401
+    upsert.assert_not_awaited()
+
+
 def test_feeder_token_is_not_accepted_as_ltm_writer_token():
     original = (settings.ltm_writer_token, settings.feeder_token)
     settings.ltm_writer_token = "ltm-secret"
@@ -93,3 +105,43 @@ def test_structured_ingest_uses_same_writer_authorization():
     response, upsert = _post(READER, body=structured_body)
     assert response.status_code == 401
     upsert.assert_not_awaited()
+
+
+def test_valid_scoped_writer_token_enters_existing_generic_ingest_pipeline():
+    original = (settings.ltm_writer_token, settings.ltm_writer_namespaces)
+    settings.ltm_writer_token = "ltm-secret"
+    settings.ltm_writer_namespaces = "muneral"
+    pool = MagicMock()
+    try:
+        with (
+            override_tenant_context(app, READER),
+            patch("scrutator.ltm.router.repository.upsert_namespace", new_callable=AsyncMock, return_value=7) as upsert,
+            patch("scrutator.ltm.router.repository.create_ltm_job", new_callable=AsyncMock, return_value="job-1"),
+            patch("scrutator.ltm.router.repository.update_ltm_job", new_callable=AsyncMock),
+            patch("scrutator.ltm.router.repository.get_chunk_ids_by_source", new_callable=AsyncMock, return_value=[]),
+            patch(
+                "scrutator.ltm.router.repository.get_entity_names_for_namespace",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
+            patch(
+                "scrutator.search.indexer.index_document",
+                new_callable=AsyncMock,
+                return_value=SimpleNamespace(chunks_indexed=0),
+            ) as index_document,
+            patch("scrutator.ltm.router._create_llm_client"),
+            patch("scrutator.db.connection.get_pool", new_callable=AsyncMock, return_value=pool),
+            TestClient(app) as client,
+        ):
+            response = client.post(
+                "/v1/ltm/ingest",
+                json=BODY,
+                headers={"X-LTM-Writer-Token": "ltm-secret"},
+            )
+    finally:
+        settings.ltm_writer_token, settings.ltm_writer_namespaces = original
+
+    assert response.status_code == 200
+    assert response.json() == {"job_id": "job-1", "status": "done"}
+    upsert.assert_awaited_once_with("muneral")
+    index_document.assert_awaited_once()
