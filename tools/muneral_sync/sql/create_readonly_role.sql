@@ -8,6 +8,10 @@
 -- They affect every role in the current database. Existing application roles
 -- that legitimately create schemas/objects or temporary tables need explicit
 -- grants before this script is applied. Ordinary DML roles are unaffected.
+-- The signature-qualified PUBLIC EXECUTE revocations below are also
+-- database-wide. Triggers continue to invoke their functions internally, but
+-- legitimate roles that directly call one must receive a reviewed, explicit
+-- GRANT EXECUTE ON FUNCTION <exact-signature> TO <role>; never regrant PUBLIC.
 
 DO $provision$
 DECLARE
@@ -64,6 +68,12 @@ GRANT USAGE ON SCHEMA public TO muneral_kb_reader;
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM muneral_kb_reader;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM muneral_kb_reader;
 REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM muneral_kb_reader;
+
+REVOKE EXECUTE ON FUNCTION public.muneral_kb_touch_task(uuid, boolean) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.muneral_kb_tasks_changed() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.muneral_kb_task_child_changed() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.muneral_kb_task_dependency_changed() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.muneral_kb_project_changed() FROM PUBLIC;
 
 GRANT SELECT ON TABLE public.users TO muneral_kb_reader;
 GRANT SELECT ON TABLE public.workspaces TO muneral_kb_reader;
