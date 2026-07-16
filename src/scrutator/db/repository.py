@@ -1919,6 +1919,18 @@ async def fetch_chunks_for_reflect(
     return grouped
 
 
+def dense_to_float32(value: Any) -> np.ndarray:
+    """Convert an ``embedding_dense`` column value to a float32 ndarray.
+
+    The pgvector asyncpg codec returns ``pgvector.Vector``, which is not
+    iterable and which ``np.asarray`` wraps as a 0-d object scalar.
+    """
+    to_numpy = getattr(value, "to_numpy", None)
+    if to_numpy is not None:
+        return np.asarray(to_numpy(), dtype=np.float32)
+    return np.asarray(value, dtype=np.float32)
+
+
 async def fetch_chunks_for_reflect_cosine(
     namespace_id: int,
     since: Any | None,
@@ -1953,7 +1965,7 @@ async def fetch_chunks_for_reflect_cosine(
         return {}
     from scrutator.ltm.grouping import cluster_by_cosine
 
-    vectors = np.asarray([list(r["embedding_dense"]) for r in rows], dtype=np.float32)
+    vectors = np.asarray([dense_to_float32(r["embedding_dense"]) for r in rows], dtype=np.float32)
     index_groups = cluster_by_cosine(vectors, threshold)
     return {
         f"cluster_{root}": [
