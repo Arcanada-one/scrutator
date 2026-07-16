@@ -560,7 +560,10 @@ class TestAnalyzerFullAnalysis:
                 }
             )
 
-            result = await analyze(DreamAnalysisRequest(namespace="test", include_boost=True), namespace_ids=frozenset({1}))
+            result = await analyze(
+                DreamAnalysisRequest(namespace="test", include_boost=True),
+                namespace_ids=frozenset({1}),
+            )
             assert mock_repo.get_stats.await_count == 2
             for call in mock_repo.get_stats.await_args_list:
                 assert call.kwargs == {"namespace_ids": frozenset({1})}
