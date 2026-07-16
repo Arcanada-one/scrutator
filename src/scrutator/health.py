@@ -281,7 +281,7 @@ async def dream_analyze_endpoint(
     request: DreamAnalysisRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> DreamAnalysisResult:
     try:
-        return await dream_analyze(request)
+        return await dream_analyze(request, namespace_ids=ctx.allowed_namespace_ids)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Dream analysis failed: {e}") from e
 

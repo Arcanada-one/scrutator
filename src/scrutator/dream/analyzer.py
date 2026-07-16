@@ -16,9 +16,9 @@ from scrutator.dream.models import (
 )
 
 
-async def _resolve_namespace_id(namespace: str) -> int | None:
-    """Look up namespace_id by name. Returns None if not found."""
-    namespaces = await repository.get_namespaces()
+async def _resolve_namespace_id(namespace: str, namespace_ids: frozenset[int]) -> int | None:
+    """Look up namespace_id by name inside the caller's allowed namespace set."""
+    namespaces = await repository.get_namespaces(namespace_ids=namespace_ids)
     for ns in namespaces:
         if ns.name == namespace:
             return ns.id
@@ -121,11 +121,11 @@ async def compute_boost_scores(namespace_id: int, limit: int) -> list[BoostScore
     return boosts
 
 
-async def analyze(request: DreamAnalysisRequest) -> DreamAnalysisResult:
-    """Run all dream analyzers for a namespace."""
+async def analyze(request: DreamAnalysisRequest, namespace_ids: frozenset[int]) -> DreamAnalysisResult:
+    """Run all dream analyzers for a namespace visible to the caller."""
     start = time.monotonic()
 
-    namespace_id = await _resolve_namespace_id(request.namespace)
+    namespace_id = await _resolve_namespace_id(request.namespace, namespace_ids)
     if namespace_id is None:
         return DreamAnalysisResult(
             namespace=request.namespace,
