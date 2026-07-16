@@ -94,14 +94,14 @@ async def find_stale_chunks(namespace_id: int, stale_days: int, limit: int) -> l
     ]
 
 
-async def compute_boost_scores(namespace_id: int, limit: int) -> list[BoostScore]:
-    """Compute relevance boost based on edge connectivity."""
+async def compute_boost_scores(namespace_id: int, limit: int, namespace_ids: frozenset[int]) -> list[BoostScore]:
+    """Compute relevance boost based on edge connectivity inside the caller's scope."""
     edge_stats = await repository.get_edge_stats(namespace_id)
     total_edges = edge_stats["total_edges"]
     if total_edges == 0:
         return []
 
-    stats = await repository.get_stats()
+    stats = await repository.get_stats(namespace_ids=namespace_ids)
     total_chunks = stats["total_chunks"]
     if total_chunks == 0:
         return []
@@ -146,10 +146,10 @@ async def analyze(request: DreamAnalysisRequest, namespace_ids: frozenset[int]) 
 
     boosts: list[BoostScore] = []
     if request.include_boost:
-        boosts = await compute_boost_scores(namespace_id, limit)
+        boosts = await compute_boost_scores(namespace_id, limit, namespace_ids)
 
     edge_stats = await repository.get_edge_stats(namespace_id)
-    stats_data = await repository.get_stats()
+    stats_data = await repository.get_stats(namespace_ids=namespace_ids)
 
     elapsed = int((time.monotonic() - start) * 1000)
 
