@@ -415,7 +415,7 @@ class TestAnalyzerResolveNamespace:
                     NamespaceInfo(id=1, name="other", description=None, chunk_count=10),
                 ]
             )
-            result = await analyze(DreamAnalysisRequest(namespace="nonexistent"))
+            result = await analyze(DreamAnalysisRequest(namespace="nonexistent"), namespace_ids=frozenset({1}))
             assert result.namespace == "nonexistent"
             assert result.stats.get("error") == "namespace_not_found"
             assert len(result.duplicates) == 0
@@ -519,7 +519,8 @@ class TestAnalyzerFullAnalysis:
                 }
             )
 
-            result = await analyze(DreamAnalysisRequest(namespace="arcanada"))
+            result = await analyze(DreamAnalysisRequest(namespace="arcanada"), namespace_ids=frozenset({1}))
+            mock_repo.get_namespaces.assert_awaited_once_with(namespace_ids=frozenset({1}))
             assert result.namespace == "arcanada"
             assert result.stats["total_chunks"] == 100
             assert result.stats["analysis_time_ms"] >= 0
@@ -558,7 +559,7 @@ class TestAnalyzerFullAnalysis:
                 }
             )
 
-            result = await analyze(DreamAnalysisRequest(namespace="test", include_boost=True))
+            result = await analyze(DreamAnalysisRequest(namespace="test", include_boost=True), namespace_ids=frozenset({1}))
             assert len(result.boosts) == 2
             assert result.boosts[0].edge_count == 7
 
