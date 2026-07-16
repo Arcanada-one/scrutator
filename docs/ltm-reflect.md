@@ -172,3 +172,31 @@ Idempotent: `upsert_entity`/`upsert_entity_edge`/`upsert_entity_event` are
 re-run), so a crashed or `--limit`-batched run can simply be re-invoked — only
 chunks still missing entities are re-selected. Per-chunk extraction failures
 are logged and skipped, not fatal to the run.
+
+## Periodic runner (LTM-0026)
+
+`python -m scrutator.ltm.reflect_runner` runs one bounded incremental reflect
+pass from inside the Scrutator runtime. It uses the same LLM settings and budget
+caps as `POST /v1/ltm/reflect`, persists a UTC cursor, and advances that cursor
+only after a non-dry-run summary with `status="done"`.
+
+```bash
+python -m scrutator.ltm.reflect_runner \
+  --namespace wiki \
+  --state-file /var/lib/scrutator/ltm-reflect/cursor.json \
+  --max-chunks 50 \
+  --dry-run
+```
+
+Production wrapper files:
+
+- `deploy/ltm-reflect-run.sh` — host-side `docker exec` wrapper with a
+  state-directory lock.
+- `deploy/ltm-reflect.service` — hardened oneshot service.
+- `deploy/ltm-reflect.timer` — hourly timer.
+
+The service has `ConditionPathExists=/var/lib/scrutator/ltm-reflect-ready`.
+Do not create that marker until the SRCH-0044 full KB backfill is explicitly
+approved and verified; before the marker exists, installing/enabling the timer is
+inert. This keeps LTM-0026 shippable without silently starting billed reflection
+or reflecting over a partial corpus.
