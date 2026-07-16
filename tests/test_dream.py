@@ -522,6 +522,7 @@ class TestAnalyzerFullAnalysis:
             result = await analyze(DreamAnalysisRequest(namespace="arcanada"), namespace_ids=frozenset({1}))
             mock_repo.get_namespaces.assert_awaited_once_with(namespace_ids=frozenset({1}))
             assert result.namespace == "arcanada"
+            mock_repo.get_stats.assert_awaited_once_with(namespace_ids=frozenset({1}))
             assert result.stats["total_chunks"] == 100
             assert result.stats["analysis_time_ms"] >= 0
             assert len(result.duplicates) == 0
@@ -560,6 +561,9 @@ class TestAnalyzerFullAnalysis:
             )
 
             result = await analyze(DreamAnalysisRequest(namespace="test", include_boost=True), namespace_ids=frozenset({1}))
+            assert mock_repo.get_stats.await_count == 2
+            for call in mock_repo.get_stats.await_args_list:
+                assert call.kwargs == {"namespace_ids": frozenset({1})}
             assert len(result.boosts) == 2
             assert result.boosts[0].edge_count == 7
 
