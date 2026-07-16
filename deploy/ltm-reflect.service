@@ -1,0 +1,27 @@
+[Unit]
+Description=Scrutator LTM bounded reflect pass
+Documentation=https://github.com/Arcanada-one/scrutator/blob/main/docs/ltm-reflect.md
+Wants=network-online.target docker.service
+After=network-online.target docker.service scrutator.service
+ConditionPathExists=/var/lib/scrutator/ltm-reflect-ready
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=LTM_REFLECT_NAMESPACE=wiki
+Environment=LTM_REFLECT_MAX_CHUNKS=50
+ExecStart=/srv/apps/scrutator/deploy/ltm-reflect-run.sh
+TimeoutStartSec=20min
+UMask=0077
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/scrutator/ltm-reflect
+ReadOnlyPaths=/srv/apps/scrutator
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native

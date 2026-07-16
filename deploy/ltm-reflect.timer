@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Scrutator LTM reflect pass hourly after backfill approval marker
+
+[Timer]
+Unit=ltm-reflect.service
+OnBootSec=15min
+OnUnitInactiveSec=1h
+RandomizedDelaySec=5min
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
