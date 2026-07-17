@@ -67,8 +67,11 @@ async def verify_service_token(token: str) -> tuple[str, str]:
         raise Unauthenticated(f"introspection request failed: {type(exc).__name__}") from exc
     if resp.status_code != 200:
         raise Unauthenticated(f"introspection returned status {resp.status_code}")
-    data = resp.json()
-    if not data.get("active"):
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise Unauthenticated("introspection returned invalid JSON") from exc
+    if not isinstance(data, dict) or data.get("active") is not True:
         raise Unauthenticated("service token inactive")
     principal_id = data.get("principal_id")
     if not principal_id:
@@ -91,7 +94,7 @@ async def verify_oidc_token(token: str) -> tuple[str, str]:
     """
     if not settings.auth_arcana_jwks_url:
         raise Unauthenticated("Auth Arcana JWKS endpoint not configured")
-    if not settings.auth_oidc_issuer or not settings.auth_oidc_audience:
+    if not settings.auth_oidc_issuer or not settings.auth_oidc_audience or not settings.auth_oidc_scope:
         raise Unauthenticated("OIDC resource profile not configured")
     try:
         jwks_client = _get_jwks_client(settings.auth_arcana_jwks_url)
@@ -111,6 +114,9 @@ async def verify_oidc_token(token: str) -> tuple[str, str]:
     principal_id = claims.get("sub")
     if not principal_id:
         raise Unauthenticated("token missing sub claim")
+    scopes = claims.get("scope")
+    if not isinstance(scopes, str) or settings.auth_oidc_scope not in scopes.split():
+        raise Unauthenticated("OIDC token scope mismatch")
     return principal_id, "user"
 
 

@@ -14,3 +14,8 @@ def test_scrutator_deploy_masks_timers_and_refuses_active_reconcilers():
     assert "exit 75" in workflow
     assert "trap resume_kb_timers EXIT" in workflow
     assert 'systemctl unmask --runtime "${kb_timers[@]}"' in workflow
+    assert "active_kb_timers=()" in workflow
+    assert 'active_kb_timers+=("$timer")' in workflow
+    assert "if ((${#active_kb_timers[@]})); then" in workflow
+    assert 'systemctl start "${active_kb_timers[@]}"' in workflow
+    assert 'systemctl start "${kb_timers[@]}"' not in workflow

@@ -296,8 +296,11 @@ class TestDeleteEdgesByCreator:
 
             count = await delete_edges_by_creator("dreamer", namespace_id=1)
             assert count == 3
-            call_args = mock_conn.execute.call_args
-            assert "namespace_id" in call_args[0][0] or len(call_args[0]) > 2
+            sql, creator, namespace_id = mock_conn.execute.call_args.args
+            assert "USING chunks source, chunks target" in sql
+            assert "source.namespace_id = $2" in sql
+            assert "target.namespace_id = $2" in sql
+            assert (creator, namespace_id) == ("dreamer", 1)
 
 
 # ── Repository analysis queries ─────────────────────────────────────
