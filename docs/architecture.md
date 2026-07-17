@@ -98,7 +98,13 @@ ORDER BY score DESC LIMIT 10;
 | `/health` | GET | Health check |
 | `/v1/chunk` | POST | Chunk a document (adaptive strategy) |
 | `/v1/index` | POST | Index chunks (embed + store) |
+| `/v1/index/batch` | POST | Index up to four same-namespace documents with one dense and one sparse embedding call |
 | `/v1/search` | POST | Hybrid search with RRF |
 | `/v1/dream/analyze` | POST | Dreaming analysis |
 | `/v1/namespaces` | GET/POST | Namespace management |
 | `/v1/stats` | GET | Index statistics |
+
+`/v1/index/batch` uses the same namespace-scoped Feeder credential as `/v1/index`. It rejects mixed namespaces and
+duplicate source paths before embedding, validates dense and sparse vector cardinality, and commits each source under
+a per-source PostgreSQL advisory lock and transaction. A failed source leaves its previous generation unchanged and
+does not roll back successful sibling documents.
