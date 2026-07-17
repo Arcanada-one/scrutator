@@ -3,8 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, HTTPException
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
@@ -74,6 +73,7 @@ from scrutator.memory.service import (
 from scrutator.memory.service import (
     recall as memory_recall,
 )
+from scrutator.request_limits import BoundedRequestBodyMiddleware
 from scrutator.search.embedder import close_client as close_embedding_client
 from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents
 from scrutator.search.navigator import build_outline, build_section_context
@@ -96,19 +96,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
-
-
-@app.middleware("http")
-async def enforce_batch_request_size(request: Request, call_next):
-    """Reject oversized batch bodies using measured bytes, including chunked requests."""
-    if request.url.path == "/v1/index/batch":
-        declared_size = request.headers.get("content-length")
-        if declared_size and declared_size.isdecimal() and int(declared_size) > INDEX_BATCH_MAX_REQUEST_BYTES:
-            return JSONResponse(status_code=413, content={"detail": "batch request body too large"})
-        body = await request.body()
-        if len(body) > INDEX_BATCH_MAX_REQUEST_BYTES:
-            return JSONResponse(status_code=413, content={"detail": "batch request body too large"})
-    return await call_next(request)
+app.add_middleware(
+    BoundedRequestBodyMiddleware,
+    path="/v1/index/batch",
+    max_bytes=INDEX_BATCH_MAX_REQUEST_BYTES,
+)
 
 
 # LTM router
