@@ -7,6 +7,7 @@ Usage:
 Outputs JSON report compatible with existing benchmark report format.
 """
 
+import hashlib
 import json
 import os
 import stat
@@ -21,15 +22,28 @@ QUERIES_DIR = str(VENDOR_ROOT / "queries")
 DEFAULT_NS = "ltm-bench-datarim-kb"
 REPORTS_DIR_V4 = str(VENDOR_ROOT / "reports/v4/scrutator")
 REPORTS_DIR_V5 = str(VENDOR_ROOT / "reports/v5/scrutator")
+CORPUS_MANIFEST_SHA256 = "ae6616d4bb899fae231070fbde27c054c68556232267407c848156cb09073b6f"
+
+
+def query_set_sha256() -> str:
+    """Hash file names and bytes in a stable order to identify the exact query contract."""
+    digest = hashlib.sha256()
+    for path in sorted(Path(QUERIES_DIR).glob("*.jsonl")):
+        digest.update(path.name.encode())
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
 
 
 def recall(query: str, namespace: str, expand_entities: bool, limit: int = 20) -> dict:
-    payload = json.dumps({
-        "query": query,
-        "namespace": namespace,
-        "limit": limit,
-        "expand_entities": expand_entities,
-    }).encode()
+    payload = json.dumps(
+        {
+            "query": query,
+            "namespace": namespace,
+            "limit": limit,
+            "expand_entities": expand_entities,
+        }
+    ).encode()
     token_file = os.environ.get("SCRUTATOR_BEARER_TOKEN_FILE")
     if not token_file:
         raise RuntimeError("SCRUTATOR_BEARER_TOKEN_FILE is required")
@@ -61,9 +75,7 @@ def tail_matches(a: str, b: str) -> bool:
         return True
     if a.endswith("/" + b):
         return True
-    if b.endswith("/" + a):
-        return True
-    return False
+    return b.endswith("/" + a)
 
 
 def file_path_matches(retrieved: str, truth: str) -> bool:
@@ -72,6 +84,7 @@ def file_path_matches(retrieved: str, truth: str) -> bool:
 
 def snippet_jaccard(a: str, b: str, threshold: float = 0.8) -> bool:
     import re
+
     ta = set(re.findall(r"[\w]+", a.lower()))
     tb = set(re.findall(r"[\w]+", b.lower()))
     if not ta or not tb:
@@ -84,8 +97,7 @@ def snippet_jaccard(a: str, b: str, threshold: float = 0.8) -> bool:
     return (inter / union) >= threshold if union > 0 else False
 
 
-def source_matches(retrieved_file: str, retrieved_snippet: str,
-                   truth_file: str, truth_snippet: str) -> bool:
+def source_matches(retrieved_file: str, retrieved_snippet: str, truth_file: str, truth_snippet: str) -> bool:
     if file_path_matches(retrieved_file, truth_file):
         return True
     if retrieved_snippet.strip() and truth_snippet.strip():
@@ -97,27 +109,26 @@ def load_queries(corpus: str) -> list:
     queries = []
     for fname in ["factual.jsonl", "multi-hop.jsonl", "temporal.jsonl"]:
         path = Path(QUERIES_DIR) / fname
-        for line in open(path):
-            q = json.loads(line)
-            if q.get("corpus") == corpus:
-                queries.append(q)
+        with path.open() as query_file:
+            for line in query_file:
+                q = json.loads(line)
+                if q.get("corpus") == corpus:
+                    queries.append(q)
     return queries
 
 
 def per_query_metrics(query_id: str, retrieved: list, truth_sources: list) -> dict:
     def any_hit(rs):
         return any(
-            source_matches(r["source_path"], r["content"], t["file"], t["snippet"])
-            for r in rs
-            for t in truth_sources
+            source_matches(r["source_path"], r["content"], t["file"], t["snippet"]) for r in rs for t in truth_sources
         )
 
     top1 = retrieved[:1]
     top5 = retrieved[:5]
     hits_in_top5 = sum(
-        1 for r in top5
-        if any(source_matches(r["source_path"], r["content"], t["file"], t["snippet"])
-               for t in truth_sources)
+        1
+        for r in top5
+        if any(source_matches(r["source_path"], r["content"], t["file"], t["snippet"]) for t in truth_sources)
     )
 
     return {
@@ -127,10 +138,9 @@ def per_query_metrics(query_id: str, retrieved: list, truth_sources: list) -> di
         "precision_at_5": hits_in_top5 / len(top5) if top5 else 0,
         "num_truth_sources": len(truth_sources),
         "num_retrieved": len(retrieved),
-        "hit_by": "path" if top5 and any(
-            file_path_matches(r["source_path"], t["file"])
-            for r in top5 for t in truth_sources
-        ) else ("snippet" if any_hit(top5) else "none"),
+        "hit_by": "path"
+        if top5 and any(file_path_matches(r["source_path"], t["file"]) for r in top5 for t in truth_sources)
+        else ("snippet" if any_hit(top5) else "none"),
     }
 
 
@@ -159,13 +169,14 @@ def main():
     else:
         mode = "with-entities" if expand_entities else "no-entities"
 
-    print(f"LTM-0009 Query Benchmark")
+    print("LTM-0009 Query Benchmark")
     print(f"  namespace={namespace} expand_entities={expand_entities}")
     print(f"  queries={len(queries)} mode={mode}")
     print()
 
     started_at = time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
     per_query = []
+    query_errors = []
     latencies = []
 
     for i, q in enumerate(queries):
@@ -180,17 +191,13 @@ def main():
 
             status = "HIT" if metrics["recall_at_5"] > 0 else "miss"
             hit_by = metrics["hit_by"]
-            print(f"  [{i+1}/{len(queries)}] {q['id']}: {status} (by={hit_by}) "
-                  f"retrieved={metrics['num_retrieved']} latency={latency:.0f}ms")
+            print(
+                f"  [{i + 1}/{len(queries)}] {q['id']}: {status} (by={hit_by}) "
+                f"retrieved={metrics['num_retrieved']} latency={latency:.0f}ms"
+            )
         except Exception as e:
-            print(f"  [{i+1}/{len(queries)}] {q['id']}: ERROR {e}")
-            per_query.append({
-                "query_id": q["id"],
-                "recall_at_1": 0, "recall_at_5": 0, "precision_at_5": 0,
-                "num_truth_sources": len(q["ground_truth"]["sources"]),
-                "num_retrieved": 0, "hit_by": "none",
-            })
-            latencies.append(0)
+            print(f"  [{i + 1}/{len(queries)}] {q['id']}: ERROR {e}")
+            query_errors.append({"query_id": q["id"], "error_type": type(e).__name__})
 
     completed_at = time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
@@ -218,11 +225,11 @@ def main():
     # Latency
     sorted_lat = sorted(latencies)
     lat_stats = {
-        "p50_ms": sorted_lat[len(sorted_lat)//2] if sorted_lat else 0,
-        "p95_ms": sorted_lat[int(len(sorted_lat)*0.95)] if sorted_lat else 0,
+        "p50_ms": sorted_lat[len(sorted_lat) // 2] if sorted_lat else 0,
+        "p95_ms": sorted_lat[int(len(sorted_lat) * 0.95)] if sorted_lat else 0,
         "min_ms": min(sorted_lat) if sorted_lat else 0,
         "max_ms": max(sorted_lat) if sorted_lat else 0,
-        "mean_ms": sum(sorted_lat)/len(sorted_lat) if sorted_lat else 0,
+        "mean_ms": sum(sorted_lat) / len(sorted_lat) if sorted_lat else 0,
         "count": len(sorted_lat),
     }
 
@@ -232,17 +239,25 @@ def main():
     misses = sum(1 for m in per_query if m["hit_by"] == "none")
 
     report = {
+        "schema": "scrutator-recall-report/2",
         "framework": "scrutator",
         "corpus": "datarim-kb",
+        "corpus_manifest_sha256": CORPUS_MANIFEST_SHA256,
+        "namespace": namespace,
+        "query_count": len(queries),
+        "query_set_sha256": query_set_sha256(),
         "run_date": time.strftime("%Y-%m-%d"),
         "run_started_at": started_at,
         "run_completed_at": completed_at,
-        "llm_model": "cursor/auto (via MC)",
+        # The service does not expose its effective Model Connector route. The caller must
+        # attest it explicitly; "unreported" intentionally makes the gate fail closed.
+        "reranker_model": os.environ.get("LTM_BENCH_RERANKER_MODEL", "unreported"),
         "mode": mode,
         "expand_entities": expand_entities,
         "with_meta_facts": with_meta_facts,
         "score_factor": score_factor,
         "per_query": per_query,
+        "query_errors": query_errors,
         "per_query_latency_ms": latencies,
         "aggregate_all": agg,
         "aggregate_by_class": by_class,
@@ -263,14 +278,18 @@ def main():
     print(f"\nReport: {out_file}")
 
     # Summary
-    print(f"\n{'='*60}")
-    print(f"RESULTS: recall@1={agg['mean_recall_at_1']:.3f} recall@5={agg['mean_recall_at_5']:.3f} "
-          f"precision@5={agg['mean_precision_at_5']:.3f}")
+    print(f"\n{'=' * 60}")
+    print(
+        f"RESULTS: recall@1={agg['mean_recall_at_1']:.3f} recall@5={agg['mean_recall_at_5']:.3f} "
+        f"precision@5={agg['mean_precision_at_5']:.3f}"
+    )
     print(f"  path_hits={path_hits} snippet_hits={snippet_hits} misses={misses}")
     print(f"  latency p50={lat_stats['p50_ms']:.0f}ms p95={lat_stats['p95_ms']:.0f}ms")
-    print(f"  by_class: factual={by_class['factual']['mean_recall_at_5']:.3f} "
-          f"multi-hop={by_class['multi-hop']['mean_recall_at_5']:.3f} "
-          f"temporal={by_class['temporal']['mean_recall_at_5']:.3f}")
+    print(
+        f"  by_class: factual={by_class['factual']['mean_recall_at_5']:.3f} "
+        f"multi-hop={by_class['multi-hop']['mean_recall_at_5']:.3f} "
+        f"temporal={by_class['temporal']['mean_recall_at_5']:.3f}"
+    )
 
 
 if __name__ == "__main__":
