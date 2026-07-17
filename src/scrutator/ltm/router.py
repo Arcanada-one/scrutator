@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
-import secrets
 import time
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from scrutator.auth.capabilities import NamespaceCapability, require_ltm_writer_capability
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
 from scrutator.auth.models import TenantContext
 from scrutator.config import settings
@@ -34,15 +34,6 @@ from scrutator.search.searcher import search
 log = logging.getLogger("scrutator.ltm.router")
 
 router = APIRouter(prefix="/v1/ltm", tags=["ltm"])
-
-
-def _has_valid_writer_token(supplied_token: str | None) -> bool:
-    try:
-        configured = settings.ltm_writer_token.encode("ascii")
-        supplied = supplied_token.encode("ascii") if supplied_token else b""
-    except UnicodeEncodeError:
-        return False
-    return bool(configured) and bool(supplied) and secrets.compare_digest(configured, supplied)
 
 
 def _source_prefixes_for(namespace: str) -> tuple[str, ...] | None:
@@ -78,8 +69,7 @@ def _create_llm_client() -> LtmLlmClient:
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest(
     req: IngestRequest,
-    ctx: TenantContext = Depends(require_tenant_context),
-    x_ltm_writer_token: str | None = Header(default=None),
+    capability: NamespaceCapability = Depends(require_ltm_writer_capability),
 ) -> IngestResponse:
     """Ingest a document: chunk, embed, extract entities/edges.
 
@@ -88,10 +78,7 @@ async def ingest(
     """
     # Reader grants never imply mutation authority. Both generic and
     # structured LTM ingest require this dedicated writer credential.
-    if not _has_valid_writer_token(x_ltm_writer_token):
-        raise HTTPException(status_code=401, detail="LTM writer credential required")
-    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
-    if req.namespace not in allowed_namespaces:
+    if req.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
 
     if req.structured_graph is not None:
@@ -241,14 +228,10 @@ async def ingest(
 @router.delete("/source", response_model=SourceDeleteResponse)
 async def delete_source(
     req: SourceDeleteRequest,
-    ctx: TenantContext = Depends(require_tenant_context),
-    x_ltm_writer_token: str | None = Header(default=None),
+    capability: NamespaceCapability = Depends(require_ltm_writer_capability),
 ) -> SourceDeleteResponse:
     """Remove one configured source without disturbing shared graph provenance."""
-    if not _has_valid_writer_token(x_ltm_writer_token):
-        raise HTTPException(status_code=401, detail="LTM writer credential required")
-    allowed_namespaces = {name.strip() for name in settings.ltm_writer_namespaces.split(",") if name.strip()}
-    if req.namespace not in allowed_namespaces:
+    if req.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
     prefixes = _source_prefixes_for(req.namespace)
     if prefixes is None:

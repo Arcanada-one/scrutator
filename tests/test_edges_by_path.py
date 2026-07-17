@@ -195,15 +195,19 @@ class TestCreateEdgesByPath:
 
 class TestEdgesByPathAPI:
     def test_edges_by_path_endpoint(self):
+        from scrutator.health import app
+        from tests.conftest import override_tenant_context
+
         mock_response = EdgeCreateByPathResponse(created=2, not_found=[])
 
-        with patch(
-            "scrutator.health.create_edges_by_path",
-            new_callable=AsyncMock,
-            return_value=mock_response,
+        with (
+            override_tenant_context(app),
+            patch(
+                "scrutator.health.create_edges_by_path",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ),
         ):
-            from scrutator.health import app
-
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.post(
                 "/v1/edges/by-path",

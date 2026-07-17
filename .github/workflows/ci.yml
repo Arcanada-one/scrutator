@@ -91,12 +91,28 @@ jobs:
         if: steps.preflight.outputs.status != 'fail'
         run: |
           set -e
+          kb_timers=(kb-reconcile.timer kb-observe.timer kb-self-improvement-reconcile.timer)
+          resume_kb_timers() {
+            sudo -n systemctl unmask --runtime "${kb_timers[@]}"
+            sudo -n systemctl start "${kb_timers[@]}"
+          }
+          sudo -n systemctl mask --runtime --now "${kb_timers[@]}"
+          trap resume_kb_timers EXIT
+          kb_reconcile_services=(kb-reconcile.service kb-self-improvement-reconcile.service)
+          for service in "${kb_reconcile_services[@]}"; do
+            if sudo -n systemctl is-active --quiet "$service"; then
+              echo "$service is active; refusing Scrutator restart while a reconcile ledger is open" >&2
+              exit 75
+            fi
+          done
           cd /srv/apps/scrutator
           git pull --ff-only origin main
           deploy/ltm-reflect-state-preflight.sh
           docker compose up -d --build
           sleep 10
           curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
+          resume_kb_timers
+          trap - EXIT
 
       - name: Notify Ops Bot on failure
         if: failure()

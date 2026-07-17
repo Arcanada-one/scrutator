@@ -68,6 +68,12 @@ class Settings(BaseSettings):
 
     # SRCH-0023: tenant isolation — Auth Arcana identity + authorization
     auth_arcana_jwks_url: str = "https://auth.arcanada.ai/.well-known/jwks.json"
+    # Generic profiles fail closed until their exact resource contract is set.
+    # The dedicated LTM M2M profile below remains pinned and independently usable.
+    auth_service_audience: str = ""
+    auth_service_scope: str = ""
+    auth_oidc_issuer: str = ""
+    auth_oidc_audience: str = ""
     # LTM-0026 dedicated M2M reader profile. Literals make environment drift
     # fail at startup instead of silently widening the accepted trust domain.
     auth_ltm_issuer: Literal["https://auth.arcanada.ai"] = "https://auth.arcanada.ai"

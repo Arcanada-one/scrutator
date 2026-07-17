@@ -688,7 +688,7 @@ async def hybrid_search(
     return results
 
 
-async def insert_edges(edges: list[dict[str, Any]]) -> int:
+async def insert_edges(edges: list[dict[str, Any]], allowed_namespace_ids: frozenset[int] | None = None) -> int:
     """Batch insert graph edges. ON CONFLICT → update weight. Returns count."""
     if not edges:
         return 0
@@ -696,6 +696,23 @@ async def insert_edges(edges: list[dict[str, Any]]) -> int:
     inserted = 0
     async with pool.acquire() as conn:
         for edge in edges:
+            if allowed_namespace_ids is not None:
+                permitted = await conn.fetchval(
+                    """
+                    SELECT NOT EXISTS (
+                        SELECT 1
+                        FROM unnest($1::uuid[]) requested(id)
+                        LEFT JOIN chunks c
+                          ON c.id = requested.id
+                         AND c.namespace_id = ANY($2::int[])
+                        WHERE c.id IS NULL
+                    )
+                    """,
+                    [edge["source_chunk_id"], edge["target_chunk_id"]],
+                    sorted(allowed_namespace_ids),
+                )
+                if not permitted:
+                    continue
             await conn.execute(
                 """
                 INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight, created_by)
@@ -713,20 +730,42 @@ async def insert_edges(edges: list[dict[str, Any]]) -> int:
     return inserted
 
 
-async def get_edges_for_chunk(chunk_id: str) -> list[dict[str, Any]]:
+async def get_edges_for_chunk(
+    chunk_id: str, allowed_namespace_ids: frozenset[int] | None = None
+) -> list[dict[str, Any]]:
     """Get all edges (inbound + outbound) for a chunk."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
+        if allowed_namespace_ids is None:
+            rows = await conn.fetch(
+                """
             SELECT id, source_chunk_id::text, target_chunk_id::text,
                    edge_type, weight, created_by, created_at::text
             FROM graph_edges
             WHERE source_chunk_id = $1::uuid OR target_chunk_id = $1::uuid
             ORDER BY created_at DESC
-            """,
-            chunk_id,
-        )
+                """,
+                chunk_id,
+            )
+        else:
+            rows = await conn.fetch(
+                """
+                SELECT g.id, g.source_chunk_id::text, g.target_chunk_id::text,
+                       g.edge_type, g.weight, g.created_by, g.created_at::text
+                FROM graph_edges g
+                JOIN chunks requested
+                  ON requested.id = $1::uuid
+                 AND requested.namespace_id = ANY($2::int[])
+                JOIN chunks source ON source.id = g.source_chunk_id
+                JOIN chunks target ON target.id = g.target_chunk_id
+                WHERE (g.source_chunk_id = requested.id OR g.target_chunk_id = requested.id)
+                  AND source.namespace_id = ANY($2::int[])
+                  AND target.namespace_id = ANY($2::int[])
+                ORDER BY g.created_at DESC
+                """,
+                chunk_id,
+                sorted(allowed_namespace_ids),
+            )
     return [dict(r) for r in rows]
 
 
@@ -997,7 +1036,7 @@ def _row_to_chunk_lookup(row: Any) -> ChunkLookupResult:
     )
 
 
-async def get_section_siblings_children(chunk_id: str) -> dict[str, Any] | None:
+async def get_section_siblings_children(chunk_id: str, allowed_namespace_ids: frozenset[int]) -> dict[str, Any] | None:
     """Fetch the target chunk's document-scoped row set for section-context assembly.
 
     SRCH-0021 (V-AC-4): looks up the target chunk, then all chunks sharing its
@@ -1015,9 +1054,10 @@ async def get_section_siblings_children(chunk_id: str) -> dict[str, Any] | None:
             SELECT id::text AS chunk_id, chunk_index, source_type, source_path,
                    namespace_id, LEFT(content, 200) AS content_preview, metadata
             FROM chunks
-            WHERE id = $1::uuid
+            WHERE id = $1::uuid AND namespace_id = ANY($2::int[])
             """,
             chunk_id,
+            list(allowed_namespace_ids),
         )
         if self_row is None:
             return None
@@ -2134,21 +2174,29 @@ async def search_meta_facts(
     ]
 
 
-async def memory_stats() -> MemoryStats:
+async def memory_stats(namespace_ids: frozenset[int] | None = None) -> MemoryStats:
     """Get memory statistics grouped by namespace, actor, type."""
     from scrutator.memory.models import MemoryStats
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        total = await conn.fetchval("SELECT COUNT(*)::int FROM chunks WHERE source_type = 'memory'")
+        allowed = sorted(namespace_ids) if namespace_ids is not None else None
+        total = await conn.fetchval(
+            """SELECT COUNT(*)::int FROM chunks
+               WHERE source_type = 'memory'
+                 AND ($1::int[] IS NULL OR namespace_id = ANY($1::int[]))""",
+            allowed,
+        )
 
         ns_rows = await conn.fetch(
             """
             SELECT n.name, COUNT(*)::int AS cnt
             FROM chunks c JOIN namespaces n ON n.id = c.namespace_id
             WHERE c.source_type = 'memory'
+              AND ($1::int[] IS NULL OR c.namespace_id = ANY($1::int[]))
             GROUP BY n.name ORDER BY cnt DESC
-            """
+            """,
+            allowed,
         )
 
         actor_rows = await conn.fetch(
@@ -2156,8 +2204,10 @@ async def memory_stats() -> MemoryStats:
             SELECT c.metadata->>'actor' AS actor, COUNT(*)::int AS cnt
             FROM chunks c
             WHERE c.source_type = 'memory' AND c.metadata->>'actor' IS NOT NULL
+              AND ($1::int[] IS NULL OR c.namespace_id = ANY($1::int[]))
             GROUP BY actor ORDER BY cnt DESC
-            """
+            """,
+            allowed,
         )
 
         type_rows = await conn.fetch(
@@ -2165,8 +2215,10 @@ async def memory_stats() -> MemoryStats:
             SELECT c.metadata->>'memory_type' AS mtype, COUNT(*)::int AS cnt
             FROM chunks c
             WHERE c.source_type = 'memory' AND c.metadata->>'memory_type' IS NOT NULL
+              AND ($1::int[] IS NULL OR c.namespace_id = ANY($1::int[]))
             GROUP BY mtype ORDER BY cnt DESC
-            """
+            """,
+            allowed,
         )
 
     return MemoryStats(

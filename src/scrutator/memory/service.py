@@ -42,14 +42,15 @@ def _memory_metadata(record: MemoryRecord, memory_id: str) -> dict:
     return meta
 
 
-async def index_memory(record: MemoryRecord) -> MemoryIndexResponse:
+async def index_memory(record: MemoryRecord, namespace_id: int | None = None) -> MemoryIndexResponse:
     """Index a single memory as a chunk with source_type='memory'."""
     memory_id = str(uuid.uuid4())
     source_path = _memory_source_path(record.namespace, record.project, record.actor, memory_id)
     metadata = _memory_metadata(record, memory_id)
 
     embedding = await embed_single(record.content)
-    namespace_id = await repository.upsert_namespace(record.namespace)
+    if namespace_id is None:
+        namespace_id = await repository.upsert_namespace(record.namespace)
     project_id = None
     if record.project:
         project_id = await repository.upsert_project(namespace_id, record.project)
@@ -69,11 +70,12 @@ async def index_memory(record: MemoryRecord) -> MemoryIndexResponse:
     return MemoryIndexResponse(memory_id=memory_id, chunk_id=memory_id, namespace=record.namespace)
 
 
-async def bulk_index(records: list[MemoryRecord]) -> MemoryBulkResponse:
+async def bulk_index(records: list[MemoryRecord], namespace_ids: dict[str, int] | None = None) -> MemoryBulkResponse:
     """Index multiple memories in batch."""
     memory_ids: list[str] = []
     for record in records:
-        result = await index_memory(record)
+        namespace_id = namespace_ids.get(record.namespace) if namespace_ids is not None else None
+        result = await index_memory(record, namespace_id)
         memory_ids.append(result.memory_id)
     return MemoryBulkResponse(indexed=len(memory_ids), memory_ids=memory_ids)
 
@@ -130,6 +132,6 @@ async def recall(request: MemoryRecallRequest, namespace_id: int) -> MemoryRecal
     )
 
 
-async def get_memory_stats() -> MemoryStats:
+async def get_memory_stats(namespace_ids: frozenset[int] | None = None) -> MemoryStats:
     """Get memory statistics grouped by namespace, actor, type."""
-    return await repository.memory_stats()
+    return await repository.memory_stats(namespace_ids)

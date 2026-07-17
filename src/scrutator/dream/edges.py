@@ -6,7 +6,9 @@ from scrutator.db.repository import get_chunks_by_source_path, insert_edges
 from scrutator.dream.models import EdgeCreateByPath, EdgeCreateByPathResponse
 
 
-async def create_edges_by_path(edges: list[EdgeCreateByPath]) -> EdgeCreateByPathResponse:
+async def create_edges_by_path(
+    edges: list[EdgeCreateByPath], namespace_id: int | None = None
+) -> EdgeCreateByPathResponse:
     """Resolve source_path → chunk_id for each edge, then batch-insert."""
     # Collect unique paths
     all_paths: set[str] = set()
@@ -17,7 +19,11 @@ async def create_edges_by_path(edges: list[EdgeCreateByPath]) -> EdgeCreateByPat
     # Batch lookup: path → {chunk_index: chunk_id}
     path_map: dict[str, dict[int, str]] = {}
     for path in all_paths:
-        chunks = await get_chunks_by_source_path(path)
+        chunks = (
+            await get_chunks_by_source_path(path, namespace_id)
+            if namespace_id is not None
+            else await get_chunks_by_source_path(path)
+        )
         if chunks:
             path_map[path] = {c.chunk_index: c.chunk_id for c in chunks}
 
@@ -56,5 +62,11 @@ async def create_edges_by_path(edges: list[EdgeCreateByPath]) -> EdgeCreateByPat
             }
         )
 
-    created = await insert_edges(resolved) if resolved else 0
+    allowed_namespace_ids = frozenset({namespace_id}) if namespace_id is not None else None
+    if not resolved:
+        created = 0
+    elif allowed_namespace_ids is None:
+        created = await insert_edges(resolved)
+    else:
+        created = await insert_edges(resolved, allowed_namespace_ids)
     return EdgeCreateByPathResponse(created=created, not_found=sorted(not_found))

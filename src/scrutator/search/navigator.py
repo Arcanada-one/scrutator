@@ -118,7 +118,7 @@ async def build_outline(namespace: str, source_path: str, max_nodes: int = DEFAU
     )
 
 
-async def build_section_context(chunk_id: str) -> SectionContext:
+async def build_section_context(chunk_id: str, allowed_namespace_ids: frozenset[int]) -> SectionContext:
     """Assemble ancestors/self/siblings/children for a chunk.
 
     422 if chunk_id is not a UUID; 404 if the chunk does not exist.
@@ -128,7 +128,7 @@ async def build_section_context(chunk_id: str) -> SectionContext:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=f"chunk_id is not a valid UUID: {chunk_id}") from exc
 
-    result = await get_section_siblings_children(chunk_id)
+    result = await get_section_siblings_children(chunk_id, allowed_namespace_ids)
     if result is None:
         raise HTTPException(status_code=404, detail=f"chunk not found: {chunk_id}")
 

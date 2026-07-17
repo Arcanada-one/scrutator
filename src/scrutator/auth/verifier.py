@@ -73,6 +73,12 @@ async def verify_service_token(token: str) -> tuple[str, str]:
     principal_id = data.get("principal_id")
     if not principal_id:
         raise Unauthenticated("introspection response missing principal_id")
+    if not settings.auth_service_audience or not settings.auth_service_scope:
+        raise Unauthenticated("service-token resource profile not configured")
+    if data.get("audience") != settings.auth_service_audience:
+        raise Unauthenticated("service token audience mismatch")
+    if data.get("scope") != settings.auth_service_scope:
+        raise Unauthenticated("service token scope mismatch")
     return principal_id, "service"
 
 
@@ -85,6 +91,8 @@ async def verify_oidc_token(token: str) -> tuple[str, str]:
     """
     if not settings.auth_arcana_jwks_url:
         raise Unauthenticated("Auth Arcana JWKS endpoint not configured")
+    if not settings.auth_oidc_issuer or not settings.auth_oidc_audience:
+        raise Unauthenticated("OIDC resource profile not configured")
     try:
         jwks_client = _get_jwks_client(settings.auth_arcana_jwks_url)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
@@ -92,7 +100,9 @@ async def verify_oidc_token(token: str) -> tuple[str, str]:
             token,
             signing_key.key,
             algorithms=["RS256", "ES256"],
-            options={"require": ["exp", "sub"]},
+            issuer=settings.auth_oidc_issuer,
+            audience=settings.auth_oidc_audience,
+            options={"require": ["exp", "sub", "iss", "aud"], "strict_aud": True},
         )
     except jwt.PyJWTError as exc:
         raise Unauthenticated(f"JWT verification failed: {type(exc).__name__}") from exc
