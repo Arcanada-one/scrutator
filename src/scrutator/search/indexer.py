@@ -27,7 +27,7 @@ from scrutator.db.repository import (
     upsert_namespace,
     upsert_project,
 )
-from scrutator.search.embedder import embed_sparse, embed_texts
+from scrutator.search.embedder import embed_dense_sparse, embed_sparse, embed_texts
 from scrutator.search.ingest_safety import scan_injection
 from scrutator.search.skill_promotions import (
     SKILL_PROMOTIONS,
@@ -1153,6 +1153,18 @@ def _enforce_pack_caps(prepared: list[_PreparedDocument], texts: list[str]) -> N
 
 
 async def _embed_batch(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
+    if settings.embedding_dense_sparse_enabled:
+        try:
+            embeddings, sparse_weights = await embed_dense_sparse(texts)
+        except Exception:
+            logger.error("Dense-sparse embedding failed for batch")
+            raise _BatchEmbeddingError("dense_embedding_failed") from None
+        if not _valid_dense_embeddings(embeddings, len(texts)):
+            raise _BatchEmbeddingError("invalid_dense_embeddings")
+        if not _valid_sparse_embeddings(sparse_weights, len(texts)):
+            raise _BatchEmbeddingError("invalid_sparse_embeddings")
+        return embeddings, sparse_weights
+
     try:
         embeddings = await embed_texts(texts)
     except Exception as exc:
@@ -1247,6 +1259,14 @@ def _valid_sparse_embeddings(embeddings: object, expected_count: int) -> bool:
 
 
 async def _embed_single_document(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
+    if settings.embedding_dense_sparse_enabled:
+        embeddings, sparse_weights = await embed_dense_sparse(texts)
+        if not _valid_dense_embeddings(embeddings, len(texts)):
+            raise ValueError("invalid dense embeddings")
+        if not _valid_sparse_embeddings(sparse_weights, len(texts)):
+            raise ValueError("invalid sparse embeddings")
+        return embeddings, sparse_weights
+
     embeddings = await embed_texts(texts)
     if not _valid_dense_embeddings(embeddings, len(texts)):
         raise ValueError("invalid dense embeddings")
