@@ -1,12 +1,16 @@
 """Health check endpoint + API routers — minimal FastAPI app."""
 
 import logging
-import secrets
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 
 from scrutator import __version__
+from scrutator.auth.capabilities import (
+    NamespaceCapability,
+    require_feeder_capability,
+    require_rollback_capability,
+)
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
 from scrutator.auth.models import TenantContext
 from scrutator.chunker.engine import chunk_document
@@ -124,21 +128,12 @@ async def chunk_endpoint(request: ChunkRequest, ctx: TenantContext = Depends(req
 @app.post("/v1/index", response_model=IndexResponse)
 async def index_endpoint(
     request: IndexRequest,
-    ctx: TenantContext = Depends(require_tenant_context),
-    x_kb_feeder_token: str | None = Header(default=None),
+    capability: NamespaceCapability = Depends(require_feeder_capability),
 ) -> IndexResponse:
     # Reader namespace grants never imply mutation authority. Indexing is
     # intentionally restricted to the dedicated, namespace-scoped Feeder
     # credential even when the bearer principal may read this namespace.
-    valid_feeder = (
-        bool(settings.feeder_token)
-        and bool(x_kb_feeder_token)
-        and secrets.compare_digest(settings.feeder_token, x_kb_feeder_token)
-    )
-    if not valid_feeder:
-        raise HTTPException(status_code=401, detail="feeder credential required")
-    allowed = {n.strip() for n in settings.feeder_namespaces.split(",") if n.strip()}
-    if request.namespace not in allowed:
+    if request.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside feeder scope")
     try:
         return await index_document(
@@ -158,26 +153,12 @@ async def index_endpoint(
 @app.delete("/v1/index", response_model=DeleteSourceResponse)
 async def delete_source_endpoint(
     request: DeleteSourceRequest,
-    ctx: TenantContext = Depends(require_tenant_context),
-    x_kb_rollback_token: str | None = Header(default=None),
+    capability: NamespaceCapability = Depends(require_rollback_capability),
 ) -> DeleteSourceResponse:
     """Tombstone one source inside a namespace granted to the caller."""
     # Read-capable bearer principals cannot delete. Only the two dedicated
     # rollback credentials carry mutation authority.
-    valid_scheduled_token = (
-        bool(settings.rollback_token)
-        and bool(x_kb_rollback_token)
-        and secrets.compare_digest(settings.rollback_token, x_kb_rollback_token)
-    )
-    valid_operator_token = (
-        bool(settings.operator_rollback_token)
-        and bool(x_kb_rollback_token)
-        and secrets.compare_digest(settings.operator_rollback_token, x_kb_rollback_token)
-    )
-    if not valid_scheduled_token and not valid_operator_token:
-        raise HTTPException(status_code=401, detail="rollback credential required")
-    scheduled_scope = {n.strip() for n in settings.rollback_namespaces.split(",") if n.strip()}
-    if valid_scheduled_token and request.namespace not in scheduled_scope:
+    if not capability.operator and request.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside rollback scope")
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -219,13 +200,22 @@ async def search_endpoint(
 
 
 @app.get("/v1/navigate/outline", response_model=OutlineResponse)
-async def navigate_outline(namespace: str, source_path: str, max_nodes: int = 2000) -> OutlineResponse:
+async def navigate_outline(
+    namespace: str,
+    source_path: str,
+    max_nodes: int = 2000,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> OutlineResponse:
+    await resolve_namespace_selector(ctx, namespace)
     return await build_outline(namespace=namespace, source_path=source_path, max_nodes=max_nodes)
 
 
 @app.get("/v1/navigate/section", response_model=SectionContext)
-async def navigate_section(chunk_id: str) -> SectionContext:
-    return await build_section_context(chunk_id)
+async def navigate_section(
+    chunk_id: str,
+    ctx: TenantContext = Depends(require_tenant_context),
+) -> SectionContext:
+    return await build_section_context(chunk_id, ctx.allowed_namespace_ids)
 
 
 @app.get("/v1/chunks", response_model=list[ChunkLookupResult])
@@ -249,6 +239,8 @@ async def create_namespace(
     # for the grace-window anonymous context, even while SCRUTATOR_AUTH_ENFORCE=False.
     if ctx.principal_id == "anonymous":
         raise HTTPException(status_code=401, detail="namespace creation requires an authenticated principal")
+    if request.name not in ctx.allowed_namespace_names:
+        raise HTTPException(status_code=403, detail="namespace outside caller scope")
     try:
         ns_id = await upsert_namespace(request.name, request.description)
         return NamespaceInfo(id=ns_id, name=request.name, description=request.description, chunk_count=0)
@@ -289,7 +281,7 @@ async def dream_analyze_endpoint(
 @app.post("/v1/edges")
 async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(require_tenant_context)) -> dict:
     try:
-        count = await insert_edges([e.model_dump() for e in edges])
+        count = await insert_edges([e.model_dump() for e in edges], ctx.allowed_namespace_ids)
         return {"created": count}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Edge creation failed: {e}") from e
@@ -298,7 +290,7 @@ async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(req
 @app.get("/v1/edges/{chunk_id}", response_model=list[EdgeInfo])
 async def get_edges(chunk_id: str, ctx: TenantContext = Depends(require_tenant_context)) -> list[EdgeInfo]:
     try:
-        rows = await get_edges_for_chunk(chunk_id)
+        rows = await get_edges_for_chunk(chunk_id, ctx.allowed_namespace_ids)
         return [EdgeInfo(**r) for r in rows]
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to get edges: {e}") from e
@@ -320,10 +312,13 @@ async def delete_edges(
 
 @app.post("/v1/edges/by-path", response_model=EdgeCreateByPathResponse)
 async def create_edges_by_path_endpoint(
-    edges: list[EdgeCreateByPath], ctx: TenantContext = Depends(require_tenant_context)
+    edges: list[EdgeCreateByPath],
+    namespace: str | None = None,
+    ctx: TenantContext = Depends(require_tenant_context),
 ) -> EdgeCreateByPathResponse:
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
-        return await create_edges_by_path(edges)
+        return await create_edges_by_path(edges, namespace_id)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Edge creation by path failed: {e}") from e
 
@@ -335,8 +330,9 @@ async def create_edges_by_path_endpoint(
 async def create_memory(
     record: MemoryRecord, ctx: TenantContext = Depends(require_tenant_context)
 ) -> MemoryIndexResponse:
+    namespace_id = await resolve_namespace_selector(ctx, record.namespace)
     try:
-        return await index_memory(record)
+        return await index_memory(record, namespace_id)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Memory index failed: {e}") from e
 
@@ -345,8 +341,12 @@ async def create_memory(
 async def create_memories_bulk(
     request: MemoryBulkRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> MemoryBulkResponse:
+    namespace_ids = {
+        namespace: await resolve_namespace_selector(ctx, namespace)
+        for namespace in {record.namespace for record in request.memories}
+    }
     try:
-        return await memory_bulk_index(request.memories)
+        return await memory_bulk_index(request.memories, namespace_ids)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Bulk memory index failed: {e}") from e
 
@@ -365,7 +365,7 @@ async def recall_memories(
 @app.get("/v1/memories/stats", response_model=MemoryStats)
 async def memory_stats_endpoint(ctx: TenantContext = Depends(require_tenant_context)) -> MemoryStats:
     try:
-        return await get_memory_stats()
+        return await get_memory_stats(ctx.allowed_namespace_ids)
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Memory stats failed: {e}") from e
 

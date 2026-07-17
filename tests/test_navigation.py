@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from scrutator.db.models import ChunkLookupResult, NamespaceInfo
+from tests.conftest import override_tenant_context
 
 
 def _mock_pool():
@@ -196,7 +197,7 @@ class TestBuildSectionContext:
         with patch("scrutator.search.navigator.get_section_siblings_children", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = {"doc_rows": doc_rows}
 
-            result = await build_section_context(chunk_id)
+            result = await build_section_context(chunk_id, frozenset({1}))
 
         assert result.chunk_id == chunk_id
         assert result.section_key == "doc/section/sub"
@@ -214,7 +215,7 @@ class TestBuildSectionContext:
         from scrutator.search.navigator import build_section_context
 
         with pytest.raises(HTTPException) as exc_info:
-            await build_section_context("not-a-uuid")
+            await build_section_context("not-a-uuid", frozenset({1}))
 
         assert exc_info.value.status_code == 422
 
@@ -228,7 +229,7 @@ class TestBuildSectionContext:
             mock_get.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
-                await build_section_context("12345678-1234-5678-1234-567812345678")
+                await build_section_context("12345678-1234-5678-1234-567812345678", frozenset({1}))
 
         assert exc_info.value.status_code == 404
 
@@ -243,7 +244,7 @@ class TestBuildSectionContext:
         with patch("scrutator.search.navigator.get_section_siblings_children", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = {"doc_rows": doc_rows}
 
-            result = await build_section_context(chunk_id)
+            result = await build_section_context(chunk_id, frozenset({1}))
 
         assert result.section_key == "root"
         assert result.ancestors == []
@@ -263,7 +264,7 @@ class TestGetSectionSiblingsChildrenRepository:
         with patch("scrutator.db.repository.get_pool", return_value=pool):
             from scrutator.db.repository import get_section_siblings_children
 
-            result = await get_section_siblings_children("12345678-1234-5678-1234-567812345678")
+            result = await get_section_siblings_children("12345678-1234-5678-1234-567812345678", frozenset({1}))
             assert result is None
 
     @pytest.mark.asyncio
@@ -300,7 +301,7 @@ class TestGetSectionSiblingsChildrenRepository:
         with patch("scrutator.db.repository.get_pool", return_value=pool):
             from scrutator.db.repository import get_section_siblings_children
 
-            result = await get_section_siblings_children("c2")
+            result = await get_section_siblings_children("c2", frozenset({1}))
 
         assert result is not None
         assert [r.chunk_id for r in result["doc_rows"]] == ["c1", "c2"]
@@ -335,7 +336,7 @@ class TestGetSectionSiblingsChildrenRepository:
         with patch("scrutator.db.repository.get_pool", return_value=pool):
             from scrutator.db.repository import get_section_siblings_children
 
-            result = await get_section_siblings_children("c1")
+            result = await get_section_siblings_children("c1", frozenset({1}))
 
         assert result is not None
         fetch_call = conn.fetch.call_args
@@ -361,7 +362,11 @@ class TestNavigateOutlineEndpoint:
             outline=[OutlineNode(title="Doc", anchor="doc", depth=1, section_key="doc", chunk_ids=["c1"])],
         )
 
-        with patch("scrutator.health.build_outline", new_callable=AsyncMock, return_value=mock_response):
+        with (
+            override_tenant_context(app),
+            patch("scrutator.health.resolve_namespace_selector", new_callable=AsyncMock, return_value=1),
+            patch("scrutator.health.build_outline", new_callable=AsyncMock, return_value=mock_response),
+        ):
             client = TestClient(app)
             resp = client.get("/v1/navigate/outline", params={"namespace": "arcanada", "source_path": "notes/doc.md"})
 
@@ -376,10 +381,14 @@ class TestNavigateOutlineEndpoint:
 
         from scrutator.health import app
 
-        with patch(
-            "scrutator.health.build_outline",
-            new_callable=AsyncMock,
-            side_effect=HTTPException(status_code=404, detail="unknown source_path: x.md"),
+        with (
+            override_tenant_context(app),
+            patch("scrutator.health.resolve_namespace_selector", new_callable=AsyncMock, return_value=1),
+            patch(
+                "scrutator.health.build_outline",
+                new_callable=AsyncMock,
+                side_effect=HTTPException(status_code=404, detail="unknown source_path: x.md"),
+            ),
         ):
             client = TestClient(app)
             resp = client.get("/v1/navigate/outline", params={"namespace": "arcanada", "source_path": "x.md"})
@@ -392,10 +401,14 @@ class TestNavigateOutlineEndpoint:
 
         from scrutator.health import app
 
-        with patch(
-            "scrutator.health.build_outline",
-            new_callable=AsyncMock,
-            side_effect=HTTPException(status_code=422, detail="document exceeds max_nodes"),
+        with (
+            override_tenant_context(app),
+            patch("scrutator.health.resolve_namespace_selector", new_callable=AsyncMock, return_value=1),
+            patch(
+                "scrutator.health.build_outline",
+                new_callable=AsyncMock,
+                side_effect=HTTPException(status_code=422, detail="document exceeds max_nodes"),
+            ),
         ):
             client = TestClient(app)
             resp = client.get(
@@ -421,7 +434,10 @@ class TestNavigateSectionEndpoint:
             self_=SectionSelf(title="Section", section_key="doc/section", depth=2, chunk_ids=[chunk_id]),
         )
 
-        with patch("scrutator.health.build_section_context", new_callable=AsyncMock, return_value=mock_response):
+        with (
+            override_tenant_context(app),
+            patch("scrutator.health.build_section_context", new_callable=AsyncMock, return_value=mock_response),
+        ):
             client = TestClient(app)
             resp = client.get("/v1/navigate/section", params={"chunk_id": chunk_id})
 
@@ -436,10 +452,13 @@ class TestNavigateSectionEndpoint:
 
         from scrutator.health import app
 
-        with patch(
-            "scrutator.health.build_section_context",
-            new_callable=AsyncMock,
-            side_effect=HTTPException(status_code=422, detail="chunk_id is not a valid UUID"),
+        with (
+            override_tenant_context(app),
+            patch(
+                "scrutator.health.build_section_context",
+                new_callable=AsyncMock,
+                side_effect=HTTPException(status_code=422, detail="chunk_id is not a valid UUID"),
+            ),
         ):
             client = TestClient(app)
             resp = client.get("/v1/navigate/section", params={"chunk_id": "not-a-uuid"})
@@ -453,10 +472,13 @@ class TestNavigateSectionEndpoint:
         from scrutator.health import app
 
         chunk_id = "12345678-1234-5678-1234-567812345678"
-        with patch(
-            "scrutator.health.build_section_context",
-            new_callable=AsyncMock,
-            side_effect=HTTPException(status_code=404, detail="chunk not found"),
+        with (
+            override_tenant_context(app),
+            patch(
+                "scrutator.health.build_section_context",
+                new_callable=AsyncMock,
+                side_effect=HTTPException(status_code=404, detail="chunk not found"),
+            ),
         ):
             client = TestClient(app)
             resp = client.get("/v1/navigate/section", params={"chunk_id": chunk_id})

@@ -33,6 +33,20 @@ class TestAuthEnforceTrueDeniesUnauthenticated:
             resp = _client().post("/v1/ltm/recall", json={"query": "q"})
         assert resp.status_code == 401
 
+    def test_missing_auth_denies_401_on_navigation_before_resource_lookup(self):
+        with patch("scrutator.auth.dependency.settings") as mock_settings:
+            mock_settings.auth_enforce = True
+            outline = _client().get(
+                "/v1/navigate/outline",
+                params={"namespace": "wiki", "source_path": "missing.md"},
+            )
+            section = _client().get(
+                "/v1/navigate/section",
+                params={"chunk_id": "00000000-0000-0000-0000-000000000000"},
+            )
+        assert outline.status_code == 401
+        assert section.status_code == 401
+
     def test_invalid_token_denies_401(self):
         with (
             patch("scrutator.auth.dependency.settings") as mock_settings,

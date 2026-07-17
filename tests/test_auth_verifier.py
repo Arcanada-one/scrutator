@@ -84,10 +84,17 @@ class TestServiceTokenIntrospection:
     async def test_valid_service_token_returns_principal(self):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        mock_resp.json.return_value = {"active": True, "principal_id": "svc-42"}
+        mock_resp.json.return_value = {
+            "active": True,
+            "principal_id": "svc-42",
+            "audience": "urn:test:scrutator",
+            "scope": "kb:read",
+        }
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            mock_settings.auth_service_audience = "urn:test:scrutator"
+            mock_settings.auth_service_scope = "kb:read"
             mock_client = AsyncMock()
             mock_client.post.return_value = mock_resp
             mock_client.__aenter__.return_value = mock_client
@@ -115,6 +122,37 @@ class TestServiceTokenIntrospection:
                 pytest.raises(Unauthenticated),
             ):
                 await verify_bearer_token("Bearer arc_api_revoked")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "response",
+        [
+            {"active": True, "principal_id": "svc-42", "audience": "other", "scope": "kb:read"},
+            {
+                "active": True,
+                "principal_id": "svc-42",
+                "audience": "urn:test:scrutator",
+                "scope": "admin",
+            },
+        ],
+    )
+    async def test_wrong_service_resource_profile_denies(self, response):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = response
+        with patch("scrutator.auth.verifier.settings") as mock_settings:
+            mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            mock_settings.auth_service_audience = "urn:test:scrutator"
+            mock_settings.auth_service_scope = "kb:read"
+            mock_client = AsyncMock()
+            mock_client.post.return_value = mock_resp
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = False
+            with (
+                patch("scrutator.auth.verifier.httpx.AsyncClient", return_value=mock_client),
+                pytest.raises(Unauthenticated),
+            ):
+                await verify_bearer_token("Bearer arc_api_wrong-resource")
 
     @pytest.mark.asyncio
     async def test_introspection_unreachable_denies_fail_closed(self):
@@ -178,12 +216,22 @@ class TestOidcJwksVerification:
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_jwks_url = "https://auth.arcanada.ai/.well-known/jwks.json"
+            mock_settings.auth_oidc_issuer = "https://auth.arcanada.ai"
+            mock_settings.auth_oidc_audience = "urn:test:scrutator"
             mock_jwks_client = MagicMock()
             mock_jwks_client.get_signing_key_from_jwt.return_value = signing_key
             with (
                 patch("scrutator.auth.verifier._get_jwks_client", return_value=mock_jwks_client),
                 patch("scrutator.auth.verifier.jwt.get_unverified_header", return_value={"alg": "RS256"}),
-                patch("scrutator.auth.verifier.jwt.decode", return_value={"sub": "user-7", "exp": 9999999999}),
+                patch(
+                    "scrutator.auth.verifier.jwt.decode",
+                    return_value={
+                        "sub": "user-7",
+                        "exp": 9999999999,
+                        "iss": "https://auth.arcanada.ai",
+                        "aud": "urn:test:scrutator",
+                    },
+                ),
             ):
                 principal_id, principal_type = await verify_bearer_token("Bearer eyJhbGciOiJSUzI1NiJ9.fake.token")
 

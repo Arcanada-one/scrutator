@@ -8,17 +8,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from scrutator.auth.models import TenantContext
+from scrutator.auth.capabilities import NamespaceCapability
 from scrutator.config import settings
 from scrutator.ltm.models import IngestRequest
 from scrutator.ltm.router import ingest
 
-CTX = TenantContext(
-    principal_id="muneral-writer",
-    principal_type="service",
-    allowed_namespace_ids=frozenset({7}),
-    allowed_namespace_names=frozenset({"muneral"}),
-)
+CAPABILITY = NamespaceCapability(namespaces=frozenset({"muneral"}))
 GRAPH = {
     "schema_version": 1,
     "content_hash": "a" * 64,
@@ -89,7 +84,7 @@ async def test_first_structured_ingest_indexes_and_persists_without_llm():
             ) as apply_graph,
             patch("scrutator.ltm.router._create_llm_client") as llm_factory,
         ):
-            response = await ingest(req, CTX, "ltm-secret")
+            response = await ingest(req, CAPABILITY)
 
     assert response.entities_upserted == 2
     assert response.edges_upserted == 1
@@ -126,7 +121,7 @@ async def test_matching_structured_hash_is_noop_before_job_and_index_dml():
             patch("scrutator.ltm.router.repository.apply_structured_graph", new_callable=AsyncMock) as apply_graph,
             patch("scrutator.ltm.router._create_llm_client") as llm_factory,
         ):
-            response = await ingest(req, CTX, "ltm-secret")
+            response = await ingest(req, CAPABILITY)
 
     assert response.idempotent_noop is True
     assert response.enrichment == "not_applicable"
@@ -173,7 +168,7 @@ async def test_structured_graph_failure_is_retryable_and_sanitized():
             ),
             pytest.raises(Exception) as raised,
         ):
-            await ingest(req, CTX, "ltm-secret")
+            await ingest(req, CAPABILITY)
 
     assert getattr(raised.value, "status_code", None) == 500
     assert getattr(raised.value, "detail", None) == "Ingest failed: structured graph error"
