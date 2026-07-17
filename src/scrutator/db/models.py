@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class NamespaceCreate(BaseModel):
@@ -67,6 +67,54 @@ class IndexResponse(BaseModel):
     source_path: str
     namespace: str
     strategy_used: str
+
+
+INDEX_BATCH_MAX_DOCUMENT_BYTES = 262_144
+INDEX_BATCH_MAX_REQUEST_BYTES = 1_048_576
+
+
+class BatchIndexRequest(BaseModel):
+    """Bounded request for POST /v1/index/batch."""
+
+    documents: list[IndexRequest] = Field(min_length=1, max_length=4)
+
+    @model_validator(mode="after")
+    def one_namespace_and_unique_paths(self) -> BatchIndexRequest:
+        namespaces = {document.namespace for document in self.documents}
+        if len(namespaces) != 1:
+            raise ValueError("all documents must use one namespace")
+        paths = [document.source_path for document in self.documents]
+        if len(paths) != len(set(paths)):
+            raise ValueError("source_path values must be unique")
+        if any(len(document.content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES for document in self.documents):
+            raise ValueError("document content exceeds batch byte limit")
+        return self
+
+
+class BatchIndexSucceeded(BaseModel):
+    source_path: str
+    status: Literal["succeeded"] = "succeeded"
+    chunks_indexed: int
+
+
+BatchIndexErrorCode = Literal[
+    "chunking_failed",
+    "dense_embedding_failed",
+    "sparse_embedding_failed",
+    "invalid_dense_embeddings",
+    "invalid_sparse_embeddings",
+    "persistence_failed",
+]
+
+
+class BatchIndexFailed(BaseModel):
+    source_path: str
+    status: Literal["failed"] = "failed"
+    error_code: BatchIndexErrorCode
+
+
+class BatchIndexResponse(BaseModel):
+    results: list[BatchIndexSucceeded | BatchIndexFailed]
 
 
 class DeleteSourceRequest(BaseModel):

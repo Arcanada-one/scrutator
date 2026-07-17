@@ -5,6 +5,7 @@ from scrutator.ltm.router import router as ltm_router
 
 MACHINE_ROUTES = {
     ("POST", "/v1/index"): "require_feeder_capability",
+    ("POST", "/v1/index/batch"): "require_feeder_capability",
     ("DELETE", "/v1/index"): "require_rollback_capability",
     ("POST", "/v1/ltm/ingest"): "require_ltm_writer_capability",
     ("DELETE", "/v1/ltm/source"): "require_ltm_writer_capability",

@@ -3,7 +3,8 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
@@ -18,6 +19,9 @@ from scrutator.chunker.models import ChunkRequest, ChunkResponse
 from scrutator.config import settings
 from scrutator.db.connection import apply_schema, close_pool, get_pool
 from scrutator.db.models import (
+    INDEX_BATCH_MAX_REQUEST_BYTES,
+    BatchIndexRequest,
+    BatchIndexResponse,
     ChunkLookupResult,
     DeleteSourceRequest,
     DeleteSourceResponse,
@@ -71,7 +75,7 @@ from scrutator.memory.service import (
     recall as memory_recall,
 )
 from scrutator.search.embedder import close_client as close_embedding_client
-from scrutator.search.indexer import index_document
+from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents
 from scrutator.search.navigator import build_outline, build_section_context
 from scrutator.search.searcher import search
 
@@ -92,6 +96,20 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+
+
+@app.middleware("http")
+async def enforce_batch_request_size(request: Request, call_next):
+    """Reject oversized batch bodies using measured bytes, including chunked requests."""
+    if request.url.path == "/v1/index/batch":
+        declared_size = request.headers.get("content-length")
+        if declared_size and declared_size.isdecimal() and int(declared_size) > INDEX_BATCH_MAX_REQUEST_BYTES:
+            return JSONResponse(status_code=413, content={"detail": "batch request body too large"})
+        body = await request.body()
+        if len(body) > INDEX_BATCH_MAX_REQUEST_BYTES:
+            return JSONResponse(status_code=413, content={"detail": "batch request body too large"})
+    return await call_next(request)
+
 
 # LTM router
 from scrutator.ltm.router import router as ltm_router  # noqa: E402
@@ -148,6 +166,19 @@ async def index_endpoint(
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
+
+
+@app.post("/v1/index/batch", response_model=BatchIndexResponse)
+async def batch_index_endpoint(
+    request: BatchIndexRequest,
+    capability: NamespaceCapability = Depends(require_feeder_capability),
+) -> BatchIndexResponse:
+    if request.documents[0].namespace not in capability.namespaces:
+        raise HTTPException(status_code=403, detail="namespace outside feeder scope")
+    try:
+        return BatchIndexResponse(results=await index_documents(request.documents))
+    except BatchIndexLimitError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.delete("/v1/index", response_model=DeleteSourceResponse)
