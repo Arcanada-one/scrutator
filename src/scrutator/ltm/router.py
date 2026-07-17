@@ -103,6 +103,7 @@ async def ingest(
                     job_id=f"noop:{current_hash}",
                     status=JobStatus.DONE,
                     idempotent_noop=True,
+                    enrichment="not_applicable",
                 )
         else:
             namespace_id = await repository.upsert_namespace(req.namespace)
@@ -117,8 +118,8 @@ async def ingest(
     # Index content using existing Scrutator chunker + embedder
     from scrutator.search.indexer import index_document
 
+    prior_provenance = None
     try:
-        prior_provenance = None
         if req.structured_graph is not None:
             prior_provenance = await repository.get_source_graph_provenance(namespace_id, req.source_path)
         await repository.update_ltm_job(job_id, status="chunking", current_step="chunking")
@@ -129,8 +130,13 @@ async def ingest(
             project=req.project,
         )
         total_chunks = index_result.chunks_indexed
+    except Exception as exc:
+        log.exception("Ingest indexing failed for job %s", job_id)
+        await repository.update_ltm_job(job_id, status="failed", error="indexing_failed")
+        raise HTTPException(status_code=500, detail="Ingest failed: indexing error") from exc
 
-        if req.structured_graph is not None:
+    if req.structured_graph is not None:
+        try:
             chunk_ids = await repository.get_chunk_ids_by_source(req.source_path, namespace_id)
             graph = req.structured_graph
             result = await repository.apply_structured_graph(
@@ -150,8 +156,20 @@ async def ingest(
                 total_chunks=total_chunks,
                 processed_chunks=total_chunks,
             )
-            return IngestResponse(job_id=job_id, status=JobStatus.DONE, **result)
+        except Exception as exc:
+            log.exception("Structured graph ingest failed for job %s", job_id)
+            await repository.update_ltm_job(job_id, status="failed", error="structured_graph_failed")
+            raise HTTPException(status_code=500, detail="Ingest failed: structured graph error") from exc
+        return IngestResponse(
+            job_id=job_id,
+            status=JobStatus.DONE,
+            total_chunks=total_chunks,
+            enrichment="not_applicable",
+            **result,
+        )
 
+    processed_chunks = 0
+    try:
         await repository.update_ltm_job(
             job_id,
             status="extracting",
@@ -179,7 +197,8 @@ async def ingest(
                 row = await conn.fetchrow("SELECT content FROM chunks WHERE id = $1::uuid", chunk_id)
             if row:
                 await pipeline.process_chunk(chunk_id, row["content"])
-            await repository.update_ltm_job(job_id, processed_chunks=i + 1)
+            processed_chunks = i + 1
+            await repository.update_ltm_job(job_id, processed_chunks=processed_chunks)
 
         # Dedup: collect all entity names, ask LLM to group aliases
         await repository.update_ltm_job(job_id, status="deduping", current_step="entity_dedup")
@@ -191,12 +210,32 @@ async def ingest(
 
         await repository.update_ltm_job(job_id, status="done", current_step="complete")
 
-    except Exception as exc:
-        log.exception("Ingest failed for job %s", job_id)
-        await repository.update_ltm_job(job_id, status="failed", error=str(exc)[:500])
-        raise HTTPException(status_code=500, detail="Ingest failed") from exc
+    except Exception:
+        log.warning("Ingest enrichment failed for indexed job %s", job_id, exc_info=True)
+        await repository.update_ltm_job(
+            job_id,
+            status="partial",
+            current_step="enrichment_failed",
+            total_chunks=total_chunks,
+            processed_chunks=processed_chunks,
+            error="enrichment_failed",
+        )
+        return IngestResponse(
+            job_id=job_id,
+            status=JobStatus.PARTIAL,
+            indexed=True,
+            total_chunks=total_chunks,
+            enrichment="failed",
+            enrichment_error="enrichment_failed",
+        )
 
-    return IngestResponse(job_id=job_id, status=JobStatus.DONE)
+    return IngestResponse(
+        job_id=job_id,
+        status=JobStatus.DONE,
+        indexed=True,
+        total_chunks=total_chunks,
+        enrichment="complete",
+    )
 
 
 @router.delete("/source", response_model=SourceDeleteResponse)
