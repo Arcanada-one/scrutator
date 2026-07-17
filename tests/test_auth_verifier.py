@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from pydantic import ValidationError
 
 import scrutator.auth.verifier as verifier_module
-from scrutator.auth.verifier import Unauthenticated, verify_bearer_token
+from scrutator.auth.verifier import Unauthenticated, verify_bearer_token, verify_oidc_token
 from scrutator.config import Settings
 
 LTM_M2M_ISSUER = "https://auth.arcanada.ai"
@@ -124,6 +124,30 @@ class TestServiceTokenIntrospection:
                 await verify_bearer_token("Bearer arc_api_revoked")
 
     @pytest.mark.asyncio
+    async def test_non_boolean_active_value_denies(self):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "active": "false",
+            "principal_id": "svc-42",
+            "audience": "urn:test:scrutator",
+            "scope": "kb:read",
+        }
+        with patch("scrutator.auth.verifier.settings") as mock_settings:
+            mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            mock_settings.auth_service_audience = "urn:test:scrutator"
+            mock_settings.auth_service_scope = "kb:read"
+            mock_client = AsyncMock()
+            mock_client.post.return_value = mock_resp
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = False
+            with (
+                patch("scrutator.auth.verifier.httpx.AsyncClient", return_value=mock_client),
+                pytest.raises(Unauthenticated, match="inactive"),
+            ):
+                await verify_bearer_token("Bearer arc_api_malformed")
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "response",
         [
@@ -218,6 +242,7 @@ class TestOidcJwksVerification:
             mock_settings.auth_arcana_jwks_url = "https://auth.arcanada.ai/.well-known/jwks.json"
             mock_settings.auth_oidc_issuer = "https://auth.arcanada.ai"
             mock_settings.auth_oidc_audience = "urn:test:scrutator"
+            mock_settings.auth_oidc_scope = "kb:read"
             mock_jwks_client = MagicMock()
             mock_jwks_client.get_signing_key_from_jwt.return_value = signing_key
             with (
@@ -230,6 +255,7 @@ class TestOidcJwksVerification:
                         "exp": 9999999999,
                         "iss": "https://auth.arcanada.ai",
                         "aud": "urn:test:scrutator",
+                        "scope": "openid kb:read",
                     },
                 ),
             ):
@@ -237,6 +263,41 @@ class TestOidcJwksVerification:
 
         assert principal_id == "user-7"
         assert principal_type == "user"
+
+    @pytest.mark.asyncio
+    async def test_oidc_profile_without_scope_denies_before_jwks_lookup(self):
+        with patch("scrutator.auth.verifier.settings") as mock_settings:
+            mock_settings.auth_arcana_jwks_url = "https://auth.arcanada.ai/.well-known/jwks.json"
+            mock_settings.auth_oidc_issuer = "https://auth.arcanada.ai"
+            mock_settings.auth_oidc_audience = "urn:test:scrutator"
+            mock_settings.auth_oidc_scope = ""
+            with (
+                patch("scrutator.auth.verifier._get_jwks_client") as jwks,
+                pytest.raises(Unauthenticated, match="resource profile not configured"),
+            ):
+                await verify_oidc_token("token")
+        jwks.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_oidc_token_without_required_scope_denies(self):
+        signing_key = MagicMock()
+        signing_key.key = "fake-public-key"
+        mock_jwks_client = MagicMock()
+        mock_jwks_client.get_signing_key_from_jwt.return_value = signing_key
+        with patch("scrutator.auth.verifier.settings") as mock_settings:
+            mock_settings.auth_arcana_jwks_url = "https://auth.arcanada.ai/.well-known/jwks.json"
+            mock_settings.auth_oidc_issuer = "https://auth.arcanada.ai"
+            mock_settings.auth_oidc_audience = "urn:test:scrutator"
+            mock_settings.auth_oidc_scope = "kb:read"
+            with (
+                patch("scrutator.auth.verifier._get_jwks_client", return_value=mock_jwks_client),
+                patch(
+                    "scrutator.auth.verifier.jwt.decode",
+                    return_value={"sub": "user-7", "scope": "openid profile"},
+                ),
+                pytest.raises(Unauthenticated, match="scope mismatch"),
+            ):
+                await verify_oidc_token("token")
 
     @pytest.mark.asyncio
     async def test_expired_token_denies(self):

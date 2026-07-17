@@ -777,10 +777,12 @@ async def delete_edges_by_creator(created_by: str, namespace_id: int | None = No
             result = await conn.execute(
                 """
                 DELETE FROM graph_edges g
-                USING chunks c
-                WHERE g.source_chunk_id = c.id
+                USING chunks source, chunks target
+                WHERE g.source_chunk_id = source.id
+                  AND g.target_chunk_id = target.id
                   AND g.created_by = $1
-                  AND c.namespace_id = $2
+                  AND source.namespace_id = $2
+                  AND target.namespace_id = $2
                 """,
                 created_by,
                 namespace_id,
