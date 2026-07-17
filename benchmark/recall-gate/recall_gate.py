@@ -15,6 +15,8 @@ Exit codes:
   2 — transport / infrastructure error: all queries returned num_retrieved==0, which indicates
       a network or service failure rather than a real recall drop. A network flake MUST NOT
       be reported as a recall regression.
+  3 — invalid benchmark contract: provenance differs, required fields are absent, or one or
+      more queries failed. Invalid evidence MUST NOT be reported as a recall regression.
 
 Usage:
   # Gate against an existing report JSON:
@@ -41,6 +43,16 @@ DEFAULT_THRESHOLDS = _GATE_DIR / "thresholds.json"
 DEFAULT_HARNESS = Path.home() / "arcanada/Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py"
 
 CLASSES = ["factual", "multi-hop", "temporal"]
+CONTRACT_FIELDS = [
+    "schema",
+    "namespace",
+    "mode",
+    "expand_entities",
+    "query_count",
+    "query_set_sha256",
+    "corpus_manifest_sha256",
+    "reranker_model",
+]
 
 
 def reports_dir_for_harness(harness_path: Path) -> Path:
@@ -80,6 +92,27 @@ def extract_per_class_recall(report: dict) -> dict[str, float]:
     return result
 
 
+def validate_contract(report: dict, baseline: dict) -> list[str]:
+    """Return reasons the report cannot be compared with the committed baseline."""
+    reasons = []
+    for field in CONTRACT_FIELDS:
+        if field not in report:
+            reasons.append(f"missing report field: {field}")
+        elif report[field] != baseline.get(field):
+            reasons.append(f"{field}: report={report[field]!r} baseline={baseline.get(field)!r}")
+
+    query_errors = report.get("query_errors")
+    if query_errors is None:
+        reasons.append("missing report field: query_errors")
+    elif query_errors:
+        reasons.append(f"query_errors: {len(query_errors)} query request(s) failed")
+
+    per_query = report.get("per_query", [])
+    if len(per_query) != report.get("query_count"):
+        reasons.append(f"per_query row count: report={len(per_query)} expected={report.get('query_count')!r}")
+    return reasons
+
+
 def run_harness(harness_path: Path) -> dict:
     """Invoke the harness with --expand-entities and parse the JSON report it writes.
 
@@ -95,7 +128,7 @@ def run_harness(harness_path: Path) -> dict:
 
     print(f"Running harness: {harness_path} --expand-entities")
     try:
-        subprocess.run(
+        completed = subprocess.run(
             [sys.executable, str(harness_path), "--expand-entities"],
             capture_output=False,
             timeout=600,
@@ -106,6 +139,9 @@ def run_harness(harness_path: Path) -> dict:
         sys.exit(2)
     except Exception as exc:
         print(f"ERROR: failed to run harness: {exc}", file=sys.stderr)
+        sys.exit(2)
+    if completed.returncode != 0:
+        print(f"ERROR: harness exited with code {completed.returncode}.", file=sys.stderr)
         sys.exit(2)
 
     # The harness writes its report to a dated file under reports/v4/scrutator/.
@@ -121,14 +157,12 @@ def run_harness(harness_path: Path) -> dict:
     # Find today's with-entities report (gate mode)
     candidates = sorted(harness_reports_dir.glob(f"{today}.datarim-kb.with-entities.json"))
     if not candidates:
-        # Fall back to most recently modified JSON
-        all_reports = sorted(harness_reports_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not all_reports:
-            print(f"ERROR: no harness report found in {harness_reports_dir}", file=sys.stderr)
-            sys.exit(2)
-        report_path = all_reports[0]
-    else:
-        report_path = candidates[-1]
+        print(
+            f"ERROR: harness did not produce today's with-entities report in {harness_reports_dir}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    report_path = candidates[-1]
 
     print(f"Reading report: {report_path}")
     return load_json(report_path, "harness report")
@@ -164,6 +198,16 @@ def print_table(results: list[dict]) -> None:
 
 def gate(report: dict, baseline: dict, thresholds: dict) -> int:
     """Run the per-class regression check. Returns the exit code."""
+    contract_errors = validate_contract(report, baseline)
+    if contract_errors:
+        print(
+            "INVALID BENCHMARK: report is not comparable with the committed baseline.\n"
+            + "\n".join(f"  - {reason}" for reason in contract_errors)
+            + "\n  Exiting with code 3; no recall-regression claim was made.",
+            file=sys.stderr,
+        )
+        return 3
+
     # Transport-error guard: if all queries show num_retrieved==0, this is an infra failure
     if is_transport_error(report):
         print(
@@ -283,6 +327,14 @@ def main() -> None:
         sys.exit(3)
 
     if args["update_baseline"]:
+        contract_errors = validate_contract(report, baseline)
+        if contract_errors:
+            print(
+                "INVALID BENCHMARK: refusing to update baseline from non-comparable evidence.\n"
+                + "\n".join(f"  - {reason}" for reason in contract_errors),
+                file=sys.stderr,
+            )
+            sys.exit(3)
         update_baseline(report, args["baseline"])
         sys.exit(0)
 

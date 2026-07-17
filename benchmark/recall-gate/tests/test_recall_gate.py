@@ -7,6 +7,7 @@ Tests cover:
 - Multi-hop-only regression fails multi-hop, others PASS
 - Transport error (all-zero + num_retrieved==0) -> exit 2, NOT exit 1
 - Baseline-load: missing file -> SystemExit with informative message
+- Contract mismatch / incomplete query run -> exit 3 (invalid benchmark, never regression)
 """
 
 import hashlib
@@ -40,7 +41,7 @@ def run_gate(*args) -> subprocess.CompletedProcess:
 
 def test_vendored_harness_snapshot_is_complete_and_pinned():
     expected = {
-        VENDOR_DIR / "ltm-bench-query.py": "a9c0e304435b25b1d90d3bc31f791735cf72ed9658c0353ad4356d160d2cee5c",
+        VENDOR_DIR / "ltm-bench-query.py": "df7b73c53d49a7db046d9fb9aa8d01b8d7a22fbc7cd28ad53ba8ae09d5870bf3",
         VENDOR_DIR / "queries/factual.jsonl": "66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767",
         VENDOR_DIR / "queries/multi-hop.jsonl": "136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f",
         VENDOR_DIR / "queries/temporal.jsonl": "14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032",
@@ -73,11 +74,11 @@ class TestGreenReport:
     """Gate passes on a report at or above baseline."""
 
     def test_exit_0_on_green_report(self):
-        result = run_gate("--report", str(FIXTURES_DIR / "report_green.json"))
+        result = run_gate("--report", str(FIXTURES_DIR / "report_contract_green.json"))
         assert result.returncode == 0, f"Expected exit 0, got {result.returncode}.\n{result.stdout}\n{result.stderr}"
 
     def test_all_classes_pass_in_output(self):
-        result = run_gate("--report", str(FIXTURES_DIR / "report_green.json"))
+        result = run_gate("--report", str(FIXTURES_DIR / "report_contract_green.json"))
         assert "PASS" in result.stdout
         assert "FAIL" not in result.stdout
 
@@ -147,6 +148,46 @@ class TestTransportError:
         assert any(word in combined for word in ["transport", "infra", "error", "network"]), (
             f"Expected transport/infra error message, got:\n{result.stdout}\n{result.stderr}"
         )
+
+
+class TestBenchmarkContract:
+    """A result is comparable only when its immutable contract matches the baseline."""
+
+    def test_legacy_report_without_contract_is_invalid(self):
+        result = run_gate("--report", str(FIXTURES_DIR / "report_legacy_green.json"))
+        assert result.returncode == 3
+        assert "INVALID BENCHMARK" in (result.stdout + result.stderr)
+
+    def test_model_mismatch_is_invalid_not_regression(self):
+        result = run_gate("--report", str(FIXTURES_DIR / "report_model_mismatch.json"))
+        assert result.returncode == 3
+        combined = result.stdout + result.stderr
+        assert "reranker_model" in combined
+        assert "RECALL REGRESSION" not in combined
+
+    def test_partial_query_errors_are_invalid_not_misses(self):
+        result = run_gate("--report", str(FIXTURES_DIR / "report_partial_error.json"))
+        assert result.returncode == 3
+        combined = result.stdout + result.stderr
+        assert "query_errors" in combined
+        assert "RECALL REGRESSION" not in combined
+
+    def test_matching_contract_can_pass(self):
+        result = run_gate("--report", str(FIXTURES_DIR / "report_contract_green.json"))
+        assert result.returncode == 0, result.stdout + result.stderr
+
+    def test_baseline_update_rejects_invalid_evidence(self, tmp_path):
+        candidate = tmp_path / "baseline.json"
+        candidate.write_bytes(BASELINE.read_bytes())
+        result = run_gate(
+            "--report",
+            str(FIXTURES_DIR / "report_partial_error.json"),
+            "--baseline",
+            str(candidate),
+            "--update-baseline",
+        )
+        assert result.returncode == 3
+        assert candidate.read_bytes() == BASELINE.read_bytes()
 
 
 class TestBaselineLoad:

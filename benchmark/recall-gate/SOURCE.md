@@ -30,9 +30,9 @@ If the runner is sandboxed to the Scrutator repo checkout only and cannot read `
 - Query source path: `Projects/Long Term Memory/benchmark/queries/`
 - Source commit: `270a3c0843d5c41d2a61feedadc5477d56bd4f45`
 - Copied at: `2026-07-15`
-- Harness adaptation: only `QUERIES_DIR` and report directories were made
-  relative to the vendored script directory; benchmark logic is unchanged.
-- Vendored harness SHA-256: `a9c0e304435b25b1d90d3bc31f791735cf72ed9658c0353ad4356d160d2cee5c`
+- Harness adaptation: checkout-local paths, bearer-token loading, contract hashes,
+  effective-model attestation, and explicit query-error reporting.
+- Vendored harness SHA-256: `df7b73c53d49a7db046d9fb9aa8d01b8d7a22fbc7cd28ad53ba8ae09d5870bf3`
 - Factual SHA-256: `66ebbec22459763f6337d87503bbd35a913d10c2c1481d36b242fab13fc20767`
 - Multi-hop SHA-256: `136af39e509a18658380473350929a313019003afdf717d67b1dec078f5f595f`
 - Temporal SHA-256: `14206a5707bb12afd30aee16d2b42ecd8e98ea7a4e28a701e24df2848535a032`
@@ -50,11 +50,21 @@ undetected.
 
 Mode consistency rule: `baseline.json` `mode` field, harness invocation flag (`--expand-entities`),
 and the report filename suffix (`.with-entities.json`) must always agree.  A mismatch causes a
-born-red gate — observed all-zeros against a non-zero baseline every build for the wrong reason.
+contract-invalid result (exit 3), never a recall-regression claim.
+
+## Comparable-run contract
+
+The gate requires exact equality for schema, namespace, mode, entity-expansion flag, query count,
+query-set SHA-256, corpus-manifest SHA-256, and effective reranker model. It also requires all query
+requests to complete. A partial run is infrastructure evidence, not a set of recall misses.
+
+The effective reranker route is supplied through `LTM_BENCH_RERANKER_MODEL`. The harness defaults
+to `unreported`; this is intentionally fail-closed because the old hard-coded `cursor/auto` label
+became false after Model Connector routing changed. The workflow reads the trusted repository
+variable `SCRUTATOR_LTM_RERANKER_MODEL`; absent or stale configuration yields exit 3.
 
 ## Baseline seeding note
 
 `baseline.json` was seeded from `reports/v4/scrutator/2026-04-26.datarim-kb.with-entities.json`
-(36-query run, expand_entities=true, real measured recall).  The live endpoint returned HTTP 500
-on 2026-06-21 (PostgreSQL connectivity issue, not a Scrutator code regression).  Recalibrate via
-`--update-baseline` after the first clean CI run on the arcana-db runner (requires live endpoint).
+(36-query run, expand_entities=true, real measured recall). The historical numbers remain intact.
+Never refresh the baseline from a failing run, after query/corpus drift, or with an unpinned model.

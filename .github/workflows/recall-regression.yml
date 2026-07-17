@@ -3,7 +3,7 @@ name: Recall@k Regression Gate
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch: {}  # manual re-run / baseline refresh trigger
+  workflow_dispatch: {}  # manual observational re-run; baseline refresh requires reviewed change
 
 jobs:
   recall-gate:
@@ -77,6 +77,10 @@ jobs:
           # harness/query snapshot so the regression gate is checkout-local.
           HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py
           SCRUTATOR_BEARER_TOKEN_FILE: ${{ runner.temp }}/scrutator-recall-reader.jwt
+          # Deliberately not guessed from repository config. Until the effective production
+          # route is supplied by a trusted deployment source, the report says "unreported"
+          # and exits 3 (invalid benchmark) rather than making a false regression claim.
+          LTM_BENCH_RERANKER_MODEL: ${{ vars.SCRUTATOR_LTM_RERANKER_MODEL }}
 
       - name: Remove benchmark reader token
         if: always()
