@@ -7,6 +7,7 @@ SRCH-0020: per-call client creation caused 503 after 2-3 index requests.
 from __future__ import annotations
 
 import logging
+import math
 
 import httpx
 from tenacity import (
@@ -19,6 +20,13 @@ from tenacity import (
 from scrutator.config import settings
 
 logger = logging.getLogger(__name__)
+
+# The shared Embedding API rejects HTTP batches larger than 64. Scrutator's
+# higher-level index pack may contain up to 256 chunks, so transport requests
+# are paged sequentially without weakening the indexer's independent caps.
+_EMBEDDING_API_MAX_BATCH_SIZE = 64
+_DENSE_DIMENSIONS = 1024
+_FLOAT32_MAX = 3.4028235e38
 
 # ── Singleton httpx client ──────────────────────────────────────────
 
@@ -78,46 +86,86 @@ def _with_retry(fn):
 # ── Public API ──────────────────────────────────────────────────────
 
 
+def _finite_number(value: object) -> bool:
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(float(value))
+
+
+def _finite_dense_number(value: object) -> bool:
+    return _finite_number(value) and abs(float(value)) <= _FLOAT32_MAX
+
+
+def _response_data(response: httpx.Response, expected_count: int) -> list[dict]:
+    try:
+        data = response.json()["data"]
+    except Exception as exc:
+        raise EmbeddingError("Embedding API returned an invalid response") from exc
+    if not isinstance(data, list) or len(data) != expected_count:
+        raise EmbeddingError("Embedding API response cardinality mismatch")
+    if not all(isinstance(item, dict) for item in data):
+        raise EmbeddingError("Embedding API returned an invalid response")
+    indices = [item.get("index") for item in data]
+    if not all(type(index) is int for index in indices) or indices != list(range(expected_count)):
+        raise EmbeddingError("Embedding API response index order mismatch")
+    return data
+
+
 @_with_retry
-async def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Get dense embeddings for a list of texts from the Embedding API.
-
-    Returns list of 1024-dim vectors.
-    """
-    if not texts:
-        return []
-
+async def _embed_dense_page(texts: list[str]) -> list[list[float]]:
     client = await get_client()
     response = await client.post(
         f"{settings.embedding_api_url}/v1/embeddings",
         json={"input": texts},
     )
     if response.status_code != 200:
-        raise EmbeddingError(f"Embedding API returned {response.status_code}: {response.text}")
+        raise EmbeddingError(f"Embedding API returned status {response.status_code}")
 
-    data = response.json()
-    return [item["embedding"] for item in data["data"]]
+    data = _response_data(response, len(texts))
+    embeddings = [item.get("embedding") for item in data]
+    if not all(
+        isinstance(vector, list)
+        and len(vector) == _DENSE_DIMENSIONS
+        and all(_finite_dense_number(value) for value in vector)
+        for vector in embeddings
+    ):
+        raise EmbeddingError("Embedding API returned invalid dense embeddings")
+    return embeddings
+
+
+async def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Get ordered dense embeddings, paging to the provider's 64-item cap."""
+    embeddings: list[list[float]] = []
+    for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE):
+        embeddings.extend(await _embed_dense_page(texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE]))
+    return embeddings
 
 
 @_with_retry
-async def embed_sparse(texts: list[str]) -> list[dict[str, float]]:
-    """Get sparse (lexical weight) embeddings from the Embedding API.
-
-    Returns list of {token_id: weight} dicts.
-    """
-    if not texts:
-        return []
-
+async def _embed_sparse_page(texts: list[str]) -> list[dict[str, float]]:
     client = await get_client()
     response = await client.post(
         f"{settings.embedding_api_url}/v1/embeddings/sparse",
         json={"input": texts},
     )
     if response.status_code != 200:
-        raise EmbeddingError(f"Sparse Embedding API returned {response.status_code}: {response.text}")
+        raise EmbeddingError(f"Sparse Embedding API returned status {response.status_code}")
 
-    data = response.json()
-    return [item["sparse_weights"] for item in data["data"]]
+    data = _response_data(response, len(texts))
+    embeddings = [item.get("sparse_weights") for item in data]
+    if not all(
+        isinstance(vector, dict)
+        and all(isinstance(token, str) and _finite_number(weight) for token, weight in vector.items())
+        for vector in embeddings
+    ):
+        raise EmbeddingError("Embedding API returned invalid sparse embeddings")
+    return embeddings
+
+
+async def embed_sparse(texts: list[str]) -> list[dict[str, float]]:
+    """Get ordered sparse embeddings, paging to the provider's 64-item cap."""
+    embeddings: list[dict[str, float]] = []
+    for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE):
+        embeddings.extend(await _embed_sparse_page(texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE]))
+    return embeddings
 
 
 async def embed_single(text: str) -> list[float]:
