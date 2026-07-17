@@ -93,25 +93,17 @@ jobs:
           set -e
           kb_timers=(kb-reconcile.timer kb-observe.timer kb-self-improvement-reconcile.timer)
           active_kb_timers=()
-          runtime_masked_kb_timers=()
           for timer in "${kb_timers[@]}"; do
             if sudo -n systemctl is-active --quiet "$timer"; then
               active_kb_timers+=("$timer")
             fi
-            if [ "$(sudo -n systemctl is-enabled "$timer" 2>/dev/null || true)" = "masked-runtime" ]; then
-              runtime_masked_kb_timers+=("$timer")
-            fi
           done
           resume_kb_timers() {
-            sudo -n systemctl unmask --runtime "${kb_timers[@]}"
-            if ((${#runtime_masked_kb_timers[@]})); then
-              sudo -n systemctl mask --runtime "${runtime_masked_kb_timers[@]}"
-            fi
             if ((${#active_kb_timers[@]})); then
               sudo -n systemctl start "${active_kb_timers[@]}"
             fi
           }
-          sudo -n systemctl mask --runtime --now "${kb_timers[@]}"
+          sudo -n systemctl stop "${kb_timers[@]}"
           trap resume_kb_timers EXIT
           kb_reconcile_services=(kb-reconcile.service kb-self-improvement-reconcile.service)
           for service in "${kb_reconcile_services[@]}"; do
