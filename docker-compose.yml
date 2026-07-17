@@ -3,6 +3,10 @@ services:
     build: .
     network_mode: host
     env_file: .env
+    environment:
+      # Dedicated bounded corpus written by the existing feeder credential.
+      # Preserve every operator-configured namespace and append only this scope.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement"
     restart: unless-stopped
     volumes:
       - scrutator-logs:/app/logs
