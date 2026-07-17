@@ -58,7 +58,12 @@ async def test_absent_content_length_stops_receiving_when_stream_crosses_cap():
 
 @pytest.mark.parametrize(
     ("content_length", "expected_status"),
-    [(b"not-a-number", 400), (b"-1", 400), (b"1048577", 413)],
+    [
+        (b"not-a-number", 400),
+        (b"-1", 400),
+        (b"1048577", 413),
+        (b"9" * 5_000, 413),
+    ],
 )
 @pytest.mark.asyncio
 async def test_invalid_or_oversized_content_length_rejected_without_reading_body(content_length, expected_status):
