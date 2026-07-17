@@ -93,6 +93,7 @@ class JobStatus(StrEnum):
     EXTRACTING = "extracting"
     DEDUPING = "deduping"
     DONE = "done"
+    PARTIAL = "partial"
     FAILED = "failed"
 
 
@@ -133,6 +134,10 @@ class IngestResponse(BaseModel):
     entities_upserted: int = 0
     edges_upserted: int = 0
     idempotent_noop: bool = False
+    indexed: bool = True
+    total_chunks: int = 0
+    enrichment: Literal["complete", "failed", "not_applicable"] = "complete"
+    enrichment_error: str | None = None
 
 
 class SourceDeleteRequest(BaseModel):
