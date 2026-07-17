@@ -1,0 +1,10 @@
+{
+  "mode": "with-entities",
+  "expand_entities": true,
+  "per_query": [{"query_id": "probe", "num_retrieved": 5}],
+  "aggregate_by_class": {
+    "factual": {"mean_recall_at_5": 0.7},
+    "multi-hop": {"mean_recall_at_5": 0.5455},
+    "temporal": {"mean_recall_at_5": 0.8}
+  }
+}
