@@ -46,14 +46,14 @@ def _declared_size(headers: list[tuple[bytes, bytes]], max_bytes: int) -> tuple[
         return None, None
     if len(values) != 1:
         return None, 400
-    try:
-        text = values[0].decode("ascii")
-    except UnicodeDecodeError:
+    raw_size = values[0]
+    if not raw_size or any(byte < ord("0") or byte > ord("9") for byte in raw_size):
         return None, 400
-    if not text.isdecimal():
-        return None, 400
-    size = int(text)
-    return (size, 413) if size > max_bytes else (size, None)
+    normalized = raw_size.lstrip(b"0") or b"0"
+    max_text = str(max_bytes).encode("ascii")
+    if len(normalized) > len(max_text) or (len(normalized) == len(max_text) and normalized > max_text):
+        return None, 413
+    return int(normalized), None
 
 
 async def _read_bounded(receive: ASGIReceive, max_bytes: int) -> tuple[bytes, int | None]:
