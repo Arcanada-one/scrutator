@@ -29,6 +29,7 @@ fi
 
 # Build and start
 echo "Building and starting Scrutator..."
+"$PROJECT_DIR/deploy/ltm-reflect-state-preflight.sh"
 docker compose up -d --build
 
 # Wait for startup

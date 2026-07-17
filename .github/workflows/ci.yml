@@ -93,6 +93,7 @@ jobs:
           set -e
           cd /srv/apps/scrutator
           git pull --ff-only origin main
+          deploy/ltm-reflect-state-preflight.sh
           docker compose up -d --build
           sleep 10
           curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
