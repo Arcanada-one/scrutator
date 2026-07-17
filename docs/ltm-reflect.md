@@ -195,8 +195,23 @@ Production wrapper files:
 - `deploy/ltm-reflect.service` — hardened oneshot service.
 - `deploy/ltm-reflect.timer` — hourly timer.
 
+The cursor directory is a fail-closed bind mount shared by the host wrapper and
+the Scrutator container. Provision it before `docker compose up` and reject
+symlinks; Compose will not create it implicitly:
+
+```bash
+install -d -o root -g root -m 0700 /var/lib/scrutator/ltm-reflect
+```
+
+`docker inspect` must show that exact host path mounted read-write at the same
+container path. The cursor is not durable if it exists only in the container
+overlay, so do not create the readiness marker until persistence across a
+controlled container recreation has been verified.
+
 The service has `ConditionPathExists=/var/lib/scrutator/ltm-reflect-ready`.
-Do not create that marker until the SRCH-0044 full KB backfill is explicitly
-approved and verified; before the marker exists, installing/enabling the timer is
-inert. This keeps LTM-0026 shippable without silently starting billed reflection
-or reflecting over a partial corpus.
+Create that marker only after a bounded safety review, an observed dry-run, a
+successful supervised backlog drain for the configured namespace, and cursor
+persistence across container recreation. Namespace isolation supersedes the old
+SRCH-0044 dependency: the `wiki` reflect runner does not authorize or trigger the
+operator-gated `arcanada` full-corpus backfill. Before the marker exists,
+installing or enabling the timer remains inert.
