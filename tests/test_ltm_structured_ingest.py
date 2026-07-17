@@ -129,11 +129,59 @@ async def test_matching_structured_hash_is_noop_before_job_and_index_dml():
             response = await ingest(req, CTX, "ltm-secret")
 
     assert response.idempotent_noop is True
+    assert response.enrichment == "not_applicable"
     upsert_namespace.assert_not_awaited()
     create_job.assert_not_awaited()
     index_document.assert_not_awaited()
     apply_graph.assert_not_awaited()
     llm_factory.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_structured_graph_failure_is_retryable_and_sanitized():
+    req = IngestRequest(
+        content="MUN:1 depends on MUN:2",
+        source_path="muneral://tasks/1",
+        namespace="muneral",
+        structured_graph=GRAPH,
+    )
+    async with _writer_settings():
+        with (
+            patch("scrutator.ltm.router.repository.get_namespace_id", new_callable=AsyncMock, return_value=None),
+            patch("scrutator.ltm.router.repository.upsert_namespace", new_callable=AsyncMock, return_value=7),
+            patch("scrutator.ltm.router.repository.create_ltm_job", new_callable=AsyncMock, return_value="job-1"),
+            patch("scrutator.ltm.router.repository.update_ltm_job", new_callable=AsyncMock) as update_job,
+            patch(
+                "scrutator.ltm.router.repository.get_source_graph_provenance",
+                new_callable=AsyncMock,
+                return_value={"entity_ids": [], "edge_ids": []},
+            ),
+            patch(
+                "scrutator.search.indexer.index_document",
+                new_callable=AsyncMock,
+                return_value=SimpleNamespace(chunks_indexed=1),
+            ),
+            patch(
+                "scrutator.ltm.router.repository.get_chunk_ids_by_source",
+                new_callable=AsyncMock,
+                return_value=["chunk-new"],
+            ),
+            patch(
+                "scrutator.ltm.router.repository.apply_structured_graph",
+                new_callable=AsyncMock,
+                side_effect=RuntimeError("postgres://secret-sentinel"),
+            ),
+            pytest.raises(Exception) as raised,
+        ):
+            await ingest(req, CTX, "ltm-secret")
+
+    assert getattr(raised.value, "status_code", None) == 500
+    assert getattr(raised.value, "detail", None) == "Ingest failed: structured graph error"
+    assert update_job.await_args_list[-1].kwargs == {
+        "status": "failed",
+        "error": "structured_graph_failed",
+    }
+    assert "secret-sentinel" not in str(getattr(raised.value, "detail", ""))
 
 
 def _pool_with_connection(conn):

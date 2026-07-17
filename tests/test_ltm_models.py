@@ -169,6 +169,21 @@ class TestIngestResponse:
         assert resp.edges_upserted == 0
         assert resp.idempotent_noop is False
 
+    def test_partial_contract_reports_indexed_content_and_failed_enrichment(self):
+        resp = IngestResponse(
+            job_id="abc-123",
+            status=JobStatus.PARTIAL,
+            indexed=True,
+            total_chunks=2,
+            enrichment="failed",
+            enrichment_error="MC unavailable",
+        )
+
+        assert resp.status == JobStatus.PARTIAL
+        assert resp.indexed is True
+        assert resp.total_chunks == 2
+        assert resp.enrichment == "failed"
+
 
 class TestEntity:
     def test_valid(self):
