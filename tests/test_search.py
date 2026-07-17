@@ -203,7 +203,12 @@ class TestEmbedder:
 
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"data": [{"embedding": [0.1] * 1024}, {"embedding": [0.2] * 1024}]}
+        mock_response.json.return_value = {
+            "data": [
+                {"index": 0, "embedding": [0.1] * 1024},
+                {"index": 1, "embedding": [0.2] * 1024},
+            ]
+        }
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
