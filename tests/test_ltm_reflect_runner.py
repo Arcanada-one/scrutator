@@ -1,12 +1,19 @@
 """Tests for the LTM-0026 bounded reflect runner."""
 
+import os
+import subprocess
 from datetime import UTC, datetime
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import yaml
 
 from scrutator.ltm.models import ReflectRunSummary
 from scrutator.ltm.reflect_runner import ReflectCursor, ReflectRunnerError, run_reflect_once
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+STATE_PREFLIGHT = REPO_ROOT / "deploy" / "ltm-reflect-state-preflight.sh"
 
 
 class FakeReflectJob:
@@ -41,6 +48,51 @@ def reset_fake_job():
         req_count=1,
         duration_ms=12.0,
     )
+
+
+def test_compose_persists_reflect_cursor_in_exact_fail_closed_bind_mount():
+    compose = yaml.safe_load((REPO_ROOT / "docker-compose.yml").read_text())
+    volumes = compose["services"]["scrutator"]["volumes"]
+    reflect_mount = next(
+        volume
+        for volume in volumes
+        if isinstance(volume, dict) and volume.get("target") == "/var/lib/scrutator/ltm-reflect"
+    )
+
+    assert reflect_mount == {
+        "type": "bind",
+        "source": "/var/lib/scrutator/ltm-reflect",
+        "target": "/var/lib/scrutator/ltm-reflect",
+        "read_only": False,
+        "bind": {"create_host_path": False},
+    }
+
+
+def test_state_preflight_accepts_exact_directory_and_rejects_symlink(tmp_path):
+    state_dir = tmp_path / "state"
+    state_dir.mkdir(mode=0o700)
+    env = {
+        **os.environ,
+        "LTM_REFLECT_STATE_EXPECTED_UID": str(os.getuid()),
+        "LTM_REFLECT_STATE_EXPECTED_GID": str(os.getgid()),
+    }
+
+    accepted = subprocess.run([STATE_PREFLIGHT, state_dir], env=env, capture_output=True, text=True)
+    assert accepted.returncode == 0, accepted.stderr
+
+    symlink = tmp_path / "state-link"
+    symlink.symlink_to(state_dir, target_is_directory=True)
+    rejected = subprocess.run([STATE_PREFLIGHT, symlink], env=env, capture_output=True, text=True)
+    assert rejected.returncode != 0
+
+
+def test_deploy_runs_state_preflight_before_compose():
+    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    deploy = workflow[workflow.index("      - name: Deploy") :]
+    script = (REPO_ROOT / "scripts" / "deploy.sh").read_text()
+
+    assert deploy.index("deploy/ltm-reflect-state-preflight.sh") < deploy.index("docker compose up")
+    assert script.index("deploy/ltm-reflect-state-preflight.sh") < script.index("docker compose up")
 
 
 def test_cursor_round_trips_utc_datetime(tmp_path):

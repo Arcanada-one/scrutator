@@ -6,6 +6,12 @@ services:
     restart: unless-stopped
     volumes:
       - scrutator-logs:/app/logs
+      - type: bind
+        source: /var/lib/scrutator/ltm-reflect
+        target: /var/lib/scrutator/ltm-reflect
+        read_only: false
+        bind:
+          create_host_path: false
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8310/health"]
       interval: 30s
