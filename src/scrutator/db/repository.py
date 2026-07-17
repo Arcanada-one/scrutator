@@ -126,6 +126,97 @@ async def insert_sparse_vectors(chunk_ids: list[str], sparse_weights: list[dict[
     return inserted
 
 
+_ATOMIC_CHUNK_UPSERT_SQL = """
+    INSERT INTO chunks (
+        namespace_id, project_id, source_path, source_type,
+        chunk_index, parent_id, content, content_hash,
+        embedding_dense, metadata, token_count, indexed_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, NOW())
+    ON CONFLICT (namespace_id, source_path, chunk_index)
+    DO UPDATE SET
+        project_id = EXCLUDED.project_id,
+        source_type = EXCLUDED.source_type,
+        parent_id = EXCLUDED.parent_id,
+        content = EXCLUDED.content,
+        content_hash = EXCLUDED.content_hash,
+        embedding_dense = EXCLUDED.embedding_dense,
+        metadata = EXCLUDED.metadata,
+        token_count = EXCLUDED.token_count,
+        updated_at = NOW(),
+        indexed_at = NOW()
+    RETURNING id
+"""
+
+_ATOMIC_SPARSE_UPSERT_SQL = """
+    INSERT INTO sparse_vectors (chunk_id, token_weights)
+    VALUES ($1::uuid, $2::jsonb)
+    ON CONFLICT (chunk_id)
+    DO UPDATE SET token_weights = EXCLUDED.token_weights
+"""
+
+_ATOMIC_DELETE_SOURCE_SQL = """
+    DELETE FROM chunks
+    WHERE namespace_id = $1 AND source_path = $2
+"""
+
+
+def _validate_atomic_replacement(
+    chunks: list[dict[str, Any]], embeddings: list[list[float]], sparse_weights: list[dict[str, float]]
+) -> str:
+    if len(chunks) != len(embeddings) or len(chunks) != len(sparse_weights):
+        raise ValueError("chunk and embedding cardinalities must match")
+    source_path = chunks[0]["source_path"]
+    if any(chunk["source_path"] != source_path for chunk in chunks):
+        raise ValueError("atomic source replacement accepts one source_path")
+    return source_path
+
+
+async def replace_source_chunks_atomic(
+    chunks: list[dict[str, Any]],
+    embeddings: list[list[float]],
+    sparse_weights: list[dict[str, float]],
+    namespace_id: int,
+    project_id: int | None = None,
+) -> int:
+    """Replace one source generation under an advisory lock and one transaction."""
+    if not chunks:
+        return 0
+    source_path = _validate_atomic_replacement(chunks, embeddings, sparse_weights)
+
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
+        # Preserve legacy delete/reinsert FK-cascade semantics inside the
+        # transactionally locked source replacement.
+        await conn.execute(_ATOMIC_DELETE_SOURCE_SQL, namespace_id, source_path)
+        for chunk, embedding, weights in zip(chunks, embeddings, sparse_weights, strict=True):
+            chunk_index = chunk["chunk_index"]
+            chunk_id = await conn.fetchval(
+                _ATOMIC_CHUNK_UPSERT_SQL,
+                namespace_id,
+                project_id,
+                source_path,
+                chunk["source_type"],
+                chunk_index,
+                chunk.get("parent_id"),
+                chunk["content"],
+                chunk["content_hash"],
+                np.asarray(embedding, dtype=np.float32),
+                json.dumps(chunk.get("metadata", {})),
+                chunk.get("token_count", 0),
+            )
+            await conn.execute(
+                _ATOMIC_SPARSE_UPSERT_SQL,
+                chunk_id,
+                json.dumps(weights),
+            )
+    return len(chunks)
+
+
 async def get_chunk_ids_by_source(source_path: str, namespace_id: int | None = None) -> list[str]:
     """Get chunk IDs for a source path, ordered by chunk_index."""
     pool = await get_pool()

@@ -258,16 +258,16 @@ class TestIndexer:
 
         with (
             patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
             patch("scrutator.search.indexer.upsert_project", new_callable=AsyncMock) as mock_proj,
-            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock) as mock_del,
-            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
         ):
             mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
             mock_ns.return_value = 1
             mock_proj.return_value = 10
-            mock_del.return_value = 0
-            mock_insert.return_value = 1
+            mock_replace.return_value = 1
 
             result = await index_document(
                 content="# Hello\n\nWorld",
@@ -281,7 +281,7 @@ class TestIndexer:
             assert result.source_path == "test.md"
             mock_ns.assert_called_once_with("arcanada")
             mock_proj.assert_called_once_with(1, "scrutator")
-            mock_del.assert_called_once_with("test.md", 1)
+            mock_replace.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_index_empty_content_returns_zero(self):
@@ -289,10 +289,10 @@ class TestIndexer:
         from scrutator.search.indexer import index_document
 
         with (
-            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock),
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock, return_value=[[0.1] * 1024]),
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock, return_value=[{"1": 0.1}]),
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock, return_value=1),
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock, return_value=1),
         ):
             # Very short content → single chunk, still indexable
             result = await index_document(content="x", source_path="empty.md")
@@ -307,18 +307,19 @@ class TestIndexer:
 
         with (
             patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
-            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
         ):
             mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
             mock_ns.return_value = 1
 
             async def _capture(chunk_dicts, *_args, **_kwargs):
                 _capture.seen = chunk_dicts
                 return len(chunk_dicts)
 
-            mock_insert.side_effect = _capture
+            mock_replace.side_effect = _capture
 
             await index_document(content="# Intro\n\nHello world", source_path="wiki/x.md", namespace="arcanada")
 
@@ -337,18 +338,19 @@ class TestIndexer:
 
         with (
             patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
-            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
         ):
             mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
             mock_ns.return_value = 1
 
             async def _capture(chunk_dicts, *_args, **_kwargs):
                 _capture.seen = chunk_dicts
                 return len(chunk_dicts)
 
-            mock_insert.side_effect = _capture
+            mock_replace.side_effect = _capture
 
             await index_document(content="plain text, no headers", source_path="note.txt", namespace="arcanada")
 
@@ -360,13 +362,14 @@ class TestIndexer:
 
         with (
             patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
             patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
-            patch("scrutator.search.indexer.delete_by_source", new_callable=AsyncMock),
-            patch("scrutator.search.indexer.insert_chunks", new_callable=AsyncMock) as mock_insert,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
         ):
             mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
             mock_ns.return_value = 1
-            mock_insert.return_value = 1
+            mock_replace.return_value = 1
 
             result = await index_document(content="hello", source_path="note.txt")
             # project=None → upsert_project should NOT be called
