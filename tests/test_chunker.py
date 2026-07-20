@@ -6,6 +6,7 @@ from scrutator.chunker import Chunk, ChunkMetadata, chunk_document
 from scrutator.chunker.metadata import detect_language, extract_frontmatter, extract_tags, extract_wikilinks
 from scrutator.chunker.models import ChunkRequest
 from scrutator.chunker.splitters import (
+    MAX_EMBEDDING_INPUT_CHARS,
     SECTION_SCHEMA_VERSION,
     compute_doc_id,
     normalize_heading_path,
@@ -243,6 +244,28 @@ def test_semantic_split_overlap():
         assert token_count(chunk) <= 300  # generous tolerance
 
 
+def test_semantic_split_hard_splits_dense_paragraph_losslessly():
+    text = "metric value " * 3_000
+
+    chunks = semantic_split(text, max_tokens=512, overlap_tokens=0)
+
+    assert len(chunks) > 1
+    assert "".join(chunks) == text
+    assert all(token_count(chunk) <= 512 for chunk in chunks)
+    assert all(len(chunk) <= MAX_EMBEDDING_INPUT_CHARS for chunk in chunks)
+
+
+def test_semantic_split_hard_splits_whitespace_free_text_losslessly():
+    text = "x" * (MAX_EMBEDDING_INPUT_CHARS + 137)
+
+    chunks = semantic_split(text, max_tokens=512, overlap_tokens=0)
+
+    assert chunks == ["x" * MAX_EMBEDDING_INPUT_CHARS, "x" * 137]
+    assert "".join(chunks) == text
+    assert all(token_count(chunk) <= 512 for chunk in chunks)
+    assert all(len(chunk) <= MAX_EMBEDDING_INPUT_CHARS for chunk in chunks)
+
+
 # --------------- T10: split_code Python ---------------
 
 
@@ -266,6 +289,15 @@ class MyClass:
 '''
     chunks = split_code(code, max_tokens=512)
     assert len(chunks) >= 3  # preamble + func_a + func_b + MyClass (func_b and MyClass might merge)
+
+
+def test_split_code_bounds_whitespace_free_preamble():
+    code = ("x" * (MAX_EMBEDDING_INPUT_CHARS + 137)) + "\n\ndef function():\n    return 1\n"
+
+    chunks = split_code(code, max_tokens=512)
+
+    assert all(token_count(chunk) <= 512 for chunk in chunks)
+    assert all(len(chunk) <= MAX_EMBEDDING_INPUT_CHARS for chunk in chunks)
 
 
 # --------------- T11: engine: short doc ---------------
@@ -325,6 +357,26 @@ def test_engine_large_markdown():
     result = chunk_document(text, "large.md", max_tokens=200)
     assert result.total_chunks >= 20
     assert result.strategy_used == "markdown_headers"
+
+
+def test_engine_bounds_dense_alert_paragraph_for_embedding_provider():
+    text = "# Azure CPU Alert\n\n" + ("metric value " * 3_000)
+
+    result = chunk_document(text, "Inbox/email/azure-cpu-alert.md", max_tokens=512, overlap_tokens=50)
+
+    assert result.total_chunks > 1
+    assert all(chunk.token_count <= 512 for chunk in result.chunks)
+    assert all(len(chunk.content) <= MAX_EMBEDDING_INPUT_CHARS for chunk in result.chunks)
+
+
+def test_engine_bounds_whitespace_free_plain_text_for_embedding_provider():
+    text = "x" * (MAX_EMBEDDING_INPUT_CHARS + 137)
+
+    result = chunk_document(text, "dense.txt", max_tokens=512, overlap_tokens=0)
+
+    assert result.total_chunks == 2
+    assert "".join(chunk.content for chunk in result.chunks) == text
+    assert all(len(chunk.content) <= MAX_EMBEDDING_INPUT_CHARS for chunk in result.chunks)
 
 
 def test_engine_parent_child_hierarchy():

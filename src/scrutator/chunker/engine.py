@@ -6,7 +6,13 @@ import os
 
 from scrutator.chunker.metadata import detect_language, extract_frontmatter, extract_tags, extract_wikilinks
 from scrutator.chunker.models import Chunk, ChunkMetadata, ChunkResult, SectionMeta
-from scrutator.chunker.splitters import normalize_heading_path, semantic_split, split_by_headers, split_code
+from scrutator.chunker.splitters import (
+    MAX_EMBEDDING_INPUT_CHARS,
+    normalize_heading_path,
+    semantic_split,
+    split_by_headers,
+    split_code,
+)
 from scrutator.chunker.tokenizer import token_count
 
 # File extension to source type mapping
@@ -39,7 +45,7 @@ def chunk_document(
         return _chunk_markdown(content, source_path, max_tokens, overlap_tokens)
     elif file_type in ("python", "typescript", "javascript"):
         return _chunk_code(content, source_path, file_type, max_tokens)
-    elif token_count(content) <= max_tokens // 2:
+    elif token_count(content) <= max_tokens // 2 and len(content) <= MAX_EMBEDDING_INPUT_CHARS:
         return _single_chunk(content, source_path, file_type)
     else:
         return _chunk_sliding_window(content, source_path, file_type, max_tokens, overlap_tokens)
@@ -90,7 +96,7 @@ def _chunk_markdown(content: str, source_path: str, max_tokens: int, overlap_tok
     for hierarchy, section_content in sections:
         section_tokens = token_count(section_content)
 
-        if section_tokens <= max_tokens:
+        if section_tokens <= max_tokens and len(section_content) <= MAX_EMBEDDING_INPUT_CHARS:
             # Fits in one chunk
             chunks.append(_make_chunk(section_content, idx, source_path, "markdown", hierarchy, frontmatter))
             idx += 1

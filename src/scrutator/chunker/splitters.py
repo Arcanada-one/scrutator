@@ -10,6 +10,10 @@ from scrutator.chunker.tokenizer import token_count
 
 _HEADER_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
+# The shared embedding provider rejects any individual input over 24,000
+# characters, independently of Scrutator's approximate token budget.
+MAX_EMBEDDING_INPUT_CHARS = 24_000
+
 # SRCH-0021: hierarchical navigation — section metadata schema version.
 # Bump when normalize_heading_path()'s output shape changes; backfill_sections.py
 # re-derives any chunk whose stored section.schema_version != this constant.
@@ -92,20 +96,68 @@ def split_by_headers(text: str) -> list[tuple[list[str], str]]:
     return sections
 
 
+def _within_embedding_bounds(text: str, max_tokens: int) -> bool:
+    return token_count(text) <= max_tokens and len(text) <= MAX_EMBEDDING_INPUT_CHARS
+
+
+def _hard_split(text: str, max_tokens: int) -> list[str]:
+    """Split one dense segment without dropping or normalizing any characters."""
+    if max_tokens < 1:
+        raise ValueError("max_tokens must be positive")
+
+    chunks: list[str] = []
+    start = 0
+    while start < len(text):
+        upper = min(start + MAX_EMBEDDING_INPUT_CHARS, len(text))
+        if token_count(text[start:upper]) <= max_tokens:
+            end = upper
+        else:
+            low = start + 1
+            high = upper
+            end = start
+            while low <= high:
+                midpoint = (low + high) // 2
+                if token_count(text[start:midpoint]) <= max_tokens:
+                    end = midpoint
+                    low = midpoint + 1
+                else:
+                    high = midpoint - 1
+
+            if end == start:
+                raise ValueError("max_tokens is too small for non-empty input")
+
+        if end < len(text):
+            whitespace = list(re.finditer(r"\s+", text[start:end]))
+            if whitespace:
+                boundary = start + whitespace[-1].end()
+                if boundary > start:
+                    end = boundary
+
+        chunks.append(text[start:end])
+        start = end
+
+    return chunks
+
+
 def semantic_split(text: str, max_tokens: int = 512, overlap_tokens: int = 50) -> list[str]:
-    """Split text by sliding window with overlap, respecting paragraph boundaries."""
-    if token_count(text) <= max_tokens:
+    """Split text within both token and provider character limits."""
+    if _within_embedding_bounds(text, max_tokens):
         return [text]
 
     paragraphs = re.split(r"\n\s*\n", text)
     chunks: list[str] = []
     current_parts: list[str] = []
-    current_tokens = 0
 
     for para in paragraphs:
-        para_tokens = token_count(para)
+        if not _within_embedding_bounds(para, max_tokens):
+            if current_parts:
+                chunks.append("\n\n".join(current_parts))
+                current_parts = []
+            chunks.extend(_hard_split(para, max_tokens))
+            continue
 
-        if current_tokens + para_tokens > max_tokens and current_parts:
+        candidate = "\n\n".join([*current_parts, para])
+        if current_parts and not _within_embedding_bounds(candidate, max_tokens):
             chunks.append("\n\n".join(current_parts))
 
             # Overlap: keep last parts that fit within overlap_tokens
@@ -119,10 +171,10 @@ def semantic_split(text: str, max_tokens: int = 512, overlap_tokens: int = 50) -
                 overlap_count += pt
 
             current_parts = overlap_parts
-            current_tokens = overlap_count
+            while current_parts and not _within_embedding_bounds("\n\n".join([*current_parts, para]), max_tokens):
+                current_parts.pop(0)
 
         current_parts.append(para)
-        current_tokens += para_tokens
 
     if current_parts:
         chunks.append("\n\n".join(current_parts))
@@ -139,7 +191,7 @@ def split_code(text: str, max_tokens: int = 512) -> list[str]:
 
     if not matches:
         # No functions/classes found — return as single chunk or sliding window
-        if token_count(text) <= max_tokens:
+        if _within_embedding_bounds(text, max_tokens):
             return [text]
         return semantic_split(text, max_tokens, overlap_tokens=0)
 
@@ -149,7 +201,10 @@ def split_code(text: str, max_tokens: int = 512) -> list[str]:
     if matches[0].start() > 0:
         preamble = text[: matches[0].start()].strip()
         if preamble:
-            chunks.append(preamble)
+            if _within_embedding_bounds(preamble, max_tokens):
+                chunks.append(preamble)
+            else:
+                chunks.extend(semantic_split(preamble, max_tokens, overlap_tokens=0))
 
     # Each function/class
     for i, match in enumerate(matches):
@@ -157,7 +212,7 @@ def split_code(text: str, max_tokens: int = 512) -> list[str]:
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         block = text[start:end].strip()
         if block:
-            if token_count(block) > max_tokens:
+            if not _within_embedding_bounds(block, max_tokens):
                 # Large block — split further
                 sub_chunks = semantic_split(block, max_tokens, overlap_tokens=0)
                 chunks.extend(sub_chunks)
