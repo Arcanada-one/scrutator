@@ -311,6 +311,7 @@ def test_batch_converts_embedding_failures_to_bounded_per_source_codes(failing_s
     settings.feeder_namespaces = "self-improvement"
     dense = AsyncMock(return_value=[[0.1] * 1024])
     sparse = AsyncMock(return_value=[{"1": 0.1}])
+
     class ProviderFailure(RuntimeError):
         status_code = 400
 
