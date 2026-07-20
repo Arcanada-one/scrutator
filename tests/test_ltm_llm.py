@@ -1,11 +1,12 @@
 """Tests for LTM LLM client — focus on permissive JSON parsing."""
 
+import hashlib
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from scrutator.ltm.llm import LtmLlmClient, parse_json_permissive
+from scrutator.ltm.llm import LtmLlmClient, LtmLlmError, parse_json_permissive
 
 
 class TestParseJsonPermissive:
@@ -95,6 +96,77 @@ class TestLtmLlmClient:
 
             result = await client.call("Say hello")
             assert result == "Hello world"
+
+    @pytest.mark.asyncio
+    async def test_call_emits_redacted_usage_record(self):
+        records = []
+        client = LtmLlmClient(
+            mc_url="http://localhost:3900",
+            connector="openrouter",
+            model="example/model",
+            api_key="secret-key",
+            usage_sink=records.append,
+        )
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {
+            "id": "req-123",
+            "status": "success",
+            "result": "sensitive extraction output",
+            "usage": {"inputTokens": 10, "outputTokens": 4, "totalTokens": 14, "costUsd": 0.0012},
+        }
+
+        with patch("scrutator.ltm.llm.httpx.AsyncClient") as mock_cls:
+            mock_http = AsyncMock()
+            mock_http.post.return_value = mock_response
+            mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+            mock_http.__aexit__ = AsyncMock(return_value=False)
+            mock_cls.return_value = mock_http
+
+            await client.call("sensitive prompt")
+
+        assert records == [
+            {
+                "request_id_sha256": hashlib.sha256(b"req-123").hexdigest(),
+                "connector": "openrouter",
+                "model": "example/model",
+                "status": "success",
+                "input_tokens": 10,
+                "output_tokens": 4,
+                "total_tokens": 14,
+                "cost_usd": 0.0012,
+            }
+        ]
+        encoded = json.dumps(records)
+        assert "sensitive" not in encoded
+        assert "secret-key" not in encoded
+        assert "req-123" not in encoded
+
+    @pytest.mark.asyncio
+    async def test_call_records_missing_result_as_failure_not_success(self):
+        records = []
+        client = LtmLlmClient("http://localhost:3900", usage_sink=records.append)
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {
+            "id": "req-malformed",
+            "status": "success",
+            "usage": {"totalTokens": 9, "costUsd": 0.002},
+        }
+
+        with patch("scrutator.ltm.llm.httpx.AsyncClient") as mock_cls:
+            mock_http = AsyncMock()
+            mock_http.post.return_value = mock_response
+            mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+            mock_http.__aexit__ = AsyncMock(return_value=False)
+            mock_cls.return_value = mock_http
+
+            with pytest.raises(LtmLlmError, match="response contract"):
+                await client.call("prompt")
+
+        assert records[0]["status"] == "response_contract_error"
+        assert records[0]["request_id_sha256"] == hashlib.sha256(b"req-malformed").hexdigest()
+        assert records[0]["total_tokens"] == 9
 
     @pytest.mark.asyncio
     async def test_call_mc_error(self, client):
