@@ -58,18 +58,23 @@ async def close_client() -> None:
 class EmbeddingError(Exception):
     """Raised when the Embedding API returns an error."""
 
+    def __init__(self, message: str, *, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
 
 # ── Retry decorator ─────────────────────────────────────────────────
 
-_RETRYABLE = (httpx.ConnectError, httpx.TimeoutException, httpx.PoolTimeout)
+_RETRYABLE = (httpx.TransportError,)
 
 
 def _log_retry(retry_state) -> None:
+    exception = retry_state.outcome.exception()
     logger.warning(
-        "Embedding retry %d/%d: %s",
+        "Embedding retry %d/%d: error_type=%s status_code=none",
         retry_state.attempt_number,
         settings.embedding_max_retries,
-        retry_state.outcome.exception(),
+        type(exception).__name__,
     )
 
 
@@ -117,7 +122,10 @@ async def _embed_dense_page(texts: list[str]) -> list[list[float]]:
         json={"input": texts},
     )
     if response.status_code != 200:
-        raise EmbeddingError(f"Embedding API returned status {response.status_code}")
+        raise EmbeddingError(
+            f"Embedding API returned status {response.status_code}",
+            status_code=response.status_code,
+        )
 
     data = _response_data(response, len(texts))
     embeddings = [item.get("embedding") for item in data]
@@ -147,7 +155,10 @@ async def _embed_sparse_page(texts: list[str]) -> list[dict[str, float]]:
         json={"input": texts},
     )
     if response.status_code != 200:
-        raise EmbeddingError(f"Sparse Embedding API returned status {response.status_code}")
+        raise EmbeddingError(
+            f"Sparse Embedding API returned status {response.status_code}",
+            status_code=response.status_code,
+        )
 
     data = _response_data(response, len(texts))
     embeddings = [item.get("sparse_weights") for item in data]
@@ -191,7 +202,10 @@ async def embed_colbert(texts: list[str]) -> list[list[list[float]]]:
         json={"input": texts},
     )
     if response.status_code != 200:
-        raise EmbeddingError(f"ColBERT Embedding API returned {response.status_code}: {response.text}")
+        raise EmbeddingError(
+            f"ColBERT Embedding API returned status {response.status_code}",
+            status_code=response.status_code,
+        )
 
     data = response.json()
     return [item["colbert_vecs"] for item in data["data"]]

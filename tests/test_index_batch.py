@@ -311,10 +311,14 @@ def test_batch_converts_embedding_failures_to_bounded_per_source_codes(failing_s
     settings.feeder_namespaces = "self-improvement"
     dense = AsyncMock(return_value=[[0.1] * 1024])
     sparse = AsyncMock(return_value=[{"1": 0.1}])
+    class ProviderFailure(RuntimeError):
+        status_code = 400
+
+    failure = ProviderFailure("sensitive-embedding-marker")
     if failing_stage == "dense":
-        dense.side_effect = RuntimeError("sensitive-embedding-marker")
+        dense.side_effect = failure
     else:
-        sparse.side_effect = RuntimeError("sensitive-embedding-marker")
+        sparse.side_effect = failure
     try:
         with (
             patch("scrutator.search.indexer.embed_texts", new=dense),
@@ -331,6 +335,8 @@ def test_batch_converts_embedding_failures_to_bounded_per_source_codes(failing_s
         settings.feeder_token, settings.feeder_namespaces = original
 
     assert response.json()["results"] == [{"source_path": "a.md", "status": "failed", "error_code": expected_code}]
+    assert "error_type=ProviderFailure" in caplog.text
+    assert "status_code=400" in caplog.text
     assert "sensitive-embedding-marker" not in caplog.text
     replace.assert_not_awaited()
 

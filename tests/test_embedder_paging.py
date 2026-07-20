@@ -164,6 +164,23 @@ async def test_only_failed_second_page_is_retried(mode):
 
 
 @pytest.mark.asyncio
+async def test_remote_protocol_error_is_retried_without_logging_details(caplog):
+    client = AsyncMock()
+    client.post.side_effect = [
+        httpx.RemoteProtocolError("sensitive-transport-marker"),
+        _response([{"embedding": [0.1] * 1024}]),
+    ]
+
+    with patch("scrutator.search.embedder.get_client", return_value=client):
+        result = await embed_texts(["one"])
+
+    assert result == [[0.1] * 1024]
+    assert client.post.await_count == 2
+    assert "error_type=RemoteProtocolError" in caplog.text
+    assert "sensitive-transport-marker" not in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_non_2xx_response_body_is_not_exposed():
     response = MagicMock()
     response.status_code = 400
@@ -178,6 +195,8 @@ async def test_non_2xx_response_body_is_not_exposed():
         await embed_texts(["one"])
 
     assert "sensitive-provider-marker" not in str(exc_info.value)
+    assert exc_info.value.status_code == 400
+    assert client.post.await_count == 1
 
 
 @pytest.mark.asyncio
