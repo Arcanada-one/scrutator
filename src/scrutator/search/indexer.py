@@ -61,6 +61,7 @@ def _stamp_doc_id(section: SectionMeta | None, namespace: str, source_path: str)
 def _chunk_dicts(chunk_result, namespace: str, source_path: str) -> list[dict]:
     return [
         {
+            "id": chunk.id,
             "source_path": source_path,
             "source_type": chunk.metadata.source_type,
             "chunk_index": chunk.chunk_index,

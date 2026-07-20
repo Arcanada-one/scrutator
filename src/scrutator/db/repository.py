@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 import numpy as np
 
@@ -128,10 +129,10 @@ async def insert_sparse_vectors(chunk_ids: list[str], sparse_weights: list[dict[
 
 _ATOMIC_CHUNK_UPSERT_SQL = """
     INSERT INTO chunks (
-        namespace_id, project_id, source_path, source_type,
+        id, namespace_id, project_id, source_path, source_type,
         chunk_index, parent_id, content, content_hash,
         embedding_dense, metadata, token_count, indexed_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, NOW())
+    ) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7::uuid, $8, $9, $10, $11::jsonb, $12, NOW())
     ON CONFLICT (namespace_id, source_path, chunk_index)
     DO UPDATE SET
         project_id = EXCLUDED.project_id,
@@ -168,6 +169,21 @@ def _validate_atomic_replacement(
     source_path = chunks[0]["source_path"]
     if any(chunk["source_path"] != source_path for chunk in chunks):
         raise ValueError("atomic source replacement accepts one source_path")
+    emitted_ids: set[str] = set()
+    for chunk in chunks:
+        chunk_id = chunk.get("id")
+        if not isinstance(chunk_id, str):
+            raise ValueError("each atomic replacement chunk requires a UUID id")
+        try:
+            UUID(chunk_id)
+        except ValueError as exc:
+            raise ValueError("each atomic replacement chunk requires a UUID id") from exc
+        if chunk_id in emitted_ids:
+            raise ValueError("duplicate chunk id in atomic replacement")
+        parent_id = chunk.get("parent_id")
+        if parent_id is not None and parent_id not in emitted_ids:
+            raise ValueError("parent_id must reference an earlier chunk in the same replacement")
+        emitted_ids.add(chunk_id)
     return source_path
 
 
@@ -197,6 +213,7 @@ async def replace_source_chunks_atomic(
             chunk_index = chunk["chunk_index"]
             chunk_id = await conn.fetchval(
                 _ATOMIC_CHUNK_UPSERT_SQL,
+                chunk["id"],
                 namespace_id,
                 project_id,
                 source_path,

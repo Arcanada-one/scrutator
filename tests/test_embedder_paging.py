@@ -193,6 +193,7 @@ async def test_later_dense_page_failure_persists_no_source():
     )
     chunks = [
         SimpleNamespace(
+            id=f"00000000-0000-4000-8000-{index + 1:012d}",
             metadata=metadata,
             chunk_index=index,
             parent_id=None,
