@@ -143,20 +143,32 @@ def _enforce_pack_caps(prepared: list[_PreparedDocument], texts: list[str]) -> N
 async def _embed_batch(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
     try:
         embeddings = await embed_texts(texts)
-    except Exception:
-        logger.error("Dense embedding failed for batch")
+    except Exception as exc:
+        _log_embedding_failure("Dense", exc)
         raise _BatchEmbeddingError("dense_embedding_failed") from None
     if not _valid_dense_embeddings(embeddings, len(texts)):
         raise _BatchEmbeddingError("invalid_dense_embeddings")
 
     try:
         sparse_weights = await embed_sparse(texts)
-    except Exception:
-        logger.error("Sparse embedding failed for batch")
+    except Exception as exc:
+        _log_embedding_failure("Sparse", exc)
         raise _BatchEmbeddingError("sparse_embedding_failed") from None
     if not _valid_sparse_embeddings(sparse_weights, len(texts)):
         raise _BatchEmbeddingError("invalid_sparse_embeddings")
     return embeddings, sparse_weights
+
+
+def _log_embedding_failure(stage: str, exception: Exception) -> None:
+    status_code = getattr(exception, "status_code", None)
+    if not isinstance(status_code, int):
+        status_code = "none"
+    logger.error(
+        "%s embedding failed for batch: error_type=%s status_code=%s",
+        stage,
+        type(exception).__name__,
+        status_code,
+    )
 
 
 async def _persist_prepared(
