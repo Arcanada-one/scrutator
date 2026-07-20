@@ -11,6 +11,24 @@ from scrutator.health import app
 from scrutator.search import indexer as indexer_module
 
 
+def test_giant_markdown_serialization_preserves_parent_ids():
+    result = indexer_module.chunk_document(
+        "# Giant\n\n" + ("word " * 3000),
+        "giant.md",
+        max_tokens=64,
+        overlap_tokens=8,
+    )
+    serialized = indexer_module._chunk_dicts(result, "test", "giant.md")
+
+    emitted = set()
+    assert len(serialized) > 1
+    for source, stored in zip(result.chunks, serialized, strict=True):
+        assert stored["id"] == source.id
+        if stored["parent_id"] is not None:
+            assert stored["parent_id"] in emitted
+        emitted.add(stored["id"])
+
+
 def test_batch_endpoint_preserves_single_document_response_order():
     original = (settings.feeder_token, settings.feeder_namespaces)
     settings.feeder_token = "feeder-secret"

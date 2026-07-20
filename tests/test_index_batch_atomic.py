@@ -8,6 +8,9 @@ import pytest
 
 from scrutator.db import repository
 
+PARENT_ID = "11111111-1111-4111-8111-111111111111"
+CHILD_ID = "22222222-2222-4222-8222-222222222222"
+
 
 class _Transaction:
     def __init__(self, conn):
@@ -62,7 +65,8 @@ class _FaithfulConnection:
             self.events.append(f"sparse-{args[0]}")
             if self.fail_sparse:
                 raise RuntimeError("injected sparse crash")
-            self.state[args[0]]["sparse"] = args[1]
+            row = next(item for item in self.state.values() if item["id"] == args[0])
+            row["sparse"] = args[1]
         elif compact.startswith("DELETE FROM chunks"):
             self.events.append("delete-generation")
             self.state = {}
@@ -70,15 +74,25 @@ class _FaithfulConnection:
 
     async def fetchval(self, sql, *args):
         assert "INSERT INTO chunks" in sql
-        chunk_index = args[4]
+        chunk_id = args[0]
+        chunk_index = args[5]
+        parent_id = args[6]
+        if parent_id is not None and parent_id not in {item.get("id") for item in self.state.values()}:
+            raise RuntimeError("foreign key violation: missing parent")
         self.events.append(f"dense-{chunk_index}")
-        self.state[chunk_index] = {"content": args[6], "sparse": None}
-        return chunk_index
+        self.state[chunk_index] = {
+            "id": chunk_id,
+            "parent_id": parent_id,
+            "content": args[7],
+            "sparse": None,
+        }
+        return chunk_id
 
 
 def _chunks():
     return [
         {
+            "id": PARENT_ID,
             "source_path": "reflection.md",
             "source_type": "markdown",
             "chunk_index": 0,
@@ -197,6 +211,62 @@ async def test_atomic_replace_is_idempotent_on_replay():
     assert conn.state[0]["content"] == "new"
 
 
+@pytest.mark.asyncio
+async def test_atomic_replace_persists_parent_before_child_with_exact_ids():
+    chunks = [
+        _chunks()[0],
+        {
+            **_chunks()[0],
+            "id": CHILD_ID,
+            "chunk_index": 1,
+            "parent_id": PARENT_ID,
+            "content": "child",
+            "content_hash": "child-hash",
+        },
+    ]
+    conn = _FaithfulConnection()
+    with patch("scrutator.db.repository.get_pool", return_value=_Pool(conn)):
+        count = await repository.replace_source_chunks_atomic(
+            chunks,
+            [[0.1] * 1024] * 2,
+            [{"1": 0.5}] * 2,
+            namespace_id=7,
+        )
+
+    assert count == 2
+    assert conn.state[0]["id"] == PARENT_ID
+    assert conn.state[1]["parent_id"] == PARENT_ID
+
+
+@pytest.mark.parametrize(
+    "chunks,match",
+    [
+        ([_chunks()[0], _chunks()[0]], "duplicate chunk id"),
+        ([{**_chunks()[0], "parent_id": CHILD_ID}], "earlier chunk"),
+        (
+            [
+                {**_chunks()[0], "parent_id": CHILD_ID},
+                {**_chunks()[0], "id": CHILD_ID, "chunk_index": 1},
+            ],
+            "earlier chunk",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_atomic_replace_rejects_invalid_parent_graph_before_opening_pool(chunks, match):
+    with (
+        patch("scrutator.db.repository.get_pool") as get_pool,
+        pytest.raises(ValueError, match=match),
+    ):
+        await repository.replace_source_chunks_atomic(
+            chunks,
+            [[0.1] * 1024] * len(chunks),
+            [{"1": 0.5}] * len(chunks),
+            namespace_id=7,
+        )
+    get_pool.assert_not_called()
+
+
 class _ConcurrentTransaction:
     def __init__(self, conn):
         self.conn = conn
@@ -231,10 +301,10 @@ class _ConcurrentConnection:
 
     async def fetchval(self, sql, *args):
         assert "INSERT INTO chunks" in sql
-        content = args[6]
+        content = args[7]
         self.shared.events.append(f"dense:{content}")
         await asyncio.sleep(0)
-        return f"00000000-0000-0000-0000-00000000000{args[4]}"
+        return args[0]
 
 
 class _ConcurrentAcquire:
@@ -263,6 +333,7 @@ def _generation(prefix: str):
         chunks.append(
             {
                 **_chunks()[0],
+                "id": f"00000000-0000-4000-8000-{index + 1:012d}",
                 "chunk_index": index,
                 "content": f"{prefix}{index}",
                 "content_hash": f"hash-{prefix}{index}",
