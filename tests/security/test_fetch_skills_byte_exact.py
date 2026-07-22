@@ -1,4 +1,4 @@
-"""SRCH-0038 1a — skills-namespace fetch returns byte-exact source; evidence stays approximate.
+"""SRCH-0038 1b — skills-namespace fetch returns byte-exact source; evidence stays approximate.
 
 This is THE Definition-of-Done guardrail for the re-run: the QA block proved that the shipped
 fetcher reassembles a document from embedding chunks (``"".join(chunks)``) while advertising the
@@ -7,7 +7,12 @@ doc (frontmatter dropped, ``overlap_tokens`` duplication, per-section ``.strip()
 multi-chunk skill plan comes back as invalid JSON — breaking the ARAS-0047 config-pinned blake3
 gate. These tests assert the exact scenario that exposed the reassembly lie.
 
-Mutation proof: each skills test also confirms the *reassembly* hash FAILS — i.e. the pre-1a code
+Storage under 1b: the exact source bytes live in the isolated ``source_documents`` table (read via
+``repository.fetch_source_raw_content``), NOT in ``chunks.metadata`` — the 1a metadata seam raised
+a multi-KB blob into the ``idx_chunks_metadata`` GIN index and hit the ~2704-byte ``jsonb_ops``
+entry ceiling on real skills. These mock tests patch that accessor to stand in for the row.
+
+Mutation proof: each skills test also confirms the *reassembly* hash FAILS — i.e. the reassembly
 path would fail this test, and only the exact-bytes path passes it.
 """
 
@@ -67,7 +72,10 @@ async def test_skills_multichunk_fetch_is_byte_exact_and_reassembly_would_fail()
 
     from scrutator.search import fetcher
 
-    with patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows):
+    with (
+        patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
+        patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=_SKILL_FRONTMATTER),
+    ):
         resp = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
 
     assert resp.trust_class == "skill"
@@ -101,7 +109,9 @@ async def test_skills_json_plan_fetch_is_parseable_json():
     section = SectionMeta(
         heading_path=["deploy"], depth=1, anchor="deploy", anchor_path=["deploy"], section_key="deploy"
     )
-    stamp0 = _stamp_doc_id(section, "skills", "deploy.json", content_hash, doc_raw_content=plan)
+    # 1b: `doc_raw_content` is NO LONGER stamped into metadata — the exact bytes live in
+    # source_documents. The section stamp carries only doc_id + doc_content_hash now.
+    stamp0 = _stamp_doc_id(section, "skills", "deploy.json", content_hash)
     stamp1 = _stamp_doc_id(section, "skills", "deploy.json", content_hash)
     doc_id = stamp0["doc_id"]
     rows = [
@@ -133,7 +143,10 @@ async def test_skills_json_plan_fetch_is_parseable_json():
 
     from scrutator.search import fetcher
 
-    with patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows):
+    with (
+        patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
+        patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=plan),
+    ):
         resp = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
 
     assert resp.content_exact is True
@@ -158,29 +171,29 @@ async def test_evidence_path_is_approximate_and_skills_path_is_exact():
     assert ev.content_exact is False
     assert ev.content == "".join(r["content"] for r in ev_rows)
 
-    # Skills namespace → exact.
+    # Skills namespace → exact (bytes come from the source_documents accessor, not metadata).
     sk_id, _sk_hash, sk_rows = build_indexed_doc(_SKILL_FRONTMATTER, namespace="skills")
-    with patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=sk_rows):
+    with (
+        patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=sk_rows),
+        patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=_SKILL_FRONTMATTER),
+    ):
         sk = await fetcher.fetch(FetchRequest(by="source_id", id=sk_id, range="full"), frozenset({1}))
     assert sk.trust_class == "skill"
     assert sk.content_exact is True
+    assert sk.content == _SKILL_FRONTMATTER
 
 
 @pytest.mark.asyncio
 async def test_legacy_skill_without_raw_content_fails_closed():
-    """A skills doc indexed BEFORE 1a (no `doc_raw_content` stamp) must fail closed (409), never
-    silently return a hash-failing reassembly."""
+    """A skills doc with NO `source_documents` row (legacy skill indexed before 1b) must fail
+    closed (409), never silently return a hash-failing reassembly. The accessor returns None."""
     doc_id, _hash, rows = build_indexed_doc(_SKILL_FRONTMATTER, namespace="skills")
-    # Strip the exact-bytes stamp to simulate a legacy skill row.
-    for row in rows:
-        section = row["metadata"].get("section")
-        if section is not None:
-            section.pop("doc_raw_content", None)
 
     from scrutator.search import fetcher
 
     with (
         patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
+        patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=None),
         pytest.raises(HTTPException) as excinfo,
     ):
         await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
@@ -188,9 +201,10 @@ async def test_legacy_skill_without_raw_content_fails_closed():
 
 
 def test_skills_exact_bytes_blob_is_size_guarded():
-    """The single POST /v1/index path has no per-document byte cap; the exact-bytes stamp must not
-    let it persist an unbounded skills blob. A skills doc over the 256 KB cap raises; the same
-    oversized doc in a non-skills namespace does NOT (the guard is skills-scoped)."""
+    """The single POST /v1/index path has no per-document byte cap; the exact-bytes source_documents
+    write must not let it persist an unbounded skills blob. A skills doc over the 256 KB cap raises
+    (in `_build_source_document`, invoked by `_chunk_dicts`); the same oversized doc in a non-skills
+    namespace does NOT (the guard is skills-scoped)."""
     from scrutator.db.models import INDEX_BATCH_MAX_DOCUMENT_BYTES
     from scrutator.search.indexer import BatchIndexLimitError, _chunk_dicts, chunk_document
 
@@ -201,5 +215,5 @@ def test_skills_exact_bytes_blob_is_size_guarded():
     with pytest.raises(BatchIndexLimitError):
         _chunk_dicts(result, "skills", "big.md", oversized)
 
-    # Non-skills namespace never stamps doc_raw_content, so it is not size-guarded here.
+    # Non-skills namespace never builds a source_documents row, so it is not size-guarded here.
     _chunk_dicts(result, "arcanada", "big.md", oversized)  # must not raise

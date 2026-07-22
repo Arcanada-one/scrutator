@@ -51,10 +51,15 @@ class TestDerivedProvenance:
     async def test_trust_class_derived_from_namespace(self):
         from scrutator.search import fetcher
 
-        # A doc in the skills namespace → "skill".
+        # A doc in the skills namespace → "skill". Under SRCH-0038 1b the skills path reads the
+        # exact bytes from `source_documents` via `fetch_source_raw_content` (a DB accessor), so it
+        # is mocked here alongside the chunk fetch (this suite is mock-based, no live Postgres).
         skills_ns = settings.skills_namespace
         doc_id, _h, rows = build_indexed_doc(_DOC, namespace=skills_ns)
-        with patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows):
+        with (
+            patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
+            patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=_DOC),
+        ):
             resp = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id), frozenset({1}))
         assert resp.trust_class == "skill"
 

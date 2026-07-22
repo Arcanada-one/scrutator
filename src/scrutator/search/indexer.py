@@ -48,6 +48,7 @@ class _PreparedDocument:
     document: IndexRequest
     chunks: list[dict]
     offset: int
+    source_document: dict | None = None
 
     @property
     def end(self) -> int:
@@ -69,40 +70,59 @@ def _stamp_doc_id(
     namespace: str,
     source_path: str,
     doc_content_hash: str,
-    doc_raw_content: str | None = None,
 ) -> dict | None:
     """Finalize a chunk's section dict with its namespace-scoped doc_id and the whole-document
     content hash (SRCH-0038 D3). Both are indexer-only context — the chunker has neither the
     namespace nor the full pre-chunk content.
 
-    When ``doc_raw_content`` is supplied (skills namespace, canonical ``chunk_index=0`` row only —
-    SRCH-0038 1a) it is stamped verbatim as ``doc_raw_content``. These are the EXACT bytes
-    ``doc_content_hash`` is computed over (both derive from the same ``full_content`` in
-    ``_chunk_dicts``), so ``sha256(doc_raw_content) == doc_content_hash`` holds by construction and
-    ``POST /v1/fetch`` returns byte-exact content for the skills namespace. It is a passthrough
-    integrity payload — never used for FTS (``textsearch_*`` derive from ``content`` only) or
-    semantic matching (embeddings are of ``content``)."""
+    ``doc_content_hash`` is ~71 bytes, safely under the ``jsonb_ops`` GIN entry ceiling, and is
+    what ``SearchHit.content_hash`` / the fetch path READ. The exact pre-chunk bytes are NOT
+    stamped here (that was the SRCH-0038 1a seam, which raised the multi-KB blob into
+    ``idx_chunks_metadata`` GIN and hit the ~2704-byte ``jsonb_ops`` entry ceiling on real
+    skills). Under 1b they live in the isolated, un-indexed ``source_documents`` table instead
+    (see ``_build_source_document`` / ``replace_source_chunks_atomic``)."""
     if section is None:
         return None
-    stamp = {
+    return {
         **section.model_dump(),
         "doc_id": compute_doc_id(namespace, source_path),
         "doc_content_hash": doc_content_hash,
     }
-    if doc_raw_content is not None:
-        stamp["doc_raw_content"] = doc_raw_content
-    return stamp
+
+
+def _build_source_document(namespace: str, source_path: str, full_content: str) -> dict | None:
+    """SRCH-0038 1b: build the isolated exact-source row for the skills namespace ONLY, so a skill
+    fetch is byte-exact against ``content_hash``. Returns ``None`` for every other namespace (the
+    evidence corpus keeps chunk-reassembly, ``content_exact=False``).
+
+    By-construction byte-exactness: ``raw_content`` is the SAME ``full_content`` string that
+    ``content_hash`` is computed over — ``compute_doc_content_hash(full_content)`` — with no
+    re-encode or normalization between them, so ``sha256(raw_content) == content_hash`` holds.
+    The blob lands in ``source_documents`` (NOT ``chunks.metadata``), so it never enters the
+    ``idx_chunks_metadata`` GIN index and the ~2704-byte ``jsonb_ops`` entry ceiling never applies.
+
+    Size guard: the single ``POST /v1/index`` path has no per-document byte cap, so bound the
+    exact-source blob at the same 256 KB cap the batch endpoint enforces."""
+    if namespace != settings.skills_namespace:
+        return None
+    if len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+        raise BatchIndexLimitError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
+    return {
+        "doc_id": compute_doc_id(namespace, source_path),
+        "source_path": source_path,
+        "content_hash": compute_doc_content_hash(full_content),
+        "raw_content": full_content,
+    }
 
 
 def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: str) -> list[dict]:
     doc_content_hash = compute_doc_content_hash(full_content)
-    # SRCH-0038 1a: persist the exact pre-chunk bytes for the skills namespace ONLY, so a
-    # skill fetch is byte-exact against `content_hash`. Guard the exact-bytes blob at the same
-    # 256 KB cap the batch endpoint enforces (BatchIndexRequest) so the single POST /v1/index
-    # path — which has no per-document byte cap — cannot stamp an unbounded skills blob.
-    is_skill = namespace == settings.skills_namespace
-    if is_skill and len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
-        raise BatchIndexLimitError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
+    # SRCH-0038 1b: keep only the ~71-byte `doc_content_hash` in `metadata.section` (safely under
+    # the jsonb_ops GIN entry ceiling); the exact bytes go to `source_documents`, never the GIN
+    # -indexed `chunks.metadata`. The skills-blob size guard now lives in `_build_source_document`,
+    # invoked here so an oversized skills doc is rejected before persistence even if the caller
+    # ignores the source-document payload.
+    _build_source_document(namespace, source_path, full_content)
     return [
         {
             "id": chunk.id,
@@ -119,13 +139,7 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
                 "wikilinks": chunk.metadata.wikilinks,
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
-                "section": _stamp_doc_id(
-                    chunk.metadata.section,
-                    namespace,
-                    source_path,
-                    doc_content_hash,
-                    doc_raw_content=full_content if (is_skill and chunk.chunk_index == 0) else None,
-                ),
+                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
             },
         }
         for chunk in chunk_result.chunks
@@ -178,7 +192,8 @@ def _prepare_documents(
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
         chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path, document.content)
-        prepared.append(_PreparedDocument(position, document, chunk_dicts, len(texts)))
+        source_document = _build_source_document(document.namespace, document.source_path, document.content)
+        prepared.append(_PreparedDocument(position, document, chunk_dicts, len(texts), source_document))
         texts.extend(chunk["content"] for chunk in chunk_dicts)
     return prepared, texts, results
 
@@ -235,6 +250,7 @@ async def _persist_prepared(
             sparse_weights[item.offset : item.end],
             namespace_id,
             project_id,
+            source_document=item.source_document,
         )
         return BatchIndexSucceeded(source_path=item.document.source_path, chunks_indexed=inserted)
     except Exception:
@@ -330,12 +346,14 @@ async def index_document(
 
     # 4. Replace dense and sparse rows as one source generation.
     chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content)
+    source_document = _build_source_document(namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
         chunk_dicts,
         embeddings,
         sparse_weights,
         namespace_id,
         project_id,
+        source_document=source_document,
     )
 
     return IndexResponse(

@@ -30,7 +30,11 @@ from scrutator.db.models import (
     OffsetRange,
     ParentOfChunkRange,
 )
-from scrutator.db.repository import fetch_chunks_by_chunk_id, fetch_chunks_by_doc_id
+from scrutator.db.repository import (
+    fetch_chunks_by_chunk_id,
+    fetch_chunks_by_doc_id,
+    fetch_source_raw_content,
+)
 
 
 def _derive_index_snapshot_id(doc_key: str, max_indexed_at: str) -> str:
@@ -79,20 +83,22 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
     namespace = first["namespace"]
     source_path = first["source_path"]
 
-    # SRCH-0038 1a: skills-namespace documents return the EXACT stored source bytes
-    # (`doc_raw_content` stamped at ingest on the canonical chunk_index=0 row) so
-    # `sha256(content) == content_hash` by construction — the reassembly path below is lossy
-    # (frontmatter/whitespace stripped, overlap duplicated) and would break the ARAS blake3 gate.
+    # SRCH-0038 1b: skills-namespace documents return the EXACT stored source bytes from the
+    # isolated `source_documents` table (upserted at ingest inside the same transaction as the
+    # chunks) so `sha256(content) == content_hash` by construction — the reassembly path below is
+    # lossy (frontmatter/whitespace stripped, overlap duplicated) and would break the ARAS blake3
+    # gate. The exact bytes are stored OUT of `chunks.metadata` because that GIN-indexed column
+    # hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills (the 1a seam).
     if namespace == settings.skills_namespace:
-        doc_raw_content = section.get("doc_raw_content")
-        if doc_raw_content is None:
-            # Fail closed / typed: a legacy skill indexed before 1a has no exact bytes. Returning
-            # a hash-failing reassembly would be the exact integrity-theater this fix removes.
+        raw_content = await fetch_source_raw_content(source_id, allowed_namespace_ids)
+        if raw_content is None:
+            # Fail closed / typed: a legacy skill with no source_documents row has no exact bytes.
+            # Returning a hash-failing reassembly would be the exact integrity-theater this removes.
             raise HTTPException(
                 status_code=409,
-                detail="skills document missing exact source bytes (indexed before SRCH-0038 1a); re-index required",
+                detail="skills document missing exact source bytes (no source_documents row); re-index required",
             )
-        full_content = doc_raw_content
+        full_content = raw_content
         content_exact = True
     else:
         # rows are ordered by chunk_index — reassembly is the inverse of the header-split. This is

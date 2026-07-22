@@ -166,6 +166,21 @@ _ATOMIC_DELETE_SOURCE_SQL = """
     WHERE namespace_id = $1 AND source_path = $2
 """
 
+# SRCH-0038 1b: exact whole-document bytes for the skills namespace, upserted INSIDE the same
+# `replace_source_chunks_atomic` transaction (crash-consistent with the chunk generation). The
+# blob lives here, OUT of the GIN-indexed `chunks.metadata`, so the ~2704-byte jsonb_ops entry
+# ceiling never applies. `raw_content` is byte-identical to the content `content_hash` hashes.
+_ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL = """
+    INSERT INTO source_documents (namespace_id, source_path, doc_id, content_hash, raw_content, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    ON CONFLICT (namespace_id, source_path)
+    DO UPDATE SET
+        doc_id = EXCLUDED.doc_id,
+        content_hash = EXCLUDED.content_hash,
+        raw_content = EXCLUDED.raw_content,
+        updated_at = NOW()
+"""
+
 
 def _validate_atomic_replacement(
     chunks: list[dict[str, Any]], embeddings: list[list[float]], sparse_weights: list[dict[str, float]]
@@ -199,8 +214,15 @@ async def replace_source_chunks_atomic(
     sparse_weights: list[dict[str, float]],
     namespace_id: int,
     project_id: int | None = None,
+    source_document: dict[str, Any] | None = None,
 ) -> int:
-    """Replace one source generation under an advisory lock and one transaction."""
+    """Replace one source generation under an advisory lock and one transaction.
+
+    ``source_document`` (SRCH-0038 1b, skills namespace only) carries the exact whole-document
+    bytes ``{doc_id, source_path, content_hash, raw_content}``. When present it is upserted into
+    ``source_documents`` INSIDE this same transaction, so the exact-source blob is crash-consistent
+    with the chunk generation it belongs to. It is deliberately NOT written to ``chunks.metadata``
+    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills)."""
     if not chunks:
         return 0
     source_path = _validate_atomic_replacement(chunks, embeddings, sparse_weights)
@@ -215,6 +237,15 @@ async def replace_source_chunks_atomic(
         # Preserve legacy delete/reinsert FK-cascade semantics inside the
         # transactionally locked source replacement.
         await conn.execute(_ATOMIC_DELETE_SOURCE_SQL, namespace_id, source_path)
+        if source_document is not None:
+            await conn.execute(
+                _ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL,
+                namespace_id,
+                source_path,
+                source_document["doc_id"],
+                source_document["content_hash"],
+                source_document["raw_content"],
+            )
         for chunk, embedding, weights in zip(chunks, embeddings, sparse_weights, strict=True):
             chunk_index = chunk["chunk_index"]
             chunk_id = await conn.fetchval(
@@ -1240,6 +1271,24 @@ def _fetch_row_to_dict(row: Any) -> dict[str, Any]:
         "indexed_at": row["indexed_at"],
         "namespace": row["namespace"],
     }
+
+
+async def fetch_source_raw_content(doc_id: str, allowed_namespace_ids: frozenset[int]) -> str | None:
+    """Return the exact whole-document bytes for a skills doc (SRCH-0038 1b), namespace-scoped.
+
+    Parameterized equality on the opaque namespace-scoped ``doc_id`` (S3, no path join) filtered to
+    the caller's allowed namespaces (S2). An empty allowed-set or an unknown / cross-namespace
+    ``doc_id`` returns ``None`` → the fetcher fails closed (409) rather than returning a hash-failing
+    reassembly. Reads from ``source_documents`` (NOT the GIN-indexed ``chunks.metadata``)."""
+    if not allowed_namespace_ids or not doc_id:
+        return None
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT raw_content FROM source_documents WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
+            doc_id,
+            list(allowed_namespace_ids),
+        )
 
 
 async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
