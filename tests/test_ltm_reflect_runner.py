@@ -87,11 +87,14 @@ def test_state_preflight_accepts_exact_directory_and_rejects_symlink(tmp_path):
 
 
 def test_deploy_runs_state_preflight_before_compose():
-    workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    workflow = (REPO_ROOT / ".github" / "workflows" / "deploy.yml").read_text()
     deploy = workflow[workflow.index("      - name: Deploy") :]
+    transaction = (REPO_ROOT / "deploy" / "scrutator-deploy-transaction.sh").read_text()
+    candidate = transaction[transaction.index("deploy_candidate()") : transaction.index("rollback_transaction()")]
     script = (REPO_ROOT / "scripts" / "deploy.sh").read_text()
 
-    assert deploy.index("deploy/ltm-reflect-state-preflight.sh") < deploy.index("docker compose up")
+    assert "deploy/scrutator-deploy-transaction.sh" in deploy
+    assert candidate.index("deploy/ltm-reflect-state-preflight.sh") < candidate.index("compose_project")
     assert script.index("deploy/ltm-reflect-state-preflight.sh") < script.index("docker compose up")
 
 

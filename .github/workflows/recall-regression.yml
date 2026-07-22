@@ -1,19 +1,28 @@
 name: Recall@k Regression Gate
 
+permissions:
+  contents: read
+
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch: {}  # manual observational re-run; baseline refresh requires reviewed change
 
 jobs:
   recall-gate:
-    runs-on: [self-hosted, linux, arcana-db, docker]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on:
+      group: scrutator-prod
+      labels: [self-hosted, linux, arcana-db, docker]
+    environment: kb-production
     # Co-located with Scrutator on arcana-db (reaches :8310 on localhost / 100.70.137.104:8310).
     # NOT ubuntu-latest: (a) Tailscale-only endpoint unreachable from hosted runners;
     # (b) Arcanada org billing-blocked for hosted runners (cicd-convention VERD-0058).
+    # Keep this workflow externally disabled. C10 must provision a dedicated recall client
+    # before activation; kb-observer is only the reviewed transitional credential path.
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0 (pinned, matches ci.yml)

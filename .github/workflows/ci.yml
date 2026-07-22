@@ -1,4 +1,7 @@
-name: CI & Deploy
+name: CI
+
+permissions:
+  contents: read
 
 on:
   push:
@@ -16,10 +19,10 @@ jobs:
     # secret exists. Provisioning `gh secret set OPSBOT_API_KEY --repo
     # Arcanada-one/scrutator` (`agent register --name scrutator` first) is a
     # credential-provisioning action outside this sweep's reversible scope —
-    # once the operator sets it, flip `deploy.needs` to `[network-exposure,
-    # lint-and-test, secrets-gate]` to close this gap.
+    # once the operator sets it, wire this gate into the separately reviewed
+    # deploy workflow to close this gap.
     if: false
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-24.04
     steps:
       - name: Assert OPSBOT_API_KEY is set
         env:
@@ -35,15 +38,19 @@ jobs:
     # Mandatory per documentation/mandates/cicd-convention.md § 5. This repo's harness code
     # (SRCH-0015) makes outbound-only calls (no new listener) — wired anyway per repo-wide
     # convention, not because this PR introduces a compose/redis/postgres/systemd change.
-    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@main
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@d3f518ea11f28f94af9c73021fa96fb4ce3f688f # main 2026-07-22
     with:
       compose_paths: docker-compose.yml
+      datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f
+      runner_labels: '["ubuntu-24.04"]'
 
   lint-and-test:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -66,71 +73,6 @@ jobs:
         run: pytest tests/ -v
         env:
           PYTHONPATH: src
-
-  deploy:
-    needs: [network-exposure, lint-and-test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: [self-hosted, linux, arcana-db, docker]
-    concurrency:
-      group: deploy-scrutator
-      cancel-in-progress: false
-    steps:
-      - name: Pre-deploy host readiness
-        id: preflight
-        uses: Arcanada-one/datarim/.github/actions/preflight-check@f01ab2034ee99321fe627b76e98641b672e12c0b # v1, immutable pin
-        with:
-          target-host: arcana-kb
-          service-name: scrutator
-          extra-checks: |
-            tailscale
-            time-skew
-            docker-pressure
-          ops-bot-key: ${{ secrets.OPSBOT_API_KEY }}
-
-      - name: Deploy
-        if: steps.preflight.outputs.status != 'fail'
-        run: |
-          set -e
-          kb_timers=(kb-reconcile.timer kb-observe.timer kb-self-improvement-reconcile.timer)
-          active_kb_timers=()
-          for timer in "${kb_timers[@]}"; do
-            if sudo -n systemctl is-active --quiet "$timer"; then
-              active_kb_timers+=("$timer")
-            fi
-          done
-          resume_kb_timers() {
-            if ((${#active_kb_timers[@]})); then
-              sudo -n systemctl start "${active_kb_timers[@]}"
-            fi
-          }
-          sudo -n systemctl stop "${kb_timers[@]}"
-          trap resume_kb_timers EXIT
-          kb_reconcile_services=(kb-reconcile.service kb-self-improvement-reconcile.service)
-          for service in "${kb_reconcile_services[@]}"; do
-            if sudo -n systemctl is-active --quiet "$service"; then
-              echo "$service is active; refusing Scrutator restart while a reconcile ledger is open" >&2
-              exit 75
-            fi
-          done
-          cd /srv/apps/scrutator
-          git pull --ff-only origin main
-          deploy/ltm-reflect-state-preflight.sh
-          docker compose up -d --build
-          sleep 10
-          curl -fsS http://localhost:${{ vars.SERVICE_PORT }}/health
-          resume_kb_timers
-          trap - EXIT
-
-      - name: Notify Ops Bot on failure
-        if: failure()
-        env:
-          OPSBOT_API_KEY: ${{ secrets.OPSBOT_API_KEY }}
-        run: |
-          if [ -z "${OPSBOT_API_KEY:-}" ]; then
-            echo "OPSBOT_API_KEY unset; skipping optional failure notification"
-            exit 0
-          fi
-          curl -fsS -X POST https://ops.arcanada.ai/events \
-            -H "Authorization: Bearer ${OPSBOT_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d '{"category":"fatal","agent":"scrutator","title":"CI Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"ci-fail-${{ github.repository }}-${{ github.run_id }}"}'
+          # The production transaction test may skip only on developer hosts.
+          # Hosted PR CI has Docker and must execute the semantic image proof.
+          SCRUTATOR_REQUIRE_DOCKER_SEMANTIC_TEST: "1"
