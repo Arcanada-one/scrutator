@@ -24,6 +24,8 @@ from scrutator.db.models import (
     ChunkLookupResult,
     DeleteSourceRequest,
     DeleteSourceResponse,
+    FetchRequest,
+    FetchResponse,
     IndexRequest,
     IndexResponse,
     IndexStats,
@@ -75,6 +77,7 @@ from scrutator.memory.service import (
 )
 from scrutator.request_limits import BoundedRequestBodyMiddleware
 from scrutator.search.embedder import close_client as close_embedding_client
+from scrutator.search.fetcher import fetch as fetch_document
 from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents
 from scrutator.search.navigator import build_outline, build_section_context
 from scrutator.search.searcher import search
@@ -155,6 +158,9 @@ async def index_endpoint(
             max_tokens=request.max_tokens,
             overlap_tokens=request.overlap_tokens,
         )
+    except BatchIndexLimitError as exc:
+        # SRCH-0038 1a: skills exact-bytes blob exceeds the 256 KB cap — client-side size fault.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
@@ -217,6 +223,27 @@ async def search_endpoint(
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Search failed: {e}") from e
+
+
+@app.post("/v1/fetch", response_model=FetchResponse)
+async def fetch_endpoint(request: FetchRequest, ctx: TenantContext = Depends(require_tenant_context)) -> FetchResponse:
+    """Exact whole-document fetch-by-id (SRCH-0038).
+
+    Namespace authorization is identical to /v1/search: the caller's allowed-namespace set
+    scopes every lookup (S2); an unknown or cross-namespace id answers 404 with no existence
+    oracle. Selectors are opaque-only (S3, enforced at FetchRequest validation).
+
+    `trust_class` is a NON-AUTHORIZING hint (D5): a `"skill"` label does NOT authorize
+    execution — the execution gate is the ARAS interpreter's config-pinned blake3 (D8), never
+    Scrutator. `content_hash` is the whole-document sha256 stamped at ingest and returned as
+    stored — never recomputed over this response (S1).
+    """
+    try:
+        return await fetch_document(request, ctx.allowed_namespace_ids)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Fetch failed: {e}") from e
 
 
 # ── Navigation endpoints (SRCH-0021) ─────────────────────────────────

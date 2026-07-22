@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     embedding_api_url: str = "http://localhost:8300"
     embedding_timeout: float = 30.0
     embedding_max_retries: int = 3
+    # SRCH-0038 (D7): the configured dense-embedder id, surfaced as provenance in POST /v1/fetch.
+    embedding_model_id: str = "bge-m3"
+    # SRCH-0038 (D5): namespace whose documents are labelled trust_class="skill" (a routing hint,
+    # NOT an execution authorization — see FetchResponse docstring / PRD D5).
+    skills_namespace: str = "skills"
 
     database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"
     database_pool_min: int = 2

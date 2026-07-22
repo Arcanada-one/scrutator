@@ -177,6 +177,51 @@ metadata yet): they fall back to a single flat root section rather than erroring
 `python tools/backfill_sections.py --namespace <ns>` (dry-run by default; pass `--live` to write)
 to populate `section` for existing chunks — idempotent, safe to re-run, zero embedding calls.
 
+## API — Exact fetch-by-id (SRCH-0038)
+
+`POST /v1/fetch` returns a whole document (or a bounded range) by opaque id, with an
+ingest-bound integrity hash — the exact/version-pinned counterpart to fuzzy `/v1/search`.
+Namespace authorization is identical to `/v1/search` (`Depends(require_tenant_context)`); an
+unknown or cross-namespace id answers `404` with no existence oracle.
+
+```jsonc
+// Request
+{
+  "by": "document_id" | "source_id" | "chunk_id",   // opaque ids only (S3)
+  "id": "0123456789abcdef",                          // 16-hex doc id, or a UUID for chunk_id
+  "range": "full"                                    // or {"parent_of_chunk": "<uuid>"}
+                                                     // or {"offset_start": N, "offset_end": M}
+  , "include": ["content", "provenance"]
+}
+// Response (FetchResponse) — every field but `content` is server-derived
+{ "source_id", "path", "content", "content_len_tokens", "content_hash",
+  "index_snapshot_id", "indexed_at", "embedding_model_id", "namespace",
+  "trust_class": "skill" | "evidence", "chunk_manifest": [...], "stale": false }
+```
+
+- **Selectors (D1).** `document_id` and `source_id` are aliases for the same opaque doc id
+  (`compute_doc_id`); `chunk_id` is a chunk UUID. No selector accepts a filesystem path —
+  path-like / malformed ids are rejected at request validation (`422`) before any DB access.
+- **`content_hash` (D3 / S1).** The **whole-document** sha256, prefixed `sha256:`, **stamped at
+  ingest** into `metadata.section.doc_content_hash` and **read** at fetch — never recomputed over
+  the response. The `/v1/search` hit's `content_hash`/`source_id` (additive fields) equal the
+  fetch values, so `search → fetch by source_id` is a closed, hash-verified roundtrip.
+- **`range` (D4).** `full` reassembles all chunks in `chunk_index` order; `parent_of_chunk`
+  returns a chunk's whole parent doc; `offset_start/offset_end` slices the reassembled content
+  (offsets are reassembly-relative in MVP — see `SRCH-0038-FU-offsets`). An offset slice never
+  re-hashes: `content_hash` stays the whole-doc ingest hash.
+- **`trust_class` (D5) is a NON-AUTHORIZING hint.** `"skill"` (namespace ==
+  `SCRUTATOR_SKILLS_NAMESPACE`) vs `"evidence"`. It does **not** authorize execution — the
+  execution gate is the consumer's config-pinned blake3 (D8), a deliberately distinct concern
+  from this sha256 fetch-integrity hash. Scrutator remains untrusted transport.
+- **`stale` (D6)** is `false` in MVP (no live-source access; see `SRCH-0038-FU-stale`).
+
+**Backfill.** Chunks indexed before SRCH-0038 lack `doc_content_hash`; fetch returns their
+`content_hash` as `""` (never a recomputed value) until re-index or an offline, idempotent
+`python scripts/backfill_doc_content_hash.py` (dry-run with `--dry-run`) binds the hash once
+from the stored chunk concatenation — an ingest-equivalent bind, not a response-time recompute
+(S1 preserved).
+
 ## Quick Start
 
 ```bash

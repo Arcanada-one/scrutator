@@ -6,7 +6,13 @@ import time
 from typing import Literal
 
 from scrutator.config import settings
-from scrutator.db.models import Citation, GroupedSearchResult, SearchResponse, SearchResult
+from scrutator.db.models import (
+    Citation,
+    GroupedSearchResult,
+    SearchResponse,
+    SearchResult,
+    doc_fields_from_metadata,
+)
 from scrutator.db.repository import hybrid_search, search_with_filters
 from scrutator.search.embedder import embed_single, embed_sparse
 from scrutator.search.reranker import rerank
@@ -97,21 +103,25 @@ async def search(
             source_type=source_type,
             limit=limit,
         )
-        results = [
-            SearchResult(
-                chunk_id=r["chunk_id"],
-                content=r["content"],
-                source_path=r["source_path"],
-                source_type=r["source_type"],
-                chunk_index=r["chunk_index"],
-                score=r["score"],
-                namespace=r["namespace"],
-                project=r.get("project"),
-                metadata=r.get("metadata", {}),
-                heading_hierarchy=r.get("metadata", {}).get("heading_hierarchy", []),
+        results = []
+        for r in raw:
+            source_id, content_hash = doc_fields_from_metadata(r.get("metadata"))
+            results.append(
+                SearchResult(
+                    chunk_id=r["chunk_id"],
+                    content=r["content"],
+                    source_path=r["source_path"],
+                    source_type=r["source_type"],
+                    chunk_index=r["chunk_index"],
+                    score=r["score"],
+                    namespace=r["namespace"],
+                    project=r.get("project"),
+                    metadata=r.get("metadata", {}),
+                    heading_hierarchy=r.get("metadata", {}).get("heading_hierarchy", []),
+                    source_id=source_id,
+                    content_hash=content_hash,
+                )
             )
-            for r in raw
-        ]
         # M1: populate citation on filtered results (score_kind=rrf — RRF order)
         for r in results:
             r.citation = _build_citation(r, "rrf")

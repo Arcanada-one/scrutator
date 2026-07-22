@@ -258,3 +258,22 @@ CREATE TABLE IF NOT EXISTS principal_namespace_grants (
 );
 
 CREATE INDEX IF NOT EXISTS idx_principal_grants_principal ON principal_namespace_grants(principal_id);
+
+-- SRCH-0038 1b: Exact whole-document source store for the skills namespace — see
+-- migrations/004_source_documents.sql. Holds the exact pre-chunk bytes OUT of any GIN
+-- index (the 1a `chunks.metadata` GIN seam hit the ~2704-byte jsonb_ops entry ceiling on
+-- real multi-KB skills). Upserted inside `replace_source_chunks_atomic` (same transaction →
+-- crash-consistent); `raw_content` is the exact `full_content` that `content_hash` hashes,
+-- so `sha256(raw_content) == content_hash` by construction. NOT GIN-indexed.
+CREATE TABLE IF NOT EXISTS source_documents (
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
+    source_path TEXT NOT NULL,
+    doc_id TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    raw_content TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (namespace_id, source_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_source_documents_doc_id
+    ON source_documents(namespace_id, doc_id);
