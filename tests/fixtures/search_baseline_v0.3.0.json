@@ -18,6 +18,7 @@
         "source_type": "markdown"
       },
       "content": "Alpha content",
+      "content_hash": "",
       "heading_hierarchy": [
         "# Alpha",
         "## Intro"
@@ -26,6 +27,7 @@
       "namespace": "arcanada",
       "project": null,
       "score": 0.05,
+      "source_id": "",
       "source_path": "docs/alpha.md",
       "source_type": "markdown"
     },
@@ -45,6 +47,7 @@
         "source_type": "markdown"
       },
       "content": "Beta content",
+      "content_hash": "",
       "heading_hierarchy": [
         "# Beta"
       ],
@@ -52,6 +55,7 @@
       "namespace": "arcanada",
       "project": null,
       "score": 0.03,
+      "source_id": "",
       "source_path": "docs/beta.md",
       "source_type": "markdown"
     }

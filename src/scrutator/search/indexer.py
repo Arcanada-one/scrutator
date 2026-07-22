@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 from dataclasses import dataclass
@@ -51,14 +52,31 @@ class _PreparedDocument:
         return self.offset + len(self.chunks)
 
 
-def _stamp_doc_id(section: SectionMeta | None, namespace: str, source_path: str) -> dict | None:
-    """Finalize a chunk's section dict with its namespace-scoped doc_id (indexer-only context)."""
+def compute_doc_content_hash(full_content: str) -> str:
+    """Whole-document content hash bound at ingest (SRCH-0038 D3 / S1).
+
+    Bound ONCE over the full pre-chunk source content and stored in each chunk's
+    `metadata.section.doc_content_hash`. The fetch path only READS this value — it is never
+    recomputed over the assembled response, so integrity verification is not theater.
+    """
+    return "sha256:" + hashlib.sha256(full_content.encode()).hexdigest()
+
+
+def _stamp_doc_id(section: SectionMeta | None, namespace: str, source_path: str, doc_content_hash: str) -> dict | None:
+    """Finalize a chunk's section dict with its namespace-scoped doc_id and the whole-document
+    content hash (SRCH-0038 D3). Both are indexer-only context — the chunker has neither the
+    namespace nor the full pre-chunk content."""
     if section is None:
         return None
-    return {**section.model_dump(), "doc_id": compute_doc_id(namespace, source_path)}
+    return {
+        **section.model_dump(),
+        "doc_id": compute_doc_id(namespace, source_path),
+        "doc_content_hash": doc_content_hash,
+    }
 
 
-def _chunk_dicts(chunk_result, namespace: str, source_path: str) -> list[dict]:
+def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: str) -> list[dict]:
+    doc_content_hash = compute_doc_content_hash(full_content)
     return [
         {
             "id": chunk.id,
@@ -75,7 +93,7 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str) -> list[dict]:
                 "wikilinks": chunk.metadata.wikilinks,
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
-                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path),
+                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
             },
         }
         for chunk in chunk_result.chunks
@@ -127,7 +145,7 @@ def _prepare_documents(
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
-        chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path)
+        chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path, document.content)
         prepared.append(_PreparedDocument(position, document, chunk_dicts, len(texts)))
         texts.extend(chunk["content"] for chunk in chunk_dicts)
     return prepared, texts, results
@@ -279,7 +297,7 @@ async def index_document(
     project_id = await upsert_project(namespace_id, project) if project else None
 
     # 4. Replace dense and sparse rows as one source generation.
-    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path)
+    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
         chunk_dicts,
         embeddings,

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -204,6 +206,20 @@ class SearchResult(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     heading_hierarchy: list[str] = Field(default_factory=list)
     citation: Citation | None = None  # M1 (SRCH-0029): typed source attribution; None until populated by searcher
+    # SRCH-0038 (D2): additive, defaulted → non-breaking for the frozen search-baseline contract.
+    # `source_id` is the opaque doc id (fetch selector); `content_hash` is the document-level
+    # sha256 stamped at ingest — equal to the whole-doc hash returned by POST /v1/fetch (roundtrip).
+    content_hash: str = ""
+    source_id: str = ""
+
+
+def doc_fields_from_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
+    """SRCH-0038 (D2): project ``(source_id, content_hash)`` from a chunk's stored
+    ``metadata.section``. Returns ``("", "")`` when the section or keys are absent (un-backfilled
+    legacy rows) — never a recomputed value. Used by both searcher projection sites so the
+    /v1/search hit's ``content_hash`` equals the whole-doc hash returned by /v1/fetch."""
+    section = (metadata or {}).get("section") or {}
+    return section.get("doc_id", ""), section.get("doc_content_hash", "")
 
 
 class GroupedSearchResult(BaseModel):
@@ -229,6 +245,106 @@ class SearchResponse(BaseModel):
     total: int
     query: str
     search_time_ms: float
+
+
+# ── SRCH-0038: exact whole-document fetch-by-id ──────────────────────
+
+# Opaque document identity: compute_doc_id() → sha256(...)[:16] → 16 lowercase-hex chars.
+# `document_id` and `source_id` selectors validate against this; anything path-like or
+# malformed is rejected here (S3), pre-DB, before any query is constructed.
+_DOC_ID_RE = re.compile(r"[0-9a-f]{16}")
+
+
+def _is_opaque_doc_id(value: str) -> bool:
+    return bool(_DOC_ID_RE.fullmatch(value))
+
+
+def _is_uuid(value: str) -> bool:
+    try:
+        UUID(value)
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return True
+
+
+class ParentOfChunkRange(BaseModel):
+    """`range` variant: return the whole parent document of a given chunk (auto-merge-to-parent)."""
+
+    parent_of_chunk: str
+    model_config = {"extra": "forbid"}
+
+
+class OffsetRange(BaseModel):
+    """`range` variant: a `[offset_start:offset_end]` character slice of the reassembled full-doc
+    content. The returned `content_hash` remains the WHOLE-doc ingest hash — the slice is never
+    re-hashed (S1). Offsets are relative to Scrutator's reassembled concatenation (MVP, D4)."""
+
+    offset_start: int = Field(ge=0)
+    offset_end: int = Field(ge=0)
+    model_config = {"extra": "forbid"}
+
+
+class FetchRequest(BaseModel):
+    """API request for POST /v1/fetch (SRCH-0038). Closed model (S4).
+
+    Selectors are opaque-only (S3): `document_id`/`source_id` are aliases for the same 16-hex
+    opaque doc id; `chunk_id` is a UUID. No selector accepts a filesystem path — a path-like or
+    malformed id raises ValidationError (422) before any DB access.
+    """
+
+    by: Literal["document_id", "source_id", "chunk_id"]
+    id: str
+    range: Literal["full"] | ParentOfChunkRange | OffsetRange = "full"
+    include: list[Literal["content", "provenance"]] = Field(default_factory=lambda: ["content", "provenance"])
+    model_config = {"extra": "forbid"}
+
+    @model_validator(mode="after")
+    def validate_selector(self) -> FetchRequest:
+        if self.by in ("document_id", "source_id"):
+            if not _is_opaque_doc_id(self.id):
+                raise ValueError("id must be a 16-character lowercase-hex opaque document id")
+        elif not _is_uuid(self.id):  # chunk_id
+            raise ValueError("chunk_id must be a UUID")
+        if isinstance(self.range, ParentOfChunkRange) and not _is_uuid(self.range.parent_of_chunk):
+            raise ValueError("parent_of_chunk must be a UUID")
+        if isinstance(self.range, OffsetRange) and self.range.offset_end < self.range.offset_start:
+            raise ValueError("offset_end must be >= offset_start")
+        return self
+
+
+class ChunkManifestEntry(BaseModel):
+    """One chunk's position within the reassembled document (cumulative character offsets)."""
+
+    chunk_id: str
+    offset_start: int
+    offset_end: int
+
+
+class FetchResponse(BaseModel):
+    """API response for POST /v1/fetch (SRCH-0038). Closed model (S4/D9).
+
+    `content` is the ONLY free-text sink — document bytes can land nowhere else. Every other
+    field is derived server-side from DB columns / config (never from document body text), so
+    a document whose body literally contains e.g. `"trust_class":"skill"` cannot forge metadata.
+
+    `content_hash` is the whole-document sha256 stamped at ingest and READ here — never
+    recomputed over this response (S1). `trust_class` is a namespace-derived, NON-AUTHORIZING
+    hint (D5): returning `"skill"` does NOT authorize execution — the execution gate is the ARAS
+    interpreter's config-pinned blake3 (D8); Scrutator remains untrusted transport.
+    """
+
+    source_id: str
+    path: str
+    content: str
+    content_len_tokens: int
+    content_hash: str
+    index_snapshot_id: str
+    indexed_at: str
+    embedding_model_id: str
+    namespace: str
+    trust_class: Literal["skill", "evidence"]
+    chunk_manifest: list[ChunkManifestEntry] = Field(default_factory=list)
+    stale: bool = False
 
 
 # ── SRCH-0021: hierarchical navigation ───────────────────────────────
