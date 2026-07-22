@@ -12,13 +12,15 @@ from scrutator.search import indexer as indexer_module
 
 
 def test_giant_markdown_serialization_preserves_parent_ids():
+    full_content = "# Giant\n\n" + ("word " * 3000)
     result = indexer_module.chunk_document(
-        "# Giant\n\n" + ("word " * 3000),
+        full_content,
         "giant.md",
         max_tokens=64,
         overlap_tokens=8,
     )
-    serialized = indexer_module._chunk_dicts(result, "test", "giant.md")
+    # SRCH-0038: _chunk_dicts now takes the full pre-chunk content (for the doc-level hash stamp).
+    serialized = indexer_module._chunk_dicts(result, "test", "giant.md", full_content)
 
     emitted = set()
     assert len(serialized) > 1

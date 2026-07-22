@@ -9,7 +9,13 @@ from uuid import UUID
 import numpy as np
 
 from scrutator.db.connection import get_pool
-from scrutator.db.models import ChunkLookupResult, NamespaceInfo, NamespaceStats, SearchResult
+from scrutator.db.models import (
+    ChunkLookupResult,
+    NamespaceInfo,
+    NamespaceStats,
+    SearchResult,
+    doc_fields_from_metadata,
+)
 
 if TYPE_CHECKING:
     from scrutator.memory.models import MemoryStats
@@ -160,6 +166,21 @@ _ATOMIC_DELETE_SOURCE_SQL = """
     WHERE namespace_id = $1 AND source_path = $2
 """
 
+# SRCH-0038 1b: exact whole-document bytes for the skills namespace, upserted INSIDE the same
+# `replace_source_chunks_atomic` transaction (crash-consistent with the chunk generation). The
+# blob lives here, OUT of the GIN-indexed `chunks.metadata`, so the ~2704-byte jsonb_ops entry
+# ceiling never applies. `raw_content` is byte-identical to the content `content_hash` hashes.
+_ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL = """
+    INSERT INTO source_documents (namespace_id, source_path, doc_id, content_hash, raw_content, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    ON CONFLICT (namespace_id, source_path)
+    DO UPDATE SET
+        doc_id = EXCLUDED.doc_id,
+        content_hash = EXCLUDED.content_hash,
+        raw_content = EXCLUDED.raw_content,
+        updated_at = NOW()
+"""
+
 
 def _validate_atomic_replacement(
     chunks: list[dict[str, Any]], embeddings: list[list[float]], sparse_weights: list[dict[str, float]]
@@ -193,8 +214,15 @@ async def replace_source_chunks_atomic(
     sparse_weights: list[dict[str, float]],
     namespace_id: int,
     project_id: int | None = None,
+    source_document: dict[str, Any] | None = None,
 ) -> int:
-    """Replace one source generation under an advisory lock and one transaction."""
+    """Replace one source generation under an advisory lock and one transaction.
+
+    ``source_document`` (SRCH-0038 1b, skills namespace only) carries the exact whole-document
+    bytes ``{doc_id, source_path, content_hash, raw_content}``. When present it is upserted into
+    ``source_documents`` INSIDE this same transaction, so the exact-source blob is crash-consistent
+    with the chunk generation it belongs to. It is deliberately NOT written to ``chunks.metadata``
+    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills)."""
     if not chunks:
         return 0
     source_path = _validate_atomic_replacement(chunks, embeddings, sparse_weights)
@@ -209,6 +237,15 @@ async def replace_source_chunks_atomic(
         # Preserve legacy delete/reinsert FK-cascade semantics inside the
         # transactionally locked source replacement.
         await conn.execute(_ATOMIC_DELETE_SOURCE_SQL, namespace_id, source_path)
+        if source_document is not None:
+            await conn.execute(
+                _ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL,
+                namespace_id,
+                source_path,
+                source_document["doc_id"],
+                source_document["content_hash"],
+                source_document["raw_content"],
+            )
         for chunk, embedding, weights in zip(chunks, embeddings, sparse_weights, strict=True):
             chunk_index = chunk["chunk_index"]
             chunk_id = await conn.fetchval(
@@ -779,6 +816,7 @@ async def hybrid_search(
     results = []
     for row in rows:
         meta = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else dict(row["metadata"] or {})
+        source_id, content_hash = doc_fields_from_metadata(meta)
         results.append(
             SearchResult(
                 chunk_id=str(row["chunk_id"]),
@@ -791,6 +829,8 @@ async def hybrid_search(
                 project=row["project_name"],
                 metadata=meta,
                 heading_hierarchy=meta.get("heading_hierarchy", []),
+                source_id=source_id,
+                content_hash=content_hash,
             )
         )
     return results
@@ -1206,6 +1246,130 @@ async def get_section_siblings_children(chunk_id: str, allowed_namespace_ids: fr
             )
 
     return {"doc_rows": [_row_to_chunk_lookup(row) for row in rows]}
+
+
+# ── SRCH-0038: exact whole-document fetch-by-id (namespace-scoped, S2/S3) ─────────────
+
+_FETCH_CHUNK_COLUMNS = """
+    c.id::text AS chunk_id, c.chunk_index, c.content, c.content_hash,
+    c.source_path, c.source_type, c.token_count,
+    c.metadata, c.indexed_at::text AS indexed_at, n.name AS namespace
+"""
+
+
+def _fetch_row_to_dict(row: Any) -> dict[str, Any]:
+    meta = json.loads(row["metadata"]) if isinstance(row["metadata"], str) else dict(row["metadata"] or {})
+    return {
+        "chunk_id": row["chunk_id"],
+        "chunk_index": row["chunk_index"],
+        "content": row["content"],
+        "content_hash": row["content_hash"],
+        "source_path": row["source_path"],
+        "source_type": row["source_type"],
+        "token_count": row["token_count"] or 0,
+        "metadata": meta,
+        "indexed_at": row["indexed_at"],
+        "namespace": row["namespace"],
+    }
+
+
+async def fetch_source_raw_content(doc_id: str, allowed_namespace_ids: frozenset[int]) -> str | None:
+    """Return the exact whole-document bytes for a skills doc (SRCH-0038 1b), namespace-scoped.
+
+    Parameterized equality on the opaque namespace-scoped ``doc_id`` (S3, no path join) filtered to
+    the caller's allowed namespaces (S2). An empty allowed-set or an unknown / cross-namespace
+    ``doc_id`` returns ``None`` → the fetcher fails closed (409) rather than returning a hash-failing
+    reassembly. Reads from ``source_documents`` (NOT the GIN-indexed ``chunks.metadata``)."""
+    if not allowed_namespace_ids or not doc_id:
+        return None
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT raw_content FROM source_documents WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
+            doc_id,
+            list(allowed_namespace_ids),
+        )
+
+
+async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
+    """Return every chunk of a document, ordered by chunk_index, scoped to the caller's
+    allowed namespaces (SRCH-0038 S2). Lookup is a parameterized equality on the opaque
+    ``metadata->'section'->>'doc_id'`` — never a filesystem-path join (S3). An empty
+    allowed-set (grace-window / zero-grant principal) fetches nothing (fail-closed); an
+    unknown or cross-namespace ``doc_id`` returns ``[]`` → the endpoint answers 404 (no
+    existence oracle)."""
+    if not allowed_namespace_ids:
+        return []
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            f"""
+            SELECT {_FETCH_CHUNK_COLUMNS}
+            FROM chunks c
+            JOIN namespaces n ON n.id = c.namespace_id
+            WHERE c.metadata->'section'->>'doc_id' = $1
+              AND c.namespace_id = ANY($2::int[])
+            ORDER BY c.chunk_index
+            """,
+            doc_id,
+            list(allowed_namespace_ids),
+        )
+    return [_fetch_row_to_dict(row) for row in rows]
+
+
+async def fetch_chunks_by_chunk_id(chunk_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
+    """Resolve a chunk UUID to its parent document, then return the whole document's chunks
+    ordered by chunk_index (SRCH-0038, mirrors ``get_section_siblings_children`` scoping).
+    Namespace-scoped throughout (S2); parameterized equality only (S3). Falls back to
+    ``(namespace_id, source_path)`` grouping when the target chunk has no ``section`` key
+    (un-backfilled). Returns ``[]`` when the chunk is unknown or outside the allowed-set."""
+    if not allowed_namespace_ids:
+        return []
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        self_row = await conn.fetchrow(
+            """
+            SELECT namespace_id, source_path, metadata
+            FROM chunks
+            WHERE id = $1::uuid AND namespace_id = ANY($2::int[])
+            """,
+            chunk_id,
+            list(allowed_namespace_ids),
+        )
+        if self_row is None:
+            return []
+        meta = (
+            json.loads(self_row["metadata"])
+            if isinstance(self_row["metadata"], str)
+            else dict(self_row["metadata"] or {})
+        )
+        namespace_id = self_row["namespace_id"]
+        doc_id = (meta.get("section") or {}).get("doc_id") or None
+        if doc_id:
+            rows = await conn.fetch(
+                f"""
+                SELECT {_FETCH_CHUNK_COLUMNS}
+                FROM chunks c
+                JOIN namespaces n ON n.id = c.namespace_id
+                WHERE c.namespace_id = $1 AND c.metadata->'section'->>'doc_id' = $2
+                ORDER BY c.chunk_index
+                """,
+                namespace_id,
+                doc_id,
+            )
+        else:
+            rows = await conn.fetch(
+                f"""
+                SELECT {_FETCH_CHUNK_COLUMNS}
+                FROM chunks c
+                JOIN namespaces n ON n.id = c.namespace_id
+                WHERE c.namespace_id = $1 AND c.source_path = $2
+                ORDER BY c.chunk_index
+                """,
+                namespace_id,
+                self_row["source_path"],
+            )
+    return [_fetch_row_to_dict(row) for row in rows]
 
 
 async def search_with_filters(
