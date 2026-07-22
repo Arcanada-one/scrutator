@@ -31,6 +31,7 @@ LTM_M2M_AUDIENCE = "urn:arcanada:scrutator:ltm"
 LTM_M2M_SCOPE = "kb:ltm.read"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
 LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
+LTM_M2M_AGENT_CLIENT_ID = "arcana-agent-kb-reader"
 _LTM_REQUIRED_CLAIMS = ("exp", "iat", "nbf", "iss", "aud", "sub", "client_id", "scope")
 
 
@@ -151,17 +152,23 @@ def _is_ltm_m2m_candidate(token: str, claims: dict) -> bool:
     audiences = audience if isinstance(audience, list) else [audience]
     scope = claims.get("scope")
     scopes = scope.split() if isinstance(scope, str) else []
+    client_id = claims.get("client_id")
+    subject = claims.get("sub")
+    if client_id is not None and not isinstance(client_id, str):
+        raise Unauthenticated("JWT routing failed: client_id claim must be a string")
+    if subject is not None and not isinstance(subject, str):
+        raise Unauthenticated("JWT routing failed: sub claim must be a string")
     return (
         header.get("alg") == "EdDSA"
         or LTM_M2M_AUDIENCE in audiences
         or LTM_M2M_SCOPE in scopes
-        or claims.get("client_id") in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID}
-        or claims.get("sub") in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID}
+        or client_id in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID, LTM_M2M_AGENT_CLIENT_ID}
+        or subject in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID, LTM_M2M_AGENT_CLIENT_ID}
     )
 
 
 async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
-    """Verify the dedicated Muneral reader JWT under an exact, fail-closed profile."""
+    """Verify a dedicated LTM reader JWT under an exact, fail-closed profile."""
     if not settings.auth_arcana_jwks_url:
         raise Unauthenticated("Auth Arcana JWKS endpoint not configured")
     try:
@@ -188,7 +195,11 @@ async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
         raise Unauthenticated("LTM M2M token scope mismatch")
     subject = claims.get("sub")
     client_id = claims.get("client_id")
-    allowed_clients = {settings.auth_ltm_client_id, settings.auth_ltm_observer_client_id}
+    allowed_clients = {
+        settings.auth_ltm_client_id,
+        settings.auth_ltm_observer_client_id,
+        settings.auth_ltm_agent_client_id,
+    }
     if subject != client_id or client_id not in allowed_clients:
         raise Unauthenticated("LTM M2M token client binding mismatch")
     issued_at = claims.get("iat")
