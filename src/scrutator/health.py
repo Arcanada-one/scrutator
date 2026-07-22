@@ -158,6 +158,9 @@ async def index_endpoint(
             max_tokens=request.max_tokens,
             overlap_tokens=request.overlap_tokens,
         )
+    except BatchIndexLimitError as exc:
+        # SRCH-0038 1a: skills exact-bytes blob exceeds the 256 KB cap — client-side size fault.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e

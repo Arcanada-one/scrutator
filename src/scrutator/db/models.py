@@ -345,6 +345,12 @@ class FetchResponse(BaseModel):
     trust_class: Literal["skill", "evidence"]
     chunk_manifest: list[ChunkManifestEntry] = Field(default_factory=list)
     stale: bool = False
+    # SRCH-0038 1a: True when `content` is the EXACT stored source bytes (skills namespace —
+    # sha256(content) == content_hash at range="full", by construction); False when `content`
+    # is a best-effort reassembly of embedding chunks (evidence namespace), which is lossy
+    # (frontmatter/whitespace stripped, overlap duplicated) and NOT hash-verifiable. Additive,
+    # defaulted False (conservative: absent ⇒ treat as best-effort) → non-breaking.
+    content_exact: bool = False
 
 
 # ── SRCH-0021: hierarchical navigation ───────────────────────────────

@@ -63,9 +63,6 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         # No existence oracle: unknown id and cross-namespace id are indistinguishable (S2).
         raise HTTPException(status_code=404, detail="document not found")
 
-    # rows are ordered by chunk_index — reassembly is the inverse of the header-split.
-    full_content = "".join(row["content"] for row in rows)
-
     manifest: list[ChunkManifestEntry] = []
     cursor = 0
     for row in rows:
@@ -81,6 +78,27 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
     content_hash = section.get("doc_content_hash", "")
     namespace = first["namespace"]
     source_path = first["source_path"]
+
+    # SRCH-0038 1a: skills-namespace documents return the EXACT stored source bytes
+    # (`doc_raw_content` stamped at ingest on the canonical chunk_index=0 row) so
+    # `sha256(content) == content_hash` by construction — the reassembly path below is lossy
+    # (frontmatter/whitespace stripped, overlap duplicated) and would break the ARAS blake3 gate.
+    if namespace == settings.skills_namespace:
+        doc_raw_content = section.get("doc_raw_content")
+        if doc_raw_content is None:
+            # Fail closed / typed: a legacy skill indexed before 1a has no exact bytes. Returning
+            # a hash-failing reassembly would be the exact integrity-theater this fix removes.
+            raise HTTPException(
+                status_code=409,
+                detail="skills document missing exact source bytes (indexed before SRCH-0038 1a); re-index required",
+            )
+        full_content = doc_raw_content
+        content_exact = True
+    else:
+        # rows are ordered by chunk_index — reassembly is the inverse of the header-split. This is
+        # best-effort (approximate) for the evidence corpus: `content_exact=False` flags it so.
+        full_content = "".join(row["content"] for row in rows)
+        content_exact = False
 
     indexed_ats = [row["indexed_at"] for row in rows if row.get("indexed_at")]
     max_indexed_at = max(indexed_ats) if indexed_ats else ""
@@ -105,4 +123,5 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         trust_class=_trust_class(namespace),
         chunk_manifest=manifest,
         stale=False,  # D6 MVP: no live-source access; typed & present for forward-compat.
+        content_exact=content_exact,
     )

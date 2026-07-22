@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from scrutator.chunker.engine import chunk_document
 from scrutator.chunker.models import SectionMeta
 from scrutator.chunker.splitters import compute_doc_id
+from scrutator.config import settings
 from scrutator.db.models import (
+    INDEX_BATCH_MAX_DOCUMENT_BYTES,
     BatchIndexErrorCode,
     BatchIndexFailed,
     BatchIndexSucceeded,
@@ -62,21 +64,45 @@ def compute_doc_content_hash(full_content: str) -> str:
     return "sha256:" + hashlib.sha256(full_content.encode()).hexdigest()
 
 
-def _stamp_doc_id(section: SectionMeta | None, namespace: str, source_path: str, doc_content_hash: str) -> dict | None:
+def _stamp_doc_id(
+    section: SectionMeta | None,
+    namespace: str,
+    source_path: str,
+    doc_content_hash: str,
+    doc_raw_content: str | None = None,
+) -> dict | None:
     """Finalize a chunk's section dict with its namespace-scoped doc_id and the whole-document
     content hash (SRCH-0038 D3). Both are indexer-only context — the chunker has neither the
-    namespace nor the full pre-chunk content."""
+    namespace nor the full pre-chunk content.
+
+    When ``doc_raw_content`` is supplied (skills namespace, canonical ``chunk_index=0`` row only —
+    SRCH-0038 1a) it is stamped verbatim as ``doc_raw_content``. These are the EXACT bytes
+    ``doc_content_hash`` is computed over (both derive from the same ``full_content`` in
+    ``_chunk_dicts``), so ``sha256(doc_raw_content) == doc_content_hash`` holds by construction and
+    ``POST /v1/fetch`` returns byte-exact content for the skills namespace. It is a passthrough
+    integrity payload — never used for FTS (``textsearch_*`` derive from ``content`` only) or
+    semantic matching (embeddings are of ``content``)."""
     if section is None:
         return None
-    return {
+    stamp = {
         **section.model_dump(),
         "doc_id": compute_doc_id(namespace, source_path),
         "doc_content_hash": doc_content_hash,
     }
+    if doc_raw_content is not None:
+        stamp["doc_raw_content"] = doc_raw_content
+    return stamp
 
 
 def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: str) -> list[dict]:
     doc_content_hash = compute_doc_content_hash(full_content)
+    # SRCH-0038 1a: persist the exact pre-chunk bytes for the skills namespace ONLY, so a
+    # skill fetch is byte-exact against `content_hash`. Guard the exact-bytes blob at the same
+    # 256 KB cap the batch endpoint enforces (BatchIndexRequest) so the single POST /v1/index
+    # path — which has no per-document byte cap — cannot stamp an unbounded skills blob.
+    is_skill = namespace == settings.skills_namespace
+    if is_skill and len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+        raise BatchIndexLimitError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
     return [
         {
             "id": chunk.id,
@@ -93,7 +119,13 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
                 "wikilinks": chunk.metadata.wikilinks,
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
-                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
+                "section": _stamp_doc_id(
+                    chunk.metadata.section,
+                    namespace,
+                    source_path,
+                    doc_content_hash,
+                    doc_raw_content=full_content if (is_skill and chunk.chunk_index == 0) else None,
+                ),
             },
         }
         for chunk in chunk_result.chunks
