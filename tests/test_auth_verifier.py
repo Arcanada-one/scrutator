@@ -23,6 +23,7 @@ LTM_M2M_AUDIENCE = "urn:arcanada:scrutator:ltm"
 LTM_M2M_SCOPE = "kb:ltm.read"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
 LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
+LTM_M2M_AGENT_CLIENT_ID = "arcana-agent-kb-reader"
 
 
 def _ltm_claims(**overrides):
@@ -380,6 +381,42 @@ class TestLtmM2mJwksVerification:
         assert await _verify_ltm_claims(claims) == (LTM_M2M_OBSERVER_CLIENT_ID, "service")
 
     @pytest.mark.asyncio
+    async def test_valid_agent_reader_profile_returns_separate_service_principal(self):
+        claims = _ltm_claims(sub=LTM_M2M_AGENT_CLIENT_ID, client_id=LTM_M2M_AGENT_CLIENT_ID)
+        assert await _verify_ltm_claims(claims) == (LTM_M2M_AGENT_CLIENT_ID, "service")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("overrides", "error"),
+        [
+            ({"client_id": "other-agent"}, "client binding mismatch"),
+            ({"aud": "urn:arcanada:scrutator:admin"}, "verification failed"),
+            ({"scope": "kb:ltm.write"}, "scope mismatch"),
+            ({"exp_offset": 301}, "lifetime mismatch"),
+            ({"sub": "other-agent"}, "client binding mismatch"),
+            ({"sub": "*", "client_id": "*"}, "client binding mismatch"),
+        ],
+    )
+    async def test_agent_reader_wrong_client_resource_scope_lifetime_or_subject_denies(self, overrides, error):
+        claims = _ltm_claims(sub=LTM_M2M_AGENT_CLIENT_ID, client_id=LTM_M2M_AGENT_CLIENT_ID)
+        if "exp_offset" in overrides:
+            claims["exp"] = claims["iat"] + overrides["exp_offset"]
+        else:
+            claims.update(overrides)
+        with pytest.raises(Unauthenticated, match=error):
+            await _verify_ltm_claims(claims)
+
+    @pytest.mark.asyncio
+    async def test_agent_reader_client_claim_list_is_rejected_fail_closed(self):
+        client_ids = [LTM_M2M_AGENT_CLIENT_ID, "other-agent"]
+        claims = _ltm_claims(
+            sub=client_ids,
+            client_id=client_ids,
+        )
+        with pytest.raises(Unauthenticated):
+            await _verify_ltm_claims(claims)
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ("claim", "value"),
         [
@@ -446,6 +483,46 @@ class TestLtmM2mJwksVerification:
             await _verify_ltm_claims(_ltm_claims(), algorithm="RS256")
 
     @pytest.mark.asyncio
+    async def test_malformed_agent_reader_profile_never_falls_back_to_interactive(self):
+        claims = _ltm_claims(
+            aud="urn:arcanada:other-service",
+            sub=LTM_M2M_AGENT_CLIENT_ID,
+            client_id=LTM_M2M_AGENT_CLIENT_ID,
+            scope="other:read",
+        )
+        interactive = AsyncMock(return_value=(LTM_M2M_AGENT_CLIENT_ID, "user"))
+        with (
+            patch("scrutator.auth.verifier.verify_oidc_token", interactive),
+            pytest.raises(Unauthenticated),
+        ):
+            await _verify_ltm_claims(claims, algorithm="RS256")
+        interactive.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "identity_claim",
+        [
+            [LTM_M2M_AGENT_CLIENT_ID, "other-agent"],
+            {"client": LTM_M2M_AGENT_CLIENT_ID},
+        ],
+        ids=["list", "dict"],
+    )
+    async def test_non_scalar_unverified_identity_claims_deny_without_interactive_fallback(self, identity_claim):
+        claims = _ltm_claims(
+            aud="urn:arcanada:other-service",
+            sub=identity_claim,
+            client_id=identity_claim,
+            scope="other:read",
+        )
+        interactive = AsyncMock(return_value=(LTM_M2M_AGENT_CLIENT_ID, "user"))
+        with (
+            patch("scrutator.auth.verifier.verify_oidc_token", interactive),
+            pytest.raises(Unauthenticated),
+        ):
+            await _verify_ltm_claims(claims, algorithm="RS256")
+        interactive.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_malformed_muneral_profile_never_falls_back_to_interactive(self):
         claims = _ltm_claims()
         del claims["aud"]
@@ -483,6 +560,7 @@ class TestLtmM2mSettings:
         assert configured.auth_ltm_scope == LTM_M2M_SCOPE
         assert configured.auth_ltm_client_id == LTM_M2M_CLIENT_ID
         assert configured.auth_ltm_observer_client_id == LTM_M2M_OBSERVER_CLIENT_ID
+        assert configured.auth_ltm_agent_client_id == LTM_M2M_AGENT_CLIENT_ID
         assert configured.auth_ltm_max_token_lifetime_seconds == 300
 
     @pytest.mark.parametrize(
@@ -493,6 +571,9 @@ class TestLtmM2mSettings:
             ("auth_ltm_scope", "namespace:read"),
             ("auth_ltm_client_id", "other-service"),
             ("auth_ltm_observer_client_id", "other-service"),
+            ("auth_ltm_agent_client_id", "other-service"),
+            ("auth_ltm_agent_client_id", "*"),
+            ("auth_ltm_agent_client_id", [LTM_M2M_AGENT_CLIENT_ID]),
             ("auth_ltm_max_token_lifetime_seconds", 3600),
         ],
     )

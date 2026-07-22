@@ -82,6 +82,7 @@ class Settings(BaseSettings):
     auth_ltm_scope: Literal["kb:ltm.read"] = "kb:ltm.read"
     auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
     auth_ltm_observer_client_id: Literal["kb-observer"] = "kb-observer"
+    auth_ltm_agent_client_id: Literal["arcana-agent-kb-reader"] = "arcana-agent-kb-reader"
     auth_ltm_max_token_lifetime_seconds: Literal[300] = 300
     auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
