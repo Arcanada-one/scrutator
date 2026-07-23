@@ -23,13 +23,15 @@
         "# Alpha",
         "## Intro"
       ],
+      "injection": null,
       "metadata": {},
       "namespace": "arcanada",
       "project": null,
       "score": 0.05,
       "source_id": "",
       "source_path": "docs/alpha.md",
-      "source_type": "markdown"
+      "source_type": "markdown",
+      "trust_tier": "curated"
     },
     {
       "chunk_id": "c2",
@@ -51,13 +53,15 @@
       "heading_hierarchy": [
         "# Beta"
       ],
+      "injection": null,
       "metadata": {},
       "namespace": "arcanada",
       "project": null,
       "score": 0.03,
       "source_id": "",
       "source_path": "docs/beta.md",
-      "source_type": "markdown"
+      "source_type": "markdown",
+      "trust_tier": "curated"
     }
   ],
   "total": 2

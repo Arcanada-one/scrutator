@@ -162,6 +162,27 @@ class SearchRequest(BaseModel):
         return min(v, _MAX_SEARCH_LIMIT)
 
 
+class InjectionSignal(BaseModel):
+    """Ingest-time prompt-injection scan result (ARAS-0055).
+
+    Computed server-side over document content at ingest (``search.ingest_safety.scan_injection``)
+    and stored in each chunk's ``metadata.injection``; READ (never recomputed) on the read path.
+    A NON-BLOCKING observability/labeling signal — a flagged document is still indexed and still
+    returned, only labeled — feeding downstream trust weighting. It NEVER promotes or demotes the
+    namespace-derived ``trust_class`` (no cross-promotion). Additive with all-defaulted fields, so
+    an absent/legacy stamp degrades to an unflagged zero signal rather than breaking any contract.
+    """
+
+    flag: bool = False
+    risk_score: int = 0
+    patterns: list[str] = Field(default_factory=list)
+
+
+# ARAS-0055: provenance trust tier. `raw` (unreviewed dumps, e.g. wiki/_raw_/) < `curated`.
+# Orthogonal to `trust_class` (skill|evidence) — a weighting hint, never an authorization axis.
+TrustTier = Literal["raw", "curated"]
+
+
 class ChunkLookupResult(BaseModel):
     """Result of chunk lookup by source_path."""
 
@@ -211,6 +232,11 @@ class SearchResult(BaseModel):
     # sha256 stamped at ingest — equal to the whole-doc hash returned by POST /v1/fetch (roundtrip).
     content_hash: str = ""
     source_id: str = ""
+    # ARAS-0055 (additive, defaulted → non-breaking for the frozen search-baseline contract).
+    # `trust_tier` is derived server-side from `source_path`; `injection` is the ingest-time scan
+    # signal read from `metadata.injection`. Both compose with `trust_class` and never mutate it.
+    trust_tier: TrustTier = "curated"
+    injection: InjectionSignal | None = None
 
 
 def doc_fields_from_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
@@ -345,6 +371,14 @@ class FetchResponse(BaseModel):
     trust_class: Literal["skill", "evidence"]
     chunk_manifest: list[ChunkManifestEntry] = Field(default_factory=list)
     stale: bool = False
+    # ARAS-0055 (additive, defaulted → non-breaking for the SRCH-0038 fetch contract).
+    # `trust_tier` is derived server-side from `path`; `injection` is the ingest-time scan signal
+    # read from `metadata.injection`. Both are defense-in-depth labels that COMPOSE with the
+    # (unchanged) `trust_class`: a lower-tier or flagged document stays whatever class its
+    # namespace assigns — the read side keeps fencing evidence-class bytes. There is no path by
+    # which a lower tier or an injection flag promotes a document to `trust_class="skill"`/exec.
+    trust_tier: TrustTier = "curated"
+    injection: InjectionSignal = Field(default_factory=InjectionSignal)
     # SRCH-0038 1a: True when `content` is the EXACT stored source bytes (skills namespace —
     # sha256(content) == content_hash at range="full", by construction); False when `content`
     # is a best-effort reassembly of embedding chunks (evidence namespace), which is lossy
