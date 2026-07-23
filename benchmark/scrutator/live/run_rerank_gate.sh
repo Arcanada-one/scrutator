@@ -34,14 +34,42 @@ if [[ ! -f "$source_dir/live/granted_context_app.py" ]]; then
     exit 2
 fi
 
-if ! command -v flock >/dev/null; then
-    echo "flock is required for exclusive ownership of the fixed benchmark ports" >&2
-    exit 2
-fi
-lock_file="${SCRUTATOR_BENCHMARK_LOCK_FILE:-/run/lock/kb-enh-srch0031.lock}"
+for lock_command in flock id stat; do
+    if ! command -v "$lock_command" >/dev/null; then
+        echo "$lock_command is required for safe ownership of the fixed benchmark ports" >&2
+        exit 2
+    fi
+done
+umask 077
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+lock_file="${SCRUTATOR_BENCHMARK_LOCK_FILE:-$runtime_dir/kb-enh-srch0031.lock}"
 if [[ "$lock_file" != /* ]]; then
     echo "SCRUTATOR_BENCHMARK_LOCK_FILE must be absolute" >&2
     exit 2
+fi
+lock_dir="${lock_file%/*}"
+current_uid="$(id -u)"
+if [[ ! -d "$lock_dir" || -L "$lock_dir" ]]; then
+    echo "benchmark lock directory must be a real directory" >&2
+    exit 2
+fi
+lock_dir_uid="$(stat -c %u -- "$lock_dir")"
+lock_dir_mode="$(stat -c %a -- "$lock_dir")"
+if [[ "$lock_dir_uid" != "$current_uid" || $((8#$lock_dir_mode & 077)) -ne 0 ]]; then
+    echo "benchmark lock directory must be owner-private" >&2
+    exit 2
+fi
+if [[ -L "$lock_file" ]]; then
+    echo "lock path must not be a symlink" >&2
+    exit 2
+fi
+if [[ -e "$lock_file" ]]; then
+    lock_uid="$(stat -c %u -- "$lock_file")"
+    lock_mode="$(stat -c %a -- "$lock_file")"
+    if [[ ! -f "$lock_file" || "$lock_uid" != "$current_uid" || $((8#$lock_mode & 077)) -ne 0 ]]; then
+        echo "existing lock must be an owner-private regular file" >&2
+        exit 2
+    fi
 fi
 if ! exec 9>"$lock_file"; then
     echo "cannot open the SRCH-0031 benchmark lock" >&2
@@ -52,7 +80,6 @@ if ! flock -n 9; then
     exit 2
 fi
 
-umask 077
 mkdir -p -- "$output_dir"
 run_tmp="$(mktemp -d /var/tmp/srch0031.XXXXXX)"
 run_suffix="${run_tmp##*.}"
@@ -78,7 +105,7 @@ unexpected_failure() {
 }
 trap unexpected_failure ERR
 
-for command in docker python3 curl sha256sum flock; do
+for command in docker python3 curl sha256sum flock id stat; do
     command -v "$command" >/dev/null
 done
 
