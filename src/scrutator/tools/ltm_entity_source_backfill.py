@@ -9,16 +9,18 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import errno
 import hashlib
 import json
 import os
 import re
+import secrets
 import stat
-import tempfile
 import unicodedata
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from contextlib import suppress
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -26,9 +28,11 @@ from typing import Any
 from scrutator.db.connection import close_pool, get_pool
 
 TASK_ID = "LTM-0019"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 METHOD = "structural_plus_unique_literal_v1"
 DEFAULT_STATE_ROOT = Path("/var/lib/scrutator/ltm-backfill/LTM-0019")
+TARGET_NAMESPACE = "ltm-bench-datarim-kb"
+TARGET_NAMESPACE_ID = 825
 
 
 class PlanError(RuntimeError):
@@ -45,6 +49,14 @@ class ChunkRecord:
     source_path: str
     content_hash: str
     content: str
+
+
+@dataclass(frozen=True)
+class DatabaseIdentity:
+    database: str
+    database_oid: str
+    system_identifier: str
+    in_recovery: bool
 
 
 @dataclass(frozen=True)
@@ -65,6 +77,7 @@ class Repair:
     chunk_id: str
     source_path: str
     content_hash: str
+    source_updated_at: str = ""
 
 
 @dataclass(frozen=True)
@@ -75,6 +88,7 @@ class Classification:
 
 @dataclass(frozen=True)
 class Snapshot:
+    database_identity: DatabaseIdentity
     namespace: str
     namespace_id: int
     chunks: list[ChunkRecord]
@@ -87,6 +101,7 @@ class Snapshot:
     def build(
         cls,
         *,
+        database_identity: DatabaseIdentity,
         namespace: str,
         namespace_id: int,
         chunks: Iterable[ChunkRecord],
@@ -100,6 +115,7 @@ class Snapshot:
             entity_id: frozenset(chunk_ids) for entity_id, chunk_ids in sorted(evidence_by_entity.items()) if chunk_ids
         }
         body = {
+            "database_identity": asdict(database_identity),
             "namespace": namespace,
             "namespace_id": namespace_id,
             "chunks": [
@@ -116,6 +132,7 @@ class Snapshot:
             "evidence_by_entity": {entity_id: sorted(chunk_ids) for entity_id, chunk_ids in ordered_evidence.items()},
         }
         return cls(
+            database_identity=database_identity,
             namespace=namespace,
             namespace_id=namespace_id,
             chunks=ordered_chunks,
@@ -132,6 +149,7 @@ class RepairPlan:
     schema_version: int
     method: str
     run_id: str
+    database_identity: DatabaseIdentity
     namespace: str
     namespace_id: int
     snapshot_digest: str
@@ -148,34 +166,40 @@ class RepairPlan:
         snapshot: Snapshot,
         run_id: str,
         classification: Classification,
+        *,
+        created_at: str | None = None,
     ) -> RepairPlan:
         validated_run_dir(Path("."), run_id)
+        plan_created_at = created_at or _utc_now()
+        repairs = [replace(item, source_updated_at=plan_created_at) for item in classification.repairs]
         body = {
             "task_id": TASK_ID,
             "schema_version": SCHEMA_VERSION,
             "method": METHOD,
             "run_id": run_id,
+            "database_identity": asdict(snapshot.database_identity),
             "namespace": snapshot.namespace,
             "namespace_id": snapshot.namespace_id,
             "snapshot_digest": snapshot.digest,
             "selection": "all",
             "parent_plan_sha256": None,
             "classification_counts": dict(sorted(classification.counts.items())),
-            "repairs": [asdict(item) for item in classification.repairs],
-            "created_at": _utc_now(),
+            "repairs": [asdict(item) for item in repairs],
+            "created_at": plan_created_at,
         }
         return cls(
             task_id=TASK_ID,
             schema_version=SCHEMA_VERSION,
             method=METHOD,
             run_id=run_id,
+            database_identity=snapshot.database_identity,
             namespace=snapshot.namespace,
             namespace_id=snapshot.namespace_id,
             snapshot_digest=snapshot.digest,
             selection="all",
             parent_plan_sha256=None,
             classification_counts=body["classification_counts"],
-            repairs=list(classification.repairs),
+            repairs=repairs,
             created_at=body["created_at"],
             plan_sha256=_digest(body),
         )
@@ -186,6 +210,7 @@ class RepairPlan:
             "schema_version": self.schema_version,
             "method": self.method,
             "run_id": self.run_id,
+            "database_identity": asdict(self.database_identity),
             "namespace": self.namespace,
             "namespace_id": self.namespace_id,
             "snapshot_digest": self.snapshot_digest,
@@ -201,33 +226,36 @@ class RepairPlan:
 
     def validate_against(self, snapshot: Snapshot) -> None:
         if (
-            snapshot.namespace != self.namespace
+            snapshot.database_identity != self.database_identity
+            or snapshot.namespace != self.namespace
             or snapshot.namespace_id != self.namespace_id
             or snapshot.digest != self.snapshot_digest
         ):
             raise PlanError("snapshot drift")
-        entities = {item.id: item for item in snapshot.entities}
-        chunks = {item.id: item for item in snapshot.chunks}
-        for repair in self.repairs:
-            entity = entities.get(repair.entity_id)
-            chunk = chunks.get(repair.chunk_id)
-            if entity is None or (
-                entity.name,
-                entity.entity_type,
-                entity.source_chunk_id,
-                entity.updated_at,
-            ) != (
-                repair.entity_name,
-                repair.entity_type,
-                None,
-                repair.original_updated_at,
-            ):
-                raise PlanError(f"entity drift for {repair.entity_id}")
-            if chunk is None or (chunk.source_path, chunk.content_hash) != (
-                repair.source_path,
-                repair.content_hash,
-            ):
-                raise PlanError(f"chunk drift for {repair.entity_id}")
+        classification = classify_snapshot(snapshot)
+        if self.classification_counts != classification.counts:
+            raise PlanError("classification drift")
+        if self.selection == "all":
+            expected = RepairPlan.from_snapshot(
+                snapshot,
+                self.run_id,
+                classification,
+                created_at=self.created_at,
+            )
+        else:
+            if not self.run_id.endswith("-canary"):
+                raise PlanError("canary run-id is not derived from a full plan")
+            full = RepairPlan.from_snapshot(
+                snapshot,
+                self.run_id.removesuffix("-canary"),
+                classification,
+                created_at=self.created_at,
+            )
+            if full.plan_sha256 != self.parent_plan_sha256:
+                raise PlanError("canary parent plan drift")
+            expected = derive_canary_plan(full)
+        if self.to_dict() != expected.to_dict():
+            raise PlanError("repair selection is not the exact recomputed eligible set")
 
 
 def _utc_now() -> str:
@@ -329,6 +357,7 @@ def validate_plan(encoded: Mapping[str, Any]) -> RepairPlan:
             schema_version=encoded["schema_version"],
             method=encoded["method"],
             run_id=encoded["run_id"],
+            database_identity=DatabaseIdentity(**encoded["database_identity"]),
             namespace=encoded["namespace"],
             namespace_id=encoded["namespace_id"],
             snapshot_digest=encoded["snapshot_digest"],
@@ -343,6 +372,16 @@ def validate_plan(encoded: Mapping[str, Any]) -> RepairPlan:
         raise PlanError("invalid plan shape") from exc
     if plan.task_id != TASK_ID or plan.schema_version != SCHEMA_VERSION or plan.method != METHOD:
         raise PlanError("unsupported LTM-0019 plan contract")
+    if plan.namespace != TARGET_NAMESPACE or plan.namespace_id != TARGET_NAMESPACE_ID:
+        raise PlanError("LTM-0019 plans are restricted to the exact benchmark namespace")
+    identity = plan.database_identity
+    if (
+        not identity.database
+        or not identity.database_oid.isdigit()
+        or not identity.system_identifier.isdigit()
+        or identity.in_recovery
+    ):
+        raise PlanError("unsafe or invalid database identity")
     validated_run_dir(Path("."), plan.run_id)
     if len({item.entity_id for item in plan.repairs}) != len(plan.repairs):
         raise PlanError("duplicate entity repair")
@@ -363,6 +402,7 @@ def validate_plan(encoded: Mapping[str, Any]) -> RepairPlan:
             not repair.source_path
             or re.fullmatch(r"[0-9a-f]{64}", repair.content_hash) is None
             or not repair.original_updated_at
+            or repair.source_updated_at != plan.created_at
         ):
             raise PlanError(f"invalid repair metadata for {repair.entity_id}")
     return plan
@@ -384,6 +424,7 @@ def derive_canary_plan(full_plan: RepairPlan) -> RepairPlan:
         "schema_version": SCHEMA_VERSION,
         "method": METHOD,
         "run_id": run_id,
+        "database_identity": asdict(full_plan.database_identity),
         "namespace": full_plan.namespace,
         "namespace_id": full_plan.namespace_id,
         "snapshot_digest": full_plan.snapshot_digest,
@@ -398,6 +439,7 @@ def derive_canary_plan(full_plan: RepairPlan) -> RepairPlan:
         schema_version=SCHEMA_VERSION,
         method=METHOD,
         run_id=run_id,
+        database_identity=full_plan.database_identity,
         namespace=full_plan.namespace,
         namespace_id=full_plan.namespace_id,
         snapshot_digest=full_plan.snapshot_digest,
@@ -416,37 +458,108 @@ def validated_run_dir(state_root: Path, run_id: str) -> Path:
     return state_root / run_id
 
 
-def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    info = path.parent.stat()
-    if not stat.S_ISDIR(info.st_mode) or stat.S_IMODE(info.st_mode) & 0o077:
-        raise PlanError(f"state directory is not owner-private: {path.parent}")
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
-    temporary = Path(temporary_name)
+def _absolute_path(path: Path) -> Path:
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _open_private_directory(path: Path, *, create: bool) -> tuple[int, Path]:
+    absolute = _absolute_path(path)
+    if any(part in (".", "..") for part in absolute.parts[1:]):
+        raise PlanError(f"state directory contains unsafe path components: {absolute}")
+    descriptor = os.open(absolute.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    current = Path(absolute.anchor)
     try:
+        for part in absolute.parts[1:]:
+            current /= part
+            try:
+                child = os.open(
+                    part,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=descriptor,
+                )
+            except FileNotFoundError:
+                if not create:
+                    raise
+                os.mkdir(part, 0o700, dir_fd=descriptor)
+                child = os.open(
+                    part,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=descriptor,
+                )
+            except OSError as exc:
+                if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+                    raise PlanError(f"refusing symlinked or non-directory state path component: {current}") from exc
+                raise
+            os.close(descriptor)
+            descriptor = child
+        info = os.fstat(descriptor)
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) & 0o077:
+            raise PlanError(f"state directory is not owner-private or owned by this process: {absolute}")
+        return descriptor, absolute
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _safe_state_name(path: Path) -> str:
+    name = path.name
+    if not name or name in (".", "..") or "/" in name:
+        raise PlanError(f"unsafe state filename: {path}")
+    return name
+
+
+def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    parent_fd, _ = _open_private_directory(path.parent, create=True)
+    target_name = _safe_state_name(path)
+    temporary_name = f".{target_name}.{secrets.token_hex(16)}.tmp"
+    descriptor = -1
+    try:
+        try:
+            descriptor = os.open(
+                temporary_name,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                0o600,
+                dir_fd=parent_fd,
+            )
+        except FileExistsError as exc:
+            raise PlanError("private state temporary-name collision") from exc
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            descriptor = -1
             stream.write(_canonical_json(payload))
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        os.chmod(path, 0o600)
-        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        os.replace(temporary_name, target_name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
+        os.chmod(target_name, 0o600, dir_fd=parent_fd, follow_symlinks=False)
+        os.fsync(parent_fd)
     finally:
-        if temporary.exists():
-            temporary.unlink()
+        if descriptor >= 0:
+            os.close(descriptor)
+        with suppress(FileNotFoundError):
+            os.unlink(temporary_name, dir_fd=parent_fd)
+        os.close(parent_fd)
+
+
+def _private_bytes(path: Path) -> bytes:
+    parent_fd, _ = _open_private_directory(path.parent, create=False)
+    target_name = _safe_state_name(path)
+    descriptor = os.open(target_name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent_fd)
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) & 0o077:
+            raise PlanError(f"refusing non-private, non-owned, or non-regular state file: {path}")
+        with os.fdopen(descriptor, "rb") as stream:
+            descriptor = -1
+            return stream.read()
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        os.close(parent_fd)
 
 
 def _private_json(path: Path) -> dict[str, Any]:
-    info = path.lstat()
-    if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) & 0o077:
-        raise PlanError(f"refusing non-private or non-regular state file: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(_private_bytes(path))
     if not isinstance(payload, dict):
         raise PlanError("state file must contain a JSON object")
     return payload
@@ -459,34 +572,47 @@ def load_plan(path: Path) -> RepairPlan:
 _STRUCTURAL_EVIDENCE_SQL = """
 SELECT ee.source_entity_id AS entity_id, ee.source_chunk_id AS chunk_id
 FROM entity_edges ee
-JOIN chunks c ON c.id = ee.source_chunk_id
-WHERE c.namespace_id = $1 AND ee.source_chunk_id IS NOT NULL
+JOIN entities e ON e.id = ee.source_entity_id
+WHERE e.namespace_id = $1 AND ee.source_chunk_id IS NOT NULL
 UNION ALL
 SELECT ee.target_entity_id, ee.source_chunk_id
 FROM entity_edges ee
-JOIN chunks c ON c.id = ee.source_chunk_id
-WHERE c.namespace_id = $1 AND ee.source_chunk_id IS NOT NULL
+JOIN entities e ON e.id = ee.target_entity_id
+WHERE e.namespace_id = $1 AND ee.source_chunk_id IS NOT NULL
 UNION ALL
 SELECT ev.entity_id, ev.source_chunk_id
 FROM entity_events ev
-JOIN chunks c ON c.id = ev.source_chunk_id
-WHERE ev.namespace_id = $1 AND c.namespace_id = $1 AND ev.source_chunk_id IS NOT NULL
+JOIN entities e ON e.id = ev.entity_id
+WHERE e.namespace_id = $1 AND ev.source_chunk_id IS NOT NULL
 UNION ALL
 SELECT ee.source_entity_id, ees.source_chunk_id
 FROM entity_edge_sources ees
 JOIN entity_edges ee ON ee.id = ees.edge_id
-JOIN chunks c ON c.id = ees.source_chunk_id
-WHERE ees.namespace_id = $1 AND c.namespace_id = $1 AND ees.source_chunk_id IS NOT NULL
+JOIN entities e ON e.id = ee.source_entity_id
+WHERE e.namespace_id = $1 AND ees.source_chunk_id IS NOT NULL
 UNION ALL
 SELECT ee.target_entity_id, ees.source_chunk_id
 FROM entity_edge_sources ees
 JOIN entity_edges ee ON ee.id = ees.edge_id
-JOIN chunks c ON c.id = ees.source_chunk_id
-WHERE ees.namespace_id = $1 AND c.namespace_id = $1 AND ees.source_chunk_id IS NOT NULL
+JOIN entities e ON e.id = ee.target_entity_id
+WHERE e.namespace_id = $1 AND ees.source_chunk_id IS NOT NULL
 """
 
 
 async def load_snapshot(conn: Any, namespace: str) -> Snapshot:
+    identity_row = await conn.fetchrow(
+        """
+        SELECT current_database() AS database,
+               (SELECT oid::text FROM pg_database WHERE datname = current_database()) AS database_oid,
+               (SELECT system_identifier::text FROM pg_control_system()) AS system_identifier,
+               pg_is_in_recovery() AS in_recovery
+        """
+    )
+    if identity_row is None:
+        raise PlanError("database identity is unavailable")
+    database_identity = DatabaseIdentity(**dict(identity_row))
+    if database_identity.in_recovery:
+        raise PlanError("LTM-0019 refuses a recovery/replica database")
     namespace_row = await conn.fetchrow("SELECT id FROM namespaces WHERE name = $1", namespace)
     if namespace_row is None:
         raise PlanError(f"namespace {namespace!r} does not exist")
@@ -521,6 +647,7 @@ async def load_snapshot(conn: Any, namespace: str) -> Snapshot:
         if row["entity_id"] is not None and row["chunk_id"] is not None:
             evidence[str(row["entity_id"])].add(str(row["chunk_id"]))
     return Snapshot.build(
+        database_identity=database_identity,
         namespace=namespace,
         namespace_id=namespace_id,
         chunks=[
@@ -658,7 +785,73 @@ def _state_is_exact_applied(entity: Any, sources: list[Any], plan: RepairPlan, r
         and source["source_path"] == repair.source_path
         and source["content_hash"] == repair.content_hash
         and str(source["source_chunk_id"]) == repair.chunk_id
+        and source["updated_at"].isoformat() == repair.source_updated_at
     )
+
+
+def _virtual_preapply_snapshot(snapshot: Snapshot, plan: RepairPlan) -> Snapshot:
+    target_ids = {item.entity_id for item in plan.repairs}
+    entities = [replace(item, source_chunk_id=None) if item.id in target_ids else item for item in snapshot.entities]
+    return Snapshot.build(
+        database_identity=snapshot.database_identity,
+        namespace=snapshot.namespace,
+        namespace_id=snapshot.namespace_id,
+        chunks=snapshot.chunks,
+        entities=entities,
+        preowned_entity_ids=snapshot.preowned_entity_ids - target_ids,
+        evidence_by_entity=snapshot.evidence_by_entity,
+    )
+
+
+async def _assert_exact_postwrite_readback(conn: Any, plan: RepairPlan) -> None:
+    for repair in plan.repairs:
+        rows = await conn.fetch(
+            """
+            SELECT e.name, e.entity_type,
+                   e.source_chunk_id::text AS entity_chunk_id,
+                   e.updated_at AS entity_updated_at,
+                   es.source_path, es.content_hash,
+                   es.source_chunk_id::text AS source_chunk_id,
+                   es.updated_at AS source_updated_at,
+                   c.source_path AS chunk_source_path,
+                   c.content_hash AS chunk_content_hash
+            FROM entities e
+            JOIN entity_sources es
+              ON es.entity_id = e.id AND es.namespace_id = e.namespace_id
+            JOIN chunks c
+              ON c.id = es.source_chunk_id AND c.namespace_id = e.namespace_id
+            WHERE e.namespace_id = $1 AND e.id = $2::uuid
+            """,
+            plan.namespace_id,
+            repair.entity_id,
+        )
+        if len(rows) != 1:
+            raise PlanError(f"post-write readback cardinality mismatch for {repair.entity_id}")
+        row = rows[0]
+        if (
+            row["name"],
+            row["entity_type"],
+            str(row["entity_chunk_id"]),
+            row["entity_updated_at"].isoformat(),
+            row["source_path"],
+            row["content_hash"],
+            str(row["source_chunk_id"]),
+            row["source_updated_at"].isoformat(),
+            row["chunk_source_path"],
+            row["chunk_content_hash"],
+        ) != (
+            repair.entity_name,
+            repair.entity_type,
+            repair.chunk_id,
+            repair.original_updated_at,
+            repair.source_path,
+            repair.content_hash,
+            repair.chunk_id,
+            repair.source_updated_at,
+            repair.source_path,
+            repair.content_hash,
+        ):
+            raise PlanError(f"post-write readback mismatch for {repair.entity_id}")
 
 
 async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
@@ -678,13 +871,13 @@ async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
                     for repair, (entity, sources) in zip(plan.repairs, states, strict=True)
                 ]
                 if exact_applied and all(exact_applied):
+                    current = await load_snapshot(conn, plan.namespace)
+                    plan.validate_against(_virtual_preapply_snapshot(current, plan))
+                    await _assert_exact_postwrite_readback(conn, plan)
                     return {
                         "applied": 0,
                         "already_applied": len(plan.repairs),
-                        "source_updated_at": {
-                            repair.entity_id: sources[0]["updated_at"].isoformat()
-                            for repair, (_, sources) in zip(plan.repairs, states, strict=True)
-                        },
+                        "source_updated_at": {repair.entity_id: repair.source_updated_at for repair in plan.repairs},
                     }
                 if any(exact_applied):
                     raise PlanError("partially applied plan requires audit")
@@ -715,7 +908,7 @@ async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
                         INSERT INTO entity_sources (
                             entity_id, namespace_id, source_path, content_hash,
                             source_chunk_id, updated_at
-                        ) VALUES ($1::uuid, $2, $3, $4, $5::uuid, NOW())
+                        ) VALUES ($1::uuid, $2, $3, $4, $5::uuid, $6::timestamptz)
                         RETURNING updated_at
                         """,
                         repair.entity_id,
@@ -723,8 +916,12 @@ async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
                         repair.source_path,
                         repair.content_hash,
                         repair.chunk_id,
+                        repair.source_updated_at,
                     )
-                    source_timestamps[repair.entity_id] = source_updated_at.isoformat()
+                    if source_updated_at.isoformat() != repair.source_updated_at:
+                        raise PlanError(f"source timestamp readback mismatch for {repair.entity_id}")
+                    source_timestamps[repair.entity_id] = repair.source_updated_at
+                await _assert_exact_postwrite_readback(conn, plan)
         finally:
             await _release_session_lock(conn, plan.namespace_id)
     return {
@@ -740,8 +937,9 @@ def _validate_apply_receipt(receipt: Mapping[str, Any], plan: RepairPlan) -> dic
     timestamps = receipt.get("source_updated_at")
     if not isinstance(timestamps, dict) or set(timestamps) != {item.entity_id for item in plan.repairs}:
         raise PlanError("apply receipt source timestamp set mismatch")
-    if not all(isinstance(value, str) and value for value in timestamps.values()):
-        raise PlanError("apply receipt has invalid source timestamps")
+    expected = {item.entity_id: item.source_updated_at for item in plan.repairs}
+    if timestamps != expected:
+        raise PlanError("apply receipt does not contain the plan-owned source timestamps")
     return dict(timestamps)
 
 
@@ -757,6 +955,8 @@ async def rollback_plan(pool: Any, plan: RepairPlan, receipt: Mapping[str, Any])
             async with conn.transaction(isolation="serializable"):
                 await _configure_mutation_transaction(conn, plan.namespace_id)
                 await _lock_plan_rows(conn, plan)
+                current = await load_snapshot(conn, plan.namespace)
+                plan.validate_against(_virtual_preapply_snapshot(current, plan))
                 for repair in plan.repairs:
                     entity, sources = await _current_repair_state(conn, plan, repair)
                     if not _state_is_exact_applied(entity, sources, plan, repair):
@@ -884,15 +1084,6 @@ async def backup_plan(pool: Any, plan: RepairPlan, backup_root: Path) -> dict[st
             plan.namespace_id,
             chunk_ids,
         )
-        database_identity = dict(
-            await conn.fetchrow(
-                """
-                SELECT current_database() AS database,
-                       current_user AS database_user,
-                       pg_is_in_recovery() AS in_recovery
-                """
-            )
-        )
     if len(entity_rows) != len(set(target_ids)) or len(chunk_rows) != len(set(chunk_ids)) or source_rows:
         raise PlanError("backup row cardinality does not match the unapplied plan")
     backup = {
@@ -902,7 +1093,7 @@ async def backup_plan(pool: Any, plan: RepairPlan, backup_root: Path) -> dict[st
         "snapshot_digest": plan.snapshot_digest,
         "namespace": plan.namespace,
         "namespace_id": plan.namespace_id,
-        "database_identity": database_identity,
+        "database_identity": asdict(snapshot.database_identity),
         "entities": [json.loads(row["row_json"]) for row in entity_rows],
         "entity_sources": [json.loads(row["row_json"]) for row in source_rows],
         "chunks_without_content_or_vectors": [json.loads(row["row_json"]) for row in chunk_rows],
@@ -910,8 +1101,8 @@ async def backup_plan(pool: Any, plan: RepairPlan, backup_root: Path) -> dict[st
     }
     backup_path = backup_root / "backup.json"
     atomic_write_json(backup_path, backup)
-    encoded = backup_path.read_bytes()
-    parsed = _private_json(backup_path)
+    encoded = _private_bytes(backup_path)
+    parsed = json.loads(encoded)
     if (
         len(parsed["entities"]) != len(set(target_ids))
         or len(parsed["chunks_without_content_or_vectors"]) != len(set(chunk_ids))
@@ -980,10 +1171,10 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     audit = commands.add_parser("audit", help="read-only namespace or plan audit")
-    audit.add_argument("--namespace", default="ltm-bench-datarim-kb")
+    audit.add_argument("--namespace", default=TARGET_NAMESPACE)
     audit.add_argument("--plan", type=Path)
     prepare = commands.add_parser("prepare", help="zero-call deterministic plan")
-    prepare.add_argument("--namespace", default="ltm-bench-datarim-kb")
+    prepare.add_argument("--namespace", default=TARGET_NAMESPACE)
     prepare.add_argument("--run-id", required=True)
     prepare.add_argument("--state-root", type=Path, default=DEFAULT_STATE_ROOT)
     backup = commands.add_parser("backup", help="private target-row backup")
@@ -1021,14 +1212,14 @@ async def _run_cli(args: argparse.Namespace) -> dict[str, Any]:
             return await audit_plan(pool, load_plan(args.plan))
         return audit_snapshot(await read_snapshot(pool, args.namespace))
     if args.command == "prepare":
-        if args.namespace != "ltm-bench-datarim-kb":
-            raise PlanError("live LTM-0019 prepare is restricted to ltm-bench-datarim-kb")
+        if args.namespace != TARGET_NAMESPACE:
+            raise PlanError(f"live LTM-0019 prepare is restricted to {TARGET_NAMESPACE}")
         return await prepare_plan(
             pool,
             args.namespace,
             args.run_id,
             args.state_root,
-            expected_namespace_id=825,
+            expected_namespace_id=TARGET_NAMESPACE_ID,
         )
     plan = load_plan(args.plan)
     if args.command == "backup":
