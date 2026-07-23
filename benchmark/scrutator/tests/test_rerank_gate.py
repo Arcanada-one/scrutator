@@ -155,6 +155,42 @@ def test_verdict_is_eligible_only_for_zero_losses_real_gain_floors_and_latency()
     assert rerank_gate.decide_verdict(eligible, on_latency_p95_ms=5000.1)["status"] == "KEEP_OFF"
 
 
+def test_candidate_scope_never_claims_production_flip_eligibility():
+    eligible = {
+        "factual": {
+            "n": 15,
+            "off_hits": 14,
+            "on_hits": 15,
+            "gains": 1,
+            "losses": 0,
+            "off_all_gold": 14,
+            "on_all_gold": 15,
+        },
+        "multi-hop": {
+            "n": 8,
+            "off_hits": 8,
+            "on_hits": 8,
+            "gains": 0,
+            "losses": 0,
+            "off_all_gold": 3,
+            "on_all_gold": 3,
+        },
+        "temporal": {
+            "n": 10,
+            "off_hits": 8,
+            "on_hits": 8,
+            "gains": 0,
+            "losses": 0,
+            "off_all_gold": 8,
+            "on_all_gold": 8,
+        },
+    }
+
+    verdict = rerank_gate.decide_verdict(eligible, on_latency_p95_ms=1000.0, eligibility_scope="candidate")
+
+    assert verdict == {"status": "CANDIDATE_ELIGIBLE", "reasons": []}
+
+
 def test_repeated_rows_must_preserve_order_and_hit_bits():
     stable = [
         [{"id": "F1", "off_paths": ["a"], "on_paths": ["b"], "off_hit": False, "on_hit": True}],
@@ -165,3 +201,26 @@ def test_repeated_rows_must_preserve_order_and_hit_bits():
     unstable = [stable[0], [{"id": "F1", "off_paths": ["x"], "on_paths": ["b"], "off_hit": False, "on_hit": True}]]
     with pytest.raises(rerank_gate.InvalidEvidence, match="unstable"):
         rerank_gate.require_repeat_stability(unstable)
+
+
+def test_unexpected_runner_exception_is_invalid_evidence(monkeypatch, capsys, tmp_path):
+    def crash(_args):
+        raise TypeError("programming defect")
+
+    monkeypatch.setattr(rerank_gate, "run_experiment", crash)
+
+    rc = rerank_gate.main(
+        [
+            "--off-endpoint",
+            "http://127.0.0.1:18310",
+            "--on-endpoint",
+            "http://127.0.0.1:18311",
+            "--golden",
+            str(tmp_path / "golden.jsonl"),
+            "--out-dir",
+            str(tmp_path),
+        ]
+    )
+
+    assert rc == rerank_gate.INVALID_EVIDENCE_CODE
+    assert "UNEXPECTED BENCHMARK ERROR: TypeError" in capsys.readouterr().err

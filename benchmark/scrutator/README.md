@@ -98,8 +98,14 @@ benchmark/scrutator/live/run_rerank_gate.sh \
     <PRIVATE_OUTPUT_DIR>
 ```
 
-Exit codes are `0` for `ELIGIBLE_TO_FLIP`, `1` for a valid terminal `KEEP_OFF`, and `2` for
-invalid or incomplete evidence. A `200` response is not enough to prove the treatment:
+The default `deployed` scope requires the candidate tag to equal the current production
+container tag. To test an exact, not-yet-deployed fix, set
+`SCRUTATOR_BENCHMARK_SCOPE=candidate`; a green candidate run reports
+`CANDIDATE_ELIGIBLE`, never `ELIGIBLE_TO_FLIP`.
+
+Exit codes are `0` for scope-appropriate eligibility, `1` for a valid terminal `KEEP_OFF`,
+and `2` for invalid or incomplete evidence. Status `0` or `1` is accepted only when a
+validated `summary.json` exists. A `200` response is not enough to prove the treatment:
 every OFF result must carry `citation.score_kind="rrf"` and every ON result must carry
 `citation.score_kind="colbert_rerank"`. The runner also invalidates corpus drift, repeated-order
 instability, observed score ties, missing results, and ColBERT soft-fallback logs.
