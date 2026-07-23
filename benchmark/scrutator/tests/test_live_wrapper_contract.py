@@ -74,6 +74,8 @@ def test_shell_runner_is_loopback_lifespan_off_and_fail_closed():
     assert "chunk_count" not in script
     assert "summary.json" in script
     assert "flock -n" in script
+    assert "/run/user/" in script
+    assert "lock path must not be a symlink" in script
     assert "trap unexpected_failure ERR" in script
     assert "trap - ERR" in script
     assert "SCRUTATOR_RERANK_ENABLED=false" in script
@@ -167,6 +169,37 @@ def test_simultaneous_start_fails_closed_before_docker(tmp_path):
     assert completed.returncode == 2
     assert "another SRCH-0031 benchmark owns the fixed ports" in completed.stderr
     assert not docker_log.exists()
+
+
+def test_precreated_lock_symlink_is_rejected_without_truncating_target(tmp_path):
+    script = Path(__file__).resolve().parent.parent / "live" / "run_rerank_gate.sh"
+    source = tmp_path / "source"
+    (source / "live").mkdir(parents=True)
+    (source / "rerank_gate.py").write_text("# probe\n", encoding="utf-8")
+    (source / "golden-arcanada-v0.jsonl").write_text("{}\n", encoding="utf-8")
+    (source / "live" / "granted_context_app.py").write_text("# probe\n", encoding="utf-8")
+    victim = tmp_path / "victim.txt"
+    victim.write_text("preserve-me\n", encoding="utf-8")
+    lock_path = tmp_path / "gate.lock"
+    lock_path.symlink_to(victim)
+
+    completed = subprocess.run(
+        [
+            "bash",
+            str(script),
+            f"scrutator-deploy:{'a' * 40}",
+            str(source),
+            str(tmp_path / "output"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "SCRUTATOR_BENCHMARK_LOCK_FILE": str(lock_path)},
+    )
+
+    assert completed.returncode == 2
+    assert "lock path must not be a symlink" in completed.stderr
+    assert victim.read_text(encoding="utf-8") == "preserve-me\n"
 
 
 def test_post_measurement_shell_failure_cannot_be_keep_off(tmp_path):
