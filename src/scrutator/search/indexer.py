@@ -25,6 +25,7 @@ from scrutator.db.repository import (
     upsert_project,
 )
 from scrutator.search.embedder import embed_sparse, embed_texts
+from scrutator.search.ingest_safety import scan_injection
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +124,11 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
     # invoked here so an oversized skills doc is rejected before persistence even if the caller
     # ignores the source-document payload.
     _build_source_document(namespace, source_path, full_content)
+    # ARAS-0055: label (never block) each document with an ingest-time injection signal, scanned
+    # ONCE over the whole pre-chunk content (fast regex/set-based — no LLM in the hot path). The
+    # signal is small (flag + int score + ≤4 short category names), JSONB-safe, and READ back on
+    # the fetch/search path. Ingestion proceeds regardless — this is an observability layer.
+    injection = scan_injection(full_content)
     return [
         {
             "id": chunk.id,
@@ -140,6 +146,7 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
                 "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
+                "injection": injection,
             },
         }
         for chunk in chunk_result.chunks

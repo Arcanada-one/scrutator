@@ -9,13 +9,27 @@ from scrutator.config import settings
 from scrutator.db.models import (
     Citation,
     GroupedSearchResult,
+    InjectionSignal,
     SearchResponse,
     SearchResult,
     doc_fields_from_metadata,
 )
 from scrutator.db.repository import hybrid_search, search_with_filters
 from scrutator.search.embedder import embed_single, embed_sparse
+from scrutator.search.ingest_safety import source_trust_tier
 from scrutator.search.reranker import rerank
+
+
+def _apply_ingest_safety(results: list[SearchResult]) -> None:
+    """ARAS-0055: surface `trust_tier` (derived server-side from `source_path`) and the
+    ingest-time `injection` signal (READ from `metadata.injection`) on every hit. One uniform
+    point so the filtered, hybrid, and reranked branches all get it. Neither field feeds
+    `trust_class` — this is a composing weight/label, never a promotion."""
+    for r in results:
+        r.trust_tier = source_trust_tier(r.source_path)
+        stamp = (r.metadata or {}).get("injection")
+        if stamp:
+            r.injection = InjectionSignal(**stamp)
 
 
 def _build_citation(r: SearchResult, score_kind: str) -> Citation:
@@ -159,6 +173,9 @@ async def search(
             # M1: populate citation on hybrid results (score_kind=rrf)
             for r in results:
                 r.citation = _build_citation(r, "rrf")
+
+    # ARAS-0055: label tier + injection on every hit before folding/filtering.
+    _apply_ingest_safety(results)
 
     # Apply filters
     if min_score > 0:

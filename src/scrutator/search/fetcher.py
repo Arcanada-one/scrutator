@@ -27,6 +27,7 @@ from scrutator.db.models import (
     ChunkManifestEntry,
     FetchRequest,
     FetchResponse,
+    InjectionSignal,
     OffsetRange,
     ParentOfChunkRange,
 )
@@ -35,6 +36,7 @@ from scrutator.db.repository import (
     fetch_chunks_by_doc_id,
     fetch_source_raw_content,
 )
+from scrutator.search.ingest_safety import source_trust_tier
 
 
 def _derive_index_snapshot_id(doc_key: str, max_indexed_at: str) -> str:
@@ -77,6 +79,9 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
     first = rows[0]  # canonically chunk_index = 0 after ordering
     section = first["metadata"].get("section") or {}
     source_id = section.get("doc_id", "")
+    # ARAS-0055: READ the ingest-stamped injection signal (server-computed at index time; the doc
+    # body can never forge it — it only lands in `content`). Absent/legacy stamp ⇒ zero signal.
+    injection = InjectionSignal(**(first["metadata"].get("injection") or {}))
     # S1: READ the ingest-bound whole-doc hash; NEVER recompute over the response. Legacy rows
     # lacking the stamp degrade to "" (never a recomputed value) — see backfill script / D3.
     content_hash = section.get("doc_content_hash", "")
@@ -127,6 +132,11 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         embedding_model_id=settings.embedding_model_id,
         namespace=namespace,
         trust_class=_trust_class(namespace),
+        # ARAS-0055: `trust_tier` (provenance) and `injection` (ingest scan) COMPOSE with
+        # `trust_class` above; neither is an input to `_trust_class`, so a raw-tier or flagged
+        # document keeps exactly the namespace-derived class — no cross-promotion to skill/exec.
+        trust_tier=source_trust_tier(source_path),
+        injection=injection,
         chunk_manifest=manifest,
         stale=False,  # D6 MVP: no live-source access; typed & present for forward-compat.
         content_exact=content_exact,
