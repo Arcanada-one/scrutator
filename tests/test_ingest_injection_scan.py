@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from scrutator.db.models import FetchRequest, FetchResponse, InjectionSignal, SearchResult
+from scrutator.db.models import FetchRequest, FetchResponse, SearchResult
 from scrutator.search.ingest_safety import scan_injection, source_trust_tier
 
 from .conftest import build_indexed_doc
