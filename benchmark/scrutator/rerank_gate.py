@@ -136,7 +136,10 @@ def decide_verdict(
     *,
     on_latency_p95_ms: float,
     latency_budget_ms: float = DEFAULT_LATENCY_P95_BUDGET_MS,
+    eligibility_scope: str = "deployed",
 ) -> dict[str, Any]:
+    if eligibility_scope not in {"deployed", "candidate"}:
+        raise InvalidEvidence(f"unsupported eligibility scope: {eligibility_scope}")
     reasons: list[str] = []
     total_gains = 0
     for cls, expected_n in EXPECTED_CLASS_COUNTS.items():
@@ -159,7 +162,8 @@ def decide_verdict(
     if on_latency_p95_ms > latency_budget_ms:
         reasons.append(f"ON p95 {on_latency_p95_ms:.1f} ms exceeds {latency_budget_ms:.1f} ms budget")
 
-    return {"status": "KEEP_OFF" if reasons else "ELIGIBLE_TO_FLIP", "reasons": reasons}
+    eligible_status = "ELIGIBLE_TO_FLIP" if eligibility_scope == "deployed" else "CANDIDATE_ELIGIBLE"
+    return {"status": "KEEP_OFF" if reasons else eligible_status, "reasons": reasons}
 
 
 def require_repeat_stability(repetitions: list[list[dict[str, Any]]]) -> None:
@@ -348,6 +352,7 @@ def run_experiment(args: argparse.Namespace) -> tuple[dict[str, Any], list[list[
         transitions,
         on_latency_p95_ms=on_p95,
         latency_budget_ms=args.latency_p95_budget_ms,
+        eligibility_scope=args.eligibility_scope,
     )
     summary = {
         "schema": "scrutator-search-rerank-gate/1",
@@ -359,6 +364,7 @@ def run_experiment(args: argparse.Namespace) -> tuple[dict[str, Any], list[list[
         "on_latency_p50_ms": round(statistics.median(on_latencies), 3),
         "on_latency_p95_ms": on_p95,
         "latency_p95_budget_ms": args.latency_p95_budget_ms,
+        "eligibility_scope": args.eligibility_scope,
         "verdict": verdict,
     }
     return summary, repetitions
@@ -373,6 +379,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--timeout", type=float, default=45.0)
     parser.add_argument("--latency-p95-budget-ms", type=float, default=DEFAULT_LATENCY_P95_BUDGET_MS)
+    parser.add_argument("--eligibility-scope", choices=("deployed", "candidate"), default="deployed")
     return parser
 
 
@@ -386,9 +393,16 @@ def main(argv: list[str] | None = None) -> int:
     except InvalidEvidence as exc:
         print(f"INVALID EVIDENCE: {exc}", file=sys.stderr)
         return INVALID_EVIDENCE_CODE
+    except Exception as exc:
+        print(f"UNEXPECTED BENCHMARK ERROR: {type(exc).__name__}", file=sys.stderr)
+        return INVALID_EVIDENCE_CODE
 
     print(json.dumps(summary["verdict"], sort_keys=True))
-    return SUCCESS_CODE if summary["verdict"]["status"] == "ELIGIBLE_TO_FLIP" else QUALITY_FAIL_CODE
+    return (
+        SUCCESS_CODE
+        if summary["verdict"]["status"] in {"ELIGIBLE_TO_FLIP", "CANDIDATE_ELIGIBLE"}
+        else QUALITY_FAIL_CODE
+    )
 
 
 if __name__ == "__main__":
