@@ -34,6 +34,24 @@ if [[ ! -f "$source_dir/live/granted_context_app.py" ]]; then
     exit 2
 fi
 
+if ! command -v flock >/dev/null; then
+    echo "flock is required for exclusive ownership of the fixed benchmark ports" >&2
+    exit 2
+fi
+lock_file="${SCRUTATOR_BENCHMARK_LOCK_FILE:-/run/lock/kb-enh-srch0031.lock}"
+if [[ "$lock_file" != /* ]]; then
+    echo "SCRUTATOR_BENCHMARK_LOCK_FILE must be absolute" >&2
+    exit 2
+fi
+if ! exec 9>"$lock_file"; then
+    echo "cannot open the SRCH-0031 benchmark lock" >&2
+    exit 2
+fi
+if ! flock -n 9; then
+    echo "another SRCH-0031 benchmark owns the fixed ports" >&2
+    exit 2
+fi
+
 umask 077
 mkdir -p -- "$output_dir"
 run_tmp="$(mktemp -d /var/tmp/srch0031.XXXXXX)"
@@ -53,7 +71,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for command in docker python3 curl sha256sum; do
+unexpected_failure() {
+    trap - ERR
+    echo "unexpected shell failure; evidence is invalid" >&2
+    exit 2
+}
+trap unexpected_failure ERR
+
+for command in docker python3 curl sha256sum flock; do
     command -v "$command" >/dev/null
 done
 
@@ -212,7 +237,7 @@ with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
 PY
 done
 
-set +e
+measurement_rc=0
 python3 "$source_dir/rerank_gate.py" \
     --off-endpoint "http://127.0.0.1:$off_port" \
     --on-endpoint "http://127.0.0.1:$on_port" \
@@ -221,19 +246,31 @@ python3 "$source_dir/rerank_gate.py" \
     --repeats 3 \
     --timeout 45 \
     --latency-p95-budget-ms 5000 \
-    --eligibility-scope "$benchmark_scope" >"$output_dir/verdict.stdout" 2>"$output_dir/verdict.stderr"
-measurement_rc="$?"
-set -e
+    --eligibility-scope "$benchmark_scope" >"$output_dir/verdict.stdout" 2>"$output_dir/verdict.stderr" \
+    || measurement_rc="$?"
 
 if [[ "$measurement_rc" -eq 0 || "$measurement_rc" -eq 1 ]]; then
     if [[ ! -s "$output_dir/summary.json" ]]; then
         echo "benchmark exited $measurement_rc without a summary; evidence is invalid" >&2
         measurement_rc=2
+    elif ! python3 - "$output_dir/summary.json" "$measurement_rc" "$benchmark_scope" <<'PY'
+import json
+import sys
+
+path, encoded_rc, scope = sys.argv[1:]
+status = json.load(open(path, encoding="utf-8")).get("verdict", {}).get("status")
+expected_eligible = "ELIGIBLE_TO_FLIP" if scope == "deployed" else "CANDIDATE_ELIGIBLE"
+valid = (int(encoded_rc) == 0 and status == expected_eligible) or (int(encoded_rc) == 1 and status == "KEEP_OFF")
+raise SystemExit(0 if valid else 1)
+PY
+    then
+        echo "benchmark exit code and summary verdict disagree; evidence is invalid" >&2
+        measurement_rc=2
     fi
 fi
 
-docker logs "$off_container" >"$output_dir/off-container.log" 2>&1
-docker logs "$on_container" >"$output_dir/on-container.log" 2>&1
+docker logs "$off_id" >"$output_dir/off-container.log" 2>&1
+docker logs "$on_id" >"$output_dir/on-container.log" 2>&1
 if grep -Eiq 'ColBERT rerank (failed|unexpected error)' "$output_dir/on-container.log"; then
     echo "ON container logged a ColBERT soft failure" >&2
     exit 2
@@ -246,4 +283,5 @@ if [[ "$production_id_before" != "$production_id_after" ]]; then
 fi
 curl -fsS --max-time 10 http://127.0.0.1:8310/health >"$output_dir/production-health-after.json"
 
+trap - ERR
 exit "$measurement_rc"
