@@ -353,6 +353,9 @@ async def test_apply_uses_null_only_cas_and_preserves_entity_timestamp(monkeypat
     assert "INSERT INTO entity_sources" in insert_sql
     assert "$6::timestamptz" in insert_sql
     assert "ON CONFLICT" not in insert_sql
+    update_call = next(call for call in connection.execute.await_args_list if "UPDATE entities" in call.args[0])
+    assert isinstance(update_call.args[-1], datetime)
+    assert isinstance(connection.fetchval.await_args.args[-1], datetime)
     backfill._assert_exact_postwrite_readback.assert_awaited_once_with(connection, plan)
 
 

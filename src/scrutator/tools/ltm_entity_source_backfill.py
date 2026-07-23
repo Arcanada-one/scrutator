@@ -262,6 +262,16 @@ def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def _timestamp(value: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value)
+    except (TypeError, ValueError) as exc:
+        raise PlanError(f"invalid timestamp {value!r}") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise PlanError(f"timestamp must include a UTC offset: {value!r}")
+    return parsed
+
+
 def _canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -398,6 +408,8 @@ def validate_plan(encoded: Mapping[str, Any]) -> RepairPlan:
     else:
         raise PlanError("unsupported plan selection")
     for repair in plan.repairs:
+        _timestamp(repair.original_updated_at)
+        _timestamp(repair.source_updated_at)
         if (
             not repair.source_path
             or re.fullmatch(r"[0-9a-f]{64}", repair.content_hash) is None
@@ -899,7 +911,7 @@ async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
                         plan.namespace_id,
                         repair.entity_name,
                         repair.entity_type,
-                        repair.original_updated_at,
+                        _timestamp(repair.original_updated_at),
                     )
                     if _parse_command_count(updated, "UPDATE") != 1:
                         raise PlanError(f"NULL-only entity CAS failed for {repair.entity_id}")
@@ -916,7 +928,7 @@ async def apply_plan(pool: Any, plan: RepairPlan) -> dict[str, Any]:
                         repair.source_path,
                         repair.content_hash,
                         repair.chunk_id,
-                        repair.source_updated_at,
+                        _timestamp(repair.source_updated_at),
                     )
                     if source_updated_at.isoformat() != repair.source_updated_at:
                         raise PlanError(f"source timestamp readback mismatch for {repair.entity_id}")
@@ -976,7 +988,7 @@ async def rollback_plan(pool: Any, plan: RepairPlan, receipt: Mapping[str, Any])
                         repair.source_path,
                         repair.content_hash,
                         repair.chunk_id,
-                        timestamps[repair.entity_id],
+                        _timestamp(timestamps[repair.entity_id]),
                     )
                     updated = await conn.execute(
                         """
@@ -992,7 +1004,7 @@ async def rollback_plan(pool: Any, plan: RepairPlan, receipt: Mapping[str, Any])
                         repair.entity_name,
                         repair.entity_type,
                         repair.chunk_id,
-                        repair.original_updated_at,
+                        _timestamp(repair.original_updated_at),
                     )
                     if _parse_command_count(deleted, "DELETE") != 1 or _parse_command_count(updated, "UPDATE") != 1:
                         raise PlanError(f"rollback CAS mismatch for {repair.entity_id}")
