@@ -60,6 +60,8 @@ def test_shell_runner_is_loopback_lifespan_off_and_fail_closed():
     assert "--network host" in script
     assert "--host 127.0.0.1" in script
     assert "--lifespan off" in script
+    assert '"production_image": production_image' in script
+    assert "requested image does not match production image" not in script
     assert "SCRUTATOR_RERANK_ENABLED=false" in script
     assert "SCRUTATOR_RERANK_ENABLED=true" in script
     assert "SCRUTATOR_DATABASE_POOL_MIN=1" in script
