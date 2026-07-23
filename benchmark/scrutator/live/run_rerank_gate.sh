@@ -50,8 +50,8 @@ if ss -H -ltn "sport = :$off_port or sport = :$on_port" | grep -q .; then
 fi
 
 production_image="$(docker inspect --format '{{.Config.Image}}' "$production_container")"
-if [[ "$production_image" != "$image" ]]; then
-    echo "requested image does not match production image" >&2
+if ! [[ "$production_image" =~ ^scrutator-deploy:[0-9a-f]{40}$ ]]; then
+    echo "production container does not use an immutable image tag" >&2
     exit 2
 fi
 production_id_before="$(docker inspect --format '{{.Id}}' "$production_container")"
@@ -92,18 +92,19 @@ env_hash="$(sha256sum "$env_file" | awk '{print $1}')"
 image_id="$(docker image inspect --format '{{.Id}}' "$image")"
 golden_hash="$(sha256sum "$source_dir/golden-arcanada-v0.jsonl" | awk '{print $1}')"
 
-python3 - "$output_dir/manifest.json" "$image" "$image_id" "$production_id_before" "$env_hash" "$golden_hash" <<'PY'
+python3 - "$output_dir/manifest.json" "$image" "$image_id" "$production_image" "$production_id_before" "$env_hash" "$golden_hash" <<'PY'
 import json
 import os
 import sys
 
-target, image, image_id, production_id, env_hash, golden_hash = sys.argv[1:]
+target, image, image_id, production_image, production_id, env_hash, golden_hash = sys.argv[1:]
 descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
 with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
     json.dump(
         {
             "image": image,
             "image_id": image_id,
+            "production_image": production_image,
             "production_container_id_before": production_id,
             "redacted_environment_sha256": env_hash,
             "golden_sha256": golden_hash,
