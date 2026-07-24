@@ -181,6 +181,30 @@ _ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL = """
         updated_at = NOW()
 """
 
+# SRCH-0039 (Mechanism C): exact whole-document bytes for the LARGE evidence corpus, upserted INSIDE
+# the same `replace_source_chunks_atomic` transaction (crash-consistent with the chunk generation).
+# A SEPARATE table from `source_documents` so evidence's flag-gated / larger / gracefully-degrading
+# policy stays isolated from skills' always-exact / 256 KB-cap / fail-closed policy. `raw_content` is
+# byte-identical to the content `content_hash` hashes, so `sha256(raw_content) == content_hash`.
+_ATOMIC_EVIDENCE_DOCUMENT_UPSERT_SQL = """
+    INSERT INTO evidence_documents (namespace_id, source_path, doc_id, content_hash, raw_content, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    ON CONFLICT (namespace_id, source_path)
+    DO UPDATE SET
+        doc_id = EXCLUDED.doc_id,
+        content_hash = EXCLUDED.content_hash,
+        raw_content = EXCLUDED.raw_content,
+        updated_at = NOW()
+"""
+
+# SRCH-0039 pre-merge review (write-side invalidation): when a chunk replacement re-stamps the
+# chunks' `doc_content_hash` but the evidence upsert is SKIPPED (flag OFF, or a skills doc), any
+# pre-existing evidence_documents row would go STALE (its raw_content no longer hashes to the new
+# stamp). Delete it in the SAME transaction so a replacement can never leave a stale exact-bytes row.
+_ATOMIC_EVIDENCE_DOCUMENT_DELETE_SQL = """
+    DELETE FROM evidence_documents WHERE namespace_id = $1 AND source_path = $2
+"""
+
 
 def _validate_atomic_replacement(
     chunks: list[dict[str, Any]], embeddings: list[list[float]], sparse_weights: list[dict[str, float]]
@@ -215,6 +239,7 @@ async def replace_source_chunks_atomic(
     namespace_id: int,
     project_id: int | None = None,
     source_document: dict[str, Any] | None = None,
+    evidence_document: dict[str, Any] | None = None,
 ) -> int:
     """Replace one source generation under an advisory lock and one transaction.
 
@@ -222,7 +247,12 @@ async def replace_source_chunks_atomic(
     bytes ``{doc_id, source_path, content_hash, raw_content}``. When present it is upserted into
     ``source_documents`` INSIDE this same transaction, so the exact-source blob is crash-consistent
     with the chunk generation it belongs to. It is deliberately NOT written to ``chunks.metadata``
-    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills)."""
+    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills).
+
+    ``evidence_document`` (SRCH-0039 Mechanism C, non-skills namespaces, only when
+    ``evidence_exact_bytes`` is ON) carries the same shape for the evidence corpus and is upserted
+    into the SEPARATE ``evidence_documents`` table inside this same transaction — crash-consistent
+    by construction. The two are mutually exclusive per document (a doc is skills XOR evidence)."""
     if not chunks:
         return 0
     source_path = _validate_atomic_replacement(chunks, embeddings, sparse_weights)
@@ -246,6 +276,20 @@ async def replace_source_chunks_atomic(
                 source_document["content_hash"],
                 source_document["raw_content"],
             )
+        if evidence_document is not None:
+            await conn.execute(
+                _ATOMIC_EVIDENCE_DOCUMENT_UPSERT_SQL,
+                namespace_id,
+                source_path,
+                evidence_document["doc_id"],
+                evidence_document["content_hash"],
+                evidence_document["raw_content"],
+            )
+        else:
+            # Write-side invalidation: no fresh exact bytes for this generation (flag OFF, or skills)
+            # → drop any stale evidence row so fetch degrades gracefully to reassembly afterward.
+            # No-op for skills source_paths (they have no evidence_documents row).
+            await conn.execute(_ATOMIC_EVIDENCE_DOCUMENT_DELETE_SQL, namespace_id, source_path)
         for chunk, embedding, weights in zip(chunks, embeddings, sparse_weights, strict=True):
             chunk_index = chunk["chunk_index"]
             chunk_id = await conn.fetchval(
@@ -601,6 +645,9 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
                 source_path,
             )
         )
+        # SRCH-0039 pre-merge review (NOTE A): remove the exact-bytes row too, so deleting a source
+        # cannot orphan or later resurrect a stale evidence_documents row. Same transaction.
+        await conn.execute(_ATOMIC_EVIDENCE_DOCUMENT_DELETE_SQL, namespace_id, source_path)
         edges_deleted = _command_count(
             await conn.execute(
                 """
@@ -653,12 +700,15 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
 async def delete_by_source(source_path: str, namespace_id: int) -> int:
     """Delete all chunks for a given source path. Returns deleted count."""
     pool = await get_pool()
-    async with pool.acquire() as conn:
+    async with pool.acquire() as conn, conn.transaction():
         result = await conn.execute(
             "DELETE FROM chunks WHERE namespace_id=$1 AND source_path=$2",
             namespace_id,
             source_path,
         )
+        # SRCH-0039 pre-merge review (NOTE A): drop the exact-bytes row in the same transaction so a
+        # source delete/re-create can't leave a stale evidence_documents row behind.
+        await conn.execute(_ATOMIC_EVIDENCE_DOCUMENT_DELETE_SQL, namespace_id, source_path)
         return int(result.split()[-1])
 
 
@@ -1289,6 +1339,38 @@ async def fetch_source_raw_content(doc_id: str, allowed_namespace_ids: frozenset
             doc_id,
             list(allowed_namespace_ids),
         )
+
+
+async def fetch_evidence_raw_content(doc_id: str, allowed_namespace_ids: frozenset[int]) -> tuple[str, str] | None:
+    """Return ``(raw_content, content_hash)`` for an evidence doc (SRCH-0039), namespace-scoped, or
+    ``None`` when absent.
+
+    Mirrors ``fetch_source_raw_content`` — the SAME fail-closed, namespace-gated predicate
+    ``WHERE doc_id = $1 AND namespace_id = ANY($2::int[])`` so the byte-fetch and the authz check
+    are one read (authorize-before-bytes: ``content_hash`` is never a request field, only resolved
+    internally). Reads from the isolated ``evidence_documents`` table (NOT the GIN-indexed
+    ``chunks.metadata``).
+
+    The row's ``content_hash`` is returned ALONGSIDE the bytes so the fetcher can compare it to the
+    current chunk stamp and reject a STALE row (a hash-to-hash comparison of two bound-at-write
+    values, NOT a body re-hash) — defense-in-depth against a stale exact-bytes row (SRCH-0039
+    pre-merge review). An empty allowed-set, an unknown / cross-namespace ``doc_id``, or a not-yet-
+    backfilled doc returns ``None`` → the fetcher GRACEFULLY DEGRADES to reassembly
+    (``content_exact=False``), deliberately NOT the skills fail-closed 409 (evidence row-absence is
+    an expected pre-backfill state on the huge existing corpus)."""
+    if not allowed_namespace_ids or not doc_id:
+        return None
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT raw_content, content_hash FROM evidence_documents "
+            "WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
+            doc_id,
+            list(allowed_namespace_ids),
+        )
+    if row is None:
+        return None
+    return row["raw_content"], row["content_hash"]
 
 
 async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
