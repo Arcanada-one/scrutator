@@ -120,7 +120,15 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         # `content_exact=True`, `sha256(content) == content_hash`.
         evidence_raw = None
         if settings.evidence_exact_bytes:
-            evidence_raw = await fetch_evidence_raw_content(source_id, allowed_namespace_ids)
+            evidence_row = await fetch_evidence_raw_content(source_id, allowed_namespace_ids)
+            # Read-side belt-and-braces (SRCH-0039 pre-merge review): trust the exact-bytes row ONLY
+            # when its bound-at-write `content_hash` still equals the current chunk stamp
+            # (`content_hash` above). A stale row — one whose bytes predate a content change that
+            # re-stamped the chunks — is REJECTED here and degrades to reassembly, so fetch can never
+            # return stale bytes as `content_exact=True`. This compares two stored hashes (both bound
+            # at write time), NOT a re-hash of the body, so it does not recompute integrity at read.
+            if evidence_row is not None and evidence_row[1] == content_hash:
+                evidence_raw = evidence_row[0]
         if evidence_raw is not None:
             full_content = evidence_raw
             content_exact = True

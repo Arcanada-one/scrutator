@@ -189,6 +189,52 @@ async def test_evidence_row_absent_degrades_to_reassembly_not_409(evidence_db):
 
 
 @pytest.mark.asyncio
+async def test_reingest_while_flag_off_invalidates_stale_evidence_row(evidence_db, monkeypatch):
+    """SECURITY REGRESSION (SRCH-0039 pre-merge review BLOCKER), write-side end-to-end: a re-ingest
+    whose evidence upsert is SKIPPED (flag OFF) re-stamps the chunks but must NOT leave the OLD
+    exact-bytes row behind, or a later flag-ON fetch would return stale bytes with a mismatched hash
+    and ``content_exact=True``. The in-transaction write-side invalidation deletes the stale row, so
+    fetch degrades to reassembly."""
+    from scrutator.chunker.splitters import compute_doc_id
+    from scrutator.search import fetcher, indexer
+
+    pool, test_ns, namespace_id, _register = evidence_db
+    source_path = "evidence/mutating.md"
+    v1 = _evidence_doc(20 * 1024)
+
+    # Flag ON (fixture default): ingest V1 → an evidence_documents row lands.
+    await indexer.index_document(v1, source_path, namespace=test_ns)
+    row = await pool.fetchrow(
+        "SELECT content_hash FROM evidence_documents WHERE namespace_id = $1 AND source_path = $2",
+        namespace_id,
+        source_path,
+    )
+    assert row is not None, "V1 ingest with the flag ON must create the evidence row"
+
+    # Flag OFF: re-ingest CHANGED content V2 → the evidence upsert is skipped, chunks re-stamp to H2.
+    monkeypatch.setattr(settings, "evidence_exact_bytes", False)
+    v2 = v1 + "\n\n## Amended\n\n" + ("revised finding. " * 400) + "\n"
+    await indexer.index_document(v2, source_path, namespace=test_ns)
+
+    # Write-side invalidation: the now-stale V1 row must be GONE.
+    stale = await pool.fetchrow(
+        "SELECT content_hash FROM evidence_documents WHERE namespace_id = $1 AND source_path = $2",
+        namespace_id,
+        source_path,
+    )
+    assert stale is None, "a chunk replacement with the flag off must delete the stale evidence row"
+
+    # Flip the flag ON and fetch → must NOT return content_exact=True with a mismatched hash.
+    monkeypatch.setattr(settings, "evidence_exact_bytes", True)
+    doc_id = compute_doc_id(test_ns, source_path)
+    fetched = await fetcher.fetch(
+        FetchRequest(by="source_id", id=doc_id, range="full"),
+        frozenset({namespace_id}),
+    )
+    assert fetched.content_exact is False, "row-absent (invalidated) evidence must degrade, not lie"
+
+
+@pytest.mark.asyncio
 async def test_evidence_cross_namespace_fetch_is_404_idor(evidence_db):
     """IDOR parity: an evidence doc ingested in namespace A is NOT reachable by a caller whose
     allowed-set is a DIFFERENT namespace B → 404 (no existence oracle), the same fail-closed

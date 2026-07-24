@@ -67,9 +67,13 @@ async def test_evidence_flag_on_row_present_is_byte_exact(monkeypatch):
 
     from scrutator.search import fetcher
 
+    # The reader returns (raw_content, content_hash-bound-at-write). Here the stored hash matches the
+    # current chunk stamp, so the row is trusted.
     with (
         patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
-        patch.object(fetcher, "fetch_evidence_raw_content", new_callable=AsyncMock, return_value=_EVIDENCE_DOC),
+        patch.object(
+            fetcher, "fetch_evidence_raw_content", new_callable=AsyncMock, return_value=(_EVIDENCE_DOC, content_hash)
+        ),
     ):
         resp = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
 
@@ -101,6 +105,44 @@ async def test_evidence_flag_on_row_absent_degrades_gracefully_not_409(monkeypat
 
 
 @pytest.mark.asyncio
+async def test_evidence_stale_row_hash_mismatch_degrades_not_exact(monkeypatch):
+    """SECURITY REGRESSION (SRCH-0039 pre-merge review BLOCKER): a STALE ``evidence_documents`` row
+    (its ``raw_content`` predates a content change that re-stamped the chunks) must NEVER be returned
+    as ``content_exact=True`` with the current, mismatching chunk ``content_hash``. Read-side
+    belt-and-braces: the reader returns the row's bound-at-write ``content_hash``; when it differs
+    from the current chunk stamp, the fetcher degrades to reassembly (``content_exact=False``) — a
+    hash-to-hash comparison of two stored values, NOT a body re-hash. Without the guard the fetcher
+    returns ``content=V1`` with ``content_hash=H2`` and ``content_exact=True`` (``sha256(V1)=H1≠H2``)."""
+    monkeypatch.setattr(settings, "evidence_exact_bytes", True)
+    # Current generation V2 → chunks stamped with H2 (the hash the fetcher advertises).
+    v2 = _EVIDENCE_DOC + "\n\n## Amended\n\nRevised finding. " + ("update " * 220) + "\n"
+    doc_id, current_hash, rows = build_indexed_doc(v2, namespace="arcanada")
+
+    # A stale row from generation V1 → its bound content_hash H1 differs from H2.
+    stale_bytes = "# Post-mortem V1\n\nOriginal finding.\n"
+    stale_hash = "sha256:" + hashlib.sha256(stale_bytes.encode()).hexdigest()
+    assert stale_hash != current_hash
+
+    from scrutator.search import fetcher
+
+    with (
+        patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
+        patch.object(
+            fetcher, "fetch_evidence_raw_content", new_callable=AsyncMock, return_value=(stale_bytes, stale_hash)
+        ),
+    ):
+        resp = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
+
+    # The stale row is rejected: fetch degrades to reassembly, never lies with content_exact=True.
+    assert resp.content_exact is False
+    assert resp.content != stale_bytes
+    assert resp.content == "".join(r["content"] for r in rows)
+    # The advertised hash stays the current chunk stamp; it must not match the returned (reassembled)
+    # content — but crucially content_exact is False, so no integrity claim is made.
+    assert resp.content_hash == current_hash
+
+
+@pytest.mark.asyncio
 async def test_evidence_flag_off_skips_exact_lookup(monkeypatch):
     """Flag OFF (default) → the evidence exact-bytes reader is NEVER consulted; reassembly,
     ``content_exact=False``. No behaviour change on merge until the flag flips."""
@@ -109,7 +151,7 @@ async def test_evidence_flag_off_skips_exact_lookup(monkeypatch):
 
     from scrutator.search import fetcher
 
-    reader = AsyncMock(return_value=_EVIDENCE_DOC)
+    reader = AsyncMock(return_value=(_EVIDENCE_DOC, "sha256:whatever"))
     with (
         patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=rows),
         patch.object(fetcher, "fetch_evidence_raw_content", reader),
@@ -132,7 +174,7 @@ async def test_skills_path_unchanged_when_evidence_flag_on(monkeypatch):
 
     # Skills doc WITH a source_documents row → exact, from the skills reader, not the evidence one.
     sk_id, _sk_hash, sk_rows = build_indexed_doc(_EVIDENCE_DOC, namespace="skills")
-    evidence_reader = AsyncMock(return_value="EVIDENCE-LEAK")
+    evidence_reader = AsyncMock(return_value=("EVIDENCE-LEAK", "sha256:leak"))
     with (
         patch.object(fetcher, "fetch_chunks_by_doc_id", new_callable=AsyncMock, return_value=sk_rows),
         patch.object(fetcher, "fetch_source_raw_content", new_callable=AsyncMock, return_value=_EVIDENCE_DOC),
