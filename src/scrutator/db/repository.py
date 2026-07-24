@@ -2494,7 +2494,7 @@ async def search_meta_facts(
         return []
     pool = await get_pool()
     vector = np.array(query_embedding, dtype=np.float32)
-    async with pool.acquire() as conn:
+    async with acquire_search_connection(pool) as conn:
         rows = await conn.fetch(
             """
             SELECT id::text, fact_type, content,
