@@ -64,9 +64,17 @@ async def deterministic_search_database():
 
     async def initialize(connection: asyncpg.Connection) -> None:
         await register_vector(connection)
+
+    async def configure(connection: asyncpg.Connection) -> None:
         await connection.execute(f'SET search_path TO "{schema}", public')
 
-    pool = await asyncpg.create_pool(dsn=dsn, min_size=1, max_size=1, init=initialize)
+    pool = await asyncpg.create_pool(
+        dsn=dsn,
+        min_size=1,
+        max_size=1,
+        init=initialize,
+        setup=configure,
+    )
     try:
         namespace_id = await pool.fetchval("INSERT INTO namespaces (name) VALUES ('determinism') RETURNING id")
         yield pool, namespace_id
