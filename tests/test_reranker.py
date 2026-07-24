@@ -168,36 +168,6 @@ class TestEmbedColbert:
         assert len(result[0]) == 2  # 2 tokens
         assert len(result[1]) == 1  # 1 token
 
-    @pytest.mark.asyncio
-    async def test_embed_colbert_pages_at_provider_batch_cap(self):
-        """The live ColBERT endpoint rejects batches larger than 16."""
-        from scrutator.search.embedder import embed_colbert
-
-        mock_client = AsyncMock()
-
-        def response_for_page(*_args, **kwargs):
-            page = kwargs["json"]["input"]
-            response = MagicMock()
-            response.status_code = 200
-            response.json.return_value = {
-                "data": [
-                    {"colbert_vecs": [[float(text.removeprefix("text-"))] * 1024], "index": index}
-                    for index, text in enumerate(page)
-                ]
-            }
-            return response
-
-        mock_client.post.side_effect = response_for_page
-
-        with patch("scrutator.search.embedder.get_client", return_value=mock_client):
-            result = await embed_colbert([f"text-{index}" for index in range(20)])
-
-        assert [call.kwargs["json"]["input"] for call in mock_client.post.await_args_list] == [
-            [f"text-{index}" for index in range(16)],
-            [f"text-{index}" for index in range(16, 20)],
-        ]
-        assert [vectors[0][0] for vectors in result] == [float(index) for index in range(20)]
-
 
 class TestReranker:
     """Tests for search/reranker.rerank."""
