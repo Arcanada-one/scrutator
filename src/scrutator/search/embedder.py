@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # higher-level index pack may contain up to 256 chunks, so transport requests
 # are paged sequentially without weakening the indexer's independent caps.
 _EMBEDDING_API_MAX_BATCH_SIZE = 64
+_COLBERT_API_MAX_BATCH_SIZE = 16
 _DENSE_DIMENSIONS = 1024
 _FLOAT32_MAX = 3.4028235e38
 
@@ -186,16 +187,7 @@ async def embed_single(text: str) -> list[float]:
 
 
 @_with_retry
-async def embed_colbert(texts: list[str]) -> list[list[list[float]]]:
-    """Token-level ColBERT multi-vectors from the Embedding API.
-
-    Returns list (per text) of list (per token) of 1024-dim vectors.
-    Mirrors embed_sparse — same singleton client, same retry decorator.
-    Field: data[i].colbert_vecs (probe-confirmed 2026-06-22).
-    """
-    if not texts:
-        return []
-
+async def _embed_colbert_page(texts: list[str]) -> list[list[list[float]]]:
     client = await get_client()
     response = await client.post(
         f"{settings.embedding_api_url}/v1/embeddings/colbert",
@@ -207,5 +199,18 @@ async def embed_colbert(texts: list[str]) -> list[list[list[float]]]:
             status_code=response.status_code,
         )
 
-    data = response.json()
-    return [item["colbert_vecs"] for item in data["data"]]
+    data = _response_data(response, len(texts))
+    return [item["colbert_vecs"] for item in data]
+
+
+async def embed_colbert(texts: list[str]) -> list[list[list[float]]]:
+    """Token-level ColBERT multi-vectors from the Embedding API.
+
+    Returns list (per text) of list (per token) of 1024-dim vectors.
+    Pages requests to the provider's independent 16-item ColBERT cap.
+    Field: data[i].colbert_vecs (probe-confirmed 2026-06-22).
+    """
+    embeddings: list[list[list[float]]] = []
+    for offset in range(0, len(texts), _COLBERT_API_MAX_BATCH_SIZE):
+        embeddings.extend(await _embed_colbert_page(texts[offset : offset + _COLBERT_API_MAX_BATCH_SIZE]))
+    return embeddings
