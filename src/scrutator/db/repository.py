@@ -181,6 +181,22 @@ _ATOMIC_SOURCE_DOCUMENT_UPSERT_SQL = """
         updated_at = NOW()
 """
 
+# SRCH-0039 (Mechanism C): exact whole-document bytes for the LARGE evidence corpus, upserted INSIDE
+# the same `replace_source_chunks_atomic` transaction (crash-consistent with the chunk generation).
+# A SEPARATE table from `source_documents` so evidence's flag-gated / larger / gracefully-degrading
+# policy stays isolated from skills' always-exact / 256 KB-cap / fail-closed policy. `raw_content` is
+# byte-identical to the content `content_hash` hashes, so `sha256(raw_content) == content_hash`.
+_ATOMIC_EVIDENCE_DOCUMENT_UPSERT_SQL = """
+    INSERT INTO evidence_documents (namespace_id, source_path, doc_id, content_hash, raw_content, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW())
+    ON CONFLICT (namespace_id, source_path)
+    DO UPDATE SET
+        doc_id = EXCLUDED.doc_id,
+        content_hash = EXCLUDED.content_hash,
+        raw_content = EXCLUDED.raw_content,
+        updated_at = NOW()
+"""
+
 
 def _validate_atomic_replacement(
     chunks: list[dict[str, Any]], embeddings: list[list[float]], sparse_weights: list[dict[str, float]]
@@ -215,6 +231,7 @@ async def replace_source_chunks_atomic(
     namespace_id: int,
     project_id: int | None = None,
     source_document: dict[str, Any] | None = None,
+    evidence_document: dict[str, Any] | None = None,
 ) -> int:
     """Replace one source generation under an advisory lock and one transaction.
 
@@ -222,7 +239,12 @@ async def replace_source_chunks_atomic(
     bytes ``{doc_id, source_path, content_hash, raw_content}``. When present it is upserted into
     ``source_documents`` INSIDE this same transaction, so the exact-source blob is crash-consistent
     with the chunk generation it belongs to. It is deliberately NOT written to ``chunks.metadata``
-    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills)."""
+    (that GIN-indexed column hit the ~2704-byte jsonb_ops entry ceiling on real multi-KB skills).
+
+    ``evidence_document`` (SRCH-0039 Mechanism C, non-skills namespaces, only when
+    ``evidence_exact_bytes`` is ON) carries the same shape for the evidence corpus and is upserted
+    into the SEPARATE ``evidence_documents`` table inside this same transaction — crash-consistent
+    by construction. The two are mutually exclusive per document (a doc is skills XOR evidence)."""
     if not chunks:
         return 0
     source_path = _validate_atomic_replacement(chunks, embeddings, sparse_weights)
@@ -245,6 +267,15 @@ async def replace_source_chunks_atomic(
                 source_document["doc_id"],
                 source_document["content_hash"],
                 source_document["raw_content"],
+            )
+        if evidence_document is not None:
+            await conn.execute(
+                _ATOMIC_EVIDENCE_DOCUMENT_UPSERT_SQL,
+                namespace_id,
+                source_path,
+                evidence_document["doc_id"],
+                evidence_document["content_hash"],
+                evidence_document["raw_content"],
             )
         for chunk, embedding, weights in zip(chunks, embeddings, sparse_weights, strict=True):
             chunk_index = chunk["chunk_index"]
@@ -1286,6 +1317,28 @@ async def fetch_source_raw_content(doc_id: str, allowed_namespace_ids: frozenset
     async with pool.acquire() as conn:
         return await conn.fetchval(
             "SELECT raw_content FROM source_documents WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
+            doc_id,
+            list(allowed_namespace_ids),
+        )
+
+
+async def fetch_evidence_raw_content(doc_id: str, allowed_namespace_ids: frozenset[int]) -> str | None:
+    """Return the exact whole-document bytes for an evidence doc (SRCH-0039), namespace-scoped.
+
+    Mirrors ``fetch_source_raw_content`` exactly — the SAME fail-closed, namespace-gated predicate
+    ``WHERE doc_id = $1 AND namespace_id = ANY($2::int[])`` so the byte-fetch and the authz check
+    are one read (authorize-before-bytes: ``content_hash`` is never a request field, only resolved
+    internally). Reads from the isolated ``evidence_documents`` table (NOT the GIN-indexed
+    ``chunks.metadata``). An empty allowed-set, an unknown / cross-namespace ``doc_id``, or a doc
+    not yet backfilled returns ``None`` → the fetcher GRACEFULLY DEGRADES to reassembly
+    (``content_exact=False``), deliberately NOT the skills fail-closed 409 (evidence row-absence is
+    an expected pre-backfill state on the huge existing corpus)."""
+    if not allowed_namespace_ids or not doc_id:
+        return None
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT raw_content FROM evidence_documents WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
             doc_id,
             list(allowed_namespace_ids),
         )

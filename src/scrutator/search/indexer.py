@@ -50,6 +50,7 @@ class _PreparedDocument:
     chunks: list[dict]
     offset: int
     source_document: dict | None = None
+    evidence_document: dict | None = None
 
     @property
     def end(self) -> int:
@@ -108,6 +109,34 @@ def _build_source_document(namespace: str, source_path: str, full_content: str) 
         return None
     if len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
         raise BatchIndexLimitError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
+    return {
+        "doc_id": compute_doc_id(namespace, source_path),
+        "source_path": source_path,
+        "content_hash": compute_doc_content_hash(full_content),
+        "raw_content": full_content,
+    }
+
+
+def _build_evidence_document(namespace: str, source_path: str, full_content: str) -> dict | None:
+    """SRCH-0039 (Mechanism C): build the isolated exact-source row for the EVIDENCE corpus, so an
+    evidence fetch can be byte-exact against ``content_hash`` once the flag is flipped.
+
+    Gated by BOTH triggers (the ratified skills-vs-evidence divergence):
+    - ``settings.evidence_exact_bytes`` — default-off, so ingest behaviour is byte-identical until
+      the operator flips the flag in prod (no row written while OFF).
+    - ``namespace != settings.skills_namespace`` — skills keep their OWN ``source_documents`` path
+      (always-exact, 256 KB-capped, fail-closed); the evidence builder never claims a skills doc.
+
+    Returns ``None`` for skills or when the flag is OFF. By-construction byte-exactness:
+    ``raw_content`` is the SAME ``full_content`` that ``content_hash`` is computed over, with no
+    re-encode between them, so ``sha256(raw_content) == content_hash`` holds. The blob lands in the
+    un-indexed ``evidence_documents`` table (never ``chunks.metadata``), so no GIN entry-size
+    ceiling applies. Unlike ``_build_source_document``, there is deliberately NO 256 KB per-document
+    cap — the evidence corpus holds large documents."""
+    if not settings.evidence_exact_bytes:
+        return None
+    if namespace == settings.skills_namespace:
+        return None
     return {
         "doc_id": compute_doc_id(namespace, source_path),
         "source_path": source_path,
@@ -200,7 +229,10 @@ def _prepare_documents(
             continue
         chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path, document.content)
         source_document = _build_source_document(document.namespace, document.source_path, document.content)
-        prepared.append(_PreparedDocument(position, document, chunk_dicts, len(texts), source_document))
+        evidence_document = _build_evidence_document(document.namespace, document.source_path, document.content)
+        prepared.append(
+            _PreparedDocument(position, document, chunk_dicts, len(texts), source_document, evidence_document)
+        )
         texts.extend(chunk["content"] for chunk in chunk_dicts)
     return prepared, texts, results
 
@@ -258,6 +290,7 @@ async def _persist_prepared(
             namespace_id,
             project_id,
             source_document=item.source_document,
+            evidence_document=item.evidence_document,
         )
         return BatchIndexSucceeded(source_path=item.document.source_path, chunks_indexed=inserted)
     except Exception:
@@ -354,6 +387,7 @@ async def index_document(
     # 4. Replace dense and sparse rows as one source generation.
     chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content)
     source_document = _build_source_document(namespace, source_path, content)
+    evidence_document = _build_evidence_document(namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
         chunk_dicts,
         embeddings,
@@ -361,6 +395,7 @@ async def index_document(
         namespace_id,
         project_id,
         source_document=source_document,
+        evidence_document=evidence_document,
     )
 
     return IndexResponse(
