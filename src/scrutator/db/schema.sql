@@ -277,3 +277,23 @@ CREATE TABLE IF NOT EXISTS source_documents (
 
 CREATE INDEX IF NOT EXISTS idx_source_documents_doc_id
     ON source_documents(namespace_id, doc_id);
+
+-- SRCH-0039 (Mechanism C): Exact whole-document source store for the LARGE evidence corpus — see
+-- migrations/005_evidence_documents.sql. A SEPARATE table from `source_documents` so the skills
+-- always-exact / 256 KB-cap / fail-closed-409 policy stays isolated from evidence's flag-gated
+-- (`evidence_exact_bytes`), larger (NO 256 KB cap), gracefully-degrading policy. Upserted inside
+-- `replace_source_chunks_atomic` (same transaction → crash-consistent); `raw_content` is the exact
+-- `full_content` that `content_hash` hashes, so `sha256(raw_content) == content_hash` by
+-- construction. NOT GIN-indexed. Byte-fetch and the namespace authz check are the SAME read.
+CREATE TABLE IF NOT EXISTS evidence_documents (
+    namespace_id INT REFERENCES namespaces(id) ON DELETE CASCADE NOT NULL,
+    source_path TEXT NOT NULL,
+    doc_id TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    raw_content TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (namespace_id, source_path)
+);
+
+CREATE INDEX IF NOT EXISTS idx_evidence_documents_doc_id
+    ON evidence_documents(namespace_id, doc_id);
