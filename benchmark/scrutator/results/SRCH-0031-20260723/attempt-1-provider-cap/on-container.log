@@ -1,0 +1,7 @@
+INFO:     Started server process [1]
+INFO:     Uvicorn running on http://127.0.0.1:18311 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60198 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60212 - "GET /v1/namespaces HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60226 - "GET /__benchmark/fingerprint HTTP/1.1" 200 OK
+ColBERT rerank failed (soft-fail, returning RRF order): ColBERT Embedding API returned status 400
+INFO:     127.0.0.1:60242 - "POST /v1/search HTTP/1.1" 200 OK
