@@ -1,0 +1,5 @@
+INFO:     Started server process [1]
+INFO:     Uvicorn running on http://127.0.0.1:18311 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49856 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49862 - "GET /v1/namespaces HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49876 - "GET /__benchmark/fingerprint HTTP/1.1" 200 OK
