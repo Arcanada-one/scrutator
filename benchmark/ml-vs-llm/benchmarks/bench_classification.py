@@ -99,7 +99,7 @@ def run_llm_classify(
             # Normalize area label
             area = resp["area"].strip().lower()
             # Match to valid labels (case-insensitive)
-            matched = next((l for l in labels if l.lower() == area), area)
+            matched = next((label for label in labels if label.lower() == area), area)
             results.append({
                 "chunk_id": chunk["chunk_id"],
                 "area": matched,
@@ -232,9 +232,12 @@ def main():
 
     print(f"\n{'Model':<35} {'Acc':>6} {'F1m':>6} {'p50ms':>7} {'Cost$':>8}")
     print("-" * 65)
-    for key, data in all_results.items():
+    for _key, data in all_results.items():
         m = data["metrics"]
-        print(f"{m['model']:<35} {m['accuracy']:>6.3f} {m['f1_macro']:>6.3f} {m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}")
+        print(
+            f"{m['model']:<35} {m['accuracy']:>6.3f} {m['f1_macro']:>6.3f} "
+            f"{m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}"
+        )
 
 
 if __name__ == "__main__":

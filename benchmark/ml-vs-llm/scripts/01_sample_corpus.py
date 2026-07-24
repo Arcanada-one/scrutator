@@ -122,7 +122,10 @@ def collect_all_chunks(base_url: str) -> dict[str, list[dict]]:
                 "metadata": r.get("metadata", {}),
             })
 
-        print(f"  [{i + 1}/{len(SEED_QUERIES)}] '{query[:35]}' → {len(results)} results, {new_count} new (total: {len(seen_ids)})")
+        print(
+            f"  [{i + 1}/{len(SEED_QUERIES)}] '{query[:35]}' → {len(results)} results, "
+            f"{new_count} new (total: {len(seen_ids)})"
+        )
 
     return groups
 
@@ -138,7 +141,7 @@ def stratified_sample(groups: dict[str, list[dict]], n: int) -> list[dict]:
 
     sorted_groups = sorted(groups.items(), key=lambda x: len(x[1]), reverse=True)
 
-    for i, (prefix, chunks) in enumerate(sorted_groups):
+    for i, (_prefix, chunks) in enumerate(sorted_groups):
         groups_left = len(sorted_groups) - i
         share = max(1, round(len(chunks) / total * n))
         share = min(share, remaining - max(0, groups_left - 1))
@@ -188,7 +191,7 @@ def main():
         prefix = "/".join(parts[:2]) if len(parts) >= 2 else parts[0]
         source_dist[prefix] = source_dist.get(prefix, 0) + 1
 
-    print(f"\nSource distribution:")
+    print("\nSource distribution:")
     for prefix, count in sorted(source_dist.items(), key=lambda x: -x[1]):
         print(f"  {prefix}: {count}")
 

@@ -299,9 +299,12 @@ def main():
 
     print(f"\n{'Model':<25} {'Exact F1':>9} {'Part F1':>8} {'p50ms':>7} {'Cost$':>8}")
     print("-" * 60)
-    for key, data in all_results.items():
+    for _key, data in all_results.items():
         m = data["metrics"]
-        print(f"{m['model']:<25} {m['exact_match']['f1']:>9.3f} {m['partial_match']['f1']:>8.3f} {m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}")
+        print(
+            f"{m['model']:<25} {m['exact_match']['f1']:>9.3f} {m['partial_match']['f1']:>8.3f} "
+            f"{m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}"
+        )
 
 
 if __name__ == "__main__":
