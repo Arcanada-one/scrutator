@@ -42,6 +42,9 @@ these four instead, or explain in this file why a fifth is warranted.
 | Path | Purpose |
 |---|---|
 | `harness.py` | Multi-model dispatch (BGE-M3 hybrid via `/v1/search`, BGE-Reranker, one LLM baseline via Model Connector), liveness pre-flight, infra-fail/threshold-fail exit-code split. |
+| `rerank_gate.py` | SRCH-0031 paired OFF/ON experiment runner. Requires two loopback endpoints, validates `rrf` versus `colbert_rerank` citations, freezes corpus fingerprints, checks repeated ordered results, reports per-class gain/loss transitions, and fails closed on invalid evidence. |
+| `live/granted_context_app.py` | Loopback-only wrapper around the deployed FastAPI app. It resolves the existing benchmark principal through live namespace grants; it bypasses JWT transport only because no reader secret is copied to the benchmark host. |
+| `live/run_rerank_gate.sh` | Exact-image live runner. Starts isolated OFF/ON listeners with lifespan disabled, mutation credentials blanked, bounded DB pools, strict cleanup, and production-container identity checks. |
 | `measure.py` | The original SRCH-0031 throwaway script, migrated verbatim (Precondition P1) as the pre-`harness.py` reference implementation. Kept until `harness.py`'s V-AC-06 reproduction check has run live and passed; not extended further. |
 | `golden/golden-arcanada-v0.jsonl` | The 33-row v0 golden set (15 factual / 8 multi-hop / 10 temporal), migrated byte-identical from `measure.py`'s original home. |
 | `golden/review-log.md` | Sidecar promotion log: candidate → two-LLM-agreement filter → human verification → `gold`. |
@@ -81,3 +84,33 @@ See `harness.py --help` for the full flag surface (multi-model dispatch, dry-run
 exit codes). Running this against live PROD Scrutator at any real volume, or wiring the CI
 workflow's schedule trigger live, is operator-gated — see `benchmark/scrutator/tests/` for the
 smoke-tested paths that don't require that sign-off.
+
+## Running the SRCH-0031 rerank gate
+
+`rerank_enabled` is a process-global setting; a request body field named `rerank` is ignored.
+The gate therefore compares two isolated processes and never restarts the production container.
+On Arcana-KB, stage this directory in a private temporary path and run:
+
+```bash
+benchmark/scrutator/live/run_rerank_gate.sh \
+    scrutator-deploy:<DEPLOYED_40_HEX_COMMIT> \
+    <PRIVATE_BENCHMARK_SOURCE_DIR> \
+    <PRIVATE_OUTPUT_DIR>
+```
+
+The default `deployed` scope requires the candidate tag to equal the current production
+container tag. To test an exact, not-yet-deployed fix, set
+`SCRUTATOR_BENCHMARK_SCOPE=candidate`; a green candidate run reports
+`CANDIDATE_ELIGIBLE`, never `ELIGIBLE_TO_FLIP`.
+
+Exit codes are `0` for scope-appropriate eligibility, `1` for a valid terminal `KEEP_OFF`,
+and `2` for invalid or incomplete evidence. Status `0` or `1` is accepted only when a
+validated `summary.json` exists. A `200` response is not enough to prove the treatment:
+every OFF result must carry `citation.score_kind="rrf"` and every ON result must carry
+`citation.score_kind="colbert_rerank"`. The runner also invalidates corpus drift, repeated-order
+instability, observed score ties, missing results, and ColBERT soft-fallback logs.
+
+The current gate is deliberately conservative: no class may lose a hit, at least one paired
+miss must become a hit, the historical fixed-set floors must hold, multi-hop all-gold retrieval
+must not regress, and ON p95 must remain within 5 seconds. This is a decision on the fixed
+33-row `arcanada` set, not a claim of statistically general search superiority.
