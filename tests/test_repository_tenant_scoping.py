@@ -14,6 +14,11 @@ import pytest
 
 
 def _make_pool_mock(mock_conn):
+    transaction = AsyncMock()
+    transaction.__aenter__ = AsyncMock(return_value=None)
+    transaction.__aexit__ = AsyncMock(return_value=False)
+    mock_conn.transaction = MagicMock(return_value=transaction)
+    mock_conn.fetchval = AsyncMock(return_value="force_custom_plan")
     mock_pool = MagicMock()
     ctx = AsyncMock()
     ctx.__aenter__ = AsyncMock(return_value=mock_conn)
@@ -114,3 +119,23 @@ class TestSearchWithFiltersMandatoryNamespaceId:
         # isolates the namespace-scoping escape hatch specifically.
         assert "IS NULL OR" not in sql, "unscoped-read escape hatch must be deleted from search_with_filters"
         assert "c.namespace_id = $2" in sql
+
+
+class TestMetaFactSearchPlanScope:
+    @pytest.mark.asyncio
+    async def test_meta_fact_vector_search_uses_custom_plan_transaction(self):
+        from scrutator.db.repository import search_meta_facts
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await search_meta_facts(namespace_id=5, query_embedding=[0.1] * 1024, limit=5)
+
+        mock_conn.transaction.assert_called_once_with(readonly=True)
+        mock_conn.execute.assert_awaited_once_with("SET LOCAL plan_cache_mode = force_custom_plan")
+        mock_conn.fetchval.assert_awaited_once_with("SHOW plan_cache_mode")
+        sql = mock_conn.fetch.call_args[0][0]
+        assert "WHERE namespace_id = $1" in sql
+        assert "ORDER BY embedding_dense <=> $2" in sql
