@@ -238,7 +238,7 @@ def main():
     # Cost report
     # Sonnet pricing: $3/M input, $15/M output
     cost = (total_input * 3.0 + total_output * 15.0) / 1_000_000
-    print(f"\n--- Cost Report ---")
+    print("\n--- Cost Report ---")
     print(f"Total input tokens: {total_input:,}")
     print(f"Total output tokens: {total_output:,}")
     print(f"Estimated cost: ${cost:.4f}")

@@ -140,7 +140,7 @@ def run_bge_reranker(queries_data: list[dict]) -> list[dict]:
         scores = model.predict(pairs)
         latency_ms = (time.perf_counter() - start) * 1000
 
-        scored = list(zip(candidates, scores))
+        scored = list(zip(candidates, scores, strict=False))
         scored.sort(key=lambda x: x[1], reverse=True)
         ranked_ids = [c["id"] for c, _ in scored]
 
@@ -284,7 +284,7 @@ def main():
 
     # --- BGE-Reranker ---
     if "reranker" in model_list:
-        print(f"\n[1/3] BGE-Reranker-v2-m3...")
+        print("\n[1/3] BGE-Reranker-v2-m3...")
         preds = run_bge_reranker(queries_data)
         metrics = evaluate(preds, golden_ranking, RERANKER_MODEL)
         all_results["reranker"] = {"predictions": preds, "metrics": metrics}
@@ -329,9 +329,12 @@ def main():
 
     print(f"\n{'Model':<30} {'nDCG@5':>7} {'MRR':>6} {'p50ms':>7} {'Cost$':>8}")
     print("-" * 60)
-    for key, data in all_results.items():
+    for _key, data in all_results.items():
         m = data["metrics"]
-        print(f"{m['model']:<30} {m['ndcg_at_5']:>7.3f} {m['mrr']:>6.3f} {m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}")
+        print(
+            f"{m['model']:<30} {m['ndcg_at_5']:>7.3f} {m['mrr']:>6.3f} "
+            f"{m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}"
+        )
 
 
 if __name__ == "__main__":
