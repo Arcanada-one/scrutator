@@ -177,7 +177,10 @@ def main():
         preds = run_gliner(chunks, ENTITY_TYPES)
         metrics = evaluate(preds, golden, GLINER2_MODEL)
         all_results["gliner"] = {"predictions": preds, "metrics": metrics}
-        print(f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  R={metrics['overall']['recall']:.3f}")
+        print(
+            f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  "
+            f"R={metrics['overall']['recall']:.3f}"
+        )
         print(f"  Latency p50={metrics['latency_p50_ms']:.0f}ms  Cost=${metrics['cost_usd']:.4f}")
 
     # --- Haiku ---
@@ -187,7 +190,10 @@ def main():
         preds = run_llm(client, chunks, HAIKU_MODEL)
         metrics = evaluate(preds, golden, HAIKU_MODEL)
         all_results["haiku"] = {"predictions": preds, "metrics": metrics}
-        print(f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  R={metrics['overall']['recall']:.3f}")
+        print(
+            f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  "
+            f"R={metrics['overall']['recall']:.3f}"
+        )
         print(f"  Latency p50={metrics['latency_p50_ms']:.0f}ms  Cost=${metrics['cost_usd']:.4f}")
 
     # --- GPT-4o-mini ---
@@ -197,7 +203,10 @@ def main():
         preds = run_llm(client, chunks, GPT4OMINI_MODEL)
         metrics = evaluate(preds, golden, GPT4OMINI_MODEL)
         all_results["gpt4omini"] = {"predictions": preds, "metrics": metrics}
-        print(f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  R={metrics['overall']['recall']:.3f}")
+        print(
+            f"  F1={metrics['overall']['f1']:.3f}  P={metrics['overall']['precision']:.3f}  "
+            f"R={metrics['overall']['recall']:.3f}"
+        )
         print(f"  Latency p50={metrics['latency_p50_ms']:.0f}ms  Cost=${metrics['cost_usd']:.4f}")
 
     # Save results
@@ -219,9 +228,12 @@ def main():
     # Summary table
     print(f"\n{'Model':<30} {'F1':>6} {'Prec':>6} {'Rec':>6} {'p50ms':>7} {'Cost$':>8}")
     print("-" * 65)
-    for key, data in all_results.items():
+    for _key, data in all_results.items():
         m = data["metrics"]
-        print(f"{m['model']:<30} {m['overall']['f1']:>6.3f} {m['overall']['precision']:>6.3f} {m['overall']['recall']:>6.3f} {m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}")
+        print(
+            f"{m['model']:<30} {m['overall']['f1']:>6.3f} {m['overall']['precision']:>6.3f} "
+            f"{m['overall']['recall']:>6.3f} {m['latency_p50_ms']:>7.0f} {m['cost_usd']:>8.4f}"
+        )
 
 
 if __name__ == "__main__":

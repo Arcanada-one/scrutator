@@ -51,6 +51,22 @@ async def apply_schema() -> None:
 
 
 @asynccontextmanager
+async def acquire_search_connection(pool: asyncpg.Pool) -> AsyncIterator[asyncpg.Connection]:
+    """Acquire a read-only connection that always uses parameter-aware search plans.
+
+    PostgreSQL's automatic prepared-statement policy may switch from custom to generic
+    plans after five executions. On the production corpus that changed the candidate
+    set for identical hybrid-search inputs. Keep the override transaction-local so it
+    cannot affect ingestion, graph, provenance, or maintenance queries using the pool.
+    """
+    async with pool.acquire() as conn, conn.transaction(readonly=True):
+        await conn.execute("SET LOCAL plan_cache_mode = force_custom_plan")
+        if await conn.fetchval("SHOW plan_cache_mode") != "force_custom_plan":
+            raise RuntimeError("hybrid retrieval requires PostgreSQL custom query plans")
+        yield conn
+
+
+@asynccontextmanager
 async def acquire_scoped(namespace_id: int) -> AsyncIterator[asyncpg.Connection]:
     """Acquire a pooled connection scoped to one tenant for the RLS (SRCH-0023 B2) GUC.
 

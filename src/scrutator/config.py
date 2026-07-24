@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     # SRCH-0038 (D5): namespace whose documents are labelled trust_class="skill" (a routing hint,
     # NOT an execution authorization — see FetchResponse docstring / PRD D5).
     skills_namespace: str = "skills"
+    # SRCH-0039: exact whole-document bytes for the LARGE evidence corpus via the isolated
+    # `evidence_documents` table (Mechanism C). Default-off (SCRUTATOR_EVIDENCE_EXACT_BYTES),
+    # matching the rerank_enabled/auth_enforce idiom: no behaviour change on merge until the flag
+    # flips. When ON, a non-skills fetch with a present evidence_documents row returns exact bytes
+    # (content_exact=True); an absent row gracefully degrades to reassembly (content_exact=False),
+    # NOT the skills fail-closed 409 — evidence row-absence is an expected pre-backfill state.
+    evidence_exact_bytes: bool = False
 
     database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"
     database_pool_min: int = 2

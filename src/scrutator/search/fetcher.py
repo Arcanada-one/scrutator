@@ -34,6 +34,7 @@ from scrutator.db.models import (
 from scrutator.db.repository import (
     fetch_chunks_by_chunk_id,
     fetch_chunks_by_doc_id,
+    fetch_evidence_raw_content,
     fetch_source_raw_content,
 )
 from scrutator.search.ingest_safety import source_trust_tier
@@ -106,10 +107,35 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         full_content = raw_content
         content_exact = True
     else:
-        # rows are ordered by chunk_index — reassembly is the inverse of the header-split. This is
-        # best-effort (approximate) for the evidence corpus: `content_exact=False` flags it so.
-        full_content = "".join(row["content"] for row in rows)
-        content_exact = False
+        # SRCH-0039 (Mechanism C): the LARGE evidence corpus gets exact whole-document bytes from
+        # the isolated `evidence_documents` table, flag-gated and gracefully-degrading. When
+        # `evidence_exact_bytes` is ON and a row is present, return its exact `raw_content`
+        # (`content_exact=True`, `sha256(content) == content_hash` by construction). When the flag
+        # is OFF (default — no behaviour change on merge) or the row is ABSENT (an expected
+        # pre-backfill state on the huge existing corpus that is filled gradually), fall back to the
+        # lossy chunk reassembly (`content_exact=False`). This absence path GRACEFULLY DEGRADES —
+        # deliberately NOT the skills fail-closed 409 above — because evidence row-absence is a
+        # transient migration state, not an integrity failure (the ratified skills-vs-evidence
+        # policy divergence). The by-construction invariant still holds: whenever
+        # `content_exact=True`, `sha256(content) == content_hash`.
+        evidence_raw = None
+        if settings.evidence_exact_bytes:
+            evidence_row = await fetch_evidence_raw_content(source_id, allowed_namespace_ids)
+            # Read-side belt-and-braces (SRCH-0039 pre-merge review): trust the exact-bytes row ONLY
+            # when its bound-at-write `content_hash` still equals the current chunk stamp
+            # (`content_hash` above). A stale row — one whose bytes predate a content change that
+            # re-stamped the chunks — is REJECTED here and degrades to reassembly, so fetch can never
+            # return stale bytes as `content_exact=True`. This compares two stored hashes (both bound
+            # at write time), NOT a re-hash of the body, so it does not recompute integrity at read.
+            if evidence_row is not None and evidence_row[1] == content_hash:
+                evidence_raw = evidence_row[0]
+        if evidence_raw is not None:
+            full_content = evidence_raw
+            content_exact = True
+        else:
+            # rows are ordered by chunk_index — reassembly is the inverse of the header-split.
+            full_content = "".join(row["content"] for row in rows)
+            content_exact = False
 
     indexed_ats = [row["indexed_at"] for row in rows if row.get("indexed_at")]
     max_indexed_at = max(indexed_ats) if indexed_ats else ""

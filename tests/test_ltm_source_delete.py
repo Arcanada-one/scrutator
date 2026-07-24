@@ -272,6 +272,10 @@ class _StatefulDeleteConnection:
             for entity_id in doomed:
                 del self.state["entities"][entity_id]
             return f"DELETE {len(doomed)}"
+        if compact.startswith("DELETE FROM evidence_documents"):
+            # SRCH-0039 NOTE A: source deletion also drops any exact-bytes evidence row so a
+            # delete/re-create cannot resurrect a stale one. No evidence rows in this graph fixture.
+            return "DELETE 0"
         raise AssertionError(sql)
 
 
