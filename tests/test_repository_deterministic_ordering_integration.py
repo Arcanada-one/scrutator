@@ -53,7 +53,8 @@ async def deterministic_search_database():
             textsearch_en tsvector GENERATED ALWAYS AS (
                 to_tsvector('english', content)
             ) STORED,
-            metadata JSONB DEFAULT '{{}}'
+            metadata JSONB DEFAULT '{{}}',
+            created_at TIMESTAMPTZ DEFAULT NOW()
         );
         CREATE TABLE "{schema}".sparse_vectors (
             chunk_id UUID REFERENCES "{schema}".chunks(id) ON DELETE CASCADE PRIMARY KEY,
