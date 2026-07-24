@@ -8,7 +8,7 @@ from uuid import UUID
 
 import numpy as np
 
-from scrutator.db.connection import get_pool
+from scrutator.db.connection import acquire_search_connection, get_pool
 from scrutator.db.models import (
     ChunkLookupResult,
     NamespaceInfo,
@@ -741,7 +741,7 @@ async def hybrid_search(
     if query_sparse:
         # 3-way RRF: dense + sparse + FTS
         sparse_json = json.dumps(query_sparse)
-        async with pool.acquire() as conn:
+        async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
                 """
                 WITH semantic AS (
@@ -811,7 +811,7 @@ async def hybrid_search(
             )
     else:
         # 2-way RRF: dense + FTS (backward-compatible)
-        async with pool.acquire() as conn:
+        async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
                 """
                 WITH semantic AS (
@@ -1503,7 +1503,7 @@ async def search_with_filters(
         boost_expr = "r.rrf_score * COALESCE((c.metadata->>'importance')::real, 0.5)"
 
     pool = await get_pool()
-    async with pool.acquire() as conn:
+    async with acquire_search_connection(pool) as conn:
         rows = await conn.fetch(
             f"""
             WITH semantic AS (

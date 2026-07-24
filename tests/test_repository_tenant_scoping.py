@@ -14,6 +14,11 @@ import pytest
 
 
 def _make_pool_mock(mock_conn):
+    transaction = AsyncMock()
+    transaction.__aenter__ = AsyncMock(return_value=None)
+    transaction.__aexit__ = AsyncMock(return_value=False)
+    mock_conn.transaction = MagicMock(return_value=transaction)
+    mock_conn.fetchval = AsyncMock(return_value="force_custom_plan")
     mock_pool = MagicMock()
     ctx = AsyncMock()
     ctx.__aenter__ = AsyncMock(return_value=mock_conn)
