@@ -65,8 +65,14 @@ async def deterministic_search_database():
     async def initialize(connection: asyncpg.Connection) -> None:
         await register_vector(connection)
 
+    session_settings = {"plan_cache_mode": "auto"}
+
     async def configure(connection: asyncpg.Connection) -> None:
+        plan_cache_mode = session_settings["plan_cache_mode"]
+        if plan_cache_mode not in {"auto", "force_custom_plan", "force_generic_plan"}:
+            raise ValueError("invalid test plan_cache_mode")
         await connection.execute(f'SET search_path TO "{schema}", public')
+        await connection.execute(f"SET plan_cache_mode = {plan_cache_mode}")
 
     pool = await asyncpg.create_pool(
         dsn=dsn,
@@ -77,7 +83,7 @@ async def deterministic_search_database():
     )
     try:
         namespace_id = await pool.fetchval("INSERT INTO namespaces (name) VALUES ('determinism') RETURNING id")
-        yield pool, namespace_id
+        yield pool, namespace_id, session_settings
     finally:
         await pool.close()
         await admin.execute(f'DROP SCHEMA "{schema}" CASCADE')
@@ -91,7 +97,7 @@ async def test_hybrid_search_repeats_exact_tie_order_on_postgresql(
 ) -> None:
     from scrutator.db.repository import hybrid_search
 
-    pool, namespace_id = deterministic_search_database
+    pool, namespace_id, session_settings = deterministic_search_database
     identifiers = [uuid.UUID(int=value) for value in range(1, 7)]
     insertion_order = identifiers.copy()
     random.Random(20260724).shuffle(insertion_order)
@@ -125,7 +131,8 @@ async def test_hybrid_search_repeats_exact_tie_order_on_postgresql(
             '{"deterministic": 1.0}',
         )
 
-    await pool.execute(f"SET plan_cache_mode = {plan_cache_mode}")
+    session_settings["plan_cache_mode"] = plan_cache_mode
+    assert await pool.fetchval("SHOW plan_cache_mode") == plan_cache_mode
     monkeypatch.setattr("scrutator.db.repository.get_pool", lambda: _awaitable(pool))
     expected = [str(chunk_id) for chunk_id in identifiers[:2]]
 
@@ -150,7 +157,7 @@ async def test_filtered_hybrid_repeats_exact_tie_order_on_postgresql(
 ) -> None:
     from scrutator.db.repository import search_with_filters
 
-    pool, namespace_id = deterministic_search_database
+    pool, namespace_id, session_settings = deterministic_search_database
     identifiers = [uuid.UUID(int=value) for value in range(1, 7)]
     insertion_order = identifiers.copy()
     random.Random(20260724).shuffle(insertion_order)
@@ -179,7 +186,8 @@ async def test_filtered_hybrid_repeats_exact_tie_order_on_postgresql(
             chunk_id.int % 2 == 1,
         )
 
-    await pool.execute("SET plan_cache_mode = force_generic_plan")
+    session_settings["plan_cache_mode"] = "force_generic_plan"
+    assert await pool.fetchval("SHOW plan_cache_mode") == "force_generic_plan"
     monkeypatch.setattr("scrutator.db.repository.get_pool", lambda: _awaitable(pool))
     monkeypatch.setattr("scrutator.search.embedder.embed_single", lambda _query: _awaitable(vector))
     expected = [str(identifiers[0]), str(identifiers[2])]
