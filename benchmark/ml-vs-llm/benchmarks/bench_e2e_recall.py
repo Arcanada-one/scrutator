@@ -21,7 +21,6 @@ import re
 import sys
 import time
 from difflib import SequenceMatcher
-from pathlib import Path
 
 import requests as http_requests
 
@@ -36,8 +35,7 @@ from config import (
     SCRUTATOR_URL,
 )
 from utils.llm_client import OpenRouterClient
-from utils.metrics import compute_cost, compute_mrr, compute_ndcg
-
+from utils.metrics import compute_cost
 
 # ---------------------------------------------------------------------------
 # Query loading
@@ -124,7 +122,7 @@ def rerank_bge(query: str, candidates: list[dict], model) -> tuple[list[str], fl
     start = time.perf_counter()
     scores = model.predict(pairs)
     latency_ms = (time.perf_counter() - start) * 1000
-    scored = list(zip(candidates, scores))
+    scored = list(zip(candidates, scores, strict=False))
     scored.sort(key=lambda x: x[1], reverse=True)
     return [c["id"] for c, _ in scored], latency_ms
 
@@ -298,8 +296,14 @@ def main():
         strategy_results = []
         for qd in queries_data:
             ranked_ids = rerank_none(qd["candidates"])
-            r5 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5, answer_summary=qd.get("answer_summary", ""))
-            r10 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10, answer_summary=qd.get("answer_summary", ""))
+            r5 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5,
+                answer_summary=qd.get("answer_summary", ""),
+            )
+            r10 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10,
+                answer_summary=qd.get("answer_summary", ""),
+            )
             strategy_results.append({
                 "query_id": qd["id"],
                 "query_class": qd["class"],
@@ -322,8 +326,14 @@ def main():
         strategy_results = []
         for i, qd in enumerate(queries_data):
             ranked_ids, lat = rerank_bge(qd["question"], qd["candidates"], bge_model)
-            r5 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5, answer_summary=qd.get("answer_summary", ""))
-            r10 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10, answer_summary=qd.get("answer_summary", ""))
+            r5 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5,
+                answer_summary=qd.get("answer_summary", ""),
+            )
+            r10 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10,
+                answer_summary=qd.get("answer_summary", ""),
+            )
             strategy_results.append({
                 "query_id": qd["id"],
                 "query_class": qd["class"],
@@ -349,8 +359,14 @@ def main():
             ranked_ids, lat, in_t, out_t = rerank_llm(
                 qd["question"], qd["candidates"], client, HAIKU_MODEL
             )
-            r5 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5, answer_summary=qd.get("answer_summary", ""))
-            r10 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10, answer_summary=qd.get("answer_summary", ""))
+            r5 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5,
+                answer_summary=qd.get("answer_summary", ""),
+            )
+            r10 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10,
+                answer_summary=qd.get("answer_summary", ""),
+            )
             strategy_results.append({
                 "query_id": qd["id"],
                 "query_class": qd["class"],
@@ -377,8 +393,14 @@ def main():
             ranked_ids, lat, in_t, out_t = rerank_llm(
                 qd["question"], qd["candidates"], client, GPT4OMINI_MODEL
             )
-            r5 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5, answer_summary=qd.get("answer_summary", ""))
-            r10 = evaluate_recall(ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10, answer_summary=qd.get("answer_summary", ""))
+            r5 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=5,
+                answer_summary=qd.get("answer_summary", ""),
+            )
+            r10 = evaluate_recall(
+                ranked_ids, qd["candidates_map"], qd["golden_snippets"], k=10,
+                answer_summary=qd.get("answer_summary", ""),
+            )
             strategy_results.append({
                 "query_id": qd["id"],
                 "query_class": qd["class"],
@@ -451,7 +473,7 @@ def main():
         )
 
     # Per-class breakdown
-    print(f"\nPer-class recall@5:")
+    print("\nPer-class recall@5:")
     print(f"{'Strategy':<20} {'factual':>9} {'temporal':>10} {'multi-hop':>10}")
     print("-" * 52)
     for strategy, s in summary.items():
