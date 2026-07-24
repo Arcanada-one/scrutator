@@ -746,27 +746,23 @@ async def hybrid_search(
                 """
                 WITH semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
-                        ORDER BY c.embedding_dense <=> $1, c.id ASC
+                        ORDER BY c.embedding_dense <=> $1
                     ) AS rank
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
-                    ORDER BY c.embedding_dense <=> $1, c.id ASC
+                    ORDER BY c.embedding_dense <=> $1
                     LIMIT $3
                 ),
                 fulltext AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                                 c.id ASC
+                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                     ) AS rank
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
-                    ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                             + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                               c.id ASC
                     LIMIT $3
                 ),
                 sparse_match AS (
@@ -776,17 +772,11 @@ async def hybrid_search(
                                 COALESCE((sv.token_weights->>key)::real, 0) * value::real
                             )
                             FROM jsonb_each_text($6::jsonb) AS q(key, value)
-                        ) DESC, sv.chunk_id ASC
+                        ) DESC
                     ) AS rank
                     FROM sparse_vectors sv
                     JOIN chunks c ON c.id = sv.chunk_id
                     WHERE c.namespace_id = $2
-                    ORDER BY (
-                        SELECT SUM(
-                            COALESCE((sv.token_weights->>key)::real, 0) * value::real
-                        )
-                        FROM jsonb_each_text($6::jsonb) AS q(key, value)
-                    ) DESC, sv.chunk_id ASC
                     LIMIT $3
                 ),
                 ranked AS (
@@ -798,7 +788,7 @@ async def hybrid_search(
                     FROM semantic s
                     FULL OUTER JOIN fulltext f ON s.id = f.id
                     FULL OUTER JOIN sparse_match sp ON COALESCE(s.id, f.id) = sp.id
-                    ORDER BY rrf_score DESC, chunk_id ASC
+                    ORDER BY rrf_score DESC
                     LIMIT $5
                 )
                 SELECT
@@ -810,7 +800,7 @@ async def hybrid_search(
                 JOIN chunks c ON c.id = r.chunk_id
                 JOIN namespaces n ON n.id = c.namespace_id
                 LEFT JOIN projects p ON p.id = c.project_id
-                ORDER BY r.rrf_score DESC, r.chunk_id ASC
+                ORDER BY r.rrf_score DESC
                 """,
                 vector,
                 namespace_id,
@@ -826,27 +816,23 @@ async def hybrid_search(
                 """
                 WITH semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
-                        ORDER BY c.embedding_dense <=> $1, c.id ASC
+                        ORDER BY c.embedding_dense <=> $1
                     ) AS rank
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
-                    ORDER BY c.embedding_dense <=> $1, c.id ASC
+                    ORDER BY c.embedding_dense <=> $1
                     LIMIT $3
                 ),
                 fulltext AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                                 c.id ASC
+                               + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                     ) AS rank
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
-                    ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                             + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                               c.id ASC
                     LIMIT $3
                 ),
                 ranked AS (
@@ -856,7 +842,7 @@ async def hybrid_search(
                             + COALESCE(1.0 / (60 + f.rank), 0.0) AS rrf_score
                     FROM semantic s
                     FULL OUTER JOIN fulltext f ON s.id = f.id
-                    ORDER BY rrf_score DESC, chunk_id ASC
+                    ORDER BY rrf_score DESC
                     LIMIT $5
                 )
                 SELECT
@@ -868,7 +854,7 @@ async def hybrid_search(
                 JOIN chunks c ON c.id = r.chunk_id
                 JOIN namespaces n ON n.id = c.namespace_id
                 LEFT JOIN projects p ON p.id = c.project_id
-                ORDER BY r.rrf_score DESC, r.chunk_id ASC
+                ORDER BY r.rrf_score DESC
                 """,
                 vector,
                 namespace_id,
@@ -1522,29 +1508,25 @@ async def search_with_filters(
             f"""
             WITH semantic AS (
                 SELECT c.id, ROW_NUMBER() OVER (
-                    ORDER BY c.embedding_dense <=> $1, c.id ASC
+                    ORDER BY c.embedding_dense <=> $1
                 ) AS rank
                 FROM chunks c
                 WHERE c.namespace_id = $2
                   AND c.embedding_dense IS NOT NULL
                   {extra_where}
-                ORDER BY c.embedding_dense <=> $1, c.id ASC
+                ORDER BY c.embedding_dense <=> $1
                 LIMIT $3
             ),
             fulltext AS (
                 SELECT c.id, ROW_NUMBER() OVER (
                     ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                           + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                             c.id ASC
+                           + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC
                 ) AS rank
                 FROM chunks c
                 WHERE c.namespace_id = $2
                   AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                        OR c.textsearch_en @@ plainto_tsquery('english', $4))
                   {extra_where}
-                ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
-                         + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
-                           c.id ASC
                 LIMIT $3
             ),
             ranked AS (
@@ -1554,7 +1536,7 @@ async def search_with_filters(
                         + COALESCE(1.0 / (60 + f.rank), 0.0) AS rrf_score
                 FROM semantic s
                 FULL OUTER JOIN fulltext f ON s.id = f.id
-                ORDER BY rrf_score DESC, chunk_id ASC
+                ORDER BY rrf_score DESC
                 LIMIT $5
             )
             SELECT
@@ -1567,7 +1549,7 @@ async def search_with_filters(
             JOIN chunks c ON c.id = r.chunk_id
             JOIN namespaces n ON n.id = c.namespace_id
             LEFT JOIN projects p ON p.id = c.project_id
-            ORDER BY score DESC, r.chunk_id ASC
+            ORDER BY score DESC
             """,
             *params,
         )
