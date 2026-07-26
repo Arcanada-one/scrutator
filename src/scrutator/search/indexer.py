@@ -316,7 +316,7 @@ def _complete_results(
 
 
 def _finite_number(value: object) -> bool:
-    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(float(value))
+    return not isinstance(value, bool) and isinstance(value, int | float) and math.isfinite(float(value))
 
 
 def _valid_dense_embeddings(embeddings: object, expected_count: int) -> bool:
