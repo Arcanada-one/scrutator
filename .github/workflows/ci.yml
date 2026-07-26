@@ -11,6 +11,7 @@ on:
 
 jobs:
   network-exposure:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     # Mandatory per documentation/mandates/cicd-convention.md § 5. This repo's harness code
     # makes outbound-only calls (no new listener) — wired anyway per repo-wide
     # convention, not because this PR introduces a compose/redis/postgres/systemd change.
@@ -18,10 +19,11 @@ jobs:
     with:
       compose_paths: docker-compose.yml
       datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f
-      runner_labels: '["ubuntu-24.04"]'
+      runner_labels: '["self-hosted","linux","arcana-prod"]'
 
   lint-and-test:
-    runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux, ci-general, docker]
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -50,7 +52,8 @@ jobs:
         env:
           PYTHONPATH: src
           # The production transaction test may skip only on developer hosts.
-          # Hosted PR CI has Docker and must execute the semantic image proof.
+          # The trusted self-hosted PR lane has Docker and must execute the
+          # semantic image proof.
           SCRUTATOR_REQUIRE_DOCKER_SEMANTIC_TEST: "1"
 
       # Keep this in a separate pytest process: the live-wrapper contract

@@ -729,20 +729,21 @@ def test_real_compose_rollback_uses_live_project_identity_and_relative_paths(tmp
         subprocess.run([*command, "down", "--volumes", "--remove-orphans"], capture_output=True, check=False)
 
 
-def test_ci_workflow_is_hosted_validation_only() -> None:
+def test_ci_workflow_uses_trusted_self_hosted_validation_only() -> None:
     workflow = CI_WORKFLOW.read_text()
 
     assert "permissions:\n  contents: read" in workflow
     assert "pull_request:" in workflow
-    assert "runs-on: ubuntu-24.04" in workflow
+    assert "runs-on: [self-hosted, linux, ci-general, docker]" in workflow
     assert 'SCRUTATOR_REQUIRE_DOCKER_SEMANTIC_TEST: "1"' in workflow
-    assert "self-hosted" not in workflow
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in workflow
+    assert "ubuntu-24.04" not in workflow
     assert "scrutator-deploy-transaction.sh" not in workflow
     assert "  deploy:" not in workflow
     assert "workflow_dispatch:" not in workflow
 
 
-def test_deploy_workflow_uses_hosted_semantic_gate_and_restricted_runner_group() -> None:
+def test_deploy_workflow_uses_trusted_semantic_gate_and_restricted_runner_group() -> None:
     workflow = DEPLOY_WORKFLOW.read_text()
 
     assert "permissions:\n  contents: read" in workflow
@@ -762,9 +763,10 @@ def test_deploy_workflow_uses_hosted_semantic_gate_and_restricted_runner_group()
     uses = re.findall(r"^\s*uses:\s*\S+@([^\s#]+)", workflow, flags=re.MULTILINE)
     assert uses
     assert all(re.fullmatch(r"[0-9a-f]{40}", revision) for revision in uses)
-    assert "runs-on: ubuntu-24.04" in workflow
+    assert "runs-on: [self-hosted, linux, ci-general, docker]" in workflow
     assert "uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@" in workflow
-    assert "runner_labels: '[\"ubuntu-24.04\"]'" in workflow
+    assert 'runner_labels: \'["self-hosted","linux","arcana-prod"]\'' in workflow
+    assert "ubuntu-24.04" not in workflow
     assert "ruff check src/ tests/" in workflow
     assert "ruff format --check src/ tests/" in workflow
     assert "bandit -ll -ii" in workflow

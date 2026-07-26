@@ -14,10 +14,10 @@ jobs:
     with:
       compose_paths: docker-compose.yml
       datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f
-      runner_labels: '["ubuntu-24.04"]'
+      runner_labels: '["self-hosted","linux","arcana-prod"]'
 
   verify-exact-target:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, ci-general, docker]
     steps:
       - name: Check out reviewed source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

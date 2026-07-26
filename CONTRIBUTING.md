@@ -8,8 +8,9 @@ Scrutator accepts focused pull requests against `main`.
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 PYTHONPATH=src .venv/bin/pytest tests/ -v
-.venv/bin/ruff check src/ tests/
-.venv/bin/ruff format --check src/ tests/
+PYTHONPATH=src:benchmark/scrutator .venv/bin/pytest benchmark/scrutator/tests/ -v
+.venv/bin/ruff check src/ tests/ benchmark/scrutator/
+.venv/bin/ruff format --check src/ tests/ benchmark/scrutator/harness.py benchmark/scrutator/tests/
 ```
 
 Add a regression test for every behavior change. Keep namespace authorization,
