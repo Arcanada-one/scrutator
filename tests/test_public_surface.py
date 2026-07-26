@@ -22,8 +22,10 @@ def public_text_files() -> list[Path]:
         [
             ROOT / "benchmark" / "scrutator" / "README.md",
             ROOT / "benchmark" / "scrutator" / "CONSUMERS.md",
+            ROOT / "benchmark" / "scrutator" / "harness.py",
         ]
     )
+    files.extend(sorted((ROOT / "benchmark" / "scrutator" / "tests").glob("*.py")))
     return files
 
 
@@ -82,7 +84,7 @@ def test_workflow_dependencies_are_immutable_and_current():
             findings.append(f"{workflow.name}: disabled if:false job")
 
     benchmark = (ROOT / ".github" / "workflows" / "benchmark-scrutator.yml").read_text(encoding="utf-8")
-    assert "ci-general" in benchmark
+    assert "ci-general" not in benchmark
     assert "arcana-ai" not in benchmark
     assert findings == []
 
@@ -115,6 +117,73 @@ def test_search_benchmark_mints_and_removes_a_reader_token():
     assert "--bearer-token-file" not in workflow
     assert "- name: Remove benchmark reader token\n        if: always()" in workflow
     assert 'pip install -e ".[dev]"' in workflow
+
+
+def test_live_search_benchmark_is_main_only_and_uses_protected_environment():
+    workflow_path = ROOT / ".github" / "workflows" / "benchmark-scrutator.yml"
+    workflow = workflow_path.read_text(encoding="utf-8")
+    benchmark = yaml.safe_load(workflow)["jobs"]["benchmark"]
+
+    assert benchmark["if"] == "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'"
+    assert benchmark["runs-on"] == {
+        "group": "scrutator-prod",
+        "labels": ["self-hosted", "linux", "arcana-db", "docker"],
+    }
+    assert benchmark["environment"] == "kb-production"
+    assert "MC_API_KEY" not in workflow
+
+
+def test_reader_token_files_are_created_exclusively_with_private_mode():
+    for filename in ("benchmark-scrutator.yml", "recall-regression.yml"):
+        workflow = (ROOT / ".github" / "workflows" / filename).read_text(encoding="utf-8")
+
+        assert "os.open(" in workflow, filename
+        assert "os.O_WRONLY | os.O_CREAT | os.O_EXCL" in workflow, filename
+        assert "0o600" in workflow, filename
+        assert "os.fdopen(" in workflow, filename
+        assert ".write_text(token)" not in workflow, filename
+        assert ".chmod(0o600)" not in workflow, filename
+
+
+def test_normal_ci_lints_and_tests_the_active_search_benchmark():
+    workflow_path = ROOT / ".github" / "workflows" / "ci.yml"
+    workflow = workflow_path.read_text(encoding="utf-8")
+    steps = {
+        step["name"]: step for step in yaml.safe_load(workflow)["jobs"]["lint-and-test"]["steps"] if "name" in step
+    }
+
+    assert "ruff check src/ tests/ benchmark/scrutator/" in workflow
+    assert "ruff format --check src/ tests/ benchmark/scrutator/harness.py benchmark/scrutator/tests/" in workflow
+    assert steps["Test"]["run"] == "pytest tests/ -v"
+    assert steps["Test"]["env"]["PYTHONPATH"] == "src"
+    assert steps["Benchmark tests"]["run"] == "pytest benchmark/scrutator/tests/ -v"
+    assert steps["Benchmark tests"]["env"]["PYTHONPATH"] == "src:benchmark/scrutator"
+
+
+def test_security_policy_matches_ecosystem_response_sla():
+    policy = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
+
+    for required in (
+        "security@arcanada.ai",
+        "72 hours",
+        "7 days",
+        "90 days",
+        "180 days",
+        "best effort",
+        "14 days",
+        "120 days",
+        "whichever is sooner",
+        "coordinated disclosure",
+    ):
+        assert required in policy
+
+
+def test_numpy_determinism_copy_matches_declared_dependency_range():
+    copy = (ROOT / "documentation" / "how-to" / "ltm-reflect.md").read_text(encoding="utf-8")
+
+    assert "`numpy>=1.26`" in copy
+    assert "not exactly pinned" in copy
+    assert "numpy version is pinned" not in copy
 
 
 def test_dependabot_updates_have_a_seven_day_cooldown():

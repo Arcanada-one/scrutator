@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""benchmark/scrutator/harness.py — SRCH-0015 multi-model `/v1/search` recall harness.
+"""Multi-model `/v1/search` recall harness.
 
 Extends `measure.py`'s request/scoring shape (ported verbatim as the starting point) with:
   - a pluggable model-dispatch interface (`ModelClient`),
-  - a `corpus_pinned_at` + runtime liveness pre-flight (D-REQ-02/D-REQ-03),
+  - a `corpus_pinned_at` + runtime liveness pre-flight,
   - recall@{1,5,10}, MRR, nDCG@5, latency p50/p95, cost per model,
-  - infra-fail vs. threshold-fail exit-code separation (D-REQ-05).
+  - infra-fail vs. threshold-fail exit-code separation.
 
-Scope decision (SRCH-0015 /dr-do, recorded in CONSUMERS.md and the task description):
-only `bge-m3` is wired to a live network call in this task. `bge-reranker` (no confirmed
+Scope decision: only `bge-m3` is wired to a live network call. `bge-reranker` (no confirmed
 live cross-encoder endpoint in this repo) and any `llm:*` baseline (real, non-trivial API
-spend at volume — the operator's HARD-GATE) are registered in `build_client()` but raise
+spend at volume requires explicit operator authorization) are registered in `build_client()` but raise
 `NotImplementedError` — tests inject a fake `ModelClient` to prove the multi-model dispatch
-loop and exit-code logic (V-AC-02a) without making those calls live. Also per PRD § Context
-Analysis: `rerank` is a no-op on `/v1/search` today (SRCH-0029 not shipped) — this harness
+loop and exit-code logic without making those calls live. The `rerank` field is a no-op on
+`/v1/search` today because the ColBERT stage is not shipped, so this harness
 does not report "rerank on" vs. "rerank off" as two distinct measured conditions.
 
 Stdlib-only by design (matches `measure.py`): this script must run on a bare self-hosted
@@ -43,14 +42,14 @@ SUCCESS_CODE = 0
 DEFAULT_ENDPOINT = "http://100.70.137.104:8310/v1/search"
 DEFAULT_NAMESPACE = "arcanada"
 DEFAULT_TIMEOUT_S = 30.0
-# Lower bound of SRCH-0031's baseline recall@5 (0.909) ± 0.03, per V-AC-06.
+# Lower bound of the original baseline recall@5 (0.909) ± 0.03.
 DEFAULT_RECALL_THRESHOLD = 0.879
 
 
 class InfraError(Exception):
     """Raised by a ModelClient when a request cannot complete due to infra failure
     (connection refused, mesh timeout, provider error) — distinct from a low-but-successful
-    recall result. See D-REQ-05."""
+    recall result."""
 
 
 # --------------------------------------------------------------------------- golden rows
@@ -109,7 +108,7 @@ def is_row_live(row: GoldenRow, corpus_root: Path) -> bool:
 
 
 def partition_by_liveness(rows: list[GoldenRow], corpus_root: Path) -> tuple[list[GoldenRow], list[GoldenRow]]:
-    """Split rows into (live, stale) per the liveness pre-flight (D-REQ-03)."""
+    """Split rows into (live, stale) for the liveness pre-flight."""
     live, stale = [], []
     for row in rows:
         (live if is_row_live(row, corpus_root) else stale).append(row)
@@ -173,8 +172,8 @@ class ModelClient(Protocol):
 
 class BGEM3Client:
     """Live dispatch to Scrutator's hybrid `/v1/search` (dense+sparse RRF). `rerank` is
-    intentionally never sent — SRCH-0029's ColBERT stage is a no-op today (see module
-    docstring); sending `rerank=true` here would silently duplicate this same measurement
+    intentionally never sent because the ColBERT stage is a no-op today (see module
+    docstring); sending `rerank=true` would silently duplicate this same measurement
     under a second label."""
 
     name = "bge-m3"
@@ -240,7 +239,7 @@ class BGEM3Client:
 
 
 class NotWiredClient:
-    """Placeholder for a model with no live dispatch path in this task's scope.
+    """Placeholder for a model with no live dispatch path in the current scope.
 
     See module docstring's "Scope decision" note. `build_client()` returns this for
     `bge-reranker` and any `llm:*` alias; `retrieve()` always raises `NotImplementedError`.
@@ -251,8 +250,7 @@ class NotWiredClient:
 
     def retrieve(self, query: str, limit: int) -> tuple[list[str], float]:
         raise NotImplementedError(
-            f"model '{self.name}' has no live dispatch path yet — operator-gated per "
-            "SRCH-0015 scope, see benchmark/scrutator/README.md"
+            f"model '{self.name}' has no live dispatch path yet — operator-gated; see benchmark/scrutator/README.md"
         )
 
     def cost_usd(self) -> float:
@@ -375,7 +373,7 @@ def run_model(
 
 
 def decide_exit_code(summaries: dict[str, dict], threshold: float, metric: str = "recall@5") -> tuple[int, str]:
-    """V-AC-02a/02b verdict: any model's overall metric below threshold ⇒ THRESHOLD_FAIL_CODE."""
+    """Return threshold failure when any model's overall metric is below the floor."""
     for summary in summaries.values():
         if summary.get("overall", {}).get(metric, 0.0) < threshold:
             return THRESHOLD_FAIL_CODE, "threshold_fail"
@@ -386,7 +384,7 @@ def decide_exit_code(summaries: dict[str, dict], threshold: float, metric: str =
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="SRCH-0015 Scrutator /v1/search recall harness")
+    p = argparse.ArgumentParser(description="Scrutator /v1/search recall harness")
     p.add_argument("--golden", default=None, help="path to golden-arcanada-v{N}.jsonl (required unless --dry-run-*)")
     p.add_argument(
         "--models",
@@ -407,7 +405,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--recall-threshold",
         type=float,
         default=DEFAULT_RECALL_THRESHOLD,
-        help="minimum overall recall@5 required for exit 0 (default: SRCH-0031 baseline lower bound)",
+        help="minimum overall recall@5 required for exit 0 (default: original baseline lower bound)",
     )
     p.add_argument(
         "--dry-run-infra-fail",

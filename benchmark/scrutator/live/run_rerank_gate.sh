@@ -72,11 +72,11 @@ if [[ -e "$lock_file" ]]; then
     fi
 fi
 if ! exec 9>"$lock_file"; then
-    echo "cannot open the SRCH-0031 benchmark lock" >&2
+    echo "cannot open the paired benchmark lock" >&2
     exit 2
 fi
 if ! flock -n 9; then
-    echo "another SRCH-0031 benchmark owns the fixed ports" >&2
+    echo "another paired benchmark owns the fixed ports" >&2
     exit 2
 fi
 
