@@ -1,7 +1,7 @@
 -r requirements.txt
-ruff>=0.9
-pytest>=8.3
-pytest-asyncio>=0.25
+ruff>=0.15.22
+pytest>=9.1.1
+pytest-asyncio>=1.4.0
 httpx>=0.28
-pyyaml>=6.0
-bandit>=1.7
+pyyaml>=6.0.3
+bandit>=1.9.4
