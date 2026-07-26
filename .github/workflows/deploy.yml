@@ -90,12 +90,30 @@ jobs:
         if: failure()
         env:
           OPSBOT_API_KEY: ${{ secrets.OPSBOT_API_KEY }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH_REF: ${{ github.ref }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
+          set -euo pipefail
+          IFS=$'\n\t'
           if [ -z "${OPSBOT_API_KEY:-}" ]; then
             echo "OPSBOT_API_KEY unset; skipping optional failure notification"
             exit 0
           fi
+          payload="$(jq -cn \
+            --arg repository "${REPOSITORY}" \
+            --arg branch_ref "${BRANCH_REF}" \
+            --arg run_url "${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}" \
+            --arg dedup_key "deploy-fail-${REPOSITORY}-${RUN_ID}" \
+            '{
+              category: "fatal",
+              agent: "scrutator",
+              title: ("Deploy Failed: " + $repository),
+              body: ("Branch: " + $branch_ref + ", Run: " + $run_url),
+              dedup_key: $dedup_key
+            }')"
           curl -fsS -X POST https://ops.arcanada.ai/events \
             -H "Authorization: Bearer ${OPSBOT_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d '{"category":"fatal","agent":"scrutator","title":"Deploy Failed: ${{ github.repository }}","body":"Branch: ${{ github.ref }}, Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}","dedup_key":"deploy-fail-${{ github.repository }}-${{ github.run_id }}"}'
+            --data-binary "${payload}"
