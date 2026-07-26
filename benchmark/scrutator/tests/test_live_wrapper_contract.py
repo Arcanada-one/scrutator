@@ -122,7 +122,11 @@ def test_port_collision_does_not_remove_another_runs_containers(tmp_path):
         check=False,
         capture_output=True,
         text=True,
-        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"},
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "SCRUTATOR_BENCHMARK_LOCK_FILE": str(tmp_path / "gate.lock"),
+        },
     )
 
     assert completed.returncode == 2
