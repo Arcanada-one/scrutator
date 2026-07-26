@@ -93,7 +93,7 @@ def _with_retry(fn):
 
 
 def _finite_number(value: object) -> bool:
-    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(float(value))
+    return not isinstance(value, bool) and isinstance(value, int | float) and math.isfinite(float(value))
 
 
 def _finite_dense_number(value: object) -> bool:

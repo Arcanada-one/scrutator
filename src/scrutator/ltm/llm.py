@@ -107,7 +107,7 @@ class LtmLlmClient:
 
     @staticmethod
     def _usage_number(value: Any) -> int | float:
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool) or not isinstance(value, int | float):
             return 0
         if not math.isfinite(value) or value < 0:
             return 0
