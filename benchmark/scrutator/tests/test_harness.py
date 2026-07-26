@@ -11,6 +11,7 @@ Covers (Test Plan step 1 + step 2):
 """
 
 import json
+import stat
 
 import harness
 import pytest
@@ -303,6 +304,58 @@ class TestInfraVsThresholdFail:
         summary = json.loads((tmp_path / "summary.json").read_text())
         assert summary["stale_skipped"] == 1
         assert summary["models"]["bge-m3"]["overall"]["n"] == 1  # total(2) - stale_skipped(1)
+
+
+class TestBearerAuthentication:
+    def test_live_client_requires_a_token_file(self):
+        client = harness.BGEM3Client(endpoint="http://scrutator.test/v1/search")
+
+        with pytest.raises(harness.InfraError, match="bearer token file is required"):
+            client.retrieve("query", 5)
+
+    def test_live_client_rejects_non_private_token_file(self, tmp_path):
+        token_file = tmp_path / "reader.jwt"
+        token_file.write_text("secret-token")
+        token_file.chmod(0o644)
+        client = harness.BGEM3Client(
+            endpoint="http://scrutator.test/v1/search",
+            bearer_token_file=token_file,
+        )
+
+        with pytest.raises(harness.InfraError, match="mode 0600"):
+            client.retrieve("query", 5)
+
+    def test_live_client_sends_bearer_token_from_private_file(self, monkeypatch, tmp_path):
+        token_file = tmp_path / "reader.jwt"
+        token_file.write_text("secret-token")
+        token_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        observed = {}
+
+        class _Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def read(self):
+                return b'{"results": [{"source_path": "a.md"}]}'
+
+        def _urlopen(request, timeout):
+            observed["authorization"] = request.get_header("Authorization")
+            observed["timeout"] = timeout
+            return _Response()
+
+        monkeypatch.setattr(harness.urllib.request, "urlopen", _urlopen)
+        client = harness.BGEM3Client(
+            endpoint="http://scrutator.test/v1/search",
+            bearer_token_file=token_file,
+        )
+
+        paths, _ = client.retrieve("query", 5)
+
+        assert paths == ["a.md"]
+        assert observed == {"authorization": "Bearer secret-token", "timeout": 30.0}
 
 
 # --------------------------------------------------------------------------- consumer-side verdict smoke

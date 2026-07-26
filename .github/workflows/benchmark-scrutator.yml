@@ -1,10 +1,13 @@
-name: Scrutator /v1/search Benchmark (SRCH-0015)
+name: Scrutator /v1/search Benchmark
 
-# HARD-GATE (plan Phase 7 Step 4): this workflow is authored disabled — manual dispatch
-# only, no `schedule:` trigger. Enabling a recurring schedule puts automated traffic on a
-# fixed cadence against an unauthenticated mesh endpoint (SRCH-0024 still pending) plus
+permissions:
+  contents: read
+
+# This workflow is intentionally manual-only, with no `schedule:` trigger.
+# Enabling a recurring schedule puts automated traffic on a
+# fixed cadence against the authenticated mesh endpoint plus
 # recurring LLM-baseline spend every run. Do not add a `schedule:` trigger without explicit
-# operator go-ahead — see benchmark/scrutator/README.md and the SRCH-0015 plan § Phase 7.
+# operator approval; see benchmark/scrutator/README.md.
 
 on:
   workflow_dispatch:
@@ -24,10 +27,12 @@ on:
 
 jobs:
   unit-tests:
-    # Lint + unit tests only — no network calls, safe on any self-hosted runner.
-    runs-on: [self-hosted, linux, arcana-prod]
+    # Lint + unit tests only — no network calls.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -35,7 +40,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install test dependencies
-        run: pip install pytest ruff
+        run: pip install -e ".[dev]"
 
       - name: Lint
         run: ruff check benchmark/scrutator/
@@ -45,33 +50,91 @@ jobs:
 
   benchmark:
     needs: unit-tests
-    # NOT ubuntu-latest: (a) 100.70.137.104:8310 is Tailscale-mesh-only, unreachable from
-    # hosted runners; (b) Arcanada org has no funded hosted-runner billing (VERD-0058).
-    runs-on: [self-hosted, linux, arcana-ai]
+    # The live API is Tailscale-only, so this job uses the general mesh runner.
+    runs-on: [self-hosted, linux, ci-general]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
-      - name: Run harness (read-only, mesh-internal calls only)
+      - name: Mint short-lived benchmark reader token
+        env:
+          KB_OBSERVER_CLIENT_SECRET: ${{ secrets.KB_OBSERVER_CLIENT_SECRET }}
+          TOKEN_FILE: ${{ runner.temp }}/scrutator-search-reader.jwt
         run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          secret = os.environ.get("KB_OBSERVER_CLIENT_SECRET", "")
+          if not secret:
+              raise SystemExit("KB_OBSERVER_CLIENT_SECRET is not configured")
+          credentials = base64.b64encode(f"kb-observer:{secret}".encode()).decode()
+          body = urllib.parse.urlencode({
+              "grant_type": "client_credentials",
+              "scope": "kb:ltm.read",
+              "resource": "urn:arcanada:scrutator:ltm",
+          }).encode()
+          request = urllib.request.Request(
+              "https://auth.arcanada.ai/oidc/token",
+              data=body,
+              headers={
+                  "Authorization": f"Basic {credentials}",
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "User-Agent": "Arcanada-Scrutator-Search-Benchmark/1.0",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              token = json.load(response).get("access_token", "")
+          if not token:
+              raise SystemExit("token endpoint returned no access_token")
+          token_path = Path(os.environ["TOKEN_FILE"])
+          token_path.write_text(token)
+          token_path.chmod(0o600)
+          PY
+
+      - name: Run harness (read-only, mesh-internal calls only)
+        env:
+          GOLDEN_SET: ${{ inputs.golden_set }}
+          MODELS: ${{ inputs.models }}
+          RECALL_THRESHOLD: ${{ inputs.recall_threshold }}
+          SCRUTATOR_BEARER_TOKEN_FILE: ${{ runner.temp }}/scrutator-search-reader.jwt
+          # Model Connector credential for any llm:* baseline dispatch — Vault via GitHub
+          # Secrets, never hardcoded.
+          MC_API_KEY: ${{ secrets.MC_API_KEY }}
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+          [[ "${GOLDEN_SET}" != *".."* ]]
+          [[ "${GOLDEN_SET}" =~ ^benchmark/scrutator/golden/[A-Za-z0-9._/-]+\.jsonl$ ]]
+          [[ "${MODELS}" =~ ^[A-Za-z0-9._:/,-]+$ ]]
+          [[ "${RECALL_THRESHOLD}" =~ ^(0(\.[0-9]+)?|1(\.0+)?)$ ]]
           python benchmark/scrutator/harness.py \
-            --golden "${{ inputs.golden_set }}" \
-            --models "${{ inputs.models }}" \
+            --golden "${GOLDEN_SET}" \
+            --models "${MODELS}" \
             --namespace arcanada \
             --corpus-root . \
-            --recall-threshold "${{ inputs.recall_threshold }}" \
+            --recall-threshold "${RECALL_THRESHOLD}" \
             --out-summary results-summary.json
+
+      - name: Remove benchmark reader token
+        if: always()
         env:
-          # Model Connector credential for any llm:* baseline dispatch — Vault via GitHub
-          # Secrets, never hardcoded (Security condition, PRD § Consilium / Appendix A).
-          MC_API_KEY: ${{ secrets.MC_API_KEY }}
+          TOKEN_FILE: ${{ runner.temp }}/scrutator-search-reader.jwt
+        run: rm -f "${TOKEN_FILE}"
 
       - name: Upload results summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: scrutator-benchmark-results
           path: results-summary.json

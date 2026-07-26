@@ -13,9 +13,10 @@ jobs:
       group: scrutator-prod
       labels: [self-hosted, linux, arcana-db, docker]
     environment: kb-production
-    # Co-located with Scrutator on arcana-db (reaches :8310 on localhost / 100.70.137.104:8310).
+    # Co-located with Scrutator on Arcana-KB. The live runner still advertises
+    # the compatibility label `arcana-db`.
     # NOT ubuntu-latest: (a) Tailscale-only endpoint unreachable from hosted runners;
-    # (b) Arcanada org billing-blocked for hosted runners (cicd-convention VERD-0058).
+    # (b) the gate must exercise the co-located production retrieval path.
     # Keep this workflow externally disabled. C10 must provision a dedicated recall client
     # before activation; kb-observer is only the reviewed transitional credential path.
 
@@ -81,8 +82,8 @@ jobs:
             --baseline benchmark/recall-gate/baseline.json \
             --thresholds benchmark/recall-gate/thresholds.json
         env:
-          # INFRA-0322 renamed the host and the runner no longer carries the
-          # historical ~/arcanada follower path. Use the reviewed vendored
+          # The host no longer carries the historical ~/arcanada follower path.
+          # Use the reviewed vendored
           # harness/query snapshot so the regression gate is checkout-local.
           HARNESS_PATH: benchmark/recall-gate/vendor/ltm-bench-query.py
           SCRUTATOR_BEARER_TOKEN_FILE: ${{ runner.temp }}/scrutator-recall-reader.jwt
@@ -93,4 +94,6 @@ jobs:
 
       - name: Remove benchmark reader token
         if: always()
-        run: rm -f "${{ runner.temp }}/scrutator-recall-reader.jwt"
+        env:
+          TOKEN_FILE: ${{ runner.temp }}/scrutator-recall-reader.jwt
+        run: rm -f "${TOKEN_FILE}"

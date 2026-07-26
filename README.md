@@ -2,7 +2,7 @@
 
 > **One human life matters**
 
-**Scrutator** (Latin: *scrutator* — "one who thoroughly investigates, searches, gets to the essence") — the foundational Knowledge Retrieval & Meaning Engine for the [Arcanada Ecosystem](https://arcanada.one).
+**Scrutator** (Latin: *scrutator* — "one who thoroughly investigates, searches, gets to the essence") — the foundational Knowledge Retrieval & Meaning Engine for the [Arcanada Ecosystem](https://arcanada.ai).
 
 ## Etymology
 
@@ -17,7 +17,7 @@ The name comes from the Latin *scrutator* — "one who thoroughly investigates."
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        arcana-db Server                             │
+│                         Arcana-KB                                  │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────┐       │
 │  │              Scrutator API (FastAPI :8310)               │       │
@@ -53,7 +53,7 @@ The name comes from the Latin *scrutator* — "one who thoroughly investigates."
     Claude Code    Agent Dreamer   Munera Workers  Personal Asst
 ```
 
-> **SRCH-0021:** two additional read-only GET routes on the same `:8310` service —
+> Two additional read-only GET routes on the same `:8310` service —
 > `/v1/navigate/outline` and `/v1/navigate/section` — omitted from the diagram above
 > for space. See [§ API — Navigation](#api--navigation) below.
 
@@ -76,7 +76,7 @@ The name comes from the Latin *scrutator* — "one who thoroughly investigates."
 
 ## Recall@k Regression Gate
 
-CI gate that runs the LTM-0009 benchmark harness against live Scrutator and fails the build when per-class recall@5 drops below a committed baseline.
+The recall gate runs the committed benchmark harness against live Scrutator and fails when per-class recall@5 drops below the reviewed baseline.
 
 | Class | Baseline (recall@5) | Regression threshold |
 |-------|--------------------|--------------------|
@@ -93,22 +93,22 @@ Thresholds are per-class (factual / multi-hop / temporal independently — not a
 # Gate against an existing report:
 python benchmark/recall-gate/recall_gate.py --report <path-to-report.json>
 
-# Run the harness and gate in one step (requires arcana-db Tailscale access):
+# Run the harness and gate in one step (requires Arcana-KB Tailscale access):
 python benchmark/recall-gate/recall_gate.py --run --harness <path-to-ltm-bench-query.py>
 
 # Refresh baseline after an intentional recall change (requires review):
 python benchmark/recall-gate/recall_gate.py --report <path> --update-baseline
 ```
 
-**Runner requirement:** the CI job runs on `[self-hosted, linux, arcana-db, docker]` (co-located with Scrutator — reaches `:8310` on localhost). GitHub-hosted runners cannot reach the Tailscale-only endpoint and are billing-blocked org-wide.
+**Runner requirement:** the CI job is co-located with Scrutator on Arcana-KB and reaches `:8310` on localhost. The workflow currently selects the host through its compatibility label `[self-hosted, linux, arcana-db, docker]`; keep that label until the runner registration is renamed. GitHub-hosted runners cannot reach the Tailscale-only endpoint.
 
-**Baseline recalibration:** after an intentional change that improves recall, run `--update-baseline` on the arcana-db runner with a fresh report, review the diff in the PR, then merge. The baseline seeded in `baseline.json` was captured from the 2026-04-26 `with-entities` run (36 queries); recalibrate from a `no-entities` run on first clean CI pass.
+**Baseline recalibration:** after an intentional recall improvement, run `--update-baseline` on the Arcana-KB runner with a fresh report, review the diff in the PR, then merge. Never lower the baseline to hide a regression.
 
-## Index Freshness Detection (SRCH-0036)
+## Index Freshness Detection
 
 `scrutator.tools.index_freshness` compares the `source_path`s currently indexed for a namespace against the current corpus (filesystem scan or an ingest manifest), and reports:
 
-- **STALE** — indexed but no longer present in the corpus (deleted/moved on disk). This is the drift that dragged the recall gate below baseline in SRCH-0031 (12/77 `datarim-kb` sources had moved).
+- **STALE** — indexed but no longer present in the corpus (deleted or moved on disk).
 - **MISSING** — present in the corpus but never indexed.
 
 The tool is **read-only**: it enumerates and reports, and can emit a dry-run re-index **plan** (`--plan`) describing the delete/re-ingest actions a future run would take. It never executes those actions — actually deleting stale chunks or re-ingesting missing sources against a live namespace is a separate, hard-gated operator step.
@@ -130,10 +130,10 @@ python -m scrutator.tools.index_freshness --namespace arcanada --corpus-root /pa
 By default it reads `SCRUTATOR_DATABASE_URL` via `scrutator.config.settings` (override with `--database-url`). `--probe-url` optionally does a read-only `GET /health` check before detection.
 ## API — Navigation
 
-SRCH-0021 adds a hierarchical-navigation layer on top of the existing chunk store: index-time
+The hierarchical-navigation layer adds index-time
 section normalization (`chunker/splitters.py`'s `slugify` + `normalize_heading_path`), two
 read-only endpoints, and an opt-in `group_by` on `/v1/search`. See
-[`docs/navigation.md`](docs/navigation.md) for the full reference.
+[`documentation/reference/navigation.md`](documentation/reference/navigation.md) for the full reference.
 
 ### `GET /v1/navigate/outline`
 
@@ -161,7 +161,7 @@ GET /v1/navigate/section?chunk_id=<uuid>
 
 `group_by: "document" | "section" | null` (default `null`) folds fused RRF hits into groups
 post-fusion, in-memory — the underlying RRF query and ranking are unchanged. Omitting `group_by`
-leaves `/v1/search` byte-identical to pre-SRCH-0021 behaviour.
+leaves `/v1/search` byte-identical to the flat-results behaviour.
 
 ```jsonc
 // SearchRequest, additive field:
@@ -172,12 +172,12 @@ leaves `/v1/search` byte-identical to pre-SRCH-0021 behaviour.
   "representative": { /* a SearchResult */ }, "member_chunk_ids": ["..."], "member_count": 3 }
 ```
 
-**Backfill.** Both endpoints degrade gracefully for chunks indexed before SRCH-0021 (no `section`
+**Backfill.** Both endpoints degrade gracefully for chunks indexed before section metadata was introduced (no `section`
 metadata yet): they fall back to a single flat root section rather than erroring. Run
 `python tools/backfill_sections.py --namespace <ns>` (dry-run by default; pass `--live` to write)
 to populate `section` for existing chunks — idempotent, safe to re-run, zero embedding calls.
 
-## API — Exact fetch-by-id (SRCH-0038)
+## API — Exact fetch-by-id
 
 `POST /v1/fetch` returns a whole document (or a bounded range) by opaque id, with an
 ingest-bound integrity hash — the exact/version-pinned counterpart to fuzzy `/v1/search`.
@@ -199,28 +199,28 @@ unknown or cross-namespace id answers `404` with no existence oracle.
   "trust_class": "skill" | "evidence", "chunk_manifest": [...], "stale": false }
 ```
 
-- **Selectors (D1).** `document_id` and `source_id` are aliases for the same opaque doc id
+- **Selectors.** `document_id` and `source_id` are aliases for the same opaque document id
   (`compute_doc_id`); `chunk_id` is a chunk UUID. No selector accepts a filesystem path —
   path-like / malformed ids are rejected at request validation (`422`) before any DB access.
-- **`content_hash` (D3 / S1).** The **whole-document** sha256, prefixed `sha256:`, **stamped at
+- **`content_hash`.** The **whole-document** SHA-256, prefixed `sha256:`, **stamped at
   ingest** into `metadata.section.doc_content_hash` and **read** at fetch — never recomputed over
   the response. The `/v1/search` hit's `content_hash`/`source_id` (additive fields) equal the
   fetch values, so `search → fetch by source_id` is a closed, hash-verified roundtrip.
-- **`range` (D4).** `full` reassembles all chunks in `chunk_index` order; `parent_of_chunk`
+- **`range`.** `full` reassembles all chunks in `chunk_index` order; `parent_of_chunk`
   returns a chunk's whole parent doc; `offset_start/offset_end` slices the reassembled content
-  (offsets are reassembly-relative in MVP — see `SRCH-0038-FU-offsets`). An offset slice never
+  (offsets are reassembly-relative in the current API). An offset slice never
   re-hashes: `content_hash` stays the whole-doc ingest hash.
-- **`trust_class` (D5) is a NON-AUTHORIZING hint.** `"skill"` (namespace ==
+- **`trust_class` is a non-authorizing hint.** `"skill"` (namespace ==
   `SCRUTATOR_SKILLS_NAMESPACE`) vs `"evidence"`. It does **not** authorize execution — the
-  execution gate is the consumer's config-pinned blake3 (D8), a deliberately distinct concern
-  from this sha256 fetch-integrity hash. Scrutator remains untrusted transport.
-- **`stale` (D6)** is `false` in MVP (no live-source access; see `SRCH-0038-FU-stale`).
+  execution gate is the consumer's config-pinned BLAKE3 digest, a deliberately distinct concern
+  from this SHA-256 fetch-integrity hash. Scrutator remains untrusted transport.
+- **`stale`** is currently `false` because the service does not read the live source during fetch.
 
-**Backfill.** Chunks indexed before SRCH-0038 lack `doc_content_hash`; fetch returns their
+**Backfill.** Chunks indexed before document hashes were introduced lack `doc_content_hash`; fetch returns their
 `content_hash` as `""` (never a recomputed value) until re-index or an offline, idempotent
 `python scripts/backfill_doc_content_hash.py` (dry-run with `--dry-run`) binds the hash once
 from the stored chunk concatenation — an ingest-equivalent bind, not a response-time recompute
-(S1 preserved).
+so the response path never invents a hash.
 
 ## Quick Start
 
@@ -239,25 +239,21 @@ pytest tests/ benchmark/recall-gate/tests/ -v
 ruff check src/ tests/
 ```
 
-> **Note:** Full server deployment requires access to the Arcanada Tailscale mesh and arcana-db PostgreSQL instance.
+> **Note:** Full server deployment requires access to the Arcanada Tailscale mesh and the Arcana-KB PostgreSQL instance.
 
 ## Project Status
 
-Scrutator is in early development. See the [architecture docs](docs/architecture.md) for the full design.
+Scrutator 0.3.0 is deployed on Arcana-KB as a Tailscale-only service. The main branch deploys through GitHub Actions, and the deployment workflow verifies the reviewed SHA before running the transactional update and health check. See the [architecture explanation](documentation/explanation/architecture.md) and [API reference](documentation/reference/api.md).
 
 **Roadmap:**
-- [x] SRCH-0001: PRD + Architecture
-- [x] SRCH-0008: GitHub Repo Setup
-- [ ] SRCH-0002: Embedding Enhancement (fp16 + sparse)
-- [ ] SRCH-0003: Chunking Engine
-- [ ] SRCH-0004: Search & Retrieval Pipeline
-- [ ] SRCH-0005: Dreaming Module
-- [ ] SRCH-0006: LTM Integration
-- [ ] SRCH-0007: Website & Blog
+- [x] Hybrid dense, sparse, and full-text retrieval
+- [x] Namespace-scoped indexing, navigation, exact fetch, graph, memory, and LTM routes
+- [x] Transactional main-branch deployment with rollback and health verification
+- [ ] Public product website and tutorials
 
 ## Part of the Arcanada Ecosystem
 
-Scrutator is the search foundation for the entire [Arcanada](https://arcanada.one) ecosystem. Without quality retrieval, no agent can effectively work with accumulated knowledge.
+Scrutator is the search foundation for the entire [Arcanada](https://arcanada.ai) ecosystem. Without quality retrieval, no agent can effectively work with accumulated knowledge.
 
 ## License
 

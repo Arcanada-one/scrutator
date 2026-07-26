@@ -1,16 +1,15 @@
-# LTM Reflect Layer (LTM-0013)
+# Operate the LTM Reflect Layer
 
 The Reflect layer (R in TEMPR) derives **meta-facts** — concise summaries,
 contradictions, and derived relations — from groups of related chunks. It
-closes the feature-parity gap with Hindsight and unblocks the LTM benchmark
-(LTM-0009).
+closes the feature-parity gap with Hindsight and supports the LTM benchmark.
 
 ## Status
 
 - Code merged in Scrutator 0.3.0.
 - Migration `003_reflect.sql` adds `meta_facts` and `reflect_runs`.
 - Recall integration is **disabled by default** (`SCRUTATOR_LTM_RECALL_INCLUDE_META_FACTS=false`)
-  until verified on the 41-chunk LTM-0012 corpus.
+  until a reviewed corpus run confirms it.
 
 ## Endpoints
 
@@ -19,7 +18,7 @@ closes the feature-parity gap with Hindsight and unblocks the LTM benchmark
 Trigger one reflect run.
 
 ```bash
-curl -X POST http://arcana-db:8310/v1/ltm/reflect \
+curl -X POST "$SCRUTATOR_BASE_URL/v1/ltm/reflect" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"namespace": "datarim-kb", "max_chunks": 50, "dry_run": false}'
@@ -53,7 +52,7 @@ Response:
 Listing for debug / inspection.
 
 ```bash
-curl "http://arcana-db:8310/v1/ltm/meta_facts?namespace=datarim-kb&fact_type=summary&limit=20"
+curl "$SCRUTATOR_BASE_URL/v1/ltm/meta_facts?namespace=datarim-kb&fact_type=summary&limit=20"
 ```
 
 ## Configuration (env, prefix `SCRUTATOR_`)
@@ -68,13 +67,13 @@ curl "http://arcana-db:8310/v1/ltm/meta_facts?namespace=datarim-kb&fact_type=sum
 | `LTM_REFLECT_MAX_DEPTH` | `1` | DB-level + code invariant |
 | `LTM_RECALL_INCLUDE_META_FACTS` | `false` | Recall verification gate |
 | `LTM_RECALL_META_FACT_SCORE_FACTOR` | `0.7` | Score penalty on meta-facts |
-| `LTM_REFLECT_GROUPING` | `cosine` | Grouping primitive — `entity` (LTM-0013) or `cosine` (LTM-0018) |
+| `LTM_REFLECT_GROUPING` | `cosine` | Grouping primitive — `entity` or `cosine` |
 | `LTM_REFLECT_COSINE_THRESHOLD` | `0.85` | Cosine edge threshold for union-find clustering |
 
-## A2 Cosine Grouping (LTM-0018)
+## Cosine Grouping
 
-Default grouping primitive since LTM-0018. Replaces single-entity-name JOIN of
-LTM-0013 with content-based clustering on dense BGE-M3 embeddings.
+The default grouping primitive replaces single-entity-name joins with
+content-based clustering on dense BGE-M3 embeddings.
 
 **Algorithm** (`scrutator.ltm.grouping.cluster_by_cosine`):
 
@@ -98,7 +97,7 @@ filter via `WHERE entity_ids @> '{X}'`; query by `source_chunk_ids` instead).
 embeddings inserted via the ingest path could induce mega-clusters; embedding
 dimension validation (1024) at INSERT remains the boundary control.
 
-**Fallback to LTM-0013 entity grouping:** set `SCRUTATOR_LTM_REFLECT_GROUPING=entity`.
+**Fallback to entity grouping:** set `SCRUTATOR_LTM_REFLECT_GROUPING=entity`.
 
 ## Safety invariants
 
@@ -114,50 +113,31 @@ dimension validation (1024) at INSERT remains the boundary control.
 | Layer | Command |
 |-------|---------|
 | Recall | `SCRUTATOR_LTM_RECALL_INCLUDE_META_FACTS=false` (default off) |
-| Grouping (LTM-0018) | `SCRUTATOR_LTM_REFLECT_GROUPING=entity` (revert to LTM-0013 entity-path) |
-| Threshold tightening | `SCRUTATOR_LTM_REFLECT_COSINE_THRESHOLD=0.95` (collapse to A1-floor behaviour) |
+| Grouping | `SCRUTATOR_LTM_REFLECT_GROUPING=entity` (revert to the entity path) |
+| Threshold tightening | `SCRUTATOR_LTM_REFLECT_COSINE_THRESHOLD=0.95` (reduce cluster size) |
 | Reflect | `SCRUTATOR_LTM_REFLECT_ENABLED=false` → 503 |
 | Schema | `DROP TABLE meta_facts CASCADE; DROP TABLE reflect_runs CASCADE;` |
 | Code | `git revert <range>` and redeploy 0.2.0 container |
 
-All four are non-destructive to LTM-0012 state.
+All four are non-destructive to the underlying chunk state.
 
-## Pilot run (Step 11)
+## Pilot run
 
 ```bash
-curl -X POST http://arcana-db:8310/v1/ltm/reflect \
+curl -X POST "$SCRUTATOR_BASE_URL/v1/ltm/reflect" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"namespace":"datarim-kb","max_chunks":50,"dry_run":false}' | jq .
 ```
 
 Expected: `status=done`, `meta_facts_created>=1`, `cost_usd=0.0`, duration <5min.
 
-## Factor sweep (Step 12)
-
-For each factor in `{0.5, 0.7, 0.9, 1.0}`:
-
-```bash
-SCRUTATOR_LTM_RECALL_META_FACT_SCORE_FACTOR=$f \
-SCRUTATOR_LTM_RECALL_INCLUDE_META_FACTS=true \
-pnpm run bench:scrutator -- --with-meta-facts \
-  --score-factor=$f \
-  --report=benchmark/reports/v5/scrutator/$DATE.with-meta-facts-factor-$f.json
-```
-
-Decision rule:
-`chosen = argmax_{factor in {0.5, 0.7, 0.9}} mean_recall@5(factor)`
-subject to `by_class.factual(chosen) >= baseline - 2pp`.
-
-Factor=1.0 is diagnostic only (excluded from default candidates due to
-hallucination amplification risk).
-
-## Production TEMPR backfill (LTM-0014)
+## Production TEMPR backfill
 
 `tools/backfill_ltm_temper.py` — one-shot, idempotent/resumable backfill of
 entity/edge/temporal-event extraction for chunks that predate the TEMPR
 pipeline (zero rows in `entities` pointing back at them via `source_chunk_id`).
 Same hard-gate convention as `tools/backfill_sections.py` (see
-`docs/navigation.md`): defaults to `--dry-run` (report candidate count, zero
+the [navigation reference](../reference/navigation.md)): defaults to `--dry-run` (report candidate count, zero
 LLM calls, zero writes); `--live` performs real extraction (billed LLM calls
 via `settings.ltm_mc_url`/`ltm_connector`/`ltm_model`) and real upserts.
 **Operator-run only — not invoked by CI, by tests, or by any task automation.**
@@ -168,12 +148,12 @@ python tools/backfill_ltm_temper.py --namespace arcanada --live --limit 200
 ```
 
 Idempotent: `upsert_entity`/`upsert_entity_edge`/`upsert_entity_event` are
-`ON CONFLICT` upserts (LTM-0019 COALESCE-repairs `source_chunk_id` on every
+`ON CONFLICT` upserts repair `source_chunk_id` on every
 re-run), so a crashed or `--limit`-batched run can simply be re-invoked — only
 chunks still missing entities are re-selected. Per-chunk extraction failures
 are logged and skipped, not fatal to the run.
 
-## Periodic runner (LTM-0026)
+## Periodic runner
 
 `python -m scrutator.ltm.reflect_runner` runs one bounded incremental reflect
 pass from inside the Scrutator runtime. It uses the same LLM settings and budget
@@ -211,7 +191,7 @@ controlled container recreation has been verified.
 The service has `ConditionPathExists=/var/lib/scrutator/ltm-reflect-ready`.
 Create that marker only after a bounded safety review, an observed dry-run, a
 successful supervised backlog drain for the configured namespace, and cursor
-persistence across container recreation. Namespace isolation supersedes the old
-SRCH-0044 dependency: the `wiki` reflect runner does not authorize or trigger the
-operator-gated `arcanada` full-corpus backfill. Before the marker exists,
+persistence across container recreation. Namespace isolation means the `wiki`
+reflect runner does not authorize or trigger the operator-gated `arcanada`
+full-corpus backfill. Before the marker exists,
 installing or enabling the timer remains inert.

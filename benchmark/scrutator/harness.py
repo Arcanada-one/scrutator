@@ -25,6 +25,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import stat
 import statistics
 import sys
 import time
@@ -182,10 +184,25 @@ class BGEM3Client:
         endpoint: str = DEFAULT_ENDPOINT,
         namespace: str = DEFAULT_NAMESPACE,
         timeout: float = DEFAULT_TIMEOUT_S,
+        bearer_token_file: str | Path | None = None,
     ):
         self.endpoint = endpoint
         self.namespace = namespace
         self.timeout = timeout
+        self.bearer_token_file = Path(bearer_token_file) if bearer_token_file else None
+
+    def _bearer_token(self) -> str:
+        if self.bearer_token_file is None:
+            raise InfraError("Scrutator bearer token file is required")
+        try:
+            if stat.S_IMODE(self.bearer_token_file.stat().st_mode) != 0o600:
+                raise InfraError("Scrutator bearer token file must have mode 0600")
+            token = self.bearer_token_file.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise InfraError(f"cannot read Scrutator bearer token file: {exc}") from exc
+        if not token:
+            raise InfraError("Scrutator bearer token file is empty")
+        return token
 
     def retrieve(self, query: str, limit: int) -> tuple[list[str], float]:
         body = {
@@ -196,8 +213,15 @@ class BGEM3Client:
             "include_content": False,
         }
         data = json.dumps(body).encode()
+        token = self._bearer_token()
         req = urllib.request.Request(
-            self.endpoint, data=data, headers={"Content-Type": "application/json"}, method="POST"
+            self.endpoint,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
+            method="POST",
         )
         t0 = time.time()
         try:
@@ -235,9 +259,19 @@ class NotWiredClient:
         return 0.0
 
 
-def build_client(model_name: str, *, endpoint: str, namespace: str) -> ModelClient:
+def build_client(
+    model_name: str,
+    *,
+    endpoint: str,
+    namespace: str,
+    bearer_token_file: str | Path | None = None,
+) -> ModelClient:
     if model_name == "bge-m3":
-        return BGEM3Client(endpoint=endpoint, namespace=namespace)
+        return BGEM3Client(
+            endpoint=endpoint,
+            namespace=namespace,
+            bearer_token_file=bearer_token_file,
+        )
     if model_name == "bge-reranker" or model_name.startswith("llm:"):
         return NotWiredClient(model_name)
     raise ValueError(f"unknown model: {model_name}")
@@ -316,13 +350,23 @@ def aggregate(results: list[RowResult], cost_usd: float = 0.0) -> dict:
 
 
 def run_model(
-    model_name: str, live_rows: list[GoldenRow], *, endpoint: str, namespace: str
+    model_name: str,
+    live_rows: list[GoldenRow],
+    *,
+    endpoint: str,
+    namespace: str,
+    bearer_token_file: str | Path | None = None,
 ) -> tuple[dict, list[RowResult]]:
     """Run one model over all live rows. Raises InfraError on the first infra failure.
 
     Returns (per-class + overall summary dict, per-row detail results).
     """
-    client = build_client(model_name, endpoint=endpoint, namespace=namespace)
+    client = build_client(
+        model_name,
+        endpoint=endpoint,
+        namespace=namespace,
+        bearer_token_file=bearer_token_file,
+    )
     results = [score_row(client, row) for row in live_rows]
     return aggregate(results, cost_usd=client.cost_usd()), results
 
@@ -351,6 +395,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--namespace", default=DEFAULT_NAMESPACE)
     p.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    p.add_argument(
+        "--bearer-token-file",
+        default=os.environ.get("SCRUTATOR_BEARER_TOKEN_FILE"),
+        help="path to a mode-0600 Scrutator reader token (or SCRUTATOR_BEARER_TOKEN_FILE)",
+    )
     p.add_argument("--corpus-root", default=".", help="repo root gold_source_paths are relative to")
     p.add_argument("--out-summary", default="results-summary.json")
     p.add_argument("--out-detail", default="results-detail.json")
@@ -400,7 +449,13 @@ def main(argv: list[str] | None = None) -> int:
     details: dict[str, list[dict]] = {}
     try:
         for model_name in model_names:
-            summary, row_results = run_model(model_name, live_rows, endpoint=args.endpoint, namespace=args.namespace)
+            summary, row_results = run_model(
+                model_name,
+                live_rows,
+                endpoint=args.endpoint,
+                namespace=args.namespace,
+                bearer_token_file=args.bearer_token_file,
+            )
             summaries[model_name] = summary
             details[model_name] = [asdict(r) for r in row_results]
     except InfraError as exc:
