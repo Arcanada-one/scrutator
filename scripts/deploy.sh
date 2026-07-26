@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Scrutator deploy script
-# Target: arcana-db (Tailscale mesh only)
+# Target: Arcana-KB (Tailscale mesh only; live runner compatibility label: arcana-db)
 # Usage: ./scripts/deploy.sh [--first-run]
 set -euo pipefail
 

@@ -46,7 +46,7 @@ class StructuredGraphEdge(BaseModel):
     @field_validator("weight", mode="before")
     @classmethod
     def weight_is_exactly_one(cls, v: object) -> float:
-        if isinstance(v, bool) or not isinstance(v, (int, float)) or v != 1.0:
+        if isinstance(v, bool) or not isinstance(v, int | float) or v != 1.0:
             raise ValueError("weight must equal 1.0")
         return 1.0
 

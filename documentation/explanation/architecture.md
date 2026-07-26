@@ -1,7 +1,5 @@
 # Scrutator Architecture
 
-> Full PRD: see `datarim/prd/PRD-SRCH-0001-scrutator.md` in the Arcanada knowledge base.
-
 ## Overview
 
 Scrutator is the unified retrieval engine for the Arcanada ecosystem. It provides semantic search, full-text search, and hybrid ranking across all knowledge sources.
@@ -10,7 +8,7 @@ Scrutator is the unified retrieval engine for the Arcanada ecosystem. It provide
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        arcana-db Server                             │
+│                         Arcana-KB                                  │
 │                                                                     │
 │  ┌─────────────────────────────────────────────────────────┐       │
 │  │              Scrutator API (FastAPI :8310)               │       │
@@ -91,18 +89,12 @@ FROM semantic s FULL OUTER JOIN fulltext f ON s.id = f.id
 ORDER BY score DESC LIMIT 10;
 ```
 
-## API Endpoints (planned)
+## API Surface
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/v1/chunk` | POST | Chunk a document (adaptive strategy) |
-| `/v1/index` | POST | Index chunks (embed + store) |
-| `/v1/index/batch` | POST | Index up to four same-namespace documents with one dense and one sparse embedding call |
-| `/v1/search` | POST | Hybrid search with RRF |
-| `/v1/dream/analyze` | POST | Dreaming analysis |
-| `/v1/namespaces` | GET/POST | Namespace management |
-| `/v1/stats` | GET | Index statistics |
+The live FastAPI application exposes health, chunking, indexing, retrieval,
+navigation, graph, memory, and long-term-memory route groups. The complete
+method/path inventory lives in the [API reference](../reference/api.md) and is
+checked against the generated OpenAPI schema in the test suite.
 
 `/v1/index/batch` uses the same namespace-scoped Feeder credential as `/v1/index`. It rejects mixed namespaces and
 duplicate source paths before embedding, validates dense and sparse vector cardinality, and commits each source under

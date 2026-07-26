@@ -1,4 +1,4 @@
-# Auth Arcana consumer manifest (Auth Arcana Mandate §6, SRCH-0023).
+# Auth Arcana consumer manifest (Auth Arcana Mandate §6).
 # Declares how Scrutator consumes Auth Arcana identity + authorization.
 # Modeled on Projects/Arcanada Support/code/api/auth.dependencies.yaml's shape.
 
