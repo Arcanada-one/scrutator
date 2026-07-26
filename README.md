@@ -232,11 +232,13 @@ cd scrutator
 # Install dependencies
 pip install -r requirements-dev.txt
 
-# Run tests (including recall gate unit tests)
-pytest tests/ benchmark/recall-gate/tests/ -v
+# Run the service and benchmark test suites
+PYTHONPATH=src pytest tests/ -v
+PYTHONPATH=src:benchmark/scrutator pytest benchmark/scrutator/tests/ -v
 
 # Lint
-ruff check src/ tests/
+ruff check src/ tests/ benchmark/scrutator/
+ruff format --check src/ tests/ benchmark/scrutator/harness.py benchmark/scrutator/tests/
 ```
 
 > **Note:** Full server deployment requires access to the Arcanada Tailscale mesh and the Arcana-KB PostgreSQL instance.

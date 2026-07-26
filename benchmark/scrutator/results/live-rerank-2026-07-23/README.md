@@ -1,4 +1,4 @@
-# SRCH-0031 live rerank gate — 2026-07-23
+# Live rerank gate — 2026-07-23
 
 Decision: **KEEP OFF**. The per-class recall gate did not become eligible to
 run to completion because the treatment failed two prerequisite checks against

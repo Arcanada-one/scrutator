@@ -15,17 +15,18 @@ ACTION_REF = re.compile(r"^\s*uses:\s+([^@\s]+)@([^\s#]+)", re.MULTILINE)
 
 
 def public_text_files() -> list[Path]:
-    files = [ROOT / "README.md", ROOT / "CLAUDE.md", ROOT / "pyproject.toml"]
+    files = [
+        ROOT / "README.md",
+        ROOT / "CLAUDE.md",
+        ROOT / "CONTRIBUTING.md",
+        ROOT / "SECURITY.md",
+        ROOT / "auth.dependencies.yaml",
+        ROOT / "pyproject.toml",
+    ]
     files.extend(sorted((ROOT / "documentation").rglob("*.md")))
     files.extend(sorted((ROOT / ".github" / "workflows").glob("*.yml")))
-    files.extend(
-        [
-            ROOT / "benchmark" / "scrutator" / "README.md",
-            ROOT / "benchmark" / "scrutator" / "CONSUMERS.md",
-            ROOT / "benchmark" / "scrutator" / "harness.py",
-        ]
-    )
-    files.extend(sorted((ROOT / "benchmark" / "scrutator" / "tests").glob("*.py")))
+    files.extend(sorted((ROOT / "benchmark" / "scrutator").rglob("*.md")))
+    files.extend(sorted((ROOT / "benchmark" / "scrutator").rglob("*.py")))
     return files
 
 
@@ -176,6 +177,10 @@ def test_security_policy_matches_ecosystem_response_sla():
         "coordinated disclosure",
     ):
         assert required in policy
+
+    assert "private vulnerability reporting" not in policy
+    assert "keys.openpgp.org" not in policy
+    assert "PGP key" not in policy
 
 
 def test_numpy_determinism_copy_matches_declared_dependency_range():
