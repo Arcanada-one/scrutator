@@ -1,12 +1,12 @@
-"""Unit tests for benchmark/scrutator/harness.py (SRCH-0015).
+"""Unit tests for benchmark/scrutator/harness.py.
 
-Covers (Test Plan step 1 + step 2):
+Covers:
 - golden-row loading + validation
 - corpus_pinned_at parsing
-- liveness pre-flight fixture (mix of live + deliberately-missing paths) — V-AC-03
+- liveness pre-flight fixture (mix of live + deliberately-missing paths)
 - recall@{1,5,10} / MRR / nDCG@5 math against hand-computed fixtures
-- infra-fail vs. threshold-fail exit-code branch (D-REQ-05) via a mocked ModelClient — V-AC-02a
-- consumer-side verdict smoke: decide_exit_code() against synthetic summary JSON — V-AC-02a/02b
+- infra-fail vs. threshold-fail exit-code branch via a mocked ModelClient
+- consumer-side verdict smoke: decide_exit_code() against synthetic summary JSON
 - CLI --dry-run-infra-fail / --dry-run-threshold-fail smoke surface
 """
 
@@ -76,7 +76,7 @@ class TestLiveness:
         assert harness.is_row_live(row, tmp_path) is True
 
     def test_partition_stale_skipped_count(self, tmp_path):
-        """V-AC-03 fixture: one live + one deliberately-deleted path → stale_skipped == 1,
+        """One live plus one missing path yields a stale count of one,
         and the live count equals total - stale_skipped."""
         (tmp_path / "live.md").write_text("content")
         rows = [self._row(["live.md"]), self._row(["dead.md"])]
@@ -160,7 +160,7 @@ class TestAggregate:
         assert agg["overall"]["recall@5"] == 0.0
 
 
-# --------------------------------------------------------------------------- infra-fail vs threshold-fail (V-AC-02a)
+# --------------------------------------------------------------------------- infra-fail vs threshold-fail
 
 
 class _FakeInfraFailClient:

@@ -50,8 +50,13 @@ jobs:
 
   benchmark:
     needs: unit-tests
-    # The live API is Tailscale-only, so this job uses the general mesh runner.
-    runs-on: [self-hosted, linux, ci-general]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on:
+      group: scrutator-prod
+      labels: [self-hosted, linux, arcana-db, docker]
+    environment: kb-production
+    # The live API is Tailscale-only. Match the protected recall-regression
+    # boundary and retain the runner's live compatibility label `arcana-db`.
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -99,8 +104,22 @@ jobs:
           if not token:
               raise SystemExit("token endpoint returned no access_token")
           token_path = Path(os.environ["TOKEN_FILE"])
-          token_path.write_text(token)
-          token_path.chmod(0o600)
+          fd = os.open(
+              token_path,
+              os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+              0o600,
+          )
+          try:
+              with os.fdopen(fd, "w", encoding="utf-8") as token_file:
+                  fd = -1
+                  token_file.write(token)
+                  token_file.flush()
+                  os.fsync(token_file.fileno())
+          except BaseException:
+              if fd != -1:
+                  os.close(fd)
+              token_path.unlink(missing_ok=True)
+              raise
           PY
 
       - name: Run harness (read-only, mesh-internal calls only)
@@ -109,9 +128,6 @@ jobs:
           MODELS: ${{ inputs.models }}
           RECALL_THRESHOLD: ${{ inputs.recall_threshold }}
           SCRUTATOR_BEARER_TOKEN_FILE: ${{ runner.temp }}/scrutator-search-reader.jwt
-          # Model Connector credential for any llm:* baseline dispatch — Vault via GitHub
-          # Secrets, never hardcoded.
-          MC_API_KEY: ${{ secrets.MC_API_KEY }}
         run: |
           set -euo pipefail
           IFS=$'\n\t'

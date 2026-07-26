@@ -82,8 +82,10 @@ content-based clustering on dense BGE-M3 embeddings.
 3. Union-find over edges with `sims[i,j] ≥ threshold` (default `0.85`).
 4. Emit groups of size ≥ 2; singletons filtered.
 
-**Determinism:** stable cluster roots when caller passes `ORDER BY chunk_id` and
-numpy version is pinned (`requirements.txt`).
+**Determinism:** stable cluster roots require a stable input order such as
+`ORDER BY chunk_id`. NumPy is declared as `numpy>=1.26`, not exactly pinned, so
+record and reinstall the exact resolved NumPy version when reproducing results
+across environments.
 
 **Resource bound:** O(n²) memory + time. Capped at
 `LTM_REFLECT_MAX_CHUNKS_PER_RUN=50` (≈ 200 KB / <2 ms per run). DoS-safe.

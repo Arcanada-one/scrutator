@@ -1,4 +1,4 @@
-"""SRCH-0031 paired /v1/search rerank-gate tests."""
+"""Paired /v1/search rerank-gate tests."""
 
 import pytest
 import rerank_gate
