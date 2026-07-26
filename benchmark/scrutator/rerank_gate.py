@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paired `/v1/search` recall gate for SRCH-0031.
+"""Paired `/v1/search` recall gate.
 
 The runner compares two already-running endpoints that differ only in the
 process-global `SCRUTATOR_RERANK_ENABLED` setting.  It fails closed when the
@@ -371,7 +371,7 @@ def run_experiment(args: argparse.Namespace) -> tuple[dict[str, Any], list[list[
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="SRCH-0031 paired /v1/search rerank gate")
+    parser = argparse.ArgumentParser(description="Paired /v1/search rerank gate")
     parser.add_argument("--off-endpoint", required=True)
     parser.add_argument("--on-endpoint", required=True)
     parser.add_argument("--golden", required=True)

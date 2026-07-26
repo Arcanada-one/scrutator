@@ -53,7 +53,7 @@ class TestParseJsonPermissive:
         text = '[{"name": "X",}]'
         result = parse_json_permissive(text)
         # Should fall back to regex extraction if json.loads fails
-        assert isinstance(result, (list, dict))
+        assert isinstance(result, list | dict)
 
     def test_multiple_json_blocks_picks_first(self):
         text = '[{"a": 1}] and then [{"b": 2}]'

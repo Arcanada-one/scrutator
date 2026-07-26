@@ -46,7 +46,7 @@ Scrutator provides unified search, retrieval, and meaning extraction across all 
 - **Vector store:** PostgreSQL + pgvector (HNSW indexes)
 - **Full-text search:** PostgreSQL FTS (tsvector, dual-language: russian + english)
 - **Hybrid ranking:** Reciprocal Rank Fusion (RRF, k=60)
-- **Temporal layer (LTM-0012):** `entity_events` table + `btree_gist` GiST range index for `as_of` / `time_range` filtering; hybrid date extraction (regex Layer 1 → LLM Layer 2 fallback gated by time-cue keywords); auto-invalidate via Graphiti-style `superseded_by`.
+- **Temporal layer:** `entity_events` table + `btree_gist` GiST range index for `as_of` / `time_range` filtering; hybrid date extraction (regex Layer 1 → LLM Layer 2 fallback gated by time-cue keywords); auto-invalidate via Graphiti-style `superseded_by`.
 - **Settings:** pydantic-settings
 - **Linting:** ruff (line-length=120, target=py312)
 - **Testing:** pytest + pytest-asyncio
@@ -57,7 +57,7 @@ Scrutator provides unified search, retrieval, and meaning extraction across all 
 ```
 src/scrutator/     — main Python package
 tests/             — pytest tests
-docs/              — architecture, design docs
+documentation/     — Diátaxis documentation (tutorials, how-to, reference, explanation)
 scripts/           — deploy, utility scripts
 ```
 
@@ -73,14 +73,13 @@ scripts/           — deploy, utility scripts
 
 ## Infrastructure
 
-- **Server:** arcana-db (Tailscale mesh only, no public endpoints)
+- **Server:** Arcana-KB (Tailscale mesh only, no public endpoints)
 - **Embedding API:** :8300 (existing, BAAI/bge-m3)
 - **Scrutator API:** :8310 (LIVE)
-- **Canonical deploy path:** `/srv/apps/scrutator` (owned `ci-runner`, CI-managed via GH self-hosted runner `arcana-db`). Per `documentation/infrastructure/CI-Runners.md` § 4.
-- **LTM connector:** `openrouter` (Model Connector via Tailscale `100.121.155.54:3900`), model `google/gemini-2.5-flash`. Cursor/CLI connectors are documented broken for structured-output frameworks (LTM-0004 archive) — do not switch back.
-- **Database:** PostgreSQL on arcana-db (pgvector extension)
-- **Secrets:** HashiCorp Vault (INFRA-0014) or `.env` fallback
-- **Legacy:** `/opt/scrutator.disabled-INFRA-0042` — pre-migration deploy path (cursor connector, LTM-0018 cosine grouping). Kept for ~30 days then removable. Backup of pre-migration `.env`: `/opt/scrutator.disabled-INFRA-0042/.env.pre-INFRA-0042-backup`.
+- **Canonical deploy path:** `/srv/apps/scrutator` (owned `ci-runner`, CI-managed via the Arcana-KB self-hosted runner). The runner currently retains the compatibility label `arcana-db`; do not change the workflow selector until the live registration changes.
+- **LTM connector:** `openrouter` (Model Connector via Tailscale `100.121.155.54:3900`), model `google/gemini-2.5-flash`. Cursor/CLI connectors do not satisfy the structured-output contract; do not switch back.
+- **Database:** PostgreSQL on Arcana-KB (pgvector extension)
+- **Secrets:** HashiCorp Vault or `.env` fallback
 
 ## Task Prefix
 
@@ -89,34 +88,34 @@ scripts/           — deploy, utility scripts
 ## Related Projects
 
 - **LTM** (Long Term Memory) — Scrutator is the retrieval backend
-- **Agent Dreamer** (AGENT-0001) — Dreaming module, pluggable analyzers
-- **Model Connector** (CONN-*) — Unified API for AI CLI agents. LIVE at `https://connector.arcanada.one`, port 3900. Bearer auth. Embedding connector: `POST /execute` with `{"connector":"embedding","prompt":"...","extra":{"embeddingType":"dense|sparse|colbert"}}`. Used by Scrutator for hybrid search (dense+sparse+ColBERT via BGE-M3).
-- **Embedding API** (INFRA-0020) — Scrutator owns and extends this (BGE-M3 on arcana-db:8300, accessed via Model Connector)
+- **Agent Dreamer** — Dreaming module, pluggable analyzers
+- **Model Connector** — Unified API for AI CLI agents. Live at `https://connector.arcanada.ai`, port 3900. Bearer auth. Embedding connector: `POST /execute` with `{"connector":"embedding","prompt":"...","extra":{"embeddingType":"dense|sparse|colbert"}}`. Used by Scrutator for hybrid search (dense+sparse+ColBERT via BGE-M3).
+- **Embedding API** — Scrutator owns and extends this (BGE-M3 on Arcana-KB:8300, accessed via Model Connector)
 
 ## Model Connector Integration
 
-Production API for LLM and embedding access. Use this instead of direct CLI calls or raw HTTP to arcana-db.
+Production API for LLM and embedding access. Use this instead of direct CLI calls or raw HTTP to Arcana-KB.
 
-**Base URL:** `https://connector.arcanada.one`
-**Auth:** `Authorization: Bearer <API_KEY>` (bcrypt-hashed keys in `ApiKey` table on arcana-db)
+**Base URL:** `https://connector.arcanada.ai`
+**Auth:** `Authorization: Bearer <API_KEY>` (bcrypt-hashed keys in the Model Connector database)
 
 ### Embedding (primary use case for Scrutator)
 
 ```bash
 # Dense embeddings (1024-dim, for similarity search)
-curl -X POST https://connector.arcanada.one/execute \
+curl -X POST https://connector.arcanada.ai/execute \
   -H "Authorization: Bearer $MC_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"connector":"embedding","prompt":"your text here"}'
 
 # Sparse embeddings (BM25-style token weights, for lexical matching)
-curl -X POST https://connector.arcanada.one/execute \
+curl -X POST https://connector.arcanada.ai/execute \
   -H "Authorization: Bearer $MC_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"connector":"embedding","prompt":"your text","extra":{"embeddingType":"sparse"}}'
 
 # ColBERT multi-vector (token-level 1024-dim vectors, for late interaction)
-curl -X POST https://connector.arcanada.one/execute \
+curl -X POST https://connector.arcanada.ai/execute \
   -H "Authorization: Bearer $MC_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"connector":"embedding","prompt":"your text","extra":{"embeddingType":"colbert"}}'
@@ -126,13 +125,13 @@ curl -X POST https://connector.arcanada.one/execute \
 
 ```bash
 # Claude Code (fastest for short tasks)
-curl -X POST https://connector.arcanada.one/connectors/claude-code/execute \
+curl -X POST https://connector.arcanada.ai/connectors/claude-code/execute \
   -H "Authorization: Bearer $MC_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt":"Rephrase this search query for better retrieval: ...","model":"haiku","maxTurns":1}'
 
 # Gemini (free tier, good for bulk)
-curl -X POST https://connector.arcanada.one/connectors/gemini/execute \
+curl -X POST https://connector.arcanada.ai/connectors/gemini/execute \
   -H "Authorization: Bearer $MC_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt":"...","model":"gemini-2.5-flash"}'
@@ -143,9 +142,9 @@ curl -X POST https://connector.arcanada.one/connectors/gemini/execute \
 All connectors return: `{id, connector, model, result, usage: {inputTokens, outputTokens, costUsd}, latencyMs, status}`.
 Embedding `result` is a JSON string — parse it to get the vector array.
 
-## ColBERT Rerank + Citation Contract (SRCH-0029)
+## ColBERT Rerank + Citation Contract
 
-### M2 — ColBERT late-interaction rerank on `/v1/search`
+### ColBERT late-interaction rerank on `/v1/search`
 
 **Path:** `search/reranker.py` (`rerank()` + `_maxsim()`). Operates on the `/v1/search` hybrid path only. Distinct from `ltm/pipeline.py`'s LLM-based reranker which runs on the `/v1/ltm/recall` path — do NOT conflate or modify those two modules together.
 
@@ -159,13 +158,13 @@ Embedding `result` is a JSON string — parse it to get the vector array.
 | `rerank_pool_multiplier` | `4` | `fetch_limit = limit * multiplier` when rerank ON |
 | `rerank_colbert_max_pool` | `30` | Hard cap on candidates sent to ColBERT (bounds latency) |
 
-**Default is OFF.** Flip `rerank_enabled=True` only after a green per-class recall@5 run on the `/v1/search` path (tracked as SRCH-0031). The recall gate at `benchmark/recall-gate/` guards `/v1/ltm/recall`, not `/v1/search` — these are different endpoints.
+**Default is OFF.** Flip `rerank_enabled=True` only after a green per-class recall@5 run on the `/v1/search` path. The recall gate at `benchmark/recall-gate/` guards `/v1/ltm/recall`, not `/v1/search` — these are different endpoints.
 
-**Soft-fail invariant:** if ColBERT embedding fails, `rerank()` logs WARNING and falls back to RRF order. The returned results always have `citation` populated with `score_kind="rrf"` (not `None`) — the M1 Citation contract is upheld even on failure.
+**Soft-fail invariant:** if ColBERT embedding fails, `rerank()` logs WARNING and falls back to RRF order. The returned results always have `citation` populated with `score_kind="rrf"` (not `None`), so the citation contract is upheld even on failure.
 
-### M1 — `Citation` frozen contract (ARCA-0180)
+### `Citation` frozen contract
 
-`Citation` in `db/models.py` is the **frozen interface contract** consumed by ARCA-0180 (answer side). It is additive-only — never remove or rename fields; bump `schema_version` only on a breaking shape change.
+`Citation` in `db/models.py` is the **frozen interface contract** consumed by the answer layer. It is additive-only — never remove or rename fields; bump `schema_version` only on a breaking shape change.
 
 ```python
 class Citation(BaseModel):
@@ -179,42 +178,42 @@ class Citation(BaseModel):
     score_kind: Literal["rrf", "colbert_rerank"]  # scale disambiguator
 ```
 
-**`score_kind` is mandatory for ARCA-0180's abstention gate** because the two scores live on different scales:
+**`score_kind` is mandatory for the answer layer's abstention gate** because the two scores live on different scales:
 - `"rrf"`: RRF fused score, bounded `~[0, 0.05]` — rerank OFF (or soft-fail)
 - `"colbert_rerank"`: ColBERT MaxSim score, unbounded above — rerank ON (success)
 
-Every `SearchResult` returned by `searcher.search()` carries a non-None `citation` (M1 is always-on, near-zero cost).
+Every `SearchResult` returned by `searcher.search()` carries a non-None `citation`; the contract is always on and has near-zero cost.
 
 ## CI/CD
 
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest
 - **Recall gate:** `.github/workflows/recall-regression.yml` — per-class recall@5 regression check against live Scrutator (see below)
-- **Deploy:** SSH to arcana-db, `docker compose up -d --build` (planned)
-- **Шаблон:** `documentation/infrastructure/CI-Runners.md` § 10.2 (Python/FastAPI)
+- **Deploy:** `.github/workflows/deploy.yml` runs the reviewed main SHA on the Arcana-KB runner through `deploy/scrutator-deploy-transaction.sh`.
+- **Template:** the ecosystem Python/FastAPI CI convention.
 - **Post-deploy:** health check (`curl -fsS http://localhost:8310/health`), Ops Bot notification on failure
 - **Convention:** см. root `CLAUDE.md` § CI/CD Convention
 
-## Recall@k Regression Gate (SRCH-0030)
+## Recall@k Regression Gate
 
-Standing CI gate that runs the LTM-0009 harness (`Projects/Long Term Memory/benchmark/scripts/ltm-bench-query.py`) over the 36-query `datarim-kb` set and compares per-class recall@5 against `benchmark/recall-gate/baseline.json`.
+Standing CI gate that runs the vendored harness over the 36-query `datarim-kb` set and compares per-class recall@5 against `benchmark/recall-gate/baseline.json`.
 
 **Gate files:**
 - `benchmark/recall-gate/recall_gate.py` — thin wrapper (baseline load + per-class delta + exit codes)
 - `benchmark/recall-gate/baseline.json` — committed per-class recall@5 baseline (factual/multi-hop/temporal)
 - `benchmark/recall-gate/thresholds.json` — per-class allowed regression delta
-- `.github/workflows/recall-regression.yml` — CI job on `[self-hosted, linux, arcana-db, docker]`
+- `.github/workflows/recall-regression.yml` — CI job on Arcana-KB through the compatibility label `[self-hosted, linux, arcana-db, docker]`
 
 **Exit codes:** `0` pass, `1` recall regression (build fails), `2` transport/infra error (not a regression).
 
 **Baseline refresh procedure:**
 1. Verify intentional recall improvement in a PR.
-2. On the arcana-db runner: `python benchmark/recall-gate/recall_gate.py --run --update-baseline`
+2. On the Arcana-KB runner: `python benchmark/recall-gate/recall_gate.py --run --update-baseline`
 3. Commit the updated `baseline.json` and include in the PR with a note explaining the improvement.
 4. Review the diff: ensure each class number moved in the expected direction.
 
 **Do NOT update the baseline** to paper over a regression. The baseline is the quality floor; regressions should be fixed in code, not masked by baseline inflation.
 
-**Runner requirement:** `[self-hosted, linux, arcana-db, docker]` only. GitHub-hosted runners cannot reach `100.70.137.104:8310` (Tailscale-only) and are billing-blocked org-wide.
+**Runner requirement:** Arcana-KB only. The live GitHub runner still advertises `[self-hosted, linux, arcana-db, docker]`; GitHub-hosted runners cannot reach the Tailscale-only service.
 
 ## Key Commands
 
@@ -225,6 +224,6 @@ ruff check src/ tests/
 ruff format src/ tests/
 pytest tests/ -v
 
-# Run server (future)
+# Run server locally
 uvicorn scrutator.main:app --host 0.0.0.0 --port 8310
 ```

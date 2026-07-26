@@ -1,16 +1,17 @@
-"""Unit tests for benchmark/scrutator/harness.py (SRCH-0015).
+"""Unit tests for benchmark/scrutator/harness.py.
 
-Covers (Test Plan step 1 + step 2):
+Covers:
 - golden-row loading + validation
 - corpus_pinned_at parsing
-- liveness pre-flight fixture (mix of live + deliberately-missing paths) — V-AC-03
+- liveness pre-flight fixture (mix of live + deliberately-missing paths)
 - recall@{1,5,10} / MRR / nDCG@5 math against hand-computed fixtures
-- infra-fail vs. threshold-fail exit-code branch (D-REQ-05) via a mocked ModelClient — V-AC-02a
-- consumer-side verdict smoke: decide_exit_code() against synthetic summary JSON — V-AC-02a/02b
+- infra-fail vs. threshold-fail exit-code branch via a mocked ModelClient
+- consumer-side verdict smoke: decide_exit_code() against synthetic summary JSON
 - CLI --dry-run-infra-fail / --dry-run-threshold-fail smoke surface
 """
 
 import json
+import stat
 
 import harness
 import pytest
@@ -75,7 +76,7 @@ class TestLiveness:
         assert harness.is_row_live(row, tmp_path) is True
 
     def test_partition_stale_skipped_count(self, tmp_path):
-        """V-AC-03 fixture: one live + one deliberately-deleted path → stale_skipped == 1,
+        """One live plus one missing path yields a stale count of one,
         and the live count equals total - stale_skipped."""
         (tmp_path / "live.md").write_text("content")
         rows = [self._row(["live.md"]), self._row(["dead.md"])]
@@ -159,7 +160,7 @@ class TestAggregate:
         assert agg["overall"]["recall@5"] == 0.0
 
 
-# --------------------------------------------------------------------------- infra-fail vs threshold-fail (V-AC-02a)
+# --------------------------------------------------------------------------- infra-fail vs threshold-fail
 
 
 class _FakeInfraFailClient:
@@ -303,6 +304,58 @@ class TestInfraVsThresholdFail:
         summary = json.loads((tmp_path / "summary.json").read_text())
         assert summary["stale_skipped"] == 1
         assert summary["models"]["bge-m3"]["overall"]["n"] == 1  # total(2) - stale_skipped(1)
+
+
+class TestBearerAuthentication:
+    def test_live_client_requires_a_token_file(self):
+        client = harness.BGEM3Client(endpoint="http://scrutator.test/v1/search")
+
+        with pytest.raises(harness.InfraError, match="bearer token file is required"):
+            client.retrieve("query", 5)
+
+    def test_live_client_rejects_non_private_token_file(self, tmp_path):
+        token_file = tmp_path / "reader.jwt"
+        token_file.write_text("secret-token")
+        token_file.chmod(0o644)
+        client = harness.BGEM3Client(
+            endpoint="http://scrutator.test/v1/search",
+            bearer_token_file=token_file,
+        )
+
+        with pytest.raises(harness.InfraError, match="mode 0600"):
+            client.retrieve("query", 5)
+
+    def test_live_client_sends_bearer_token_from_private_file(self, monkeypatch, tmp_path):
+        token_file = tmp_path / "reader.jwt"
+        token_file.write_text("secret-token")
+        token_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        observed = {}
+
+        class _Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def read(self):
+                return b'{"results": [{"source_path": "a.md"}]}'
+
+        def _urlopen(request, timeout):
+            observed["authorization"] = request.get_header("Authorization")
+            observed["timeout"] = timeout
+            return _Response()
+
+        monkeypatch.setattr(harness.urllib.request, "urlopen", _urlopen)
+        client = harness.BGEM3Client(
+            endpoint="http://scrutator.test/v1/search",
+            bearer_token_file=token_file,
+        )
+
+        paths, _ = client.retrieve("query", 5)
+
+        assert paths == ["a.md"]
+        assert observed == {"authorization": "Bearer secret-token", "timeout": 30.0}
 
 
 # --------------------------------------------------------------------------- consumer-side verdict smoke

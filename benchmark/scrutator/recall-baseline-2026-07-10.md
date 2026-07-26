@@ -1,4 +1,4 @@
-# SRCH-0031 — Baseline Recall Measurement (Scrutator hybrid search, namespace `arcanada`)
+# Baseline Recall Measurement (Scrutator hybrid search, namespace `arcanada`)
 
 **Date:** 2026-07-10
 **Endpoint:** `POST http://100.70.137.104:8310/v1/search`
@@ -26,7 +26,7 @@ This is the **baseline hybrid RRF** result. It also **is** the current "rerank O
 - `content` per result: **identical**.
 - Only field that differs between `rerank:true` and `rerank:false` calls: `search_time_ms` (server-side timing jitter, not a content signal).
 
-**Conclusion: the ColBERT rerank stage (SRCH-0029) is not implemented in `/v1/search` today.** Whatever "rerank ON" means operationally right now is byte-identical to plain hybrid RRF. The recall numbers above are therefore valid for *both* "rerank on" and "rerank off" as currently deployed — there is exactly one search behavior in production, not two.
+**Conclusion: the planned ColBERT rerank stage is not implemented in `/v1/search` today.** Whatever "rerank ON" means operationally right now is byte-identical to plain hybrid RRF. The recall numbers above are therefore valid for *both* "rerank on" and "rerank off" as currently deployed — there is exactly one search behavior in production, not two.
 
 ## Golden-set methodology (v0 seed, non-circular)
 
@@ -43,18 +43,18 @@ To avoid the circularity trap (using search output as its own ground truth), the
 
 ### Honest caveats
 
-- **v0 seed size (33 queries), single author, single reading pass.** This is not a statistically powered benchmark — it is the first non-circular golden set for this corpus, sized to unblock SRCH-0031/SRCH-0015, not to be cited as an authoritative recall figure. Confidence intervals on n=8–15 per class are wide.
+- **v0 seed size (33 queries), single author, single reading pass.** This is not a statistically powered benchmark — it is the first non-circular golden set for this corpus, intended to establish the original benchmark and recall-gate baseline, not to be cited as an authoritative recall figure. Confidence intervals on n=8–15 per class are wide.
 - **Coverage skew.** Because I could only build questions from documents I could verify still exist, coverage over-represents Long Term Memory (8 files touched) and Rules of Robotics (3 files) relative to other corpus areas (e.g. nothing from Verdicus, since its `datarim/` tree is gone from disk; nothing from Consilium beyond a credentials file I deliberately skipped).
 - **Index staleness is itself a finding, not just a caveat.** 12/77 sampled source_paths are dead links today. Any production consumer trusting `/v1/search` results to point at live files will hit ~15% dead-path rate on this sample (not a golden-set metric, just an observation from the discovery pass — a full dead-link audit is out of scope here).
 - **Two genuine misses worth reading, not statistical noise:**
-  - **F15** (LTM-0002 scoring weights, "recall@5 overall 25%") — 0/5 miss. The document (`benchmark/README.md`) never surfaced; four different `Long Term Memory` docs about scoring/criteria did instead — looks like a genuine near-duplicate-content confusion within the LTM corpus.
+  - **F15** (the Long Term Memory benchmark's "recall@5 overall 25%" scoring weight) — 0/5 miss. The document (`benchmark/README.md`) never surfaced; four different `Long Term Memory` docs about scoring/criteria did instead — looks like a genuine near-duplicate-content confusion within the LTM corpus.
   - **T1/T9** (exact "Last Updated"/"Created" date lookups on `datarim/techContext.md` and `Projects/Datarim/datarim/tasks.md`) — both missed at top-5. Dates-as-metadata (a line like `**Last Updated:** 2026-04-12`) appear weakly weighted by the current hybrid ranker versus body-text terms; other date-grounded queries (T3–T8, T10) hit fine when the date co-occurs with distinctive prose, not just a frontmatter-style line.
 - **No ColBERT signal was measured** — by definition, since it's not implemented. These numbers characterize dense+sparse hybrid RRF only.
 
 ## Artifacts
 
-- Golden set: `/tmp/claude-1002/-home-dev-wt-kb-scrutator/1ae8b277-4a92-43b8-bf03-a8a625b17026/scratchpad/srch-0031-measure/golden-arcanada-v0.jsonl`
-- Measurement script: `/tmp/claude-1002/-home-dev-wt-kb-scrutator/1ae8b277-4a92-43b8-bf03-a8a625b17026/scratchpad/srch-0031-measure/measure.py`
-- Per-query detail (returned top-5 paths, hit/miss, latency): `/tmp/claude-1002/-home-dev-wt-kb-scrutator/1ae8b277-4a92-43b8-bf03-a8a625b17026/scratchpad/srch-0031-measure/results-detail.json`
-- Summary JSON: `/tmp/claude-1002/-home-dev-wt-kb-scrutator/1ae8b277-4a92-43b8-bf03-a8a625b17026/scratchpad/srch-0031-measure/results-summary.json`
-- Corpus discovery raw output: `/tmp/claude-1002/-home-dev-wt-kb-scrutator/1ae8b277-4a92-43b8-bf03-a8a625b17026/scratchpad/srch-0031-measure/all_paths.txt`
+- Golden set: `benchmark/scrutator/golden/golden-arcanada-v0.jsonl`
+- Measurement script: `benchmark/scrutator/measure.py`
+- Summary JSON: `benchmark/scrutator/golden-arcanada-v0.results-summary.json`
+- The exploratory per-query detail and corpus-discovery output were ephemeral
+  working files and are not claimed as retained evidence.

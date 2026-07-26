@@ -2,7 +2,7 @@
 """Golden-set candidate-generation tooling (Fork 1 — PRD § Technical Approach;
 plan Phase 6 Steps 2-4).
 
-Two-LLM-pass disagreement filter, mirroring how the v0 seed (SRCH-0031) was built by hand:
+Two-LLM-pass disagreement filter, mirroring how the v0 seed was built by hand:
 
   1. **Pass 1** reads a source document and proposes candidate questions, each tagged
      `class` (factual/multi-hop/temporal) with a stated answer + `gold_source_paths`.
@@ -124,7 +124,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Model Connector connector name — no silent default (e.g. claude-code, gemini)",
     )
     p.add_argument("--model", required=True, help="model alias passed to the connector")
-    p.add_argument("--mc-url", default="https://connector.arcanada.one")
+    p.add_argument("--mc-url", default="https://connector.arcanada.ai")
     p.add_argument(
         "--api-key",
         default="",

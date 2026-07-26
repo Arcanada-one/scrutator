@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""benchmark/scrutator/harness.py — SRCH-0015 multi-model `/v1/search` recall harness.
+"""Multi-model `/v1/search` recall harness.
 
 Extends `measure.py`'s request/scoring shape (ported verbatim as the starting point) with:
   - a pluggable model-dispatch interface (`ModelClient`),
-  - a `corpus_pinned_at` + runtime liveness pre-flight (D-REQ-02/D-REQ-03),
+  - a `corpus_pinned_at` + runtime liveness pre-flight,
   - recall@{1,5,10}, MRR, nDCG@5, latency p50/p95, cost per model,
-  - infra-fail vs. threshold-fail exit-code separation (D-REQ-05).
+  - infra-fail vs. threshold-fail exit-code separation.
 
-Scope decision (SRCH-0015 /dr-do, recorded in CONSUMERS.md and the task description):
-only `bge-m3` is wired to a live network call in this task. `bge-reranker` (no confirmed
+Scope decision: only `bge-m3` is wired to a live network call. `bge-reranker` (no confirmed
 live cross-encoder endpoint in this repo) and any `llm:*` baseline (real, non-trivial API
-spend at volume — the operator's HARD-GATE) are registered in `build_client()` but raise
+spend at volume requires explicit operator authorization) are registered in `build_client()` but raise
 `NotImplementedError` — tests inject a fake `ModelClient` to prove the multi-model dispatch
-loop and exit-code logic (V-AC-02a) without making those calls live. Also per PRD § Context
-Analysis: `rerank` is a no-op on `/v1/search` today (SRCH-0029 not shipped) — this harness
+loop and exit-code logic without making those calls live. The `rerank` field is a no-op on
+`/v1/search` today because the ColBERT stage is not shipped, so this harness
 does not report "rerank on" vs. "rerank off" as two distinct measured conditions.
 
 Stdlib-only by design (matches `measure.py`): this script must run on a bare self-hosted
@@ -25,6 +24,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import stat
 import statistics
 import sys
 import time
@@ -41,14 +42,14 @@ SUCCESS_CODE = 0
 DEFAULT_ENDPOINT = "http://100.70.137.104:8310/v1/search"
 DEFAULT_NAMESPACE = "arcanada"
 DEFAULT_TIMEOUT_S = 30.0
-# Lower bound of SRCH-0031's baseline recall@5 (0.909) ± 0.03, per V-AC-06.
+# Lower bound of the original baseline recall@5 (0.909) ± 0.03.
 DEFAULT_RECALL_THRESHOLD = 0.879
 
 
 class InfraError(Exception):
     """Raised by a ModelClient when a request cannot complete due to infra failure
     (connection refused, mesh timeout, provider error) — distinct from a low-but-successful
-    recall result. See D-REQ-05."""
+    recall result."""
 
 
 # --------------------------------------------------------------------------- golden rows
@@ -107,7 +108,7 @@ def is_row_live(row: GoldenRow, corpus_root: Path) -> bool:
 
 
 def partition_by_liveness(rows: list[GoldenRow], corpus_root: Path) -> tuple[list[GoldenRow], list[GoldenRow]]:
-    """Split rows into (live, stale) per the liveness pre-flight (D-REQ-03)."""
+    """Split rows into (live, stale) for the liveness pre-flight."""
     live, stale = [], []
     for row in rows:
         (live if is_row_live(row, corpus_root) else stale).append(row)
@@ -171,8 +172,8 @@ class ModelClient(Protocol):
 
 class BGEM3Client:
     """Live dispatch to Scrutator's hybrid `/v1/search` (dense+sparse RRF). `rerank` is
-    intentionally never sent — SRCH-0029's ColBERT stage is a no-op today (see module
-    docstring); sending `rerank=true` here would silently duplicate this same measurement
+    intentionally never sent because the ColBERT stage is a no-op today (see module
+    docstring); sending `rerank=true` would silently duplicate this same measurement
     under a second label."""
 
     name = "bge-m3"
@@ -182,10 +183,25 @@ class BGEM3Client:
         endpoint: str = DEFAULT_ENDPOINT,
         namespace: str = DEFAULT_NAMESPACE,
         timeout: float = DEFAULT_TIMEOUT_S,
+        bearer_token_file: str | Path | None = None,
     ):
         self.endpoint = endpoint
         self.namespace = namespace
         self.timeout = timeout
+        self.bearer_token_file = Path(bearer_token_file) if bearer_token_file else None
+
+    def _bearer_token(self) -> str:
+        if self.bearer_token_file is None:
+            raise InfraError("Scrutator bearer token file is required")
+        try:
+            if stat.S_IMODE(self.bearer_token_file.stat().st_mode) != 0o600:
+                raise InfraError("Scrutator bearer token file must have mode 0600")
+            token = self.bearer_token_file.read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            raise InfraError(f"cannot read Scrutator bearer token file: {exc}") from exc
+        if not token:
+            raise InfraError("Scrutator bearer token file is empty")
+        return token
 
     def retrieve(self, query: str, limit: int) -> tuple[list[str], float]:
         body = {
@@ -196,8 +212,15 @@ class BGEM3Client:
             "include_content": False,
         }
         data = json.dumps(body).encode()
+        token = self._bearer_token()
         req = urllib.request.Request(
-            self.endpoint, data=data, headers={"Content-Type": "application/json"}, method="POST"
+            self.endpoint,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
+            method="POST",
         )
         t0 = time.time()
         try:
@@ -216,7 +239,7 @@ class BGEM3Client:
 
 
 class NotWiredClient:
-    """Placeholder for a model with no live dispatch path in this task's scope.
+    """Placeholder for a model with no live dispatch path in the current scope.
 
     See module docstring's "Scope decision" note. `build_client()` returns this for
     `bge-reranker` and any `llm:*` alias; `retrieve()` always raises `NotImplementedError`.
@@ -227,17 +250,26 @@ class NotWiredClient:
 
     def retrieve(self, query: str, limit: int) -> tuple[list[str], float]:
         raise NotImplementedError(
-            f"model '{self.name}' has no live dispatch path yet — operator-gated per "
-            "SRCH-0015 scope, see benchmark/scrutator/README.md"
+            f"model '{self.name}' has no live dispatch path yet — operator-gated; see benchmark/scrutator/README.md"
         )
 
     def cost_usd(self) -> float:
         return 0.0
 
 
-def build_client(model_name: str, *, endpoint: str, namespace: str) -> ModelClient:
+def build_client(
+    model_name: str,
+    *,
+    endpoint: str,
+    namespace: str,
+    bearer_token_file: str | Path | None = None,
+) -> ModelClient:
     if model_name == "bge-m3":
-        return BGEM3Client(endpoint=endpoint, namespace=namespace)
+        return BGEM3Client(
+            endpoint=endpoint,
+            namespace=namespace,
+            bearer_token_file=bearer_token_file,
+        )
     if model_name == "bge-reranker" or model_name.startswith("llm:"):
         return NotWiredClient(model_name)
     raise ValueError(f"unknown model: {model_name}")
@@ -316,13 +348,23 @@ def aggregate(results: list[RowResult], cost_usd: float = 0.0) -> dict:
 
 
 def run_model(
-    model_name: str, live_rows: list[GoldenRow], *, endpoint: str, namespace: str
+    model_name: str,
+    live_rows: list[GoldenRow],
+    *,
+    endpoint: str,
+    namespace: str,
+    bearer_token_file: str | Path | None = None,
 ) -> tuple[dict, list[RowResult]]:
     """Run one model over all live rows. Raises InfraError on the first infra failure.
 
     Returns (per-class + overall summary dict, per-row detail results).
     """
-    client = build_client(model_name, endpoint=endpoint, namespace=namespace)
+    client = build_client(
+        model_name,
+        endpoint=endpoint,
+        namespace=namespace,
+        bearer_token_file=bearer_token_file,
+    )
     results = [score_row(client, row) for row in live_rows]
     return aggregate(results, cost_usd=client.cost_usd()), results
 
@@ -331,7 +373,7 @@ def run_model(
 
 
 def decide_exit_code(summaries: dict[str, dict], threshold: float, metric: str = "recall@5") -> tuple[int, str]:
-    """V-AC-02a/02b verdict: any model's overall metric below threshold ⇒ THRESHOLD_FAIL_CODE."""
+    """Return threshold failure when any model's overall metric is below the floor."""
     for summary in summaries.values():
         if summary.get("overall", {}).get(metric, 0.0) < threshold:
             return THRESHOLD_FAIL_CODE, "threshold_fail"
@@ -342,7 +384,7 @@ def decide_exit_code(summaries: dict[str, dict], threshold: float, metric: str =
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="SRCH-0015 Scrutator /v1/search recall harness")
+    p = argparse.ArgumentParser(description="Scrutator /v1/search recall harness")
     p.add_argument("--golden", default=None, help="path to golden-arcanada-v{N}.jsonl (required unless --dry-run-*)")
     p.add_argument(
         "--models",
@@ -351,6 +393,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--namespace", default=DEFAULT_NAMESPACE)
     p.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    p.add_argument(
+        "--bearer-token-file",
+        default=os.environ.get("SCRUTATOR_BEARER_TOKEN_FILE"),
+        help="path to a mode-0600 Scrutator reader token (or SCRUTATOR_BEARER_TOKEN_FILE)",
+    )
     p.add_argument("--corpus-root", default=".", help="repo root gold_source_paths are relative to")
     p.add_argument("--out-summary", default="results-summary.json")
     p.add_argument("--out-detail", default="results-detail.json")
@@ -358,7 +405,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--recall-threshold",
         type=float,
         default=DEFAULT_RECALL_THRESHOLD,
-        help="minimum overall recall@5 required for exit 0 (default: SRCH-0031 baseline lower bound)",
+        help="minimum overall recall@5 required for exit 0 (default: original baseline lower bound)",
     )
     p.add_argument(
         "--dry-run-infra-fail",
@@ -400,7 +447,13 @@ def main(argv: list[str] | None = None) -> int:
     details: dict[str, list[dict]] = {}
     try:
         for model_name in model_names:
-            summary, row_results = run_model(model_name, live_rows, endpoint=args.endpoint, namespace=args.namespace)
+            summary, row_results = run_model(
+                model_name,
+                live_rows,
+                endpoint=args.endpoint,
+                namespace=args.namespace,
+                bearer_token_file=args.bearer_token_file,
+            )
             summaries[model_name] = summary
             details[model_name] = [asdict(r) for r in row_results]
     except InfraError as exc:

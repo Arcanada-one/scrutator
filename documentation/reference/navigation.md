@@ -1,7 +1,4 @@
-# Hierarchical Navigation (SRCH-0021)
-
-> Reference (Diátaxis). For the design rationale, see `datarim/prd/PRD-SRCH-0021.md` and
-> `datarim/plans/SRCH-0021-plan.md` in the Arcanada knowledge base.
+# Hierarchical Navigation
 
 ## Section metadata
 
@@ -73,9 +70,9 @@ happens strictly after `hybrid_search()` returns. Omitting `group_by` returns th
 `SearchResponse` shape Scrutator has always returned (byte-identical, enforced by a committed
 snapshot test).
 
-## Un-backfilled documents (pre-SRCH-0021 data)
+## Documents without section metadata
 
-Chunks indexed before SRCH-0021 have no `section` key yet. Both navigation endpoints and
+Older chunks may have no `section` key yet. Both navigation endpoints and
 `group_by` degrade gracefully rather than erroring:
 
 - **Outline**: all of a document's un-backfilled chunks fold into a single flat root node

@@ -1,4 +1,4 @@
-"""Safety-contract tests for the SRCH-0031 loopback measurement wrapper."""
+"""Safety-contract tests for the paired loopback measurement wrapper."""
 
 from __future__ import annotations
 
@@ -122,7 +122,11 @@ def test_port_collision_does_not_remove_another_runs_containers(tmp_path):
         check=False,
         capture_output=True,
         text=True,
-        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"},
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "SCRUTATOR_BENCHMARK_LOCK_FILE": str(tmp_path / "gate.lock"),
+        },
     )
 
     assert completed.returncode == 2
@@ -167,7 +171,7 @@ def test_simultaneous_start_fails_closed_before_docker(tmp_path):
     )
 
     assert completed.returncode == 2
-    assert "another SRCH-0031 benchmark owns the fixed ports" in completed.stderr
+    assert "another paired benchmark owns the fixed ports" in completed.stderr
     assert not docker_log.exists()
 
 
