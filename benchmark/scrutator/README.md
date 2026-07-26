@@ -38,7 +38,7 @@ these four instead, or explain in this file why a fifth is warranted.
 
 | Path | Purpose |
 |---|---|
-| `harness.py` | Multi-model dispatch (BGE-M3 hybrid via `/v1/search`, BGE-Reranker, one LLM baseline via Model Connector), liveness pre-flight, infra-fail/threshold-fail exit-code split. |
+| `harness.py` | Multi-model dispatch with BGE-M3 hybrid wired live via `/v1/search`; BGE-Reranker and LLM aliases are registered but intentionally not wired. Includes a liveness pre-flight and infra-fail/threshold-fail exit-code split. |
 | `rerank_gate.py` | Paired OFF/ON experiment runner. Requires two loopback endpoints, validates `rrf` versus `colbert_rerank` citations, freezes corpus fingerprints, checks repeated ordered results, reports per-class gain/loss transitions, and fails closed on invalid evidence. |
 | `live/granted_context_app.py` | Loopback-only wrapper around the deployed FastAPI app. It resolves the existing benchmark principal through live namespace grants; it bypasses JWT transport only because no reader secret is copied to the benchmark host. |
 | `live/run_rerank_gate.sh` | Exact-image live runner. Starts isolated OFF/ON listeners with lifespan disabled, mutation credentials blanked, bounded DB pools, strict cleanup, and production-container identity checks. |
