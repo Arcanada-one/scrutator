@@ -43,17 +43,36 @@ def _bare_hash(content_hash: str) -> str:
 
 
 def _skill_doc(target_bytes: int) -> str:
-    """A realistic markdown skill: YAML frontmatter + headings (so every chunk carries a
-    ``section``, and thus a ``doc_id`` stamp, matching how fetch-by-doc_id resolves rows) + enough
-    body to cross ``target_bytes``. Under 1a a body this size would exceed the 2704-byte jsonb_ops
-    GIN entry ceiling when stamped into ``chunks.metadata``."""
-    body = "Step: assemble, sign, and verify the release artifact deterministically. " * 30 + "\n\n"
-    doc = "---\nname: big-release\nversion: 7\ntrust: skill\n---\n\n# Big Release Skill\n\n"
-    section = 0
-    while len(doc.encode("utf-8")) < target_bytes:
-        section += 1
-        doc += f"## Step {section}\n\n{body}"
-    return doc
+    """A structurally valid SkillPlan JSON document that crosses ``target_bytes`` by repeating
+    stages. Under 1a a body this size would exceed the 2704-byte jsonb_ops GIN entry ceiling when
+    stamped into ``chunks.metadata``.
+
+    ARAS-0057: switched from Markdown to valid SkillPlan JSON so the skills-namespace ingest path
+    (including ``_derive_skill_metadata``) is exercised end-to-end — the Markdown fixture was from
+    before skills had a structural contract."""
+    import json as _json
+
+    single_stage = {
+        "id": "step",
+        "model": {"by_task_type": "code"},
+        "agent_count": 1,
+        "limits": {"max_turns": 1, "max_cost_usd": 0.01, "context_budget_chars": 8192},
+        "tools": [],
+        "metrics": [],
+        "action": {"capability": "model_call", "input": {"prompt": "Execute build step."}},
+    }
+    plan = {
+        "schema_version": 1,
+        "name": "big-release",
+        "version": 7,
+        "kind": "instance",
+        "maturity": "production",
+        "stages": [single_stage],
+        "defaults": {"model": {"by_task_type": "code"}},
+    }
+    while len(_json.dumps(plan).encode("utf-8")) < target_bytes:
+        plan["stages"].append(single_stage.copy())
+    return _json.dumps(plan)
 
 
 @pytest.fixture

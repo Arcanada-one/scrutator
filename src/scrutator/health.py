@@ -4,6 +4,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
@@ -104,6 +106,20 @@ app.add_middleware(
     path="/v1/index/batch",
     max_bytes=INDEX_BATCH_MAX_REQUEST_BYTES,
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def non_echoing_request_validation_error(_request, exc: RequestValidationError) -> JSONResponse:
+    """Return typed validation details without echoing unencodable request values."""
+    detail = [
+        {
+            "type": error["type"],
+            "loc": list(error["loc"]),
+            "msg": error["msg"],
+        }
+        for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 # LTM router
@@ -209,6 +225,15 @@ async def delete_source_endpoint(
 async def search_endpoint(
     request: SearchRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> SearchResponse:
+    # ARAS-0057: maturity floor is valid only for the configured skills namespace.
+    # A supplied floor with a non-skills or omitted namespace is a clear 422,
+    # validated BEFORE namespace resolution so the error is never masked by a
+    # cross-namespace 404 or an authz 401/403.
+    if request.maturity is not None and request.namespace != settings.skills_namespace:
+        raise HTTPException(
+            status_code=422,
+            detail="maturity floor requires the configured skills namespace",
+        )
     namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
         return await search(
@@ -220,6 +245,7 @@ async def search_endpoint(
             min_score=request.min_score,
             include_content=request.include_content,
             group_by=request.group_by,
+            maturity=request.maturity,
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Search failed: {e}") from e

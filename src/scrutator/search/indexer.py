@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import json as _json
 import logging
 import math
+import re
+import unicodedata
 from dataclasses import dataclass
 
 from scrutator.chunker.engine import chunk_document
@@ -26,6 +29,10 @@ from scrutator.db.repository import (
 )
 from scrutator.search.embedder import embed_sparse, embed_texts
 from scrutator.search.ingest_safety import scan_injection
+from scrutator.search.skill_promotions import (
+    SKILL_PROMOTIONS,
+    approved_skill_maturity,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +43,860 @@ _DENSE_DIMENSIONS = 1024
 
 class BatchIndexLimitError(ValueError):
     """Raised before embedding when a packed batch crosses a resource cap."""
+
+
+class SkillPlanContractError(BatchIndexLimitError):
+    """Raised when a skills-namespace document fails structural validation against the
+    Rust ``SkillPlan`` wire shape before embedding/persistence. Derives from
+    ``BatchIndexLimitError`` so both index endpoints return the existing 422 path."""
+
+
+@dataclass(frozen=True)
+class _PreparedSkillPlan:
+    metadata: dict[str, object]
+    semantic_content: str
+
+
+# ── ARAS-0057: skill plan validation and proposal-metadata derivation ──────────
+
+_SKILL_KINDS = frozenset({"template", "instance"})
+_SKILL_MATURITIES = frozenset({"draft", "validated", "production"})
+# Rust TaskType enum — closed set, serde rejects unknown variants.
+_SKILL_TASK_TYPES = frozenset({"code", "summarize", "default"})
+# Rust u32 / u64 ranges — values outside these overflow the target serde types.
+_U32_MAX = 4_294_967_295
+_U64_MAX = 18_446_744_073_709_551_615
+_I32_MIN = -2_147_483_648
+_I32_MAX = 2_147_483_647
+_JSON_NUMBER_PARTS_RE = re.compile(r"-?(0|[1-9][0-9]*)(?:\.([0-9]+))?(?:[eE]([+-]?)([0-9]+))?\Z")
+
+
+def _reject_non_finite_json(value: object) -> object:
+    """Reject NaN, Infinity, and -Infinity during JSON parsing — these are valid
+    Python ``json`` tokens that ``serde_json`` refuses by default."""
+    raise ValueError(f"Non-finite JSON constant is not allowed: {value!r}")
+
+
+def _is_finite_number(value: object) -> bool:
+    """True for a ``serde_json``-compatible finite number (f64 or int that fits
+    in f64 without overflow).  Rejects bool, NaN, infinities, and integers that
+    would overflow ``f64``."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if isinstance(value, int):
+        try:
+            f = float(value)
+        except OverflowError:
+            return False
+        return math.isfinite(f)
+    return False
+
+
+def _check_serde_number(value: object, label: str) -> None:
+    """Reject numbers that ``serde_json`` cannot represent as finite f64."""
+    if isinstance(value, bool):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise SkillPlanContractError(f"{label}: non-finite float")
+        return
+    if isinstance(value, int):
+        try:
+            f = float(value)
+        except OverflowError:
+            raise SkillPlanContractError(f"{label}: integer overflows f64") from None
+        if not math.isfinite(f):
+            raise SkillPlanContractError(f"{label}: integer overflows f64") from None
+        return
+
+
+def _is_non_neg_u32(value: object) -> bool:
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[0, _U32_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U32_MAX
+
+
+def _is_pos_u32(value: object) -> bool:
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[1, _U32_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
+    return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= _U32_MAX
+
+
+def _is_non_neg_u64(value: object) -> bool:
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[0, _U64_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U64_MAX
+
+
+# Rust char::is_whitespace / str::trim Unicode White_Space set:
+# U+0009..U+000D, U+0020, U+0085, U+00A0, U+1680,
+# U+2000..U+200A, U+2028..U+2029, U+202F, U+205F, U+3000.
+# Does NOT trim U+001C..U+001F, U+200B, U+200E/U+200F, or U+FEFF.
+_RUST_WS: frozenset[str] = frozenset("\t\n\x0b\x0c\r                  　")
+
+# serde_json default recursion limit.
+_SERDE_DEPTH_LIMIT = 128
+_ALLOWED_SEMANTIC_CONTROLS = frozenset({"\t", "\n", "\r"})
+
+
+def _is_non_empty_string(value: object) -> bool:
+    """True when *value* is a non-empty string after Rust-compatible whitespace trim."""
+    if not isinstance(value, str):
+        return False
+    start = 0
+    end = len(value)
+    while start < end and value[start] in _RUST_WS:
+        start += 1
+    while end > start and value[end - 1] in _RUST_WS:
+        end -= 1
+    return start < end
+
+
+def _check_semantic_content_safety(value: object) -> None:
+    """Reject unsafe decoded controls without reflecting untrusted values."""
+    if isinstance(value, str):
+        for char in value:
+            category = unicodedata.category(char)
+            if category == "Cf" or (category == "Cc" and char not in _ALLOWED_SEMANTIC_CONTROLS):
+                raise SkillPlanContractError("Unsafe skill semantic content")
+        return
+    if isinstance(value, list):
+        for item in value:
+            _check_semantic_content_safety(item)
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _check_semantic_content_safety(key)
+            _check_semantic_content_safety(item)
+
+
+class _NegZeroInt(int):
+    """Marker for JSON ``-0`` (integer negative zero).  Python ``int('-0')``
+    loses the sign and returns plain ``0``; Rust serde_json rejects ``-0`` when
+    the target type is unsigned.  Wrapping the parsed value lets u32/u64
+    validators reject it while the int behaves normally everywhere else."""
+
+    __slots__ = ()
+
+
+def _accumulate_serde_significand(digits: str, significand: int) -> tuple[int, int | None]:
+    """Accumulate decimal digits until the next multiply-add would overflow u64."""
+    for index, char in enumerate(digits):
+        digit = ord(char) - ord("0")
+        if significand > (_U64_MAX - digit) // 10:
+            return significand, index
+        significand = (significand * 10) + digit
+    return significand, None
+
+
+def _parse_serde_exponent(digits: str) -> int | None:
+    """Return an i32 exponent, or ``None`` when serde_json's accumulator overflows."""
+    exponent = 0
+    for char in digits:
+        digit = ord(char) - ord("0")
+        if exponent > (_I32_MAX - digit) // 10:
+            return None
+        exponent = (exponent * 10) + digit
+    return exponent
+
+
+def _validate_serde_f64_parts(significand: int, exponent: int, value: str) -> None:
+    """Apply serde_json's default-feature finite-f64 range calculation."""
+    number = float(significand)
+    while abs(exponent) > 308:
+        if number == 0.0:
+            return
+        if exponent >= 0:
+            raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+        number /= 1e308
+        exponent += 308
+
+    power = 10.0 ** abs(exponent)
+    number = number * power if exponent >= 0 else number / power
+    if not math.isfinite(number):
+        raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+
+
+def _validate_serde_number_lexeme(value: str) -> None:
+    """Match serde_json 1.0.149's default numeric acceptance state machine.
+
+    The pinned Rust consumer does not decide from exact decimal magnitude. It
+    accumulates a u64 significand, tracks discarded digits in an i32 exponent,
+    then applies finite-f64 multiplication or division. This independently
+    written acceptance port intentionally follows those path-dependent steps.
+    """
+    match = _JSON_NUMBER_PARTS_RE.fullmatch(value)
+    if match is None:
+        raise ValueError(f"JSON number is invalid: {value!r}")
+    integer_digits, fraction_digits, exponent_sign, exponent_digits = match.groups()
+
+    significand, integer_overflow_at = _accumulate_serde_significand(integer_digits, 0)
+    starting_exponent = 0 if integer_overflow_at is None else len(integer_digits) - integer_overflow_at
+
+    if fraction_digits is not None:
+        significand, fraction_overflow_at = _accumulate_serde_significand(fraction_digits, significand)
+        consumed_fraction_digits = len(fraction_digits) if fraction_overflow_at is None else fraction_overflow_at
+        starting_exponent -= consumed_fraction_digits
+
+    if exponent_digits is not None:
+        parsed_exponent = _parse_serde_exponent(exponent_digits)
+        if parsed_exponent is None:
+            if significand != 0 and exponent_sign != "-":
+                raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+            return
+        if exponent_sign == "-":
+            starting_exponent = max(_I32_MIN, starting_exponent - parsed_exponent)
+        else:
+            starting_exponent = min(_I32_MAX, starting_exponent + parsed_exponent)
+
+    if fraction_digits is None and exponent_digits is None and integer_overflow_at is None:
+        return
+    _validate_serde_f64_parts(significand, starting_exponent, value)
+
+
+def _parse_int_strict(value: str) -> int:
+    """Reject integer ``-0`` and exact magnitudes outside serde_json's finite range."""
+    _validate_serde_number_lexeme(value)
+    if value == "-0":
+        return _NegZeroInt(0)
+    return int(value)
+
+
+def _parse_float_strict(value: str) -> float:
+    """Parse only exact decimal lexemes that the Rust serde_json consumer accepts."""
+    _validate_serde_number_lexeme(value)
+    return float(value)
+
+
+# Lone surrogates (U+D800-U+DFFF) — valid surrogate pairs are decoded by Python's
+# json parser into the correct supplementary character; lone surrogates survive
+# as raw codepoints and must be rejected in known String fields and object keys.
+_SURROGATE_LO = 0xD800
+_SURROGATE_HI = 0xDFFF
+
+
+def _check_no_lone_surrogates(s: str, label: str) -> None:
+    for ch in s:
+        cp = ord(ch)
+        if _SURROGATE_LO <= cp <= _SURROGATE_HI:
+            raise SkillPlanContractError(f"Lone surrogate U+{cp:04X} in {label}")
+
+
+class PairObject:
+    """Lightweight ordered-pair holder returned by ``object_pairs_hook``.
+    Preserves insertion order so the normalization pass can detect duplicate
+    keys at known struct levels."""
+
+    __slots__ = ("_pairs",)
+
+    def __init__(self, pairs: list[tuple[str, object]]) -> None:
+        self._pairs: tuple[tuple[str, object], ...] = tuple(pairs)
+
+    def items(self):
+        return self._pairs
+
+    def get(self, key: str, default: object = None) -> object:
+        for k, v in self._pairs:
+            if k == key:
+                return v
+        return default
+
+
+# Context-specific known-key sets for duplicate detection.
+_KNOWN_ROOT = frozenset({"schema_version", "name", "version", "kind", "maturity", "stages", "defaults"})
+_KNOWN_STAGE = frozenset({"id", "model", "agent_count", "limits", "tools", "metrics", "action"})
+_KNOWN_LIMITS = frozenset({"max_turns", "max_cost_usd", "context_budget_chars"})
+_KNOWN_METRIC = frozenset({"name", "goal"})
+_KNOWN_ACTION = frozenset({"capability", "input"})
+_KNOWN_DEFAULTS = frozenset({"model"})
+_KNOWN_MODEL_ENUM = frozenset({"literal", "by_task_type"})
+_KNOWN_STRING_FIELDS = frozenset(
+    {
+        ("root", "name"),
+        ("stage", "id"),
+        ("action", "capability"),
+        ("model_enum", "literal"),
+        ("metric", "name"),
+    }
+)
+_EMPTY_KEYS: frozenset[str] = frozenset()
+_JSON_NUMBER_RE = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
+_JSON_WHITESPACE = frozenset(" \t\r\n")
+_OBJECT_CONTEXTS = frozenset({"root", "stage", "limits", "metric", "action", "defaults", "model_enum"})
+_LIST_ITEM_CONTEXTS = {"stage_list": "stage", "metric_list": "metric"}
+
+
+def _child_context(parent_ctx: str, key: str) -> tuple[str, frozenset[str]]:
+    """Return ``(context_name, known_keys)`` for a child of *parent_ctx*
+    accessed by *key*.  ``action.input`` and every ignored unknown-field
+    subtree use the ``"value"`` context with an empty known-key set, so
+    arbitrary JSON receives Rust-compatible last-value-wins behaviour."""
+    if parent_ctx == "root":
+        if key == "stages":
+            return ("stage_list", _EMPTY_KEYS)
+        if key == "defaults":
+            return ("defaults", _KNOWN_DEFAULTS)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "stage_list":
+        return ("stage", _KNOWN_STAGE)
+    if parent_ctx == "stage":
+        if key == "limits":
+            return ("limits", _KNOWN_LIMITS)
+        if key == "model":
+            return ("model_enum", _KNOWN_MODEL_ENUM)
+        if key == "metrics":
+            return ("metric_list", _EMPTY_KEYS)
+        if key == "action":
+            return ("action", _KNOWN_ACTION)
+        if key == "tools":
+            return ("value", _EMPTY_KEYS)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "metric_list":
+        return ("metric", _KNOWN_METRIC)
+    if parent_ctx == "defaults":
+        if key == "model":
+            return ("model_enum", _KNOWN_MODEL_ENUM)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "action":
+        if key == "input":
+            return ("action_input_value", _EMPTY_KEYS)  # known path — check surrogates
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "action_input_value":
+        return ("action_input_value", _EMPTY_KEYS)  # propagate recursively
+    # model_enum, limits, metric, value — children always arbitrary
+    return ("value", _EMPTY_KEYS)
+
+
+def _skip_json_whitespace(text: str, index: int) -> int:
+    while index < len(text) and text[index] in _JSON_WHITESPACE:
+        index += 1
+    return index
+
+
+def _scan_json_string(text: str, index: int) -> int:
+    """Return the end of one syntactically valid JSON string token."""
+    if index >= len(text) or text[index] != '"':
+        raise ValueError("expected JSON string")
+    index += 1
+    while index < len(text):
+        char = text[index]
+        if char == '"':
+            return index + 1
+        if ord(char) < 0x20:
+            raise ValueError("unescaped control character in JSON string")
+        if char != "\\":
+            index += 1
+            continue
+        index += 1
+        if index >= len(text):
+            raise ValueError("unterminated JSON escape")
+        escape = text[index]
+        if escape == "u":
+            digits = text[index + 1 : index + 5]
+            if len(digits) != 4 or any(char not in "0123456789abcdefABCDEF" for char in digits):
+                raise ValueError("invalid JSON Unicode escape")
+            index += 5
+            continue
+        if escape not in '"\\/bfnrt':
+            raise ValueError("invalid JSON escape")
+        index += 1
+    raise ValueError("unterminated JSON string")
+
+
+def _scan_json_atom(text: str, index: int) -> int:
+    """Return the end of a scalar JSON token, excluding strings."""
+    for constant in ("NaN", "Infinity", "-Infinity"):
+        if text.startswith(constant, index):
+            raise ValueError(f"Non-finite JSON constant is not allowed: {constant!r}")
+    for literal in ("true", "false", "null"):
+        if text.startswith(literal, index):
+            return index + len(literal)
+    match = _JSON_NUMBER_RE.match(text, index)
+    if match is not None:
+        return match.end()
+    raise ValueError("invalid JSON value")
+
+
+def _skip_json_value(text: str, index: int) -> int:
+    """Validate and skip one JSON value without recursion or number conversion.
+
+    Rust routes unknown struct fields through ``serde::de::IgnoredAny``. This
+    iterative scanner mirrors that behavior: ignored values remain subject to
+    JSON syntax, but their depth, integer size, and decoded strings never enter
+    Python's recursive decoder.
+    """
+
+    frames: list[tuple[str, str]] = []
+
+    def begin_value(start: int) -> int:
+        start = _skip_json_whitespace(text, start)
+        if start >= len(text):
+            raise ValueError("expected JSON value")
+        char = text[start]
+        if char == "{":
+            frames.append(("object", "key_or_end"))
+            return start + 1
+        if char == "[":
+            frames.append(("array", "value_or_end"))
+            return start + 1
+        if char == '"':
+            return _scan_json_string(text, start)
+        return _scan_json_atom(text, start)
+
+    index = begin_value(index)
+    if not frames:
+        return index
+
+    while frames:
+        kind, state = frames[-1]
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON container")
+
+        if kind == "object":
+            if state in {"key_or_end", "key"}:
+                if text[index] == "}":
+                    if state == "key":
+                        raise ValueError("trailing comma in JSON object")
+                    frames.pop()
+                    index += 1
+                    continue
+                index = _scan_json_string(text, index)
+                index = _skip_json_whitespace(text, index)
+                if index >= len(text) or text[index] != ":":
+                    raise ValueError("expected colon after JSON object key")
+                frames[-1] = ("object", "comma_or_end")
+                index = begin_value(index + 1)
+                continue
+            if text[index] == ",":
+                frames[-1] = ("object", "key")
+                index += 1
+                continue
+            if text[index] == "}":
+                frames.pop()
+                index += 1
+                continue
+            raise ValueError("expected comma or end of JSON object")
+
+        if state in {"value_or_end", "value"}:
+            if text[index] == "]":
+                if state == "value":
+                    raise ValueError("trailing comma in JSON array")
+                frames.pop()
+                index += 1
+                continue
+            frames[-1] = ("array", "comma_or_end")
+            index = begin_value(index)
+            continue
+        if text[index] == ",":
+            frames[-1] = ("array", "value")
+            index += 1
+            continue
+        if text[index] == "]":
+            frames.pop()
+            index += 1
+            continue
+        raise ValueError("expected comma or end of JSON array")
+
+    return index
+
+
+def _known_keys_for_context(context: str) -> frozenset[str]:
+    return {
+        "root": _KNOWN_ROOT,
+        "stage": _KNOWN_STAGE,
+        "limits": _KNOWN_LIMITS,
+        "metric": _KNOWN_METRIC,
+        "action": _KNOWN_ACTION,
+        "defaults": _KNOWN_DEFAULTS,
+        "model_enum": _KNOWN_MODEL_ENUM,
+    }.get(context, _EMPTY_KEYS)
+
+
+def _filter_known_json_value(text: str, index: int, context: str) -> tuple[str, int]:
+    """Render known struct fields while syntax-checking and dropping unknowns."""
+    index = _skip_json_whitespace(text, index)
+    if index >= len(text):
+        raise ValueError("expected JSON value")
+    if context in _OBJECT_CONTEXTS and text[index] == "{":
+        return _filter_known_json_object(text, index, context)
+    item_context = _LIST_ITEM_CONTEXTS.get(context)
+    if item_context is not None and text[index] == "[":
+        return _filter_known_json_array(text, index, item_context)
+    end = _skip_json_value(text, index)
+    return text[index:end], end
+
+
+def _filter_known_json_object(text: str, index: int, context: str) -> tuple[str, int]:
+    known_keys = _known_keys_for_context(context)
+    fields: list[str] = []
+    index = _skip_json_whitespace(text, index + 1)
+    if index < len(text) and text[index] == "}":
+        return "{}", index + 1
+
+    while True:
+        key_start = index
+        key_end = _scan_json_string(text, key_start)
+        key = _json.loads(text[key_start:key_end])
+        _check_no_lone_surrogates(key, f"{context} object key")
+        index = _skip_json_whitespace(text, key_end)
+        if index >= len(text) or text[index] != ":":
+            raise ValueError("expected colon after JSON object key")
+        index = _skip_json_whitespace(text, index + 1)
+        if key in known_keys:
+            child_context, _child_keys = _child_context(context, key)
+            rendered, index = _filter_known_json_value(text, index, child_context)
+            fields.append(f"{text[key_start:key_end]}:{rendered}")
+        else:
+            value_start = index
+            index = _skip_json_value(text, index)
+            if context == "model_enum":
+                fields.append(f"{text[key_start:key_end]}:{text[value_start:index]}")
+
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON object")
+        if text[index] == "}":
+            return f"{{{','.join(fields)}}}", index + 1
+        if text[index] != ",":
+            raise ValueError("expected comma or end of JSON object")
+        index = _skip_json_whitespace(text, index + 1)
+        if index >= len(text) or text[index] == "}":
+            raise ValueError("trailing comma in JSON object")
+
+
+def _filter_known_json_array(text: str, index: int, item_context: str) -> tuple[str, int]:
+    items: list[str] = []
+    index = _skip_json_whitespace(text, index + 1)
+    if index < len(text) and text[index] == "]":
+        return "[]", index + 1
+
+    while True:
+        rendered, index = _filter_known_json_value(text, index, item_context)
+        items.append(rendered)
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON array")
+        if text[index] == "]":
+            return f"[{','.join(items)}]", index + 1
+        if text[index] != ",":
+            raise ValueError("expected comma or end of JSON array")
+        index = _skip_json_whitespace(text, index + 1)
+        if index >= len(text) or text[index] == "]":
+            raise ValueError("trailing comma in JSON array")
+
+
+def _filter_ignored_json_fields(text: str) -> str:
+    filtered, end = _filter_known_json_value(text, 0, "root")
+    if _skip_json_whitespace(text, end) != len(text):
+        raise ValueError("trailing data after JSON document")
+    return filtered
+
+
+def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str], depth: int = 0) -> object:
+    """Walk a ``PairObject`` tree with explicit context awareness.
+    Rejects duplicate known struct fields, non-finite floats in
+    ``action_input_value`` and typed-f64 contexts, lone surrogates in keys
+    and known String values, and excessive nesting depth (matching
+    serde_json's recursion limit). Converts ``PairObject`` → ``dict``."""
+
+    if depth >= _SERDE_DEPTH_LIMIT:
+        raise SkillPlanContractError("Maximum recursion depth exceeded")
+
+    # ── Lists: each item gets the item-level context ─────────────────
+    if isinstance(obj, list):
+        next_depth = depth + 1
+        if context == "stage_list":
+            return [_normalize_contextual(v, "stage", _KNOWN_STAGE, next_depth) for v in obj]
+        if context == "metric_list":
+            return [_normalize_contextual(v, "metric", _KNOWN_METRIC, next_depth) for v in obj]
+        if context == "action_input_value":
+            result = []
+            for v in obj:
+                item = _normalize_contextual(v, "action_input_value", _EMPTY_KEYS, next_depth)
+                if isinstance(item, str):
+                    _check_no_lone_surrogates(item, "action.input list element")
+                result.append(item)
+            return result
+        return [_normalize_contextual(v, "value", _EMPTY_KEYS, next_depth) for v in obj]
+
+    # ── Scalars: number + surrogate check ────────────────────────────
+    if not isinstance(obj, PairObject):
+        if context == "action_input_value":
+            _check_serde_number(obj, "action.input")
+            if isinstance(obj, str):
+                _check_no_lone_surrogates(obj, "action.input string")
+        # Preserve _NegZeroInt through normalization — typed validators
+        # reject it; f64/action.input accept it like any other int.
+        return obj
+
+    # ── Structs: check duplicate known keys, surrogate-check keys ─────
+    next_depth = depth + 1
+    seen: set[str] = set()
+    for key, _value in obj.items():
+        _check_no_lone_surrogates(key, f"{context} object key")
+        if key in known_keys:
+            if key in seen:
+                raise SkillPlanContractError(f"Duplicate known key in {context} struct: {key!r}")
+            seen.add(key)
+
+    result: dict[str, object] = {}
+    for key, value in obj.items():
+        child_ctx, child_keys = _child_context(context, key)
+        normalized = _normalize_contextual(value, child_ctx, child_keys, next_depth)
+        if isinstance(normalized, str) and (context, key) in _KNOWN_STRING_FIELDS:
+            _check_no_lone_surrogates(normalized, f"{context}.{key}")
+        if context == "stage" and key == "tools" and isinstance(normalized, list):
+            for tool in normalized:
+                if isinstance(tool, str):
+                    _check_no_lone_surrogates(tool, "stage.tools[]")
+        result[key] = normalized
+    return result
+
+
+def _validate_model_spec(label: str, model: object) -> None:
+    """Require ``model`` to match the Rust ``ModelSpec`` externally-tagged enum:
+    exactly one of ``{"literal": "<str>"}`` or
+    ``{"by_task_type": "code"|"summarize"|"default"}``.
+    Rust ``String`` allows empty, so an empty ``literal`` is valid."""
+    if not isinstance(model, dict) or len(model) != 1:
+        raise SkillPlanContractError(
+            f"{label} must be an externally-tagged object with exactly one literal or by_task_type variant key"
+        )
+    if "literal" in model:
+        if not isinstance(model["literal"], str):
+            raise SkillPlanContractError(f"{label}.literal must be a string")
+    elif "by_task_type" in model:
+        tt = model["by_task_type"]
+        if not isinstance(tt, str) or tt not in _SKILL_TASK_TYPES:
+            raise SkillPlanContractError(f"{label}.by_task_type must be one of {sorted(_SKILL_TASK_TYPES)}, got {tt!r}")
+    else:
+        raise SkillPlanContractError(f"{label} must be {{literal: string}} or {{by_task_type: code|summarize|default}}")
+
+
+def _prepare_skill_plan(
+    namespace: str,
+    full_content: str,
+    source_path: str | None = None,
+) -> _PreparedSkillPlan | None:
+    """Validate a skill plan and prepare authoritative metadata/model context.
+
+    Raises ``SkillPlanContractError`` (a ``BatchIndexLimitError`` subclass, so
+    the endpoints return 422) on any structural or semantic-safety violation.
+    Exact raw bytes remain outside the semantic projection returned here.
+    """
+    if namespace != settings.skills_namespace:
+        return None
+
+    # 256 KiB exact-source cap — reject BEFORE JSON parsing, embedding, chunking,
+    # or namespace persistence (the single-index path has no per-document cap upstream,
+    # and the batch path's cap is a different check layer).
+    try:
+        content_bytes = full_content.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise SkillPlanContractError(f"Invalid Unicode in skills document: {exc}") from exc
+    if len(content_bytes) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+        raise SkillPlanContractError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
+
+    # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
+    # that serde_json refuses. The raw string is never reserialized.
+    try:
+        filtered_content = _filter_ignored_json_fields(full_content)
+        plan_raw = _json.loads(
+            filtered_content,
+            parse_constant=_reject_non_finite_json,
+            parse_float=_parse_float_strict,
+            parse_int=_parse_int_strict,
+            object_pairs_hook=PairObject,
+        )
+    except RecursionError as exc:
+        raise SkillPlanContractError("JSON nesting depth exceeds parser limit") from exc
+    except UnicodeEncodeError as exc:
+        raise SkillPlanContractError(f"Invalid Unicode in skills document: {exc}") from exc
+    except (ValueError, TypeError) as exc:
+        cause = str(exc)
+        raise SkillPlanContractError(f"Invalid JSON in skills document: {cause}") from exc
+
+    if not isinstance(plan_raw, PairObject):
+        raise SkillPlanContractError("Skills document root must be a JSON object")
+
+    # Normalize PairObject → dict with context-aware duplicate detection,
+    # lone-surrogate rejection, and NegZeroInt resolution.
+    # action.input uses "action_input_value" context; unknown fields use plain
+    # "value" context with last-value-wins.  No global recursive number scan —
+    # typed fields are range-checked below, and arbitrary JSON accepts whatever
+    # serde_json::Value accepts (finite f64 from huge integer lexemes is fine).
+    plan = _normalize_contextual(plan_raw, "root", _KNOWN_ROOT)
+    _check_semantic_content_safety(plan)
+
+    # schema_version: must be exactly integer 1 (bool True == 1 must be rejected)
+    schema_version = plan.get("schema_version")
+    if schema_version is True or schema_version is False or not isinstance(schema_version, int):
+        raise SkillPlanContractError(
+            f"Skill schema_version must be an integer (1), got {type(schema_version).__name__}"
+        )
+    if schema_version != 1:
+        raise SkillPlanContractError(f"Unsupported skill schema_version: {schema_version!r} (expected 1)")
+
+    # name: string (Rust String allows empty)
+    name = plan.get("name")
+    if not isinstance(name, str):
+        raise SkillPlanContractError("Skill plan 'name' must be a string")
+
+    # version: u32 (strict integer, not bool)
+    version = plan.get("version")
+    if not _is_non_neg_u32(version):
+        raise SkillPlanContractError("Skill plan 'version' must be a u32 integer (0–4294967295)")
+
+    # kind: template | instance
+    kind = plan.get("kind")
+    if not isinstance(kind, str) or kind not in _SKILL_KINDS:
+        raise SkillPlanContractError(f"Skill plan 'kind' must be one of {sorted(_SKILL_KINDS)}, got {kind!r}")
+
+    # maturity: draft | validated | production
+    maturity = plan.get("maturity")
+    if not isinstance(maturity, str) or maturity not in _SKILL_MATURITIES:
+        raise SkillPlanContractError(
+            f"Skill plan 'maturity' must be one of {sorted(_SKILL_MATURITIES)}, got {maturity!r}"
+        )
+
+    # defaults: required object with model.by_task_type
+    defaults = plan.get("defaults")
+    if not isinstance(defaults, dict):
+        raise SkillPlanContractError("Skill plan 'defaults' must be an object")
+    _validate_model_spec("defaults.model", defaults.get("model"))
+
+    # stages: non-empty array
+    stages = plan.get("stages")
+    if not isinstance(stages, list) or len(stages) == 0:
+        raise SkillPlanContractError("Skill plan 'stages' must be a non-empty array")
+
+    # Validate each stage's structural constraints
+    for i, stage in enumerate(stages):
+        if not isinstance(stage, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}] must be an object")
+
+        # stage.id: string (Rust String allows empty)
+        stage_id = stage.get("id")
+        if not isinstance(stage_id, str):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].id must be a string")
+
+        # stage.model: externally-tagged ModelSpec {literal: str} | {by_task_type: task}
+        _validate_model_spec(f"stage[{i}].model", stage.get("model"))
+
+        # agent_count: u32 >= 1
+        agent_count = stage.get("agent_count")
+        if not _is_pos_u32(agent_count):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].agent_count must be a u32 integer >= 1, got {agent_count!r}"
+            )
+
+        # limits: required object with all three required fields
+        limits = stage.get("limits")
+        if not isinstance(limits, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].limits must be an object")
+
+        max_turns = limits.get("max_turns")
+        if not _is_non_neg_u32(max_turns):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.max_turns must be a u32 integer >= 0, got {max_turns!r}"
+            )
+
+        max_cost = limits.get("max_cost_usd")
+        if not _is_finite_number(max_cost):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.max_cost_usd must be a finite number, got {max_cost!r}"
+            )
+
+        context_budget = limits.get("context_budget_chars")
+        if not _is_non_neg_u64(context_budget):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.context_budget_chars must be a u64 integer >= 0, got {context_budget!r}"
+            )
+
+        # tools: Vec<String> — Rust String allows empty
+        tools = stage.get("tools")
+        if not isinstance(tools, list):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].tools must be an array")
+        for j, tool in enumerate(tools):
+            if not isinstance(tool, str):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}] must be a string, got {tool!r}")
+
+        # metrics: list of objects, each with name (non-empty string) and goal (finite number)
+        metrics = stage.get("metrics")
+        if not isinstance(metrics, list):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].metrics must be an array")
+        for j, metric in enumerate(metrics):
+            if not isinstance(metric, dict):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}] must be an object")
+            metric_name = metric.get("name")
+            if not isinstance(metric_name, str):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}].name must be a string")
+            goal = metric.get("goal")
+            if not _is_finite_number(goal):
+                raise SkillPlanContractError(
+                    f"Skill plan stage[{i}].metrics[{j}].goal must be a finite number, got {goal!r}"
+                )
+
+        # action: must be an object
+        action = stage.get("action")
+        if not isinstance(action, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action must be an object")
+
+        # action.capability: non-empty, non-whitespace string (Rust validate rejects
+        # empty/whitespace via trim().is_empty() — the only String field with this constraint)
+        capability = action.get("capability")
+        if not _is_non_empty_string(capability):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].action.capability must be a non-empty, non-whitespace string"
+            )
+
+        # action.input: required but any JSON value (including null) is valid
+        if "input" not in action:
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action.input is required")
+
+    content_hash = compute_doc_content_hash(full_content)
+    effective_maturity = approved_skill_maturity(
+        SKILL_PROMOTIONS,
+        source_path or "",
+        content_hash,
+    )
+    plan["maturity"] = effective_maturity
+    semantic_content = _json.dumps(
+        plan,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    if scan_injection(semantic_content)["flag"]:
+        raise SkillPlanContractError("Unsafe skill semantic content")
+
+    return _PreparedSkillPlan(
+        metadata={
+            "schema_version": schema_version,
+            "name": name,
+            "version": version,
+            "kind": kind,
+            "maturity": effective_maturity,
+        },
+        semantic_content=semantic_content,
+    )
+
+
+def _derive_skill_metadata(
+    namespace: str,
+    full_content: str,
+    source_path: str | None = None,
+) -> dict[str, object] | None:
+    """Return only server-derived proposal metadata for compatibility tests."""
+    prepared = _prepare_skill_plan(namespace, full_content, source_path)
+    return prepared.metadata if prepared is not None else None
 
 
 class _BatchEmbeddingError(Exception):
@@ -145,7 +1006,14 @@ def _build_evidence_document(namespace: str, source_path: str, full_content: str
     }
 
 
-def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: str) -> list[dict]:
+def _chunk_dicts(
+    chunk_result,
+    namespace: str,
+    source_path: str,
+    full_content: str,
+    skill_metadata: dict[str, object] | None = None,
+    injection_content: str | None = None,
+) -> list[dict]:
     doc_content_hash = compute_doc_content_hash(full_content)
     # SRCH-0038 1b: keep only the ~71-byte `doc_content_hash` in `metadata.section` (safely under
     # the jsonb_ops GIN entry ceiling); the exact bytes go to `source_documents`, never the GIN
@@ -153,11 +1021,21 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
     # invoked here so an oversized skills doc is rejected before persistence even if the caller
     # ignores the source-document payload.
     _build_source_document(namespace, source_path, full_content)
-    # ARAS-0055: label (never block) each document with an ingest-time injection signal, scanned
-    # ONCE over the whole pre-chunk content (fast regex/set-based — no LLM in the hot path). The
-    # signal is small (flag + int score + ≤4 short category names), JSONB-safe, and READ back on
-    # the fetch/search path. Ingestion proceeds regardless — this is an observability layer.
-    injection = scan_injection(full_content)
+    # ARAS-0055: label each persisted document with a bounded ingest-time injection signal. For
+    # skills, ``injection_content`` is the already validated canonical projection and any strong
+    # signal was rejected before chunking. Evidence retains the original non-blocking label.
+    injection = scan_injection(injection_content if injection_content is not None else full_content)
+    # ARAS-0057: JSON skill plans have no markdown headings, so the chunker emits
+    # section=None. Stamp a minimal provenance dict so every skills chunk carries
+    # nonempty doc_id and doc_content_hash — required by the search projection and
+    # fetch-by-doc_id resolution.
+    _fallback_section: dict[str, str] | None = None
+    if skill_metadata is not None:
+        _fallback_section = {
+            "doc_id": compute_doc_id(namespace, source_path),
+            "doc_content_hash": doc_content_hash,
+        }
+
     return [
         {
             "id": chunk.id,
@@ -174,8 +1052,10 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
                 "wikilinks": chunk.metadata.wikilinks,
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
-                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
+                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash)
+                or _fallback_section,
                 "injection": injection,
+                **(skill_metadata or {}),
             },
         }
         for chunk in chunk_result.chunks
@@ -216,18 +1096,46 @@ def _prepare_documents(
     results: list[BatchIndexSucceeded | BatchIndexFailed | None] = [None] * len(documents)
     for position, document in enumerate(documents):
         try:
+            content_size = len(document.content.encode("utf-8"))
+        except UnicodeEncodeError as exc:
+            content_size = len(document.content.encode("utf-8", errors="surrogatepass"))
+            if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+                raise BatchIndexLimitError("document content exceeds batch byte limit") from exc
+            raise BatchIndexLimitError("document content contains invalid Unicode") from exc
+        if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+            raise BatchIndexLimitError("document content exceeds batch byte limit")
+        try:
+            # ARAS-0057: validate skill plan BEFORE chunking/embedding,
+            # so a malformed plan is rejected without wasted compute.
+            # SkillPlanContractError propagates to the endpoint handler → 422 (typed client-input error).
+            skill_plan = _prepare_skill_plan(
+                document.namespace,
+                document.content,
+                document.source_path,
+            )
+            index_content = skill_plan.semantic_content if skill_plan is not None else document.content
             chunk_result = chunk_document(
-                content=document.content,
+                content=index_content,
                 source_path=document.source_path,
                 source_type=document.source_type,
                 max_tokens=document.max_tokens,
                 overlap_tokens=document.overlap_tokens,
             )
+        except SkillPlanContractError:
+            raise
         except Exception:
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
-        chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path, document.content)
+        skill_metadata = skill_plan.metadata if skill_plan is not None else None
+        chunk_dicts = _chunk_dicts(
+            chunk_result,
+            document.namespace,
+            document.source_path,
+            document.content,
+            skill_metadata,
+            index_content,
+        )
         source_document = _build_source_document(document.namespace, document.source_path, document.content)
         evidence_document = _build_evidence_document(document.namespace, document.source_path, document.content)
         prepared.append(
@@ -364,9 +1272,15 @@ async def index_document(
     overlap_tokens: int = 50,
 ) -> IndexResponse:
     """Full index pipeline: chunk → embed → store."""
+    # ARAS-0057: validate and derive skill proposal metadata BEFORE embedding,
+    # so a malformed plan is rejected without wasting compute.
+    skill_plan = _prepare_skill_plan(namespace, content, source_path)
+    index_content = skill_plan.semantic_content if skill_plan is not None else content
+    skill_metadata = skill_plan.metadata if skill_plan is not None else None
+
     # 1. Chunk the document
     chunk_result = chunk_document(
-        content=content,
+        content=index_content,
         source_path=source_path,
         source_type=source_type,
         max_tokens=max_tokens,
@@ -385,7 +1299,14 @@ async def index_document(
     project_id = await upsert_project(namespace_id, project) if project else None
 
     # 4. Replace dense and sparse rows as one source generation.
-    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content)
+    chunk_dicts = _chunk_dicts(
+        chunk_result,
+        namespace,
+        source_path,
+        content,
+        skill_metadata,
+        index_content,
+    )
     source_document = _build_source_document(namespace, source_path, content)
     evidence_document = _build_evidence_document(namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
