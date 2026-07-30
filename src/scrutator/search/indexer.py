@@ -54,9 +54,6 @@ _SKILL_TASK_TYPES = frozenset({"code", "summarize", "default"})
 # Rust u32 / u64 ranges — values outside these overflow the target serde types.
 _U32_MAX = 4_294_967_295
 _U64_MAX = 18_446_744_073_709_551_615
-# serde_json::Number integer range: i64::MIN through u64::MAX.
-_SERDE_INT_MIN = -9_223_372_036_854_775_808  # i64::MIN
-_SERDE_INT_MAX = 18_446_744_073_709_551_615  # u64::MAX
 
 
 def _reject_non_finite_json(value: object) -> object:
@@ -66,34 +63,112 @@ def _reject_non_finite_json(value: object) -> object:
 
 
 def _is_finite_number(value: object) -> bool:
-    """True for finite int or float, excluding bool, NaN, and infinities."""
+    """True for a ``serde_json``-compatible finite number (f64 or int that fits
+    in f64 without overflow).  Rejects bool, NaN, infinities, and integers that
+    would overflow ``f64``."""
     if isinstance(value, bool):
         return False
-    if isinstance(value, int):
-        return True
     if isinstance(value, float):
         return math.isfinite(value)
+    if isinstance(value, int):
+        try:
+            f = float(value)
+        except OverflowError:
+            return False
+        return math.isfinite(f)
     return False
 
 
+def _check_serde_number(value: object, label: str) -> None:
+    """Reject numbers that ``serde_json`` cannot represent as finite f64."""
+    if isinstance(value, bool):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise SkillPlanContractError(f"{label}: non-finite float")
+        return
+    if isinstance(value, int):
+        try:
+            f = float(value)
+        except OverflowError:
+            raise SkillPlanContractError(f"{label}: integer overflows f64") from None
+        if not math.isfinite(f):
+            raise SkillPlanContractError(f"{label}: integer overflows f64") from None
+        return
+
+
 def _is_non_neg_u32(value: object) -> bool:
-    """True when *value* is a strict integer (not bool) in ``[0, _U32_MAX]``."""
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[0, _U32_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
     return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U32_MAX
 
 
 def _is_pos_u32(value: object) -> bool:
-    """True when *value* is a strict integer (not bool) in ``[1, _U32_MAX]``."""
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[1, _U32_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
     return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= _U32_MAX
 
 
 def _is_non_neg_u64(value: object) -> bool:
-    """True when *value* is a strict integer (not bool) in ``[0, _U64_MAX]``."""
+    """True when *value* is a strict integer (not bool, not ``-0``) in ``[0, _U64_MAX]``."""
+    if isinstance(value, _NegZeroInt):
+        return False
     return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U64_MAX
 
 
+# Rust char::is_whitespace / str::trim Unicode White_Space set:
+# U+0009..U+000D, U+0020, U+0085, U+00A0, U+1680,
+# U+2000..U+200A, U+2028..U+2029, U+202F, U+205F, U+3000.
+# Does NOT trim U+001C..U+001F, U+200B, U+200E/U+200F, or U+FEFF.
+_RUST_WS: frozenset[str] = frozenset("\t\n\x0b\x0c\r                  　")
+
+# serde_json default recursion limit.
+_SERDE_DEPTH_LIMIT = 128
+
+
 def _is_non_empty_string(value: object) -> bool:
-    """True when *value* is a non-empty (non-whitespace-only) string."""
-    return isinstance(value, str) and bool(value.strip())
+    """True when *value* is a non-empty string after Rust-compatible whitespace trim."""
+    if not isinstance(value, str):
+        return False
+    start = 0
+    end = len(value)
+    while start < end and value[start] in _RUST_WS:
+        start += 1
+    while end > start and value[end - 1] in _RUST_WS:
+        end -= 1
+    return start < end
+
+
+class _NegZeroInt(int):
+    """Marker for JSON ``-0`` (integer negative zero).  Python ``int('-0')``
+    loses the sign and returns plain ``0``; Rust serde_json rejects ``-0`` when
+    the target type is unsigned.  Wrapping the parsed value lets u32/u64
+    validators reject it while the int behaves normally everywhere else."""
+
+    __slots__ = ()
+
+
+def _parse_int_strict(value: str) -> int:
+    """Reject integer ``-0`` that Python would silently accept as ``0``."""
+    if value == "-0":
+        return _NegZeroInt(0)
+    return int(value)
+
+
+# Lone surrogates (U+D800-U+DFFF) — valid surrogate pairs are decoded by Python's
+# json parser into the correct supplementary character; lone surrogates survive
+# as raw codepoints and must be rejected in known String fields and object keys.
+_SURROGATE_LO = 0xD800
+_SURROGATE_HI = 0xDFFF
+
+
+def _check_no_lone_surrogates(s: str, label: str) -> None:
+    for ch in s:
+        cp = ord(ch)
+        if _SURROGATE_LO <= cp <= _SURROGATE_HI:
+            raise SkillPlanContractError(f"Lone surrogate U+{cp:04X} in {label}")
 
 
 class PairObject:
@@ -124,6 +199,15 @@ _KNOWN_METRIC = frozenset({"name", "goal"})
 _KNOWN_ACTION = frozenset({"capability", "input"})
 _KNOWN_DEFAULTS = frozenset({"model"})
 _KNOWN_MODEL_ENUM = frozenset({"literal", "by_task_type"})
+_KNOWN_STRING_FIELDS = frozenset(
+    {
+        ("root", "name"),
+        ("stage", "id"),
+        ("action", "capability"),
+        ("model_enum", "literal"),
+        ("metric", "name"),
+    }
+)
 _EMPTY_KEYS: frozenset[str] = frozenset()
 
 
@@ -160,32 +244,56 @@ def _child_context(parent_ctx: str, key: str) -> tuple[str, frozenset[str]]:
         return ("value", _EMPTY_KEYS)
     if parent_ctx == "action":
         if key == "input":
-            return ("value", _EMPTY_KEYS)  # arbitrary serde_json::Value
+            return ("action_input_value", _EMPTY_KEYS)  # known path — check surrogates
         return ("value", _EMPTY_KEYS)
+    if parent_ctx == "action_input_value":
+        return ("action_input_value", _EMPTY_KEYS)  # propagate recursively
     # model_enum, limits, metric, value — children always arbitrary
     return ("value", _EMPTY_KEYS)
 
 
-def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str]) -> object:
+def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str], depth: int = 0) -> object:
     """Walk a ``PairObject`` tree with explicit context awareness.
-    Rejects duplicate known struct fields, converts ``PairObject`` → ``dict``,
-    and recurses with the correct child or list-item context."""
+    Rejects duplicate known struct fields, non-finite floats in
+    ``action_input_value`` and typed-f64 contexts, lone surrogates in keys
+    and known String values, and excessive nesting depth (matching
+    serde_json's recursion limit). Converts ``PairObject`` → ``dict``."""
+
+    if depth >= _SERDE_DEPTH_LIMIT:
+        raise SkillPlanContractError("Maximum recursion depth exceeded")
 
     # ── Lists: each item gets the item-level context ─────────────────
     if isinstance(obj, list):
+        next_depth = depth + 1
         if context == "stage_list":
-            return [_normalize_contextual(v, "stage", _KNOWN_STAGE) for v in obj]
+            return [_normalize_contextual(v, "stage", _KNOWN_STAGE, next_depth) for v in obj]
         if context == "metric_list":
-            return [_normalize_contextual(v, "metric", _KNOWN_METRIC) for v in obj]
-        return [_normalize_contextual(v, "value", _EMPTY_KEYS) for v in obj]
+            return [_normalize_contextual(v, "metric", _KNOWN_METRIC, next_depth) for v in obj]
+        if context == "action_input_value":
+            result = []
+            for v in obj:
+                item = _normalize_contextual(v, "action_input_value", _EMPTY_KEYS, next_depth)
+                if isinstance(item, str):
+                    _check_no_lone_surrogates(item, "action.input list element")
+                result.append(item)
+            return result
+        return [_normalize_contextual(v, "value", _EMPTY_KEYS, next_depth) for v in obj]
 
-    # ── Scalars: pass through ────────────────────────────────────────
+    # ── Scalars: number + surrogate check ────────────────────────────
     if not isinstance(obj, PairObject):
+        if context == "action_input_value":
+            _check_serde_number(obj, "action.input")
+            if isinstance(obj, str):
+                _check_no_lone_surrogates(obj, "action.input string")
+        # Preserve _NegZeroInt through normalization — typed validators
+        # reject it; f64/action.input accept it like any other int.
         return obj
 
-    # ── Structs: check duplicate known keys, recurse per-key ──────────
+    # ── Structs: check duplicate known keys, surrogate-check keys ─────
+    next_depth = depth + 1
     seen: set[str] = set()
     for key, _value in obj.items():
+        _check_no_lone_surrogates(key, f"{context} object key")
         if key in known_keys:
             if key in seen:
                 raise SkillPlanContractError(f"Duplicate known key in {context} struct: {key!r}")
@@ -194,35 +302,15 @@ def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str])
     result: dict[str, object] = {}
     for key, value in obj.items():
         child_ctx, child_keys = _child_context(context, key)
-        result[key] = _normalize_contextual(value, child_ctx, child_keys)
+        normalized = _normalize_contextual(value, child_ctx, child_keys, next_depth)
+        if isinstance(normalized, str) and (context, key) in _KNOWN_STRING_FIELDS:
+            _check_no_lone_surrogates(normalized, f"{context}.{key}")
+        if context == "stage" and key == "tools" and isinstance(normalized, list):
+            for tool in normalized:
+                if isinstance(tool, str):
+                    _check_no_lone_surrogates(tool, "stage.tools[]")
+        result[key] = normalized
     return result
-
-
-def _validate_numbers_recursive(value: object, path: str) -> None:
-    """Recursively reject non-finite floats and integer-overflow anywhere in the
-    parsed JSON, matching ``serde_json::Number`` range (i64::MIN … u64::MAX).
-    Field-specific u32 / u64 / f64 constraints are enforced separately at each
-    known struct field — this gate only rejects values ``serde_json`` cannot
-    store at all."""
-    if isinstance(value, bool):
-        return
-    if isinstance(value, int):
-        if not (_SERDE_INT_MIN <= value <= _SERDE_INT_MAX):
-            raise SkillPlanContractError(
-                f"Integer overflow at {path}: {value} outside serde_json range [{_SERDE_INT_MIN}, {_SERDE_INT_MAX}]"
-            )
-        return
-    if isinstance(value, float):
-        if not math.isfinite(value):
-            raise SkillPlanContractError(f"Non-finite float at {path}: {value}")
-        return
-    if isinstance(value, (dict, PairObject)):
-        items = value.items() if isinstance(value, dict) else value._pairs
-        for k, v in items:
-            _validate_numbers_recursive(v, f"{path}.{k}")
-    elif isinstance(value, list):
-        for i, v in enumerate(value):
-            _validate_numbers_recursive(v, f"{path}[{i}]")
 
 
 def _validate_model_spec(label: str, model: object) -> None:
@@ -258,7 +346,11 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     # 256 KiB exact-source cap — reject BEFORE JSON parsing, embedding, chunking,
     # or namespace persistence (the single-index path has no per-document cap upstream,
     # and the batch path's cap is a different check layer).
-    if len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+    try:
+        content_bytes = full_content.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise SkillPlanContractError(f"Invalid Unicode in skills document: {exc}") from exc
+    if len(content_bytes) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
         raise SkillPlanContractError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
 
     # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
@@ -267,8 +359,13 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         plan_raw = _json.loads(
             full_content,
             parse_constant=_reject_non_finite_json,
+            parse_int=_parse_int_strict,
             object_pairs_hook=PairObject,
         )
+    except RecursionError as exc:
+        raise SkillPlanContractError("JSON nesting depth exceeds parser limit") from exc
+    except UnicodeEncodeError as exc:
+        raise SkillPlanContractError(f"Invalid Unicode in skills document: {exc}") from exc
     except (ValueError, TypeError) as exc:
         cause = str(exc)
         raise SkillPlanContractError(f"Invalid JSON in skills document: {cause}") from exc
@@ -276,13 +373,12 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     if not isinstance(plan_raw, PairObject):
         raise SkillPlanContractError("Skills document root must be a JSON object")
 
-    # Recursive number sanity: reject non-finite floats (1e400→inf) and
-    # serde_json::Number overflow anywhere, including inside action.input.
-    _validate_numbers_recursive(plan_raw, "<root>")
-
-    # Normalize PairObject → dict with context-aware duplicate detection.
-    # Only known struct fields are checked; action.input and unknown-field
-    # values get "value" context with last-value-wins behaviour.
+    # Normalize PairObject → dict with context-aware duplicate detection,
+    # lone-surrogate rejection, and NegZeroInt resolution.
+    # action.input uses "action_input_value" context; unknown fields use plain
+    # "value" context with last-value-wins.  No global recursive number scan —
+    # typed fields are range-checked below, and arbitrary JSON accepts whatever
+    # serde_json::Value accepts (finite f64 from huge integer lexemes is fine).
     plan = _normalize_contextual(plan_raw, "root", _KNOWN_ROOT)
 
     # schema_version: must be exactly integer 1 (bool True == 1 must be rejected)

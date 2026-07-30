@@ -641,42 +641,14 @@ class TestHardenedParityRejections:
 
     # ── Number boundary probes ─────────────────────────────────────────
 
-    def test_1e400_becomes_inf_rejected_by_recursive_check(self):
-        """1e400 becomes inf in Python, rejected by recursive number gate."""
-        plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["input"] = {"value": 1e400}
-        raw = json.dumps(plan)
-        with pytest.raises(SkillPlanContractError, match="Non-finite"):
-            _derive_skill_metadata("skills", raw)
-
-    def test_i64_min_minus_one_rejected(self):
-        plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["input"] = {"n": -9_223_372_036_854_775_809}
-        raw = json.dumps(plan)
-        with pytest.raises(SkillPlanContractError, match="Integer overflow"):
-            _derive_skill_metadata("skills", raw)
-
-    def test_u64_max_plus_one_rejected(self):
-        plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["input"] = {"n": 18_446_744_073_709_551_616}
-        raw = json.dumps(plan)
-        with pytest.raises(SkillPlanContractError, match="Integer overflow"):
-            _derive_skill_metadata("skills", raw)
-
-    def test_i64_max_plus_one_accepted(self):
-        """9223372036854775808 is within serde_json u64 range."""
-        plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["input"] = {"n": 9_223_372_036_854_775_808}
-        raw = json.dumps(plan)
-        result = _derive_skill_metadata("skills", raw)
-        assert result is not None
-
-    def test_u64_max_accepted(self):
-        plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["input"] = {"n": 18_446_744_073_709_551_615}
-        raw = json.dumps(plan)
-        result = _derive_skill_metadata("skills", raw)
-        assert result is not None
+    def test_huge_integers_in_action_input_accepted_as_f64(self):
+        """serde_json::Value converts oversized integer lexemes to finite f64."""
+        for n in (-9_223_372_036_854_775_809, 18_446_744_073_709_551_616):
+            plan = json.loads(VALID_SKILL_PLAN)
+            plan["stages"][0]["action"]["input"] = {"n": n}
+            raw = json.dumps(plan)
+            result = _derive_skill_metadata("skills", raw)
+            assert result is not None
 
     def test_negative_cost_accepted(self):
         """Rust f64 allows negative max_cost_usd."""
@@ -684,6 +656,150 @@ class TestHardenedParityRejections:
         plan["stages"][0]["limits"]["max_cost_usd"] = -5.0
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
+
+    # ── Negative zero (-0) for integer fields ──────────────────────────
+
+    def test_neg_zero_version_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        raw = json.dumps(plan).replace('"version": 1', '"version": -0')
+        with pytest.raises(SkillPlanContractError, match="version"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_neg_zero_max_turns_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        raw = json.dumps(plan).replace('"max_turns": 1', '"max_turns": -0')
+        with pytest.raises(SkillPlanContractError, match="max_turns"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_neg_zero_in_action_input_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"n": 0}
+        raw = json.dumps(plan).replace('"n": 0', '"n": -0')
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    # ── Lone surrogate rejection ───────────────────────────────────────
+
+    def test_lone_surrogate_in_name_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["name"] = "a\ud800b"
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_lone_surrogate_in_action_input_string_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"k": "a\ud800b"}
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_lone_surrogate_in_object_key_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"a\ud800b": "value"}
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_lone_surrogate_in_unknown_field_accepted(self):
+        """Unknown struct fields are ignored by Rust — surrogates allowed."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown_field__"] = "a\ud800b"
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    # ── Rust trim: U+001C not stripped ─────────────────────────────────
+
+    def test_control_char_u001c_in_capability_accepted(self):
+        """Rust trim() does not remove U+001C; Python strip() does."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["capability"] = ""
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_unknown_field_key_lone_surrogate_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["a\ud800b"] = "value"
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_valid_surrogate_pair_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["name"] = "a\U00010000b"
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    @pytest.mark.parametrize(
+        "setter",
+        [
+            lambda plan, value: plan["defaults"].update({"model": {"literal": value}}),
+            lambda plan, value: plan["stages"][0].update({"model": {"literal": value}}),
+            lambda plan, value: plan["stages"][0].update({"tools": [value]}),
+            lambda plan, value: plan["stages"][0]["metrics"][0].update({"name": value}),
+        ],
+    )
+    def test_lone_surrogate_in_every_known_string_context_rejected(self, setter):
+        plan = json.loads(VALID_SKILL_PLAN)
+        setter(plan, "a\ud800b")
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Recursion depth boundary (serde_json limit 128; wrapper ~5) ────
+
+    def test_depth_123_accepted(self):
+        value = "leaf"
+        for _ in range(123):
+            value = {"x": value}
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = value
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_depth_124_rejected(self):
+        value = "leaf"
+        for _ in range(124):
+            value = {"x": value}
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = value
+        raw = json.dumps(plan)
+        with pytest.raises(SkillPlanContractError, match="depth"):
+            _derive_skill_metadata("skills", raw)
+
+    # ── 1e400 differential ──────────────────────────────────────────
+
+    def test_1e400_in_action_input_value_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan).replace(json.dumps(sentinel), '{"v":1e400}')
+        with pytest.raises(SkillPlanContractError, match="non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_1e400_in_unknown_field_value_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["__u__"] = sentinel
+        raw = json.dumps(plan).replace(json.dumps(sentinel), "1e400")
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    @pytest.mark.parametrize("context", ["action.input", "typed f64"])
+    def test_400_digit_integer_rejected_in_deserialized_number_contexts(self, context):
+        huge = "1" + ("0" * 400)
+        plan = json.loads(VALID_SKILL_PLAN)
+        if context == "action.input":
+            marker = {"__HUGE__": True}
+            plan["stages"][0]["action"]["input"] = marker
+            raw = json.dumps(plan).replace(json.dumps(marker), f'{{"n":{huge}}}')
+        else:
+            plan["stages"][0]["limits"]["max_cost_usd"] = "__HUGE__"
+            raw = json.dumps(plan).replace('"__HUGE__"', huge)
+        with pytest.raises(SkillPlanContractError, match="overflows f64|finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_400_digit_integer_in_ignored_unknown_field_accepted(self):
+        huge = "1" + ("0" * 400)
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown_huge__"] = "__HUGE__"
+        raw = json.dumps(plan).replace('"__HUGE__"', huge)
+        assert _derive_skill_metadata("skills", raw) is not None
 
     # ── Table-driven empty-string parity ───────────────────────────────
 
@@ -861,6 +977,30 @@ class TestSkillIndexHttpEndpointErrors:
         assert resp.status_code == 422, (
             f"batch index with invalid skill must return 422, got {resp.status_code}: {resp.text[:200]}"
         )
+
+    @pytest.mark.parametrize("route", ["/v1/index", "/v1/index/batch"])
+    @pytest.mark.parametrize("invalid_case", ["depth", "surrogate"])
+    def test_hardened_skill_contract_failures_return_typed_422(self, route, invalid_case):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        plan = json.loads(VALID_SKILL_PLAN)
+        if invalid_case == "depth":
+            value: object = "leaf"
+            for _ in range(124):
+                value = {"x": value}
+            plan["stages"][0]["action"]["input"] = value
+        else:
+            plan["name"] = "a\ud800b"
+        document = {
+            "content": json.dumps(plan),
+            "source_path": f"skills/{invalid_case}.json",
+            "namespace": "skills",
+        }
+        payload = {"documents": [document]} if route.endswith("/batch") else document
+        response = TestClient(app).post(route, json=payload)
+        assert response.status_code == 422, response.text[:200]
 
 
 # ── HTTP endpoint: oversized skill returns 422 before embedding ───────────────
