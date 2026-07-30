@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
+from typing import Literal
 
 from fastapi import Header, HTTPException
+from pydantic import BaseModel
 
 from scrutator.config import settings
 
@@ -14,6 +16,17 @@ from scrutator.config import settings
 class NamespaceCapability:
     namespaces: frozenset[str]
     operator: bool = False
+
+
+class FeederCapabilityResponse(BaseModel):
+    schema_version: Literal[1] = 1
+    namespaces: list[str]
+
+
+class RollbackCapabilityResponse(BaseModel):
+    schema_version: Literal[1] = 1
+    namespaces: list[str]
+    operator: bool
 
 
 def _namespaces(value: str) -> frozenset[str]:
