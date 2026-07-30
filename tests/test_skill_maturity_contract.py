@@ -333,19 +333,307 @@ class TestSearchWithFiltersMaturityFloor:
             assert maturity_idx < limit_idx, f"maturity predicate must be before LIMIT in {cte} CTE"
 
 
-# ── API endpoint: maturity forwarding and validation ──────────────────────────
+# ── API endpoint: early 422 validation + maturity forwarding ──────────────────
 
 
-class TestSearchEndpointMaturityForwarding:
-    """The /v1/search endpoint validates namespace and forwards maturity."""
+class TestSearchEndpointMaturityValidation:
+    """Behavioral endpoint tests: maturity validation happens BEFORE
+    namespace resolution, and valid maturity+namespace forwards correctly."""
+
+    @pytest.fixture(autouse=True)
+    def _override_auth(self):
+        from scrutator.auth.capabilities import NamespaceCapability, require_feeder_capability
+        from scrutator.health import app
+
+        app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
+            namespaces=frozenset({"skills", "arcanada"})
+        )
+        yield
+        app.dependency_overrides.pop(require_feeder_capability, None)
+
+    def test_maturity_non_skills_namespace_returns_422(self):
+        """Maturity + non-skills namespace → 422 BEFORE any authz/namespace resolution."""
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        client = TestClient(app)
+        resp = client.post(
+            "/v1/search",
+            json={"query": "test", "namespace": "arcanada", "maturity": "production"},
+        )
+        assert resp.status_code == 422
+        assert "maturity" in resp.text.lower()
+
+    def test_maturity_without_namespace_returns_422(self):
+        """Maturity without an explicit namespace → 422 (omitted namespace ≠ skills)."""
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        client = TestClient(app)
+        resp = client.post(
+            "/v1/search",
+            json={"query": "test", "maturity": "production"},
+        )
+        assert resp.status_code == 422
+        assert "maturity" in resp.text.lower()
+
+
+# ── search() forwarding: all paths forward maturity ───────────────────────────
+
+
+class TestSearchForwardingMaturity:
+    """search() must forward maturity to every backend path."""
 
     @pytest.mark.asyncio
-    async def test_maturity_forwarded_to_searcher(self):
-        """When maturity is supplied, the search_endpoint forwards it to search()."""
-        from scrutator.db.models import SearchRequest
+    async def test_hybrid_two_way_forwards_maturity(self):
+        from scrutator.search.searcher import search
 
-        # Verify SearchRequest carries maturity
-        req = SearchRequest(query="test", namespace="skills", maturity="production")
-        assert req.maturity == "production"
-        model = req.model_dump()
-        assert model["maturity"] == "production"
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+        ):
+            mock_settings.rerank_enabled = False
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = []
+
+            await search(query="q", namespace_id=1, maturity="validated")
+
+        _, kwargs = mock_search.call_args
+        assert kwargs.get("maturity") == "validated"
+
+    @pytest.mark.asyncio
+    async def test_hybrid_three_way_forwards_maturity(self):
+        from scrutator.search.searcher import search
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+        ):
+            mock_settings.rerank_enabled = False
+            mock_embed.return_value = [0.1] * 1024
+            mock_sparse.return_value = [{"tok": 0.5}]
+            mock_search.return_value = []
+
+            await search(query="q", namespace_id=1, maturity="draft")
+
+        _, kwargs = mock_search.call_args
+        assert kwargs.get("maturity") == "draft"
+
+    @pytest.mark.asyncio
+    async def test_rerank_path_forwards_maturity(self):
+        from scrutator.search.searcher import search
+
+        with (
+            patch("scrutator.search.searcher.embed_single", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.searcher.hybrid_search", new_callable=AsyncMock) as mock_search,
+            patch("scrutator.search.searcher.rerank", new_callable=AsyncMock) as mock_rerank,
+            patch("scrutator.search.searcher.settings") as mock_settings,
+        ):
+            mock_settings.rerank_enabled = True
+            mock_settings.rerank_pool_multiplier = 4
+            mock_embed.return_value = [0.1] * 1024
+            mock_search.return_value = []
+            mock_rerank.return_value = []
+
+            await search(query="q", namespace_id=1, maturity="production")
+
+        _, kwargs = mock_search.call_args
+        assert kwargs.get("maturity") == "production"
+        assert kwargs.get("return_pool") is True
+
+    @pytest.mark.asyncio
+    async def test_filtered_path_forwards_maturity(self):
+        from scrutator.search.searcher import search
+
+        with (
+            patch("scrutator.search.searcher.search_with_filters", new_callable=AsyncMock) as mock_filtered,
+        ):
+            mock_filtered.return_value = []
+
+            await search(query="q", namespace_id=1, source_type="md", maturity="draft")
+
+        _, kwargs = mock_filtered.call_args
+        assert kwargs.get("maturity") == "draft"
+
+
+# ── Locked SQL predicates: exact placeholder numbers and argument counts ──────
+
+
+class TestLockedSqlPredicates:
+    """The maturity predicate must use exact placeholder numbers, appear in every
+    candidate CTE arm, and must never have an IS NULL OR escape hatch."""
+
+    @pytest.mark.asyncio
+    async def test_2way_predicate_uses_placeholder_6(self):
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                maturity="production",
+            )
+
+        sql = mock_conn.fetch.call_args[0][0]
+        assert "metadata->>'maturity' = ANY($6::text[])" in sql
+
+    @pytest.mark.asyncio
+    async def test_2way_predicate_occurs_twice(self):
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                maturity="production",
+            )
+
+        sql = mock_conn.fetch.call_args[0][0]
+        count = sql.count("metadata->>'maturity' = ANY")
+        assert count == 2, f"expected 2 predicate occurrences in 2-way SQL, got {count}"
+
+    @pytest.mark.asyncio
+    async def test_3way_predicate_uses_placeholder_7(self):
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                query_sparse={"tok": 1.0},
+                maturity="production",
+            )
+
+        sql = mock_conn.fetch.call_args[0][0]
+        assert "metadata->>'maturity' = ANY($7::text[])" in sql
+
+    @pytest.mark.asyncio
+    async def test_3way_predicate_occurs_three_times(self):
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                query_sparse={"tok": 1.0},
+                maturity="production",
+            )
+
+        sql = mock_conn.fetch.call_args[0][0]
+        count = sql.count("metadata->>'maturity' = ANY")
+        assert count == 3, f"expected 3 predicate occurrences in 3-way SQL, got {count}"
+
+    @pytest.mark.asyncio
+    async def test_no_is_null_or_escape_in_maturity_predicate(self):
+        """Never allow an IS NULL OR escape hatch — targeted regex check."""
+        import re
+
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                maturity="production",
+            )
+
+        sql = mock_conn.fetch.call_args[0][0]
+        # IS NULL OR near a maturity predicate is the escape we reject
+        assert not re.search(r"IS\s+NULL\s+OR.*maturity", sql, re.IGNORECASE), (
+            "IS NULL OR escape hatch must not appear near maturity predicate"
+        )
+
+    @pytest.mark.asyncio
+    async def test_exact_argument_count_2way(self):
+        """2-way with maturity: exactly 6 positional args (vector, ns, limit, text, final, [maturities])."""
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                maturity="production",
+            )
+
+        args = mock_conn.fetch.call_args[0]
+        assert len(args) == 7, f"2-way with maturity expects 7 args (1 SQL + 6 params), got {len(args)}"
+        # Last arg is the maturity list
+        assert args[6] == ["production"]
+
+    @pytest.mark.asyncio
+    async def test_exact_argument_count_3way(self):
+        """3-way with maturity: exactly 7 positional args (vector, ns, limit, text, final, sparse, [maturities])."""
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                query_sparse={"tok": 1.0},
+                maturity="production",
+            )
+
+        args = mock_conn.fetch.call_args[0]
+        assert len(args) == 8, f"3-way with maturity expects 8 args (1 SQL + 7 params), got {len(args)}"
+        # Last arg is the maturity list
+        assert args[7] == ["production"]
+
+    @pytest.mark.asyncio
+    async def test_exact_argument_count_2way_no_maturity(self):
+        """2-way without maturity: exactly 5 positional args."""
+        from scrutator.db.repository import hybrid_search
+
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        mock_pool = _make_pool_mock(mock_conn)
+
+        with patch("scrutator.db.repository.get_pool", new_callable=AsyncMock, return_value=mock_pool):
+            await hybrid_search(
+                query_embedding=[0.1] * 1024,
+                query_text="q",
+                namespace_id=5,
+                maturity=None,
+            )
+
+        args = mock_conn.fetch.call_args[0]
+        assert len(args) == 6, f"2-way without maturity expects 6 args (1 SQL + 5 params), got {len(args)}"

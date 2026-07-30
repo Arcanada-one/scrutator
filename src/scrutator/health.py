@@ -209,15 +209,16 @@ async def delete_source_endpoint(
 async def search_endpoint(
     request: SearchRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> SearchResponse:
-    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     # ARAS-0057: maturity floor is valid only for the configured skills namespace.
     # A supplied floor with a non-skills or omitted namespace is a clear 422,
-    # because the maturity metadata key is only stamped on skills-namespace chunks.
+    # validated BEFORE namespace resolution so the error is never masked by a
+    # cross-namespace 404 or an authz 401/403.
     if request.maturity is not None and request.namespace != settings.skills_namespace:
         raise HTTPException(
             status_code=422,
             detail="maturity floor requires the configured skills namespace",
         )
+    namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
         return await search(
             query=request.query,

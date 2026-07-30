@@ -49,6 +49,8 @@ class SkillPlanContractError(BatchIndexLimitError):
 
 _SKILL_KINDS = frozenset({"template", "instance"})
 _SKILL_MATURITIES = frozenset({"draft", "validated", "production"})
+# Rust TaskType enum — closed set, serde rejects unknown variants.
+_SKILL_TASK_TYPES = frozenset({"code", "summarize", "default"})
 # Rust u32 / u64 ranges — values outside these overflow the target serde types.
 _U32_MAX = 4_294_967_295
 _U64_MAX = 18_446_744_073_709_551_615
@@ -91,13 +93,33 @@ def _is_non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _validate_model_object(label: str, model: object) -> None:
-    """Require ``model`` to be a dict with a non-empty ``by_task_type`` string."""
-    if not isinstance(model, dict):
-        raise SkillPlanContractError(f"{label} must be an object")
-    by_task_type = model.get("by_task_type")
-    if not isinstance(by_task_type, str) or not by_task_type.strip():
-        raise SkillPlanContractError(f"{label}.by_task_type must be a non-empty string")
+def _detect_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate keys in JSON objects — Python's last-value-wins behaviour
+    differs from Rust serde which rejects duplicates by default."""
+    seen: set[str] = set()
+    for key, _value in pairs:
+        if key in seen:
+            raise ValueError(f"Duplicate key in JSON object: {key!r}")
+        seen.add(key)
+    return dict(pairs)
+
+
+def _validate_model_spec(label: str, model: object) -> None:
+    """Require ``model`` to match the Rust ``ModelSpec`` externally-tagged enum:
+    exactly one of ``{"literal": "<non-empty-str>"}`` or
+    ``{"by_task_type": "code"|"summarize"|"default"}``."""
+    if not isinstance(model, dict) or len(model) != 1:
+        raise SkillPlanContractError(f"{label} must be an externally-tagged object with exactly one variant key")
+    if "literal" in model:
+        lit = model["literal"]
+        if not _is_non_empty_string(lit):
+            raise SkillPlanContractError(f"{label}.literal must be a non-empty string")
+    elif "by_task_type" in model:
+        tt = model["by_task_type"]
+        if tt not in _SKILL_TASK_TYPES:
+            raise SkillPlanContractError(f"{label}.by_task_type must be one of {sorted(_SKILL_TASK_TYPES)}, got {tt!r}")
+    else:
+        raise SkillPlanContractError(f"{label} must be {{literal: string}} or {{by_task_type: code|summarize|default}}")
 
 
 def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, object] | None:
@@ -121,7 +143,11 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
     # that serde_json refuses. The raw string is never reserialized.
     try:
-        plan = _json.loads(full_content, parse_constant=_reject_non_finite_json)
+        plan = _json.loads(
+            full_content,
+            parse_constant=_reject_non_finite_json,
+            object_pairs_hook=_detect_duplicate_keys,
+        )
     except (ValueError, TypeError) as exc:
         cause = str(exc)
         raise SkillPlanContractError(f"Invalid JSON in skills document: {cause}") from exc
@@ -164,7 +190,7 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     defaults = plan.get("defaults")
     if not isinstance(defaults, dict):
         raise SkillPlanContractError("Skill plan 'defaults' must be an object")
-    _validate_model_object("defaults.model", defaults.get("model"))
+    _validate_model_spec("defaults.model", defaults.get("model"))
 
     # stages: non-empty array
     stages = plan.get("stages")
@@ -181,8 +207,8 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if not _is_non_empty_string(stage_id):
             raise SkillPlanContractError(f"Skill plan stage[{i}].id must be a non-empty string")
 
-        # stage.model: object with by_task_type
-        _validate_model_object(f"stage[{i}].model", stage.get("model"))
+        # stage.model: externally-tagged ModelSpec {literal: str} | {by_task_type: task}
+        _validate_model_spec(f"stage[{i}].model", stage.get("model"))
 
         # agent_count: u32 >= 1
         agent_count = stage.get("agent_count")
@@ -214,16 +240,15 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
                 f"Skill plan stage[{i}].limits.context_budget_chars must be a u64 integer >= 0, got {context_budget!r}"
             )
 
-        # tools: list of objects, each with a non-empty name string
+        # tools: Vec<String> — each element must be a non-empty string
         tools = stage.get("tools")
         if not isinstance(tools, list):
             raise SkillPlanContractError(f"Skill plan stage[{i}].tools must be an array")
         for j, tool in enumerate(tools):
-            if not isinstance(tool, dict):
-                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}] must be an object")
-            tool_name = tool.get("name")
-            if not _is_non_empty_string(tool_name):
-                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}].name must be a non-empty string")
+            if not _is_non_empty_string(tool):
+                raise SkillPlanContractError(
+                    f"Skill plan stage[{i}].tools[{j}] must be a non-empty string, got {tool!r}"
+                )
 
         # metrics: list of objects, each with name (non-empty string) and goal (finite number)
         metrics = stage.get("metrics")
@@ -250,6 +275,10 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         capability = action.get("capability")
         if not _is_non_empty_string(capability):
             raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a non-empty string")
+
+        # action.input: required but any JSON value (including null) is valid
+        if "input" not in action:
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action.input is required")
 
     # Return only the five proposal fields — no leaking of parsed internals.
     # Keys are consumer-compatible (ARAS skill_hit_from reads name/version/maturity directly).
