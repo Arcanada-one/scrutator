@@ -6,6 +6,7 @@ import hashlib
 import json as _json
 import logging
 import math
+import re
 from dataclasses import dataclass
 
 from scrutator.chunker.engine import chunk_document
@@ -209,6 +210,10 @@ _KNOWN_STRING_FIELDS = frozenset(
     }
 )
 _EMPTY_KEYS: frozenset[str] = frozenset()
+_JSON_NUMBER_RE = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
+_JSON_WHITESPACE = frozenset(" \t\r\n")
+_OBJECT_CONTEXTS = frozenset({"root", "stage", "limits", "metric", "action", "defaults", "model_enum"})
+_LIST_ITEM_CONTEXTS = {"stage_list": "stage", "metric_list": "metric"}
 
 
 def _child_context(parent_ctx: str, key: str) -> tuple[str, frozenset[str]]:
@@ -250,6 +255,228 @@ def _child_context(parent_ctx: str, key: str) -> tuple[str, frozenset[str]]:
         return ("action_input_value", _EMPTY_KEYS)  # propagate recursively
     # model_enum, limits, metric, value — children always arbitrary
     return ("value", _EMPTY_KEYS)
+
+
+def _skip_json_whitespace(text: str, index: int) -> int:
+    while index < len(text) and text[index] in _JSON_WHITESPACE:
+        index += 1
+    return index
+
+
+def _scan_json_string(text: str, index: int) -> int:
+    """Return the end of one syntactically valid JSON string token."""
+    if index >= len(text) or text[index] != '"':
+        raise ValueError("expected JSON string")
+    index += 1
+    while index < len(text):
+        char = text[index]
+        if char == '"':
+            return index + 1
+        if ord(char) < 0x20:
+            raise ValueError("unescaped control character in JSON string")
+        if char != "\\":
+            index += 1
+            continue
+        index += 1
+        if index >= len(text):
+            raise ValueError("unterminated JSON escape")
+        escape = text[index]
+        if escape == "u":
+            digits = text[index + 1 : index + 5]
+            if len(digits) != 4 or any(char not in "0123456789abcdefABCDEF" for char in digits):
+                raise ValueError("invalid JSON Unicode escape")
+            index += 5
+            continue
+        if escape not in '"\\/bfnrt':
+            raise ValueError("invalid JSON escape")
+        index += 1
+    raise ValueError("unterminated JSON string")
+
+
+def _scan_json_atom(text: str, index: int) -> int:
+    """Return the end of a scalar JSON token, excluding strings."""
+    for constant in ("NaN", "Infinity", "-Infinity"):
+        if text.startswith(constant, index):
+            raise ValueError(f"Non-finite JSON constant is not allowed: {constant!r}")
+    for literal in ("true", "false", "null"):
+        if text.startswith(literal, index):
+            return index + len(literal)
+    match = _JSON_NUMBER_RE.match(text, index)
+    if match is not None:
+        return match.end()
+    raise ValueError("invalid JSON value")
+
+
+def _skip_json_value(text: str, index: int) -> int:
+    """Validate and skip one JSON value without recursion or number conversion.
+
+    Rust routes unknown struct fields through ``serde::de::IgnoredAny``. This
+    iterative scanner mirrors that behavior: ignored values remain subject to
+    JSON syntax, but their depth, integer size, and decoded strings never enter
+    Python's recursive decoder.
+    """
+
+    frames: list[tuple[str, str]] = []
+
+    def begin_value(start: int) -> int:
+        start = _skip_json_whitespace(text, start)
+        if start >= len(text):
+            raise ValueError("expected JSON value")
+        char = text[start]
+        if char == "{":
+            frames.append(("object", "key_or_end"))
+            return start + 1
+        if char == "[":
+            frames.append(("array", "value_or_end"))
+            return start + 1
+        if char == '"':
+            return _scan_json_string(text, start)
+        return _scan_json_atom(text, start)
+
+    index = begin_value(index)
+    if not frames:
+        return index
+
+    while frames:
+        kind, state = frames[-1]
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON container")
+
+        if kind == "object":
+            if state in {"key_or_end", "key"}:
+                if text[index] == "}":
+                    if state == "key":
+                        raise ValueError("trailing comma in JSON object")
+                    frames.pop()
+                    index += 1
+                    continue
+                index = _scan_json_string(text, index)
+                index = _skip_json_whitespace(text, index)
+                if index >= len(text) or text[index] != ":":
+                    raise ValueError("expected colon after JSON object key")
+                frames[-1] = ("object", "comma_or_end")
+                index = begin_value(index + 1)
+                continue
+            if text[index] == ",":
+                frames[-1] = ("object", "key")
+                index += 1
+                continue
+            if text[index] == "}":
+                frames.pop()
+                index += 1
+                continue
+            raise ValueError("expected comma or end of JSON object")
+
+        if state in {"value_or_end", "value"}:
+            if text[index] == "]":
+                if state == "value":
+                    raise ValueError("trailing comma in JSON array")
+                frames.pop()
+                index += 1
+                continue
+            frames[-1] = ("array", "comma_or_end")
+            index = begin_value(index)
+            continue
+        if text[index] == ",":
+            frames[-1] = ("array", "value")
+            index += 1
+            continue
+        if text[index] == "]":
+            frames.pop()
+            index += 1
+            continue
+        raise ValueError("expected comma or end of JSON array")
+
+    return index
+
+
+def _known_keys_for_context(context: str) -> frozenset[str]:
+    return {
+        "root": _KNOWN_ROOT,
+        "stage": _KNOWN_STAGE,
+        "limits": _KNOWN_LIMITS,
+        "metric": _KNOWN_METRIC,
+        "action": _KNOWN_ACTION,
+        "defaults": _KNOWN_DEFAULTS,
+        "model_enum": _KNOWN_MODEL_ENUM,
+    }.get(context, _EMPTY_KEYS)
+
+
+def _filter_known_json_value(text: str, index: int, context: str) -> tuple[str, int]:
+    """Render known struct fields while syntax-checking and dropping unknowns."""
+    index = _skip_json_whitespace(text, index)
+    if index >= len(text):
+        raise ValueError("expected JSON value")
+    if context in _OBJECT_CONTEXTS and text[index] == "{":
+        return _filter_known_json_object(text, index, context)
+    item_context = _LIST_ITEM_CONTEXTS.get(context)
+    if item_context is not None and text[index] == "[":
+        return _filter_known_json_array(text, index, item_context)
+    end = _skip_json_value(text, index)
+    return text[index:end], end
+
+
+def _filter_known_json_object(text: str, index: int, context: str) -> tuple[str, int]:
+    known_keys = _known_keys_for_context(context)
+    fields: list[str] = []
+    index = _skip_json_whitespace(text, index + 1)
+    if index < len(text) and text[index] == "}":
+        return "{}", index + 1
+
+    while True:
+        key_start = index
+        key_end = _scan_json_string(text, key_start)
+        key = _json.loads(text[key_start:key_end])
+        index = _skip_json_whitespace(text, key_end)
+        if index >= len(text) or text[index] != ":":
+            raise ValueError("expected colon after JSON object key")
+        index = _skip_json_whitespace(text, index + 1)
+        if key in known_keys:
+            child_context, _child_keys = _child_context(context, key)
+            rendered, index = _filter_known_json_value(text, index, child_context)
+            fields.append(f"{text[key_start:key_end]}:{rendered}")
+        else:
+            index = _skip_json_value(text, index)
+
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON object")
+        if text[index] == "}":
+            return f"{{{','.join(fields)}}}", index + 1
+        if text[index] != ",":
+            raise ValueError("expected comma or end of JSON object")
+        index = _skip_json_whitespace(text, index + 1)
+        if index >= len(text) or text[index] == "}":
+            raise ValueError("trailing comma in JSON object")
+
+
+def _filter_known_json_array(text: str, index: int, item_context: str) -> tuple[str, int]:
+    items: list[str] = []
+    index = _skip_json_whitespace(text, index + 1)
+    if index < len(text) and text[index] == "]":
+        return "[]", index + 1
+
+    while True:
+        rendered, index = _filter_known_json_value(text, index, item_context)
+        items.append(rendered)
+        index = _skip_json_whitespace(text, index)
+        if index >= len(text):
+            raise ValueError("unterminated JSON array")
+        if text[index] == "]":
+            return f"[{','.join(items)}]", index + 1
+        if text[index] != ",":
+            raise ValueError("expected comma or end of JSON array")
+        index = _skip_json_whitespace(text, index + 1)
+        if index >= len(text) or text[index] == "]":
+            raise ValueError("trailing comma in JSON array")
+
+
+def _filter_ignored_json_fields(text: str) -> str:
+    filtered, end = _filter_known_json_value(text, 0, "root")
+    if _skip_json_whitespace(text, end) != len(text):
+        raise ValueError("trailing data after JSON document")
+    return filtered
 
 
 def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str], depth: int = 0) -> object:
@@ -319,7 +546,9 @@ def _validate_model_spec(label: str, model: object) -> None:
     ``{"by_task_type": "code"|"summarize"|"default"}``.
     Rust ``String`` allows empty, so an empty ``literal`` is valid."""
     if not isinstance(model, dict) or len(model) != 1:
-        raise SkillPlanContractError(f"{label} must be an externally-tagged object with exactly one variant key")
+        raise SkillPlanContractError(
+            f"{label} must be an externally-tagged object with exactly one literal or by_task_type variant key"
+        )
     if "literal" in model:
         if not isinstance(model["literal"], str):
             raise SkillPlanContractError(f"{label}.literal must be a string")
@@ -356,8 +585,9 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
     # that serde_json refuses. The raw string is never reserialized.
     try:
+        filtered_content = _filter_ignored_json_fields(full_content)
         plan_raw = _json.loads(
-            full_content,
+            filtered_content,
             parse_constant=_reject_non_finite_json,
             parse_int=_parse_int_strict,
             object_pairs_hook=PairObject,

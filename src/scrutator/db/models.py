@@ -88,8 +88,18 @@ class BatchIndexRequest(BaseModel):
         paths = [document.source_path for document in self.documents]
         if len(paths) != len(set(paths)):
             raise ValueError("source_path values must be unique")
-        if any(len(document.content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES for document in self.documents):
-            raise ValueError("document content exceeds batch byte limit")
+        for document in self.documents:
+            try:
+                content_size = len(document.content.encode("utf-8"))
+            except UnicodeEncodeError:
+                # Do not raise a Pydantic validation error containing the
+                # unencodable input: Starlette's validation renderer would
+                # fail while serializing that error and turn the intended 422
+                # into a 500. The index contract maps invalid Unicode to the
+                # existing safe, non-echoing client-error path.
+                continue
+            if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+                raise ValueError("document content exceeds batch byte limit")
         return self
 
 
