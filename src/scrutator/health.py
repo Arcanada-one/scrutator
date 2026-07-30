@@ -4,6 +4,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
@@ -104,6 +106,20 @@ app.add_middleware(
     path="/v1/index/batch",
     max_bytes=INDEX_BATCH_MAX_REQUEST_BYTES,
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def non_echoing_request_validation_error(_request, exc: RequestValidationError) -> JSONResponse:
+    """Return typed validation details without echoing unencodable request values."""
+    detail = [
+        {
+            "type": error["type"],
+            "loc": list(error["loc"]),
+            "msg": error["msg"],
+        }
+        for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 # LTM router

@@ -55,6 +55,9 @@ _SKILL_TASK_TYPES = frozenset({"code", "summarize", "default"})
 # Rust u32 / u64 ranges — values outside these overflow the target serde types.
 _U32_MAX = 4_294_967_295
 _U64_MAX = 18_446_744_073_709_551_615
+_I32_MIN = -2_147_483_648
+_I32_MAX = 2_147_483_647
+_JSON_NUMBER_PARTS_RE = re.compile(r"-?(0|[1-9][0-9]*)(?:\.([0-9]+))?(?:[eE]([+-]?)([0-9]+))?\Z")
 
 
 def _reject_non_finite_json(value: object) -> object:
@@ -151,11 +154,93 @@ class _NegZeroInt(int):
     __slots__ = ()
 
 
+def _accumulate_serde_significand(digits: str, significand: int) -> tuple[int, int | None]:
+    """Accumulate decimal digits until the next multiply-add would overflow u64."""
+    for index, char in enumerate(digits):
+        digit = ord(char) - ord("0")
+        if significand > (_U64_MAX - digit) // 10:
+            return significand, index
+        significand = (significand * 10) + digit
+    return significand, None
+
+
+def _parse_serde_exponent(digits: str) -> int | None:
+    """Return an i32 exponent, or ``None`` when serde_json's accumulator overflows."""
+    exponent = 0
+    for char in digits:
+        digit = ord(char) - ord("0")
+        if exponent > (_I32_MAX - digit) // 10:
+            return None
+        exponent = (exponent * 10) + digit
+    return exponent
+
+
+def _validate_serde_f64_parts(significand: int, exponent: int, value: str) -> None:
+    """Apply serde_json's default-feature finite-f64 range calculation."""
+    number = float(significand)
+    while abs(exponent) > 308:
+        if number == 0.0:
+            return
+        if exponent >= 0:
+            raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+        number /= 1e308
+        exponent += 308
+
+    power = 10.0 ** abs(exponent)
+    number = number * power if exponent >= 0 else number / power
+    if not math.isfinite(number):
+        raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+
+
+def _validate_serde_number_lexeme(value: str) -> None:
+    """Match serde_json 1.0.149's default numeric acceptance state machine.
+
+    The pinned Rust consumer does not decide from exact decimal magnitude. It
+    accumulates a u64 significand, tracks discarded digits in an i32 exponent,
+    then applies finite-f64 multiplication or division. This independently
+    written acceptance port intentionally follows those path-dependent steps.
+    """
+    match = _JSON_NUMBER_PARTS_RE.fullmatch(value)
+    if match is None:
+        raise ValueError(f"JSON number is invalid: {value!r}")
+    integer_digits, fraction_digits, exponent_sign, exponent_digits = match.groups()
+
+    significand, integer_overflow_at = _accumulate_serde_significand(integer_digits, 0)
+    starting_exponent = 0 if integer_overflow_at is None else len(integer_digits) - integer_overflow_at
+
+    if fraction_digits is not None:
+        significand, fraction_overflow_at = _accumulate_serde_significand(fraction_digits, significand)
+        consumed_fraction_digits = len(fraction_digits) if fraction_overflow_at is None else fraction_overflow_at
+        starting_exponent -= consumed_fraction_digits
+
+    if exponent_digits is not None:
+        parsed_exponent = _parse_serde_exponent(exponent_digits)
+        if parsed_exponent is None:
+            if significand != 0 and exponent_sign != "-":
+                raise ValueError(f"JSON number out of range (non-finite or overflows f64): {value!r}")
+            return
+        if exponent_sign == "-":
+            starting_exponent = max(_I32_MIN, starting_exponent - parsed_exponent)
+        else:
+            starting_exponent = min(_I32_MAX, starting_exponent + parsed_exponent)
+
+    if fraction_digits is None and exponent_digits is None and integer_overflow_at is None:
+        return
+    _validate_serde_f64_parts(significand, starting_exponent, value)
+
+
 def _parse_int_strict(value: str) -> int:
-    """Reject integer ``-0`` that Python would silently accept as ``0``."""
+    """Reject integer ``-0`` and exact magnitudes outside serde_json's finite range."""
+    _validate_serde_number_lexeme(value)
     if value == "-0":
         return _NegZeroInt(0)
     return int(value)
+
+
+def _parse_float_strict(value: str) -> float:
+    """Parse only exact decimal lexemes that the Rust serde_json consumer accepts."""
+    _validate_serde_number_lexeme(value)
+    return float(value)
 
 
 # Lone surrogates (U+D800-U+DFFF) — valid surrogate pairs are decoded by Python's
@@ -558,7 +643,7 @@ def _validate_model_spec(label: str, model: object) -> None:
             raise SkillPlanContractError(f"{label}.literal must be a string")
     elif "by_task_type" in model:
         tt = model["by_task_type"]
-        if tt not in _SKILL_TASK_TYPES:
+        if not isinstance(tt, str) or tt not in _SKILL_TASK_TYPES:
             raise SkillPlanContractError(f"{label}.by_task_type must be one of {sorted(_SKILL_TASK_TYPES)}, got {tt!r}")
     else:
         raise SkillPlanContractError(f"{label} must be {{literal: string}} or {{by_task_type: code|summarize|default}}")
@@ -593,6 +678,7 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         plan_raw = _json.loads(
             filtered_content,
             parse_constant=_reject_non_finite_json,
+            parse_float=_parse_float_strict,
             parse_int=_parse_int_strict,
             object_pairs_hook=PairObject,
         )
@@ -636,12 +722,12 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
 
     # kind: template | instance
     kind = plan.get("kind")
-    if kind not in _SKILL_KINDS:
+    if not isinstance(kind, str) or kind not in _SKILL_KINDS:
         raise SkillPlanContractError(f"Skill plan 'kind' must be one of {sorted(_SKILL_KINDS)}, got {kind!r}")
 
     # maturity: draft | validated | production
     maturity = plan.get("maturity")
-    if maturity not in _SKILL_MATURITIES:
+    if not isinstance(maturity, str) or maturity not in _SKILL_MATURITIES:
         raise SkillPlanContractError(
             f"Skill plan 'maturity' must be one of {sorted(_SKILL_MATURITIES)}, got {maturity!r}"
         )
