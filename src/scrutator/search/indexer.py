@@ -428,6 +428,7 @@ def _filter_known_json_object(text: str, index: int, context: str) -> tuple[str,
         key_start = index
         key_end = _scan_json_string(text, key_start)
         key = _json.loads(text[key_start:key_end])
+        _check_no_lone_surrogates(key, f"{context} object key")
         index = _skip_json_whitespace(text, key_end)
         if index >= len(text) or text[index] != ":":
             raise ValueError("expected colon after JSON object key")
@@ -437,7 +438,10 @@ def _filter_known_json_object(text: str, index: int, context: str) -> tuple[str,
             rendered, index = _filter_known_json_value(text, index, child_context)
             fields.append(f"{text[key_start:key_end]}:{rendered}")
         else:
+            value_start = index
             index = _skip_json_value(text, index)
+            if context == "model_enum":
+                fields.append(f"{text[key_start:key_end]}:{text[value_start:index]}")
 
         index = _skip_json_whitespace(text, index)
         if index >= len(text):
@@ -944,6 +948,15 @@ def _prepare_documents(
     texts: list[str] = []
     results: list[BatchIndexSucceeded | BatchIndexFailed | None] = [None] * len(documents)
     for position, document in enumerate(documents):
+        try:
+            content_size = len(document.content.encode("utf-8"))
+        except UnicodeEncodeError as exc:
+            content_size = len(document.content.encode("utf-8", errors="surrogatepass"))
+            if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+                raise BatchIndexLimitError("document content exceeds batch byte limit") from exc
+            raise BatchIndexLimitError("document content contains invalid Unicode") from exc
+        if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+            raise BatchIndexLimitError("document content exceeds batch byte limit")
         try:
             # ARAS-0057: validate skill plan BEFORE chunking/embedding,
             # so a malformed plan is rejected without wasted compute.

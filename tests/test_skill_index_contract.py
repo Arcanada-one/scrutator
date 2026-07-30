@@ -513,6 +513,14 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="literal"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
+    @pytest.mark.parametrize("location", ["stage", "defaults"])
+    def test_model_extra_variant_key_rejected(self, location):
+        plan = json.loads(VALID_SKILL_PLAN)
+        target = plan["stages"][0] if location == "stage" else plan["defaults"]
+        target["model"] = {"literal": "model", "unknown": 1}
+        with pytest.raises(SkillPlanContractError, match="variant key"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
     # ── action.input required ───────────────────────────────────────────
 
     def test_missing_action_input_rejected(self):
@@ -714,9 +722,15 @@ class TestHardenedParityRejections:
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
 
-    def test_unknown_field_key_lone_surrogate_accepted(self):
+    def test_unknown_field_key_lone_surrogate_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
         plan["a\ud800b"] = "value"
+        with pytest.raises(SkillPlanContractError, match="surrogate"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_nested_key_inside_ignored_unknown_value_accepts_lone_surrogate(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown__"] = {"a\ud800b": "value"}
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
 
@@ -1007,6 +1021,23 @@ class TestSkillIndexHttpEndpointErrors:
 
         raw_body = (
             b'{"documents":[{"content":"\\ud800","source_path":"skills/literal-surrogate.json","namespace":"skills"}]}'
+        )
+        response = TestClient(app, raise_server_exceptions=False).post(
+            "/v1/index/batch",
+            content=raw_body,
+            headers={"content-type": "application/json"},
+        )
+        assert response.status_code == 422, response.text[:200]
+
+    def test_batch_oversized_literal_surrogate_cannot_bypass_general_cap(self):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        raw_body = (
+            b'{"documents":[{"content":"'
+            + (b"x" * (INDEX_BATCH_MAX_DOCUMENT_BYTES + 1))
+            + b'\\ud800","source_path":"oversized-surrogate.txt","namespace":"arcanada"}]}'
         )
         response = TestClient(app, raise_server_exceptions=False).post(
             "/v1/index/batch",
