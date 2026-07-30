@@ -4,9 +4,9 @@ Defense-in-depth companion to ARAS-0049's read-side nonce-fenced envelope and SR
 namespace-derived ``trust_class``. This module hardens the KB at INGEST time:
 
 - :func:`scan_injection` — a fast regex/set-based scan (deliberately NO LLM call in the ingest
-  hot path) that LABELS a document with a non-blocking injection signal. Ingestion is NEVER
-  blocked by this signal — the KB must stay complete; the label is an observability layer that
-  feeds downstream trust decisions.
+  hot path) that returns a bounded injection signal. Evidence ingestion uses it as a non-blocking
+  observability label; executable skill-plan ingestion may reject a flagged semantic projection
+  before chunking.
 - :func:`source_trust_tier` — a provenance-derived tier. Unreviewed raw dumps (``wiki/_raw_/``)
   get a LOWER tier (``raw``) than curated sources (``curated``). The tier is a WEIGHTING hint
   that composes with ``trust_class``; it NEVER promotes evidence to skill/exec (no
@@ -46,6 +46,12 @@ _ROLE_MARKERS = (
     "[/inst]",
     "<<sys>>",
     "<</sys>>",
+    "<start_of_turn>",
+    "<end_of_turn>",
+    "<|begin_of_text|>",
+    "<|start_header_id|>",
+    "<|end_header_id|>",
+    "<|eot_id|>",
 )
 
 # "ignore previous instructions"-class imperatives that try to override the operator's prompt.
@@ -94,8 +100,8 @@ def scan_injection(content: str) -> dict:
 
     Returns a small, JSONB-safe signal dict ``{"flag": bool, "risk_score": int,
     "patterns": [category, ...]}`` — ``patterns`` is deduplicated and sorted (at most one entry
-    per category, so bounded by ``len(_CATEGORY_WEIGHTS)``). This is a NON-BLOCKING label: the
-    caller indexes the document regardless of the result.
+    per category, so bounded by ``len(_CATEGORY_WEIGHTS)``). Policy stays with the caller:
+    evidence labels the result, while skill plans reject a flagged semantic projection.
     """
     matched: list[str] = []
     lowered = content.lower()

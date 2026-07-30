@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "promotions": [
+    {
+      "source_path": "skills/skills-kb-discovery-probe.json",
+      "content_hash": "sha256:a568ac9631c86ff90fc4bf5b893f70a7113cbf851e0991c59acb16d087165633",
+      "maturity": "production"
+    }
+  ]
+}
