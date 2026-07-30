@@ -399,10 +399,13 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if not isinstance(action, dict):
             raise SkillPlanContractError(f"Skill plan stage[{i}].action must be an object")
 
-        # action.capability: string (Rust String allows empty)
+        # action.capability: non-empty, non-whitespace string (Rust validate rejects
+        # empty/whitespace via trim().is_empty() — the only String field with this constraint)
         capability = action.get("capability")
-        if not isinstance(capability, str):
-            raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a string")
+        if not _is_non_empty_string(capability):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].action.capability must be a non-empty, non-whitespace string"
+            )
 
         # action.input: required but any JSON value (including null) is valid
         if "input" not in action:
