@@ -154,12 +154,19 @@ class TestDeriveSkillMetadata:
         with pytest.raises(SkillPlanContractError, match="agent_count"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_empty_action_capability_accepted(self):
-        """Rust String allows empty capability."""
+    def test_empty_action_capability_rejected(self):
+        """Rust validate rejects empty/whitespace capability via trim().is_empty()."""
         plan = json.loads(VALID_SKILL_PLAN)
         plan["stages"][0]["action"]["capability"] = ""
-        result = _derive_skill_metadata("skills", json.dumps(plan))
-        assert result is not None
+        with pytest.raises(SkillPlanContractError, match="capability"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_whitespace_action_capability_rejected(self):
+        """Whitespace-only capability is rejected (trim().is_empty())."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["capability"] = "   "
+        with pytest.raises(SkillPlanContractError, match="capability"):
+            _derive_skill_metadata("skills", json.dumps(plan))
 
     def test_missing_stages_raises_skill_plan_contract_error(self):
         """Missing 'stages' raises SkillPlanContractError."""
@@ -550,9 +557,7 @@ class TestHardenedParityRejections:
         sentinel = {"__SENTINEL__": True}
         plan["stages"][0]["action"]["input"] = sentinel
         raw = json.dumps(plan)
-        dup_fragment = "{}: {}, {}: {}".format(
-            json.dumps(key), json.dumps(val1), json.dumps(key), json.dumps(val2)
-        )
+        dup_fragment = f"{json.dumps(key)}: {json.dumps(val1)}, {json.dumps(key)}: {json.dumps(val2)}"
         return raw.replace(json.dumps(sentinel), "{" + dup_fragment + "}")
 
     def test_action_input_duplicate_name_accepted(self):
@@ -690,7 +695,6 @@ class TestHardenedParityRejections:
             ("stage.model.literal", lambda p, v: p["stages"][0].update({"model": {"literal": v}})),
             ("stage.tools[0]", lambda p, v: p["stages"][0].update({"tools": [v]})),
             ("stage.metrics[0].name", lambda p, v: p["stages"][0]["metrics"][0].update({"name": v})),
-            ("stage.action.capability", lambda p, v: p["stages"][0]["action"].update({"capability": v})),
         ],
         ids=lambda f: f,
     )
