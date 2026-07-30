@@ -210,6 +210,14 @@ async def search_endpoint(
     request: SearchRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> SearchResponse:
     namespace_id = await resolve_namespace_selector(ctx, request.namespace)
+    # ARAS-0057: maturity floor is valid only for the configured skills namespace.
+    # A supplied floor with a non-skills or omitted namespace is a clear 422,
+    # because the maturity metadata key is only stamped on skills-namespace chunks.
+    if request.maturity is not None and request.namespace != settings.skills_namespace:
+        raise HTTPException(
+            status_code=422,
+            detail="maturity floor requires the configured skills namespace",
+        )
     try:
         return await search(
             query=request.query,
@@ -220,6 +228,7 @@ async def search_endpoint(
             min_score=request.min_score,
             include_content=request.include_content,
             group_by=request.group_by,
+            maturity=request.maturity,
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Search failed: {e}") from e
