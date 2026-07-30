@@ -97,12 +97,13 @@ class TestDeriveSkillMetadata:
         with pytest.raises(SkillPlanContractError, match="name"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_empty_name_raises_skill_plan_contract_error(self):
-        """Empty 'name' string raises SkillPlanContractError."""
+    def test_empty_name_accepted(self):
+        """Empty 'name' string is valid — Rust String allows empty."""
         plan = json.loads(VALID_SKILL_PLAN)
         plan["name"] = ""
-        with pytest.raises(SkillPlanContractError, match="name"):
-            _derive_skill_metadata("skills", json.dumps(plan))
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+        assert result["name"] == ""
 
     def test_missing_version_raises_skill_plan_contract_error(self):
         """Missing required 'version' field raises SkillPlanContractError."""
@@ -153,12 +154,12 @@ class TestDeriveSkillMetadata:
         with pytest.raises(SkillPlanContractError, match="agent_count"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_empty_action_capability_raises_skill_plan_contract_error(self):
-        """Empty action.capability raises SkillPlanContractError."""
+    def test_empty_action_capability_accepted(self):
+        """Rust String allows empty capability."""
         plan = json.loads(VALID_SKILL_PLAN)
         plan["stages"][0]["action"]["capability"] = ""
-        with pytest.raises(SkillPlanContractError, match="capability"):
-            _derive_skill_metadata("skills", json.dumps(plan))
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
 
     def test_missing_stages_raises_skill_plan_contract_error(self):
         """Missing 'stages' raises SkillPlanContractError."""
@@ -327,11 +328,12 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="stage\\[0\\].id"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_empty_stage_id_rejected(self):
+    def test_empty_stage_id_accepted(self):
+        """Rust String allows empty stage id."""
         plan = json.loads(VALID_SKILL_PLAN)
         plan["stages"][0]["id"] = ""
-        with pytest.raises(SkillPlanContractError, match="stage\\[0\\].id"):
-            _derive_skill_metadata("skills", json.dumps(plan))
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
 
     # ── Missing / wrong stage model ─────────────────────────────────────
 
@@ -414,11 +416,12 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="tools\\[0\\]"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_tool_empty_string_rejected(self):
+    def test_tool_empty_string_accepted(self):
+        """Rust Vec<String> allows empty tool strings."""
         plan = json.loads(VALID_SKILL_PLAN)
         plan["stages"][0]["tools"] = [""]
-        with pytest.raises(SkillPlanContractError, match="tools\\[0\\]"):
-            _derive_skill_metadata("skills", json.dumps(plan))
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
 
     def test_string_tools_accepted(self):
         """Vec<String> — a list of non-empty strings is valid."""
@@ -524,7 +527,7 @@ class TestHardenedParityRejections:
         last-value-wins differs from serde)."""
         # Build valid JSON with duplicate "name" key at top level
         raw = '{"schema_version":1,"name":"first","name":"second",' + VALID_SKILL_PLAN[1:]
-        with pytest.raises(SkillPlanContractError, match="Duplicate key"):
+        with pytest.raises(SkillPlanContractError, match="Duplicate known key"):
             _derive_skill_metadata("skills", raw)
 
     def test_duplicate_nested_key_rejected(self):
@@ -533,8 +536,169 @@ class TestHardenedParityRejections:
             '"max_turns": 1',
             '"max_turns": 1, "max_turns": 2',
         )
-        with pytest.raises(SkillPlanContractError, match="Duplicate key"):
+        with pytest.raises(SkillPlanContractError, match="Duplicate known key"):
             _derive_skill_metadata("skills", raw)
+
+    # ── action.input collision probes: struct keys in Value context ────
+    # Duplicate keys cannot be expressed as Python dict literals (last-value-
+    # wins at construction), so these tests construct the raw JSON string with
+    # targeted replacements that inject duplicate keys inside action.input.
+
+    def _make_input_with_duplicate(self, key, val1, val2):
+        """Return VALID_SKILL_PLAN with action.input containing a duplicate *key*."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__SENTINEL__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan)
+        dup_fragment = "{}: {}, {}: {}".format(
+            json.dumps(key), json.dumps(val1), json.dumps(key), json.dumps(val2)
+        )
+        return raw.replace(json.dumps(sentinel), "{" + dup_fragment + "}")
+
+    def test_action_input_duplicate_name_accepted(self):
+        raw = self._make_input_with_duplicate("name", "a", "b")
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_action_input_duplicate_id_accepted(self):
+        raw = self._make_input_with_duplicate("id", "a", "b")
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_action_input_contains_stages_key_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan)
+        raw = raw.replace(
+            json.dumps(sentinel),
+            '{"stages":[],"name":"a","name":"b"}',
+        )
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_action_input_contains_agent_count_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan)
+        raw = raw.replace(
+            json.dumps(sentinel),
+            '{"agent_count":1,"id":"a","id":"b"}',
+        )
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_action_input_contains_capability_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan)
+        raw = raw.replace(
+            json.dumps(sentinel),
+            '{"capability":"x","input":"y","capability":"z"}',
+        )
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_action_input_with_goal_key_last_value_wins(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        sentinel = {"__S__": True}
+        plan["stages"][0]["action"]["input"] = sentinel
+        raw = json.dumps(plan)
+        raw = raw.replace(
+            json.dumps(sentinel),
+            '{"goal":1.0,"goal":2.0}',
+        )
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    # ── Stage-level duplicate field detection ──────────────────────────
+
+    def test_duplicate_stage_id_rejected(self):
+        """Duplicate id inside a stage object must be rejected."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        raw = json.dumps(plan)
+        raw = raw.replace('"id": "summarize"', '"id": "summarize", "id": "dup"')
+        with pytest.raises(SkillPlanContractError, match="Duplicate known key"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_duplicate_metric_name_in_list_accepted(self):
+        """Duplicate metric names across different metrics — not duplicate keys."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"] = [
+            {"name": "m", "goal": 1.0},
+            {"name": "m", "goal": 2.0},
+        ]
+        raw = json.dumps(plan)
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    # ── Number boundary probes ─────────────────────────────────────────
+
+    def test_1e400_becomes_inf_rejected_by_recursive_check(self):
+        """1e400 becomes inf in Python, rejected by recursive number gate."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"value": 1e400}
+        raw = json.dumps(plan)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_i64_min_minus_one_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"n": -9_223_372_036_854_775_809}
+        raw = json.dumps(plan)
+        with pytest.raises(SkillPlanContractError, match="Integer overflow"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_u64_max_plus_one_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"n": 18_446_744_073_709_551_616}
+        raw = json.dumps(plan)
+        with pytest.raises(SkillPlanContractError, match="Integer overflow"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_i64_max_plus_one_accepted(self):
+        """9223372036854775808 is within serde_json u64 range."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"n": 9_223_372_036_854_775_808}
+        raw = json.dumps(plan)
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_u64_max_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = {"n": 18_446_744_073_709_551_615}
+        raw = json.dumps(plan)
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_negative_cost_accepted(self):
+        """Rust f64 allows negative max_cost_usd."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["max_cost_usd"] = -5.0
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    # ── Table-driven empty-string parity ───────────────────────────────
+
+    @pytest.mark.parametrize(
+        "field_path, setter",
+        [
+            ("name", lambda p, v: p.update({"name": v})),
+            ("stage.id", lambda p, v: p["stages"][0].update({"id": v})),
+            ("stage.model.literal", lambda p, v: p["stages"][0].update({"model": {"literal": v}})),
+            ("stage.tools[0]", lambda p, v: p["stages"][0].update({"tools": [v]})),
+            ("stage.metrics[0].name", lambda p, v: p["stages"][0]["metrics"][0].update({"name": v})),
+            ("stage.action.capability", lambda p, v: p["stages"][0]["action"].update({"capability": v})),
+        ],
+        ids=lambda f: f,
+    )
+    def test_empty_string_accepted(self, field_path, setter):
+        plan = json.loads(VALID_SKILL_PLAN)
+        setter(plan, "")
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None, f"empty string rejected at {field_path}"
 
 
 # ── Exact-bytes preservation ──────────────────────────────────────────────────
