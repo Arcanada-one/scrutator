@@ -6,7 +6,7 @@ services:
     environment:
       # Dedicated bounded corpus written by the existing feeder credential.
       # Preserve every operator-configured namespace and append only this scope.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement"
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system"
     restart: unless-stopped
     volumes:
       - scrutator-logs:/app/logs

@@ -11,6 +11,8 @@ route addition or removal must update this page in the same pull request.
 |---|---|
 | `GET /health` | Service status and version |
 | `POST /v1/chunk` | Chunk a document without indexing it |
+| `GET /v1/index/capability` | Read the effective namespace scope of the authenticated feeder credential |
+| `GET /v1/index/rollback-capability` | Read the effective namespace scope and operator flag of the authenticated rollback credential |
 | `POST /v1/index` | Index one document |
 | `DELETE /v1/index` | Delete one indexed source |
 | `POST /v1/index/batch` | Index a bounded same-namespace batch |
