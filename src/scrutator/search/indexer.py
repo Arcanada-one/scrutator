@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json as _json
 import logging
 import math
 from dataclasses import dataclass
@@ -36,6 +37,123 @@ _DENSE_DIMENSIONS = 1024
 
 class BatchIndexLimitError(ValueError):
     """Raised before embedding when a packed batch crosses a resource cap."""
+
+
+class SkillPlanContractError(BatchIndexLimitError):
+    """Raised when a skills-namespace document fails structural validation against the
+    Rust ``SkillPlan`` wire shape before embedding/persistence. Derives from
+    ``BatchIndexLimitError`` so both index endpoints return the existing 422 path."""
+
+
+# ── ARAS-0057: skill plan validation and proposal-metadata derivation ──────────
+
+_SKILL_KINDS = frozenset({"template", "instance"})
+_SKILL_MATURITIES = frozenset({"draft", "validated", "production"})
+
+
+def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, object] | None:
+    """Validate a skills-namespace document against the Rust ``SkillPlan`` wire
+    shape and return only the five proposal-metadata fields, or ``None`` for a
+    non-skills namespace.
+
+    Raises ``SkillPlanContractError`` (a ``BatchIndexLimitError`` subclass, so
+    the endpoints return 422) on any structural violation. The raw
+    ``full_content`` bytes are never reserialized or returned from this helper.
+    """
+    if namespace != settings.skills_namespace:
+        return None
+
+    try:
+        plan = _json.loads(full_content)
+    except (ValueError, TypeError) as exc:
+        raise SkillPlanContractError("Invalid JSON in skills document") from exc
+
+    if not isinstance(plan, dict):
+        raise SkillPlanContractError("Skills document root must be a JSON object")
+
+    # schema_version: must be 1 (only supported version)
+    schema_version = plan.get("schema_version")
+    if schema_version != 1:
+        raise SkillPlanContractError(f"Unsupported skill schema_version: {schema_version!r} (expected 1)")
+
+    # name: non-empty string
+    name = plan.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise SkillPlanContractError("Skill plan 'name' must be a non-empty string")
+
+    # version: u32 (non-negative integer)
+    version = plan.get("version")
+    if not isinstance(version, int) or isinstance(version, bool) or version < 0:
+        raise SkillPlanContractError("Skill plan 'version' must be a non-negative integer")
+
+    # kind: template | instance
+    kind = plan.get("kind")
+    if kind not in _SKILL_KINDS:
+        raise SkillPlanContractError(f"Skill plan 'kind' must be one of {sorted(_SKILL_KINDS)}, got {kind!r}")
+
+    # maturity: draft | validated | production
+    maturity = plan.get("maturity")
+    if maturity not in _SKILL_MATURITIES:
+        raise SkillPlanContractError(
+            f"Skill plan 'maturity' must be one of {sorted(_SKILL_MATURITIES)}, got {maturity!r}"
+        )
+
+    # stages: non-empty array
+    stages = plan.get("stages")
+    if not isinstance(stages, list) or len(stages) == 0:
+        raise SkillPlanContractError("Skill plan 'stages' must be a non-empty array")
+
+    # Validate each stage's structural constraints
+    for i, stage in enumerate(stages):
+        if not isinstance(stage, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}] must be an object")
+
+        # agent_count: integer >= 1
+        agent_count = stage.get("agent_count")
+        if not isinstance(agent_count, int) or isinstance(agent_count, bool) or agent_count < 1:
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].agent_count must be an integer >= 1, got {agent_count!r}"
+            )
+
+        # action: must be an object
+        action = stage.get("action")
+        if not isinstance(action, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action must be an object")
+
+        # action.capability: non-empty string
+        capability = action.get("capability")
+        if not isinstance(capability, str) or not capability.strip():
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a non-empty string")
+
+        # limits (optional but if present must be an object with valid fields)
+        limits = stage.get("limits")
+        if limits is not None and isinstance(limits, dict):
+            max_turns = limits.get("max_turns")
+            if max_turns is not None and (
+                not isinstance(max_turns, int) or isinstance(max_turns, bool) or max_turns < 0
+            ):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].limits.max_turns must be a non-negative integer")
+            max_cost = limits.get("max_cost_usd")
+            if max_cost is not None and (
+                not isinstance(max_cost, (int, float)) or isinstance(max_cost, bool) or max_cost < 0
+            ):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].limits.max_cost_usd must be a non-negative number")
+            context_budget = limits.get("context_budget_chars")
+            if context_budget is not None and (
+                not isinstance(context_budget, int) or isinstance(context_budget, bool) or context_budget < 0
+            ):
+                raise SkillPlanContractError(
+                    f"Skill plan stage[{i}].limits.context_budget_chars must be a non-negative integer"
+                )
+
+    # Return only the five proposal fields — no leaking of parsed internals
+    return {
+        "skill_schema_version": schema_version,
+        "skill_name": name,
+        "skill_version": version,
+        "skill_kind": kind,
+        "skill_maturity": maturity,
+    }
 
 
 class _BatchEmbeddingError(Exception):
@@ -145,7 +263,13 @@ def _build_evidence_document(namespace: str, source_path: str, full_content: str
     }
 
 
-def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: str) -> list[dict]:
+def _chunk_dicts(
+    chunk_result,
+    namespace: str,
+    source_path: str,
+    full_content: str,
+    skill_metadata: dict[str, object] | None = None,
+) -> list[dict]:
     doc_content_hash = compute_doc_content_hash(full_content)
     # SRCH-0038 1b: keep only the ~71-byte `doc_content_hash` in `metadata.section` (safely under
     # the jsonb_ops GIN entry ceiling); the exact bytes go to `source_documents`, never the GIN
@@ -176,6 +300,7 @@ def _chunk_dicts(chunk_result, namespace: str, source_path: str, full_content: s
                 "language": chunk.metadata.language,
                 "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
                 "injection": injection,
+                **(skill_metadata or {}),
             },
         }
         for chunk in chunk_result.chunks
@@ -216,6 +341,9 @@ def _prepare_documents(
     results: list[BatchIndexSucceeded | BatchIndexFailed | None] = [None] * len(documents)
     for position, document in enumerate(documents):
         try:
+            # ARAS-0057: validate skill plan BEFORE chunking/embedding,
+            # so a malformed plan is rejected without wasted compute.
+            skill_metadata = _derive_skill_metadata(document.namespace, document.content)
             chunk_result = chunk_document(
                 content=document.content,
                 source_path=document.source_path,
@@ -223,11 +351,17 @@ def _prepare_documents(
                 max_tokens=document.max_tokens,
                 overlap_tokens=document.overlap_tokens,
             )
+        except SkillPlanContractError:
+            logger.error("Batch skill validation failed for one source")
+            results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
+            continue
         except Exception:
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
-        chunk_dicts = _chunk_dicts(chunk_result, document.namespace, document.source_path, document.content)
+        chunk_dicts = _chunk_dicts(
+            chunk_result, document.namespace, document.source_path, document.content, skill_metadata
+        )
         source_document = _build_source_document(document.namespace, document.source_path, document.content)
         evidence_document = _build_evidence_document(document.namespace, document.source_path, document.content)
         prepared.append(
@@ -364,6 +498,10 @@ async def index_document(
     overlap_tokens: int = 50,
 ) -> IndexResponse:
     """Full index pipeline: chunk → embed → store."""
+    # ARAS-0057: validate and derive skill proposal metadata BEFORE embedding,
+    # so a malformed plan is rejected without wasting compute.
+    skill_metadata = _derive_skill_metadata(namespace, content)
+
     # 1. Chunk the document
     chunk_result = chunk_document(
         content=content,
@@ -385,7 +523,7 @@ async def index_document(
     project_id = await upsert_project(namespace_id, project) if project else None
 
     # 4. Replace dense and sparse rows as one source generation.
-    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content)
+    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content, skill_metadata)
     source_document = _build_source_document(namespace, source_path, content)
     evidence_document = _build_evidence_document(namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
