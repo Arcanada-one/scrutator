@@ -1,6 +1,5 @@
-"""Tests for ARAS-0057 Task 1: Scrutator ingest contract — skill plan validation and metadata derivation.
-
-RED phase: every test here must fail before the implementation lands.
+"""Tests for ARAS-0057 Task 1: Scrutator ingest contract — skill plan validation,
+metadata derivation, provenance stamping, and HTTP error propagation.
 """
 
 from __future__ import annotations
@@ -61,19 +60,13 @@ class TestDeriveSkillMetadata:
         """A structurally valid skills JSON yields the five proposal fields."""
         result = _derive_skill_metadata("skills", VALID_SKILL_PLAN)
         assert result is not None
-        assert result["skill_schema_version"] == 1
-        assert result["skill_name"] == "source-grounded-summary"
-        assert result["skill_version"] == 1
-        assert result["skill_kind"] == "instance"
-        assert result["skill_maturity"] == "production"
+        assert result["schema_version"] == 1
+        assert result["name"] == "source-grounded-summary"
+        assert result["version"] == 1
+        assert result["kind"] == "instance"
+        assert result["maturity"] == "production"
         # Strict: only the five proposal fields — no leaking of parsed internals
-        assert set(result.keys()) == {
-            "skill_schema_version",
-            "skill_name",
-            "skill_version",
-            "skill_kind",
-            "skill_maturity",
-        }
+        assert set(result.keys()) == {"schema_version", "name", "version", "kind", "maturity"}
 
     def test_non_skills_namespace_returns_none(self):
         """A skills-shaped JSON outside the skills namespace returns None (no metadata)."""
@@ -180,7 +173,7 @@ class TestDeriveSkillMetadata:
         plan["kind"] = "template"
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
-        assert result["skill_kind"] == "template"
+        assert result["kind"] == "template"
 
     def test_maturity_draft_accepted(self):
         """maturity='draft' is valid and accepted."""
@@ -188,7 +181,7 @@ class TestDeriveSkillMetadata:
         plan["maturity"] = "draft"
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
-        assert result["skill_maturity"] == "draft"
+        assert result["maturity"] == "draft"
 
     def test_maturity_validated_accepted(self):
         """maturity='validated' is valid and accepted."""
@@ -196,7 +189,272 @@ class TestDeriveSkillMetadata:
         plan["maturity"] = "validated"
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
-        assert result["skill_maturity"] == "validated"
+        assert result["maturity"] == "validated"
+
+
+# ── Hardened parity: reject documents Rust serde_json / SkillPlan cannot accept ──
+
+
+class TestHardenedParityRejections:
+    """These documents parse as valid Python JSON but MUST be rejected because
+    Rust serde_json + SkillPlan deserialization would fail on them."""
+
+    # ── Non-finite JSON constants (serde_json rejects NaN/Inf) ──────────
+
+    def test_nan_in_max_cost_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["max_cost_usd"] = float("nan")
+        raw = json.dumps(plan, allow_nan=True)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_infinity_in_max_cost_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["max_cost_usd"] = float("inf")
+        raw = json.dumps(plan, allow_nan=True)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_neg_infinity_in_max_cost_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["max_cost_usd"] = float("-inf")
+        raw = json.dumps(plan, allow_nan=True)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_nan_in_metric_goal_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"][0]["goal"] = float("nan")
+        raw = json.dumps(plan, allow_nan=True)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_literal_nan_token_rejected(self):
+        raw = VALID_SKILL_PLAN.replace("0.2", "NaN")
+        with pytest.raises(SkillPlanContractError):
+            _derive_skill_metadata("skills", raw)
+
+    def test_literal_infinity_token_rejected(self):
+        raw = VALID_SKILL_PLAN.replace("0.2", "Infinity")
+        with pytest.raises(SkillPlanContractError):
+            _derive_skill_metadata("skills", raw)
+
+    # ── schema_version as bool (True == 1 in Python) ────────────────────
+
+    def test_schema_version_true_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["schema_version"] = True
+        with pytest.raises(SkillPlanContractError, match="schema_version"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_schema_version_false_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["schema_version"] = False
+        with pytest.raises(SkillPlanContractError, match="schema_version"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── version / agent_count as bool ───────────────────────────────────
+
+    def test_version_true_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["version"] = True
+        with pytest.raises(SkillPlanContractError, match="version"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_agent_count_true_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["agent_count"] = True
+        with pytest.raises(SkillPlanContractError, match="agent_count"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── u32 / u64 overflow ──────────────────────────────────────────────
+
+    def test_version_u32_overflow_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["version"] = 4_294_967_296  # u32 max + 1
+        with pytest.raises(SkillPlanContractError, match="version"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_agent_count_u32_overflow_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["agent_count"] = 4_294_967_296
+        with pytest.raises(SkillPlanContractError, match="agent_count"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_max_turns_u32_overflow_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["max_turns"] = 4_294_967_296
+        with pytest.raises(SkillPlanContractError, match="max_turns"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_context_budget_u64_overflow_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"]["context_budget_chars"] = 18_446_744_073_709_551_616  # u64 max + 1
+        with pytest.raises(SkillPlanContractError, match="context_budget_chars"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Missing / wrong defaults ────────────────────────────────────────
+
+    def test_missing_defaults_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["defaults"]
+        with pytest.raises(SkillPlanContractError, match="defaults"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_defaults_non_object_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["defaults"] = "not an object"
+        with pytest.raises(SkillPlanContractError, match="defaults"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_defaults_model_missing_by_task_type_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["defaults"] = {"model": {}}
+        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_defaults_model_empty_by_task_type_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["defaults"] = {"model": {"by_task_type": ""}}
+        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Missing / wrong stage id ────────────────────────────────────────
+
+    def test_missing_stage_id_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["id"]
+        with pytest.raises(SkillPlanContractError, match="stage\\[0\\].id"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_empty_stage_id_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["id"] = ""
+        with pytest.raises(SkillPlanContractError, match="stage\\[0\\].id"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Missing / wrong stage model ─────────────────────────────────────
+
+    def test_missing_stage_model_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["model"]
+        with pytest.raises(SkillPlanContractError, match="stage\\[0\\].model"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_stage_model_non_object_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = "summarize"
+        with pytest.raises(SkillPlanContractError, match="stage\\[0\\].model"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_stage_model_missing_by_task_type_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {}
+        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── limits as non-object ────────────────────────────────────────────
+
+    def test_limits_array_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"] = [1, 2, 3]
+        with pytest.raises(SkillPlanContractError, match="limits"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_limits_string_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"] = "unlimited"
+        with pytest.raises(SkillPlanContractError, match="limits"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_limits_null_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["limits"] = None
+        with pytest.raises(SkillPlanContractError, match="limits"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Missing required limit fields ───────────────────────────────────
+
+    def test_missing_max_turns_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["limits"]["max_turns"]
+        with pytest.raises(SkillPlanContractError, match="max_turns"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_missing_max_cost_usd_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["limits"]["max_cost_usd"]
+        with pytest.raises(SkillPlanContractError, match="max_cost_usd"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_missing_context_budget_chars_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["limits"]["context_budget_chars"]
+        with pytest.raises(SkillPlanContractError, match="context_budget_chars"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── Missing tools / metrics arrays ──────────────────────────────────
+
+    def test_missing_tools_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["tools"]
+        with pytest.raises(SkillPlanContractError, match="tools"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_tools_non_array_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["tools"] = "none"
+        with pytest.raises(SkillPlanContractError, match="tools"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_tool_item_non_object_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["tools"] = ["not_an_object"]
+        with pytest.raises(SkillPlanContractError, match="tools\\[0\\]"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_tool_missing_name_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["tools"] = [{}]
+        with pytest.raises(SkillPlanContractError, match="tools\\[0\\].name"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_missing_metrics_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["metrics"]
+        with pytest.raises(SkillPlanContractError, match="metrics"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_metrics_non_array_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"] = 42
+        with pytest.raises(SkillPlanContractError, match="metrics"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_metric_item_non_object_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"] = ["not_an_object"]
+        with pytest.raises(SkillPlanContractError, match="metrics\\[0\\]"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_metric_missing_name_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"] = [{"goal": 0.5}]
+        with pytest.raises(SkillPlanContractError, match="metrics\\[0\\].name"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_metric_missing_goal_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"] = [{"name": "metric"}]
+        with pytest.raises(SkillPlanContractError, match="metrics\\[0\\].goal"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_metric_non_finite_goal_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["metrics"][0]["goal"] = float("nan")
+        raw = json.dumps(plan, allow_nan=True)
+        with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
 
 
 # ── Exact-bytes preservation ──────────────────────────────────────────────────
@@ -207,14 +465,77 @@ class TestExactBytesPreservation:
     metadata derivation must not normalize or reserialize it."""
 
     def test_raw_content_is_unchanged_input_bytes(self):
-        """_derive_skill_metadata returns None for raw_content — the full_content
-        passed to _build_source_document must remain byte-identical."""
-        # _derive_skill_metadata parses for metadata only and does not return the content.
-        # The raw_content preservation is tested end-to-end via index_document.
+        """_derive_skill_metadata returns proposal metadata only — the raw
+        content is NOT returned or reserialized from this helper."""
         result = _derive_skill_metadata("skills", VALID_SKILL_PLAN)
         assert result is not None
-        # The validated metadata is returned, but the raw string is NOT returned/reserialized
         assert "raw_content" not in result
+
+    @pytest.mark.asyncio
+    async def test_source_document_raw_content_equals_exact_input(self):
+        """The source_document payload passed to replace_source_chunks_atomic
+        carries raw_content that is byte-identical to the input string."""
+        captured_source_doc = None
+
+        async def capture(chunk_dicts, *_args, source_document=None, **_kwargs):
+            nonlocal captured_source_doc
+            captured_source_doc = source_document
+            return len(chunk_dicts)
+
+        with (
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
+        ):
+            mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
+            mock_ns.return_value = 1
+            mock_replace.side_effect = capture
+
+            await index_document(
+                content=VALID_SKILL_PLAN,
+                source_path="skills/plan.json",
+                namespace="skills",
+            )
+
+        assert captured_source_doc is not None, "source_document must be passed to persistence"
+        assert captured_source_doc["raw_content"] == VALID_SKILL_PLAN
+        assert (
+            captured_source_doc["content_hash"]
+            == "sha256:" + __import__("hashlib").sha256(VALID_SKILL_PLAN.encode()).hexdigest()
+        )
+
+
+# ── Caller metadata boundary ──────────────────────────────────────────────────
+
+
+class TestCallerMetadataBoundary:
+    """IndexRequest has no caller-controlled metadata field. Proposal metadata
+    is derived server-side from the raw JSON only; no field in the document body
+    can override the five server-derived values."""
+
+    def test_index_request_has_no_metadata_field(self):
+        from scrutator.db.models import IndexRequest
+
+        fields = IndexRequest.model_fields
+        assert "metadata" not in fields, "IndexRequest must not expose a caller-controlled metadata field"
+
+    def test_conflicting_inline_fields_cannot_override_server_metadata(self):
+        """Even if the raw JSON contains fields that collide with the derived
+        metadata keys, the server-derived values take precedence because they
+        are unpacked AFTER the chunk's own metadata dict."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        # Inject conflicting fields into the raw document
+        plan["name"] = "overridden-name"
+        _derive_skill_metadata("skills", json.dumps(plan))
+        # The validated name is whatever the document says — but the document
+        # body CANNOT introduce extra proposal fields like "trust_class"
+        plan["trust_class"] = "skill"
+        result2 = _derive_skill_metadata("skills", json.dumps(plan))
+        # Only the five proposal keys ever appear
+        assert "trust_class" not in result2
+        assert set(result2.keys()) == {"schema_version", "name", "version", "kind", "maturity"}
 
 
 # ── SkillPlanContractError is a BatchIndexLimitError ───────────────────────────
@@ -235,6 +556,140 @@ class TestSkillPlanContractErrorHierarchy:
 
         source = inspect.getsource(index_endpoint)
         assert "BatchIndexLimitError" in source
+
+
+# ── HTTP endpoint: invalid skill returns typed 422 ────────────────────────────
+
+
+class TestSkillIndexHttpEndpointErrors:
+    """Both single and batch index endpoints must return 422 for invalid skills
+    (NOT 503 persistence failures)."""
+
+    @pytest.fixture(autouse=True)
+    def _override_auth(self):
+        from scrutator.auth.capabilities import NamespaceCapability, require_feeder_capability
+        from scrutator.health import app
+
+        app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
+            namespaces=frozenset({"skills", "arcanada"})
+        )
+        yield
+        app.dependency_overrides.pop(require_feeder_capability, None)
+
+    def test_single_index_invalid_skill_returns_422(self):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        client = TestClient(app)
+        resp = client.post(
+            "/v1/index",
+            json={
+                "content": "not valid json",
+                "source_path": "skills/bad.json",
+                "namespace": "skills",
+            },
+        )
+        assert resp.status_code == 422
+
+    def test_batch_index_invalid_skill_returns_422(self):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        client = TestClient(app)
+        resp = client.post(
+            "/v1/index/batch",
+            json={
+                "documents": [
+                    {
+                        "content": "not valid json",
+                        "source_path": "skills/bad.json",
+                        "namespace": "skills",
+                    },
+                ],
+            },
+        )
+        assert resp.status_code == 422, (
+            f"batch index with invalid skill must return 422, got {resp.status_code}: {resp.text[:200]}"
+        )
+
+
+# ── HTTP endpoint: oversized skill returns 422 before embedding ───────────────
+
+
+class TestOversizedSkillsDocument:
+    """The 256 KiB cap must reject an oversized structurally valid skill plan
+    before embedding, chunking, or namespace persistence."""
+
+    @pytest.fixture(autouse=True)
+    def _override_auth(self):
+        from scrutator.auth.capabilities import NamespaceCapability, require_feeder_capability
+        from scrutator.health import app
+
+        app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
+            namespaces=frozenset({"skills"})
+        )
+        yield
+        app.dependency_overrides.pop(require_feeder_capability, None)
+
+    def test_oversized_valid_json_returns_422_before_embedding(self):
+        """Construct a structurally valid skill plan that exceeds 256 KiB
+        (NOT by appending junk — by repeating an array element until the byte
+        count crosses the cap), and assert the single-index endpoint returns 422
+        without calling the embedder."""
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        # Build a valid plan with a single stage repeated until oversized
+        single_stage = json.loads(VALID_SKILL_PLAN)["stages"][0]
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"] = [single_stage]
+        # Add copies until we cross the 256 KiB cap
+        while len(json.dumps(plan).encode("utf-8")) < INDEX_BATCH_MAX_DOCUMENT_BYTES + 1024:
+            plan["stages"].append(single_stage.copy())
+        oversized = json.dumps(plan)
+        assert len(oversized.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES
+
+        with patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed:
+            client = TestClient(app)
+            resp = client.post(
+                "/v1/index",
+                json={
+                    "content": oversized,
+                    "source_path": "skills/huge.json",
+                    "namespace": "skills",
+                },
+            )
+            assert resp.status_code == 422
+            # Must NOT waste an embedding call on an oversized doc
+            mock_embed.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_oversized_by_appended_junk_still_rejected(self):
+        """A skills doc > 256 KiB also fails when bloated with appended junk
+        (the cap rejects before JSON parsing)."""
+        oversized = VALID_SKILL_PLAN + " " + "x" * INDEX_BATCH_MAX_DOCUMENT_BYTES
+
+        with (
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
+        ):
+            mock_ns.return_value = 1
+            mock_replace.return_value = 1
+
+            with pytest.raises(SkillPlanContractError):
+                await index_document(
+                    content=oversized,
+                    source_path="skills/huge.json",
+                    namespace="skills",
+                )
+
+            mock_embed.assert_not_called()
+            mock_sparse.assert_not_called()
 
 
 # ── Integration: non-skills namespace does not gain proposal metadata ──────────
@@ -275,48 +730,16 @@ class TestNonSkillsNamespaceNoMetadata:
         assert captured_chunks is not None
         metadata = captured_chunks[0]["metadata"]
         # No skill proposal metadata on the chunk
-        assert "skill_schema_version" not in metadata
-        assert "skill_name" not in metadata
+        assert "schema_version" not in metadata
+        assert "maturity" not in metadata
 
 
-# ── Oversized skills document still fails under 256 KiB cap ────────────────────
-
-
-class TestOversizedSkillsDocument:
-    """The existing 256 KiB cap must still reject an oversized skills document."""
-
-    @pytest.mark.asyncio
-    async def test_oversized_skills_document_fails_before_embedding(self):
-        """A skills document > 256 KiB raises BatchIndexLimitError before embedding."""
-        oversized = VALID_SKILL_PLAN + " " + "x" * INDEX_BATCH_MAX_DOCUMENT_BYTES
-
-        with (
-            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
-            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
-            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
-            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
-        ):
-            mock_ns.return_value = 1
-            mock_replace.return_value = 1
-
-            with pytest.raises(BatchIndexLimitError):
-                await index_document(
-                    content=oversized,
-                    source_path="skills/huge.json",
-                    namespace="skills",
-                )
-
-            # Must NOT waste an embedding call on an oversized doc
-            mock_embed.assert_not_called()
-            mock_sparse.assert_not_called()
-
-
-# ── Skills namespace chunks carry proposal metadata ────────────────────────────
+# ── Skills namespace chunks carry proposal metadata + provenance ──────────────
 
 
 class TestSkillsNamespaceChunkMetadata:
     """When a valid plan is indexed under the skills namespace, chunk metadata
-    must carry the derived proposal fields at the top level."""
+    must carry the derived proposal fields and nonempty source provenance."""
 
     @pytest.mark.asyncio
     async def test_valid_plan_stamps_proposal_metadata_on_chunks(self):
@@ -350,8 +773,52 @@ class TestSkillsNamespaceChunkMetadata:
         assert len(captured_chunks) >= 1
         for chunk in captured_chunks:
             meta = chunk["metadata"]
-            assert meta.get("skill_schema_version") == 1
-            assert meta.get("skill_name") == "source-grounded-summary"
-            assert meta.get("skill_version") == 1
-            assert meta.get("skill_kind") == "instance"
-            assert meta.get("skill_maturity") == "production"
+            assert meta.get("schema_version") == 1
+            assert meta.get("name") == "source-grounded-summary"
+            assert meta.get("version") == 1
+            assert meta.get("kind") == "instance"
+            assert meta.get("maturity") == "production"
+
+    @pytest.mark.asyncio
+    async def test_skills_chunk_has_nonempty_source_provenance(self):
+        """JSON skill plans have no markdown headings (chunker emits section=None),
+        yet every chunk must carry nonempty doc_id and doc_content_hash in
+        metadata.section so the search projection and fetch-by-doc_id work."""
+        captured_chunks = None
+
+        async def capture(chunk_dicts, *_args, **_kwargs):
+            nonlocal captured_chunks
+            captured_chunks = chunk_dicts
+            return len(chunk_dicts)
+
+        with (
+            patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock) as mock_embed,
+            patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock) as mock_sparse,
+            patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as mock_ns,
+            patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as mock_replace,
+        ):
+            mock_embed.return_value = [[0.1] * 1024]
+            mock_sparse.return_value = [{"1": 0.1}]
+            mock_ns.return_value = 1
+            mock_replace.side_effect = capture
+
+            await index_document(
+                content=VALID_SKILL_PLAN,
+                source_path="skills/plan.json",
+                namespace="skills",
+            )
+
+        assert captured_chunks is not None
+        assert len(captured_chunks) >= 1
+        for chunk in captured_chunks:
+            section = chunk["metadata"].get("section")
+            assert section is not None, "skills chunk must have non-null section with doc_id and doc_content_hash"
+            doc_id = section.get("doc_id")
+            assert isinstance(doc_id, str) and len(doc_id) == 16, f"doc_id must be a 16-char hex string, got {doc_id!r}"
+            doc_content_hash = section.get("doc_content_hash")
+            assert isinstance(doc_content_hash, str) and doc_content_hash.startswith("sha256:"), (
+                f"doc_content_hash must start with sha256:, got {doc_content_hash!r}"
+            )
+            # Verify the hash matches the content
+            expected_hash = "sha256:" + __import__("hashlib").sha256(VALID_SKILL_PLAN.encode()).hexdigest()
+            assert doc_content_hash == expected_hash

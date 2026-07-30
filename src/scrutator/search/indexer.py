@@ -49,6 +49,55 @@ class SkillPlanContractError(BatchIndexLimitError):
 
 _SKILL_KINDS = frozenset({"template", "instance"})
 _SKILL_MATURITIES = frozenset({"draft", "validated", "production"})
+# Rust u32 / u64 ranges — values outside these overflow the target serde types.
+_U32_MAX = 4_294_967_295
+_U64_MAX = 18_446_744_073_709_551_615
+
+
+def _reject_non_finite_json(value: object) -> object:
+    """Reject NaN, Infinity, and -Infinity during JSON parsing — these are valid
+    Python ``json`` tokens that ``serde_json`` refuses by default."""
+    raise ValueError(f"Non-finite JSON constant is not allowed: {value!r}")
+
+
+def _is_finite_number(value: object) -> bool:
+    """True for finite int or float, excluding bool, NaN, and infinities."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    if isinstance(value, float):
+        return math.isfinite(value)
+    return False
+
+
+def _is_non_neg_u32(value: object) -> bool:
+    """True when *value* is a strict integer (not bool) in ``[0, _U32_MAX]``."""
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U32_MAX
+
+
+def _is_pos_u32(value: object) -> bool:
+    """True when *value* is a strict integer (not bool) in ``[1, _U32_MAX]``."""
+    return isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= _U32_MAX
+
+
+def _is_non_neg_u64(value: object) -> bool:
+    """True when *value* is a strict integer (not bool) in ``[0, _U64_MAX]``."""
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= _U64_MAX
+
+
+def _is_non_empty_string(value: object) -> bool:
+    """True when *value* is a non-empty (non-whitespace-only) string."""
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _validate_model_object(label: str, model: object) -> None:
+    """Require ``model`` to be a dict with a non-empty ``by_task_type`` string."""
+    if not isinstance(model, dict):
+        raise SkillPlanContractError(f"{label} must be an object")
+    by_task_type = model.get("by_task_type")
+    if not isinstance(by_task_type, str) or not by_task_type.strip():
+        raise SkillPlanContractError(f"{label}.by_task_type must be a non-empty string")
 
 
 def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, object] | None:
@@ -63,28 +112,41 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     if namespace != settings.skills_namespace:
         return None
 
+    # 256 KiB exact-source cap — reject BEFORE JSON parsing, embedding, chunking,
+    # or namespace persistence (the single-index path has no per-document cap upstream,
+    # and the batch path's cap is a different check layer).
+    if len(full_content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+        raise SkillPlanContractError(f"skills document exceeds {INDEX_BATCH_MAX_DOCUMENT_BYTES}-byte exact-source cap")
+
+    # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
+    # that serde_json refuses. The raw string is never reserialized.
     try:
-        plan = _json.loads(full_content)
+        plan = _json.loads(full_content, parse_constant=_reject_non_finite_json)
     except (ValueError, TypeError) as exc:
-        raise SkillPlanContractError("Invalid JSON in skills document") from exc
+        cause = str(exc)
+        raise SkillPlanContractError(f"Invalid JSON in skills document: {cause}") from exc
 
     if not isinstance(plan, dict):
         raise SkillPlanContractError("Skills document root must be a JSON object")
 
-    # schema_version: must be 1 (only supported version)
+    # schema_version: must be exactly integer 1 (bool True == 1 must be rejected)
     schema_version = plan.get("schema_version")
+    if schema_version is True or schema_version is False or not isinstance(schema_version, int):
+        raise SkillPlanContractError(
+            f"Skill schema_version must be an integer (1), got {type(schema_version).__name__}"
+        )
     if schema_version != 1:
         raise SkillPlanContractError(f"Unsupported skill schema_version: {schema_version!r} (expected 1)")
 
     # name: non-empty string
     name = plan.get("name")
-    if not isinstance(name, str) or not name.strip():
+    if not _is_non_empty_string(name):
         raise SkillPlanContractError("Skill plan 'name' must be a non-empty string")
 
-    # version: u32 (non-negative integer)
+    # version: u32 (strict integer, not bool)
     version = plan.get("version")
-    if not isinstance(version, int) or isinstance(version, bool) or version < 0:
-        raise SkillPlanContractError("Skill plan 'version' must be a non-negative integer")
+    if not _is_non_neg_u32(version):
+        raise SkillPlanContractError("Skill plan 'version' must be a u32 integer (0–4294967295)")
 
     # kind: template | instance
     kind = plan.get("kind")
@@ -98,6 +160,12 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
             f"Skill plan 'maturity' must be one of {sorted(_SKILL_MATURITIES)}, got {maturity!r}"
         )
 
+    # defaults: required object with model.by_task_type
+    defaults = plan.get("defaults")
+    if not isinstance(defaults, dict):
+        raise SkillPlanContractError("Skill plan 'defaults' must be an object")
+    _validate_model_object("defaults.model", defaults.get("model"))
+
     # stages: non-empty array
     stages = plan.get("stages")
     if not isinstance(stages, list) or len(stages) == 0:
@@ -108,12 +176,70 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if not isinstance(stage, dict):
             raise SkillPlanContractError(f"Skill plan stage[{i}] must be an object")
 
-        # agent_count: integer >= 1
+        # stage.id: non-empty string
+        stage_id = stage.get("id")
+        if not _is_non_empty_string(stage_id):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].id must be a non-empty string")
+
+        # stage.model: object with by_task_type
+        _validate_model_object(f"stage[{i}].model", stage.get("model"))
+
+        # agent_count: u32 >= 1
         agent_count = stage.get("agent_count")
-        if not isinstance(agent_count, int) or isinstance(agent_count, bool) or agent_count < 1:
+        if not _is_pos_u32(agent_count):
             raise SkillPlanContractError(
-                f"Skill plan stage[{i}].agent_count must be an integer >= 1, got {agent_count!r}"
+                f"Skill plan stage[{i}].agent_count must be a u32 integer >= 1, got {agent_count!r}"
             )
+
+        # limits: required object with all three required fields
+        limits = stage.get("limits")
+        if not isinstance(limits, dict):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].limits must be an object")
+
+        max_turns = limits.get("max_turns")
+        if not _is_non_neg_u32(max_turns):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.max_turns must be a u32 integer >= 0, got {max_turns!r}"
+            )
+
+        max_cost = limits.get("max_cost_usd")
+        if not _is_finite_number(max_cost) or (isinstance(max_cost, (int, float)) and max_cost < 0):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.max_cost_usd must be a finite number >= 0, got {max_cost!r}"
+            )
+
+        context_budget = limits.get("context_budget_chars")
+        if not _is_non_neg_u64(context_budget):
+            raise SkillPlanContractError(
+                f"Skill plan stage[{i}].limits.context_budget_chars must be a u64 integer >= 0, got {context_budget!r}"
+            )
+
+        # tools: list of objects, each with a non-empty name string
+        tools = stage.get("tools")
+        if not isinstance(tools, list):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].tools must be an array")
+        for j, tool in enumerate(tools):
+            if not isinstance(tool, dict):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}] must be an object")
+            tool_name = tool.get("name")
+            if not _is_non_empty_string(tool_name):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}].name must be a non-empty string")
+
+        # metrics: list of objects, each with name (non-empty string) and goal (finite number)
+        metrics = stage.get("metrics")
+        if not isinstance(metrics, list):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].metrics must be an array")
+        for j, metric in enumerate(metrics):
+            if not isinstance(metric, dict):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}] must be an object")
+            metric_name = metric.get("name")
+            if not _is_non_empty_string(metric_name):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}].name must be a non-empty string")
+            goal = metric.get("goal")
+            if not _is_finite_number(goal):
+                raise SkillPlanContractError(
+                    f"Skill plan stage[{i}].metrics[{j}].goal must be a finite number, got {goal!r}"
+                )
 
         # action: must be an object
         action = stage.get("action")
@@ -122,37 +248,17 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
 
         # action.capability: non-empty string
         capability = action.get("capability")
-        if not isinstance(capability, str) or not capability.strip():
+        if not _is_non_empty_string(capability):
             raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a non-empty string")
 
-        # limits (optional but if present must be an object with valid fields)
-        limits = stage.get("limits")
-        if limits is not None and isinstance(limits, dict):
-            max_turns = limits.get("max_turns")
-            if max_turns is not None and (
-                not isinstance(max_turns, int) or isinstance(max_turns, bool) or max_turns < 0
-            ):
-                raise SkillPlanContractError(f"Skill plan stage[{i}].limits.max_turns must be a non-negative integer")
-            max_cost = limits.get("max_cost_usd")
-            if max_cost is not None and (
-                not isinstance(max_cost, (int, float)) or isinstance(max_cost, bool) or max_cost < 0
-            ):
-                raise SkillPlanContractError(f"Skill plan stage[{i}].limits.max_cost_usd must be a non-negative number")
-            context_budget = limits.get("context_budget_chars")
-            if context_budget is not None and (
-                not isinstance(context_budget, int) or isinstance(context_budget, bool) or context_budget < 0
-            ):
-                raise SkillPlanContractError(
-                    f"Skill plan stage[{i}].limits.context_budget_chars must be a non-negative integer"
-                )
-
-    # Return only the five proposal fields — no leaking of parsed internals
+    # Return only the five proposal fields — no leaking of parsed internals.
+    # Keys are consumer-compatible (ARAS skill_hit_from reads name/version/maturity directly).
     return {
-        "skill_schema_version": schema_version,
-        "skill_name": name,
-        "skill_version": version,
-        "skill_kind": kind,
-        "skill_maturity": maturity,
+        "schema_version": schema_version,
+        "name": name,
+        "version": version,
+        "kind": kind,
+        "maturity": maturity,
     }
 
 
@@ -282,6 +388,17 @@ def _chunk_dicts(
     # signal is small (flag + int score + ≤4 short category names), JSONB-safe, and READ back on
     # the fetch/search path. Ingestion proceeds regardless — this is an observability layer.
     injection = scan_injection(full_content)
+    # ARAS-0057: JSON skill plans have no markdown headings, so the chunker emits
+    # section=None. Stamp a minimal provenance dict so every skills chunk carries
+    # nonempty doc_id and doc_content_hash — required by the search projection and
+    # fetch-by-doc_id resolution.
+    _fallback_section: dict[str, str] | None = None
+    if skill_metadata is not None:
+        _fallback_section = {
+            "doc_id": compute_doc_id(namespace, source_path),
+            "doc_content_hash": doc_content_hash,
+        }
+
     return [
         {
             "id": chunk.id,
@@ -298,7 +415,8 @@ def _chunk_dicts(
                 "wikilinks": chunk.metadata.wikilinks,
                 "tags": chunk.metadata.tags,
                 "language": chunk.metadata.language,
-                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash),
+                "section": _stamp_doc_id(chunk.metadata.section, namespace, source_path, doc_content_hash)
+                or _fallback_section,
                 "injection": injection,
                 **(skill_metadata or {}),
             },
@@ -343,6 +461,7 @@ def _prepare_documents(
         try:
             # ARAS-0057: validate skill plan BEFORE chunking/embedding,
             # so a malformed plan is rejected without wasted compute.
+            # SkillPlanContractError propagates to the endpoint handler → 422 (typed client-input error).
             skill_metadata = _derive_skill_metadata(document.namespace, document.content)
             chunk_result = chunk_document(
                 content=document.content,
@@ -352,9 +471,7 @@ def _prepare_documents(
                 overlap_tokens=document.overlap_tokens,
             )
         except SkillPlanContractError:
-            logger.error("Batch skill validation failed for one source")
-            results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
-            continue
+            raise
         except Exception:
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")

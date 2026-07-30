@@ -736,7 +736,7 @@ def _maturity_clause_and_param(maturity: str | None, param_idx: int) -> tuple[st
     if maturity is None:
         return "", None
     return (
-        f"AND c.metadata->>'skill_maturity' = ANY(${param_idx}::text[])",
+        f"AND c.metadata->>'maturity' = ANY(${param_idx}::text[])",
         _maturity_values_for_floor(maturity),
     )
 
@@ -1563,7 +1563,7 @@ async def search_with_filters(
 
     # ARAS-0057: pre-ranking maturity floor — bound text[] parameter
     if maturity is not None:
-        conditions.append(f"c.metadata->>'skill_maturity' = ANY(${param_idx}::text[])")
+        conditions.append(f"c.metadata->>'maturity' = ANY(${param_idx}::text[])")
         params.append(_maturity_values_for_floor(maturity))
         param_idx += 1
 
