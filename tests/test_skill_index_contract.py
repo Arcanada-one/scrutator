@@ -755,7 +755,7 @@ class TestHardenedParityRejections:
     def test_control_char_u001c_in_capability_accepted(self):
         """Rust trim() does not remove U+001C; Python strip() does."""
         plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["action"]["capability"] = ""
+        plan["stages"][0]["action"]["capability"] = "\x1c"
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
 
