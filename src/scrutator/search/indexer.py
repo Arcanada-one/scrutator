@@ -7,6 +7,7 @@ import json as _json
 import logging
 import math
 import re
+import unicodedata
 from dataclasses import dataclass
 
 from scrutator.chunker.engine import chunk_document
@@ -28,6 +29,10 @@ from scrutator.db.repository import (
 )
 from scrutator.search.embedder import embed_sparse, embed_texts
 from scrutator.search.ingest_safety import scan_injection
+from scrutator.search.skill_promotions import (
+    SKILL_PROMOTIONS,
+    approved_skill_maturity,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +49,12 @@ class SkillPlanContractError(BatchIndexLimitError):
     """Raised when a skills-namespace document fails structural validation against the
     Rust ``SkillPlan`` wire shape before embedding/persistence. Derives from
     ``BatchIndexLimitError`` so both index endpoints return the existing 422 path."""
+
+
+@dataclass(frozen=True)
+class _PreparedSkillPlan:
+    metadata: dict[str, object]
+    semantic_content: str
 
 
 # ── ARAS-0057: skill plan validation and proposal-metadata derivation ──────────
@@ -130,6 +141,7 @@ _RUST_WS: frozenset[str] = frozenset("\t\n\x0b\x0c\r         �
 
 # serde_json default recursion limit.
 _SERDE_DEPTH_LIMIT = 128
+_ALLOWED_SEMANTIC_CONTROLS = frozenset({"\t", "\n", "\r"})
 
 
 def _is_non_empty_string(value: object) -> bool:
@@ -143,6 +155,24 @@ def _is_non_empty_string(value: object) -> bool:
     while end > start and value[end - 1] in _RUST_WS:
         end -= 1
     return start < end
+
+
+def _check_semantic_content_safety(value: object) -> None:
+    """Reject unsafe decoded controls without reflecting untrusted values."""
+    if isinstance(value, str):
+        for char in value:
+            category = unicodedata.category(char)
+            if category == "Cf" or (category == "Cc" and char not in _ALLOWED_SEMANTIC_CONTROLS):
+                raise SkillPlanContractError("Unsafe skill semantic content")
+        return
+    if isinstance(value, list):
+        for item in value:
+            _check_semantic_content_safety(item)
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _check_semantic_content_safety(key)
+            _check_semantic_content_safety(item)
 
 
 class _NegZeroInt(int):
@@ -649,14 +679,16 @@ def _validate_model_spec(label: str, model: object) -> None:
         raise SkillPlanContractError(f"{label} must be {{literal: string}} or {{by_task_type: code|summarize|default}}")
 
 
-def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, object] | None:
-    """Validate a skills-namespace document against the Rust ``SkillPlan`` wire
-    shape and return only the five proposal-metadata fields, or ``None`` for a
-    non-skills namespace.
+def _prepare_skill_plan(
+    namespace: str,
+    full_content: str,
+    source_path: str | None = None,
+) -> _PreparedSkillPlan | None:
+    """Validate a skill plan and prepare authoritative metadata/model context.
 
     Raises ``SkillPlanContractError`` (a ``BatchIndexLimitError`` subclass, so
-    the endpoints return 422) on any structural violation. The raw
-    ``full_content`` bytes are never reserialized or returned from this helper.
+    the endpoints return 422) on any structural or semantic-safety violation.
+    Exact raw bytes remain outside the semantic projection returned here.
     """
     if namespace != settings.skills_namespace:
         return None
@@ -700,6 +732,7 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     # typed fields are range-checked below, and arbitrary JSON accepts whatever
     # serde_json::Value accepts (finite f64 from huge integer lexemes is fine).
     plan = _normalize_contextual(plan_raw, "root", _KNOWN_ROOT)
+    _check_semantic_content_safety(plan)
 
     # schema_version: must be exactly integer 1 (bool True == 1 must be rejected)
     schema_version = plan.get("schema_version")
@@ -827,15 +860,43 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if "input" not in action:
             raise SkillPlanContractError(f"Skill plan stage[{i}].action.input is required")
 
-    # Return only the five proposal fields — no leaking of parsed internals.
-    # Keys are consumer-compatible (ARAS skill_hit_from reads name/version/maturity directly).
-    return {
-        "schema_version": schema_version,
-        "name": name,
-        "version": version,
-        "kind": kind,
-        "maturity": maturity,
-    }
+    content_hash = compute_doc_content_hash(full_content)
+    effective_maturity = approved_skill_maturity(
+        SKILL_PROMOTIONS,
+        source_path or "",
+        content_hash,
+    )
+    plan["maturity"] = effective_maturity
+    semantic_content = _json.dumps(
+        plan,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    if scan_injection(semantic_content)["flag"]:
+        raise SkillPlanContractError("Unsafe skill semantic content")
+
+    return _PreparedSkillPlan(
+        metadata={
+            "schema_version": schema_version,
+            "name": name,
+            "version": version,
+            "kind": kind,
+            "maturity": effective_maturity,
+        },
+        semantic_content=semantic_content,
+    )
+
+
+def _derive_skill_metadata(
+    namespace: str,
+    full_content: str,
+    source_path: str | None = None,
+) -> dict[str, object] | None:
+    """Return only server-derived proposal metadata for compatibility tests."""
+    prepared = _prepare_skill_plan(namespace, full_content, source_path)
+    return prepared.metadata if prepared is not None else None
 
 
 class _BatchEmbeddingError(Exception):
@@ -951,6 +1012,7 @@ def _chunk_dicts(
     source_path: str,
     full_content: str,
     skill_metadata: dict[str, object] | None = None,
+    injection_content: str | None = None,
 ) -> list[dict]:
     doc_content_hash = compute_doc_content_hash(full_content)
     # SRCH-0038 1b: keep only the ~71-byte `doc_content_hash` in `metadata.section` (safely under
@@ -959,11 +1021,10 @@ def _chunk_dicts(
     # invoked here so an oversized skills doc is rejected before persistence even if the caller
     # ignores the source-document payload.
     _build_source_document(namespace, source_path, full_content)
-    # ARAS-0055: label (never block) each document with an ingest-time injection signal, scanned
-    # ONCE over the whole pre-chunk content (fast regex/set-based — no LLM in the hot path). The
-    # signal is small (flag + int score + ≤4 short category names), JSONB-safe, and READ back on
-    # the fetch/search path. Ingestion proceeds regardless — this is an observability layer.
-    injection = scan_injection(full_content)
+    # ARAS-0055: label each persisted document with a bounded ingest-time injection signal. For
+    # skills, ``injection_content`` is the already validated canonical projection and any strong
+    # signal was rejected before chunking. Evidence retains the original non-blocking label.
+    injection = scan_injection(injection_content if injection_content is not None else full_content)
     # ARAS-0057: JSON skill plans have no markdown headings, so the chunker emits
     # section=None. Stamp a minimal provenance dict so every skills chunk carries
     # nonempty doc_id and doc_content_hash — required by the search projection and
@@ -1047,9 +1108,14 @@ def _prepare_documents(
             # ARAS-0057: validate skill plan BEFORE chunking/embedding,
             # so a malformed plan is rejected without wasted compute.
             # SkillPlanContractError propagates to the endpoint handler → 422 (typed client-input error).
-            skill_metadata = _derive_skill_metadata(document.namespace, document.content)
+            skill_plan = _prepare_skill_plan(
+                document.namespace,
+                document.content,
+                document.source_path,
+            )
+            index_content = skill_plan.semantic_content if skill_plan is not None else document.content
             chunk_result = chunk_document(
-                content=document.content,
+                content=index_content,
                 source_path=document.source_path,
                 source_type=document.source_type,
                 max_tokens=document.max_tokens,
@@ -1061,8 +1127,14 @@ def _prepare_documents(
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
+        skill_metadata = skill_plan.metadata if skill_plan is not None else None
         chunk_dicts = _chunk_dicts(
-            chunk_result, document.namespace, document.source_path, document.content, skill_metadata
+            chunk_result,
+            document.namespace,
+            document.source_path,
+            document.content,
+            skill_metadata,
+            index_content,
         )
         source_document = _build_source_document(document.namespace, document.source_path, document.content)
         evidence_document = _build_evidence_document(document.namespace, document.source_path, document.content)
@@ -1202,11 +1274,13 @@ async def index_document(
     """Full index pipeline: chunk → embed → store."""
     # ARAS-0057: validate and derive skill proposal metadata BEFORE embedding,
     # so a malformed plan is rejected without wasting compute.
-    skill_metadata = _derive_skill_metadata(namespace, content)
+    skill_plan = _prepare_skill_plan(namespace, content, source_path)
+    index_content = skill_plan.semantic_content if skill_plan is not None else content
+    skill_metadata = skill_plan.metadata if skill_plan is not None else None
 
     # 1. Chunk the document
     chunk_result = chunk_document(
-        content=content,
+        content=index_content,
         source_path=source_path,
         source_type=source_type,
         max_tokens=max_tokens,
@@ -1225,7 +1299,14 @@ async def index_document(
     project_id = await upsert_project(namespace_id, project) if project else None
 
     # 4. Replace dense and sparse rows as one source generation.
-    chunk_dicts = _chunk_dicts(chunk_result, namespace, source_path, content, skill_metadata)
+    chunk_dicts = _chunk_dicts(
+        chunk_result,
+        namespace,
+        source_path,
+        content,
+        skill_metadata,
+        index_content,
+    )
     source_document = _build_source_document(namespace, source_path, content)
     evidence_document = _build_evidence_document(namespace, source_path, content)
     inserted = await replace_source_chunks_atomic(
