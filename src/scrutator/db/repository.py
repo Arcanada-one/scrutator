@@ -712,6 +712,35 @@ async def delete_by_source(source_path: str, namespace_id: int) -> int:
         return int(result.split()[-1])
 
 
+# ARAS-0057: ordered maturity floors for pre-ranking filtering.
+# The floor is inclusive — draft admits draft, validated, production;
+# validated admits validated, production; production admits only production.
+_MATURITY_FLOOR_MAP: dict[str, list[str]] = {
+    "draft": ["draft", "validated", "production"],
+    "validated": ["validated", "production"],
+    "production": ["production"],
+}
+
+
+def _maturity_values_for_floor(floor: str) -> list[str]:
+    """Return the permitted maturity values for a floor.
+    Never rely on lexical string comparison."""
+    if floor not in _MATURITY_FLOOR_MAP:
+        raise ValueError(f"Unknown maturity floor: {floor!r}")
+    return _MATURITY_FLOOR_MAP[floor]
+
+
+def _maturity_clause_and_param(maturity: str | None, param_idx: int) -> tuple[str, list[str] | None]:
+    """Build a parameterized ``metadata->>'skill_maturity' = ANY($N::text[])``
+    clause and its bound values, or empty-string/None when no floor is set."""
+    if maturity is None:
+        return "", None
+    return (
+        f"AND c.metadata->>'skill_maturity' = ANY(${param_idx}::text[])",
+        _maturity_values_for_floor(maturity),
+    )
+
+
 async def hybrid_search(
     query_embedding: list[float],
     query_text: str,
@@ -720,6 +749,7 @@ async def hybrid_search(
     query_sparse: dict[str, float] | None = None,
     fetch_multiplier: int = 3,
     return_pool: bool = False,
+    maturity: str | None = None,
 ) -> list[SearchResult]:
     """Hybrid search: dense cosine + sparse lexical + FTS with RRF ranking.
 
@@ -731,6 +761,9 @@ async def hybrid_search(
       Set to settings.rerank_pool_multiplier when rerank_enabled=True (wider recall pool).
     - return_pool: when True, the SQL final LIMIT returns fetch_limit rows (full pool for reranker).
       When False (default), final LIMIT is `limit` (existing behaviour).
+
+    ARAS-0057: ``maturity`` sets a pre-ranking floor inside every candidate CTE
+    before its LIMIT. Only one bound ``text[]`` parameter is added for all arms.
     """
     pool = await get_pool()
     vector = np.array(query_embedding, dtype=np.float32)
@@ -738,12 +771,28 @@ async def hybrid_search(
     # SQL $5 target: full pool for reranker, or final limit otherwise
     sql_final_limit = fetch_limit if return_pool else limit
 
+    # ARAS-0057: maturity clause and parameter (2-way path uses $6).
+    # 3-way path below overrides param_idx because $6 is sparse_json.
+    maturity_clause, maturity_values = _maturity_clause_and_param(maturity, param_idx=6)
+
     if query_sparse:
         # 3-way RRF: dense + sparse + FTS
         sparse_json = json.dumps(query_sparse)
+        # Override maturity clause param index — $6 is sparse_json, maturity is $7
+        maturity_clause, maturity_values = _maturity_clause_and_param(maturity, param_idx=7)
+        params = [
+            vector,
+            namespace_id,
+            fetch_limit,
+            query_text,
+            sql_final_limit,
+            sparse_json,
+        ]
+        if maturity_values is not None:
+            params.append(maturity_values)
         async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
-                """
+                f"""
                 WITH semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY c.embedding_dense <=> $1, c.id ASC
@@ -751,6 +800,7 @@ async def hybrid_search(
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
+                      {maturity_clause}
                     ORDER BY c.embedding_dense <=> $1, c.id ASC
                     LIMIT $3
                 ),
@@ -764,6 +814,7 @@ async def hybrid_search(
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
+                      {maturity_clause}
                     ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
                              + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
                                c.id ASC
@@ -783,6 +834,7 @@ async def hybrid_search(
                         FROM sparse_vectors sv
                         JOIN chunks c ON c.id = sv.chunk_id
                         WHERE c.namespace_id = $2
+                          {maturity_clause}
                     ) AS scored
                     ORDER BY scored.sparse_score DESC, scored.id ASC
                     LIMIT $3
@@ -810,18 +862,22 @@ async def hybrid_search(
                 LEFT JOIN projects p ON p.id = c.project_id
                 ORDER BY r.rrf_score DESC, r.chunk_id ASC
                 """,
-                vector,
-                namespace_id,
-                fetch_limit,
-                query_text,
-                sql_final_limit,
-                sparse_json,
+                *params,
             )
     else:
         # 2-way RRF: dense + FTS (backward-compatible)
+        params = [
+            vector,
+            namespace_id,
+            fetch_limit,
+            query_text,
+            sql_final_limit,
+        ]
+        if maturity_values is not None:
+            params.append(maturity_values)
         async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
-                """
+                f"""
                 WITH semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY c.embedding_dense <=> $1, c.id ASC
@@ -829,6 +885,7 @@ async def hybrid_search(
                     FROM chunks c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
+                      {maturity_clause}
                     ORDER BY c.embedding_dense <=> $1, c.id ASC
                     LIMIT $3
                 ),
@@ -842,6 +899,7 @@ async def hybrid_search(
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
+                      {maturity_clause}
                     ORDER BY ts_rank_cd(c.textsearch_ru, plainto_tsquery('russian', $4))
                              + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
                                c.id ASC
@@ -868,11 +926,7 @@ async def hybrid_search(
                 LEFT JOIN projects p ON p.id = c.project_id
                 ORDER BY r.rrf_score DESC, r.chunk_id ASC
                 """,
-                vector,
-                namespace_id,
-                fetch_limit,
-                query_text,
-                sql_final_limit,
+                *params,
             )
 
     results = []
@@ -1475,6 +1529,7 @@ async def search_with_filters(
     include_expired: bool = False,
     importance_boost: bool = False,
     limit: int = 10,
+    maturity: str | None = None,
 ) -> list[dict[str, Any]]:
     """Hybrid search with additional metadata filters for memory recall."""
     from scrutator.search.embedder import embed_single
@@ -1505,6 +1560,12 @@ async def search_with_filters(
 
     if not include_expired:
         conditions.append("(c.metadata->>'valid_until' IS NULL OR c.metadata->>'valid_until' > NOW()::text)")
+
+    # ARAS-0057: pre-ranking maturity floor — bound text[] parameter
+    if maturity is not None:
+        conditions.append(f"c.metadata->>'skill_maturity' = ANY(${param_idx}::text[])")
+        params.append(_maturity_values_for_floor(maturity))
+        param_idx += 1
 
     extra_where = ""
     if conditions:

@@ -146,6 +146,9 @@ class SearchRequest(BaseModel):
     min_score: float = 0.0
     include_content: bool = True
     group_by: Literal["document", "section"] | None = None  # SRCH-0021, opt-in, default off
+    # ARAS-0057: typed maturity floor — applied as a pre-ranking filter in every
+    # SQL candidate arm when set. Only valid for the configured skills namespace.
+    maturity: Literal["draft", "validated", "production"] | None = None
 
     @field_validator("query")
     @classmethod

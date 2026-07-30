@@ -92,6 +92,7 @@ async def search(
     min_score: float = 0.0,
     include_content: bool = True,
     group_by: Literal["document", "section"] | None = None,
+    maturity: Literal["draft", "validated", "production"] | None = None,
 ) -> SearchResponse:
     """Execute hybrid search: embed query → dense+FTS → RRF → optional ColBERT rerank → results.
 
@@ -116,6 +117,7 @@ async def search(
             namespace_id=namespace_id,
             source_type=source_type,
             limit=limit,
+            maturity=maturity,
         )
         results = []
         for r in raw:
@@ -158,6 +160,7 @@ async def search(
                 query_sparse=query_sparse,
                 fetch_multiplier=settings.rerank_pool_multiplier,
                 return_pool=True,
+                maturity=maturity,
             )
             # Rerank via ColBERT MaxSim (sets .score and .citation on returned results)
             results = await rerank(query=query, candidates=results, top_k=limit)
@@ -169,6 +172,7 @@ async def search(
                 namespace_id=namespace_id,
                 limit=limit,
                 query_sparse=query_sparse,
+                maturity=maturity,
             )
             # M1: populate citation on hybrid results (score_kind=rrf)
             for r in results:

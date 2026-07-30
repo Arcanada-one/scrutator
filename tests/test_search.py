@@ -68,6 +68,28 @@ class TestSearchRequest:
         assert req.namespace == "arcanada"
         assert req.project == "scrutator"
 
+    # ── ARAS-0057 maturity floor ──────────────────────────────────────
+
+    def test_maturity_defaults_to_none(self):
+        req = SearchRequest(query="test")
+        assert req.maturity is None
+
+    def test_maturity_accepts_draft(self):
+        req = SearchRequest(query="test", maturity="draft")
+        assert req.maturity == "draft"
+
+    def test_maturity_accepts_validated(self):
+        req = SearchRequest(query="test", maturity="validated")
+        assert req.maturity == "validated"
+
+    def test_maturity_accepts_production(self):
+        req = SearchRequest(query="test", maturity="production")
+        assert req.maturity == "production"
+
+    def test_maturity_rejects_invalid_enum(self):
+        with pytest.raises(ValueError):
+            SearchRequest(query="test", maturity="unknown")
+
 
 class TestSearchResult:
     def test_source_attribution(self):
