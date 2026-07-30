@@ -9,7 +9,9 @@ from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
+    FeederCapabilityResponse,
     NamespaceCapability,
+    RollbackCapabilityResponse,
     require_feeder_capability,
     require_rollback_capability,
 )
@@ -180,6 +182,28 @@ async def index_endpoint(
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
+
+
+@app.get("/v1/index/capability", response_model=FeederCapabilityResponse)
+async def feeder_capability_endpoint(
+    capability: NamespaceCapability = Depends(require_feeder_capability),
+) -> FeederCapabilityResponse:
+    """Return only the effective namespace scope for this feeder credential."""
+    return FeederCapabilityResponse(namespaces=sorted(capability.namespaces))
+
+
+@app.get(
+    "/v1/index/rollback-capability",
+    response_model=RollbackCapabilityResponse,
+)
+async def rollback_capability_endpoint(
+    capability: NamespaceCapability = Depends(require_rollback_capability),
+) -> RollbackCapabilityResponse:
+    """Return only the effective scope of this rollback credential."""
+    return RollbackCapabilityResponse(
+        namespaces=sorted(capability.namespaces),
+        operator=capability.operator,
+    )
 
 
 @app.post("/v1/index/batch", response_model=BatchIndexResponse)
