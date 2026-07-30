@@ -54,6 +54,9 @@ _SKILL_TASK_TYPES = frozenset({"code", "summarize", "default"})
 # Rust u32 / u64 ranges — values outside these overflow the target serde types.
 _U32_MAX = 4_294_967_295
 _U64_MAX = 18_446_744_073_709_551_615
+# serde_json::Number integer range: i64::MIN through u64::MAX.
+_SERDE_INT_MIN = -9_223_372_036_854_775_808  # i64::MIN
+_SERDE_INT_MAX = 18_446_744_073_709_551_615  # u64::MAX
 
 
 def _reject_non_finite_json(value: object) -> object:
@@ -93,27 +96,145 @@ def _is_non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _detect_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    """Reject duplicate keys in JSON objects — Python's last-value-wins behaviour
-    differs from Rust serde which rejects duplicates by default."""
+class PairObject:
+    """Lightweight ordered-pair holder returned by ``object_pairs_hook``.
+    Preserves insertion order so the normalization pass can detect duplicate
+    keys at known struct levels."""
+
+    __slots__ = ("_pairs",)
+
+    def __init__(self, pairs: list[tuple[str, object]]) -> None:
+        self._pairs: tuple[tuple[str, object], ...] = tuple(pairs)
+
+    def items(self):
+        return self._pairs
+
+    def get(self, key: str, default: object = None) -> object:
+        for k, v in self._pairs:
+            if k == key:
+                return v
+        return default
+
+
+# Context-specific known-key sets for duplicate detection.
+_KNOWN_ROOT = frozenset({"schema_version", "name", "version", "kind", "maturity", "stages", "defaults"})
+_KNOWN_STAGE = frozenset({"id", "model", "agent_count", "limits", "tools", "metrics", "action"})
+_KNOWN_LIMITS = frozenset({"max_turns", "max_cost_usd", "context_budget_chars"})
+_KNOWN_METRIC = frozenset({"name", "goal"})
+_KNOWN_ACTION = frozenset({"capability", "input"})
+_KNOWN_DEFAULTS = frozenset({"model"})
+_KNOWN_MODEL_ENUM = frozenset({"literal", "by_task_type"})
+_EMPTY_KEYS: frozenset[str] = frozenset()
+
+
+def _child_context(parent_ctx: str, key: str) -> tuple[str, frozenset[str]]:
+    """Return ``(context_name, known_keys)`` for a child of *parent_ctx*
+    accessed by *key*.  ``action.input`` and every ignored unknown-field
+    subtree use the ``"value"`` context with an empty known-key set, so
+    arbitrary JSON receives Rust-compatible last-value-wins behaviour."""
+    if parent_ctx == "root":
+        if key == "stages":
+            return ("stage_list", _EMPTY_KEYS)
+        if key == "defaults":
+            return ("defaults", _KNOWN_DEFAULTS)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "stage_list":
+        return ("stage", _KNOWN_STAGE)
+    if parent_ctx == "stage":
+        if key == "limits":
+            return ("limits", _KNOWN_LIMITS)
+        if key == "model":
+            return ("model_enum", _KNOWN_MODEL_ENUM)
+        if key == "metrics":
+            return ("metric_list", _EMPTY_KEYS)
+        if key == "action":
+            return ("action", _KNOWN_ACTION)
+        if key == "tools":
+            return ("value", _EMPTY_KEYS)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "metric_list":
+        return ("metric", _KNOWN_METRIC)
+    if parent_ctx == "defaults":
+        if key == "model":
+            return ("model_enum", _KNOWN_MODEL_ENUM)
+        return ("value", _EMPTY_KEYS)
+    if parent_ctx == "action":
+        if key == "input":
+            return ("value", _EMPTY_KEYS)  # arbitrary serde_json::Value
+        return ("value", _EMPTY_KEYS)
+    # model_enum, limits, metric, value — children always arbitrary
+    return ("value", _EMPTY_KEYS)
+
+
+def _normalize_contextual(obj: object, context: str, known_keys: frozenset[str]) -> object:
+    """Walk a ``PairObject`` tree with explicit context awareness.
+    Rejects duplicate known struct fields, converts ``PairObject`` → ``dict``,
+    and recurses with the correct child or list-item context."""
+
+    # ── Lists: each item gets the item-level context ─────────────────
+    if isinstance(obj, list):
+        if context == "stage_list":
+            return [_normalize_contextual(v, "stage", _KNOWN_STAGE) for v in obj]
+        if context == "metric_list":
+            return [_normalize_contextual(v, "metric", _KNOWN_METRIC) for v in obj]
+        return [_normalize_contextual(v, "value", _EMPTY_KEYS) for v in obj]
+
+    # ── Scalars: pass through ────────────────────────────────────────
+    if not isinstance(obj, PairObject):
+        return obj
+
+    # ── Structs: check duplicate known keys, recurse per-key ──────────
     seen: set[str] = set()
-    for key, _value in pairs:
-        if key in seen:
-            raise ValueError(f"Duplicate key in JSON object: {key!r}")
-        seen.add(key)
-    return dict(pairs)
+    for key, _value in obj.items():
+        if key in known_keys:
+            if key in seen:
+                raise SkillPlanContractError(f"Duplicate known key in {context} struct: {key!r}")
+            seen.add(key)
+
+    result: dict[str, object] = {}
+    for key, value in obj.items():
+        child_ctx, child_keys = _child_context(context, key)
+        result[key] = _normalize_contextual(value, child_ctx, child_keys)
+    return result
+
+
+def _validate_numbers_recursive(value: object, path: str) -> None:
+    """Recursively reject non-finite floats and integer-overflow anywhere in the
+    parsed JSON, matching ``serde_json::Number`` range (i64::MIN … u64::MAX).
+    Field-specific u32 / u64 / f64 constraints are enforced separately at each
+    known struct field — this gate only rejects values ``serde_json`` cannot
+    store at all."""
+    if isinstance(value, bool):
+        return
+    if isinstance(value, int):
+        if not (_SERDE_INT_MIN <= value <= _SERDE_INT_MAX):
+            raise SkillPlanContractError(
+                f"Integer overflow at {path}: {value} outside serde_json range [{_SERDE_INT_MIN}, {_SERDE_INT_MAX}]"
+            )
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise SkillPlanContractError(f"Non-finite float at {path}: {value}")
+        return
+    if isinstance(value, (dict, PairObject)):
+        items = value.items() if isinstance(value, dict) else value._pairs
+        for k, v in items:
+            _validate_numbers_recursive(v, f"{path}.{k}")
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            _validate_numbers_recursive(v, f"{path}[{i}]")
 
 
 def _validate_model_spec(label: str, model: object) -> None:
     """Require ``model`` to match the Rust ``ModelSpec`` externally-tagged enum:
-    exactly one of ``{"literal": "<non-empty-str>"}`` or
-    ``{"by_task_type": "code"|"summarize"|"default"}``."""
+    exactly one of ``{"literal": "<str>"}`` or
+    ``{"by_task_type": "code"|"summarize"|"default"}``.
+    Rust ``String`` allows empty, so an empty ``literal`` is valid."""
     if not isinstance(model, dict) or len(model) != 1:
         raise SkillPlanContractError(f"{label} must be an externally-tagged object with exactly one variant key")
     if "literal" in model:
-        lit = model["literal"]
-        if not _is_non_empty_string(lit):
-            raise SkillPlanContractError(f"{label}.literal must be a non-empty string")
+        if not isinstance(model["literal"], str):
+            raise SkillPlanContractError(f"{label}.literal must be a string")
     elif "by_task_type" in model:
         tt = model["by_task_type"]
         if tt not in _SKILL_TASK_TYPES:
@@ -143,17 +264,26 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     # Parse JSON, rejecting Python-only non-finite constants (NaN, Inf, -Inf)
     # that serde_json refuses. The raw string is never reserialized.
     try:
-        plan = _json.loads(
+        plan_raw = _json.loads(
             full_content,
             parse_constant=_reject_non_finite_json,
-            object_pairs_hook=_detect_duplicate_keys,
+            object_pairs_hook=PairObject,
         )
     except (ValueError, TypeError) as exc:
         cause = str(exc)
         raise SkillPlanContractError(f"Invalid JSON in skills document: {cause}") from exc
 
-    if not isinstance(plan, dict):
+    if not isinstance(plan_raw, PairObject):
         raise SkillPlanContractError("Skills document root must be a JSON object")
+
+    # Recursive number sanity: reject non-finite floats (1e400→inf) and
+    # serde_json::Number overflow anywhere, including inside action.input.
+    _validate_numbers_recursive(plan_raw, "<root>")
+
+    # Normalize PairObject → dict with context-aware duplicate detection.
+    # Only known struct fields are checked; action.input and unknown-field
+    # values get "value" context with last-value-wins behaviour.
+    plan = _normalize_contextual(plan_raw, "root", _KNOWN_ROOT)
 
     # schema_version: must be exactly integer 1 (bool True == 1 must be rejected)
     schema_version = plan.get("schema_version")
@@ -164,10 +294,10 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
     if schema_version != 1:
         raise SkillPlanContractError(f"Unsupported skill schema_version: {schema_version!r} (expected 1)")
 
-    # name: non-empty string
+    # name: string (Rust String allows empty)
     name = plan.get("name")
-    if not _is_non_empty_string(name):
-        raise SkillPlanContractError("Skill plan 'name' must be a non-empty string")
+    if not isinstance(name, str):
+        raise SkillPlanContractError("Skill plan 'name' must be a string")
 
     # version: u32 (strict integer, not bool)
     version = plan.get("version")
@@ -202,10 +332,10 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if not isinstance(stage, dict):
             raise SkillPlanContractError(f"Skill plan stage[{i}] must be an object")
 
-        # stage.id: non-empty string
+        # stage.id: string (Rust String allows empty)
         stage_id = stage.get("id")
-        if not _is_non_empty_string(stage_id):
-            raise SkillPlanContractError(f"Skill plan stage[{i}].id must be a non-empty string")
+        if not isinstance(stage_id, str):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].id must be a string")
 
         # stage.model: externally-tagged ModelSpec {literal: str} | {by_task_type: task}
         _validate_model_spec(f"stage[{i}].model", stage.get("model"))
@@ -229,9 +359,9 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
             )
 
         max_cost = limits.get("max_cost_usd")
-        if not _is_finite_number(max_cost) or (isinstance(max_cost, (int, float)) and max_cost < 0):
+        if not _is_finite_number(max_cost):
             raise SkillPlanContractError(
-                f"Skill plan stage[{i}].limits.max_cost_usd must be a finite number >= 0, got {max_cost!r}"
+                f"Skill plan stage[{i}].limits.max_cost_usd must be a finite number, got {max_cost!r}"
             )
 
         context_budget = limits.get("context_budget_chars")
@@ -240,15 +370,13 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
                 f"Skill plan stage[{i}].limits.context_budget_chars must be a u64 integer >= 0, got {context_budget!r}"
             )
 
-        # tools: Vec<String> — each element must be a non-empty string
+        # tools: Vec<String> — Rust String allows empty
         tools = stage.get("tools")
         if not isinstance(tools, list):
             raise SkillPlanContractError(f"Skill plan stage[{i}].tools must be an array")
         for j, tool in enumerate(tools):
-            if not _is_non_empty_string(tool):
-                raise SkillPlanContractError(
-                    f"Skill plan stage[{i}].tools[{j}] must be a non-empty string, got {tool!r}"
-                )
+            if not isinstance(tool, str):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].tools[{j}] must be a string, got {tool!r}")
 
         # metrics: list of objects, each with name (non-empty string) and goal (finite number)
         metrics = stage.get("metrics")
@@ -258,8 +386,8 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
             if not isinstance(metric, dict):
                 raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}] must be an object")
             metric_name = metric.get("name")
-            if not _is_non_empty_string(metric_name):
-                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}].name must be a non-empty string")
+            if not isinstance(metric_name, str):
+                raise SkillPlanContractError(f"Skill plan stage[{i}].metrics[{j}].name must be a string")
             goal = metric.get("goal")
             if not _is_finite_number(goal):
                 raise SkillPlanContractError(
@@ -271,10 +399,10 @@ def _derive_skill_metadata(namespace: str, full_content: str) -> dict[str, objec
         if not isinstance(action, dict):
             raise SkillPlanContractError(f"Skill plan stage[{i}].action must be an object")
 
-        # action.capability: non-empty string
+        # action.capability: string (Rust String allows empty)
         capability = action.get("capability")
-        if not _is_non_empty_string(capability):
-            raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a non-empty string")
+        if not isinstance(capability, str):
+            raise SkillPlanContractError(f"Skill plan stage[{i}].action.capability must be a string")
 
         # action.input: required but any JSON value (including null) is valid
         if "input" not in action:
