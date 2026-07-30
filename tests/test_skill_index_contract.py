@@ -714,11 +714,33 @@ class TestHardenedParityRejections:
         result = _derive_skill_metadata("skills", json.dumps(plan))
         assert result is not None
 
-    def test_unknown_field_key_lone_surrogate_rejected(self):
+    def test_unknown_field_key_lone_surrogate_accepted(self):
         plan = json.loads(VALID_SKILL_PLAN)
         plan["a\ud800b"] = "value"
-        with pytest.raises(SkillPlanContractError, match="surrogate"):
-            _derive_skill_metadata("skills", json.dumps(plan))
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_deep_unknown_field_is_ignored_without_recursion_limit(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown_deep__"] = "__DEEP__"
+        nested = '{"x":' * 1100 + '"leaf"' + "}" * 1100
+        raw = json.dumps(plan).replace('"__DEEP__"', nested)
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_5000_digit_integer_in_unknown_field_is_ignored(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown_huge__"] = "__HUGE__"
+        raw = json.dumps(plan).replace('"__HUGE__"', "1" + ("0" * 4999))
+        result = _derive_skill_metadata("skills", raw)
+        assert result is not None
+
+    def test_malformed_json_inside_unknown_field_is_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__unknown_bad__"] = "__BAD__"
+        raw = json.dumps(plan).replace('"__BAD__"', '{"x":[1,]}')
+        with pytest.raises(SkillPlanContractError, match="Invalid JSON"):
+            _derive_skill_metadata("skills", raw)
 
     def test_valid_surrogate_pair_accepted(self):
         plan = json.loads(VALID_SKILL_PLAN)
@@ -977,6 +999,21 @@ class TestSkillIndexHttpEndpointErrors:
         assert resp.status_code == 422, (
             f"batch index with invalid skill must return 422, got {resp.status_code}: {resp.text[:200]}"
         )
+
+    def test_batch_literal_lone_surrogate_returns_typed_422(self):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        raw_body = (
+            b'{"documents":[{"content":"\\ud800","source_path":"skills/literal-surrogate.json","namespace":"skills"}]}'
+        )
+        response = TestClient(app, raise_server_exceptions=False).post(
+            "/v1/index/batch",
+            content=raw_body,
+            headers={"content-type": "application/json"},
+        )
+        assert response.status_code == 422, response.text[:200]
 
     @pytest.mark.parametrize("route", ["/v1/index", "/v1/index/batch"])
     @pytest.mark.parametrize("invalid_case", ["depth", "surrogate"])
