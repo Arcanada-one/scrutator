@@ -54,12 +54,12 @@ def _skill_doc(target_bytes: int) -> str:
 
     single_stage = {
         "id": "step",
-        "model": {"by_task_type": "assemble"},
+        "model": {"by_task_type": "code"},
         "agent_count": 1,
         "limits": {"max_turns": 1, "max_cost_usd": 0.01, "context_budget_chars": 8192},
         "tools": [],
         "metrics": [],
-        "action": {"capability": "model_call", "input": {"prompt": "Execute assembly step."}},
+        "action": {"capability": "model_call", "input": {"prompt": "Execute build step."}},
     }
     plan = {
         "schema_version": 1,
@@ -68,7 +68,7 @@ def _skill_doc(target_bytes: int) -> str:
         "kind": "instance",
         "maturity": "production",
         "stages": [single_stage],
-        "defaults": {"model": {"by_task_type": "assemble"}},
+        "defaults": {"model": {"by_task_type": "code"}},
     }
     while len(_json.dumps(plan).encode("utf-8")) < target_bytes:
         plan["stages"].append(single_stage.copy())

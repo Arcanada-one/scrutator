@@ -731,7 +731,7 @@ def _maturity_values_for_floor(floor: str) -> list[str]:
 
 
 def _maturity_clause_and_param(maturity: str | None, param_idx: int) -> tuple[str, list[str] | None]:
-    """Build a parameterized ``metadata->>'skill_maturity' = ANY($N::text[])``
+    """Build a parameterized ``metadata->>'maturity' = ANY($N::text[])``
     clause and its bound values, or empty-string/None when no floor is set."""
     if maturity is None:
         return "", None

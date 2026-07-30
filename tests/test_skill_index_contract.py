@@ -307,13 +307,13 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="defaults"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_defaults_model_missing_by_task_type_rejected(self):
+    def test_defaults_model_empty_object_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
         plan["defaults"] = {"model": {}}
-        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+        with pytest.raises(SkillPlanContractError, match="variant key"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_defaults_model_empty_by_task_type_rejected(self):
+    def test_defaults_model_empty_by_task_type_value_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
         plan["defaults"] = {"model": {"by_task_type": ""}}
         with pytest.raises(SkillPlanContractError, match="by_task_type"):
@@ -347,10 +347,10 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="stage\\[0\\].model"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_stage_model_missing_by_task_type_rejected(self):
+    def test_stage_model_empty_object_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
         plan["stages"][0]["model"] = {}
-        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+        with pytest.raises(SkillPlanContractError, match="variant key"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
     # ── limits as non-object ────────────────────────────────────────────
@@ -407,17 +407,25 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="tools"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_tool_item_non_object_rejected(self):
+    def test_tool_object_rejected(self):
+        """Rust Vec<String> rejects object tools — each tool must be a plain string."""
         plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["tools"] = ["not_an_object"]
+        plan["stages"][0]["tools"] = [{"name": "web_search"}]
         with pytest.raises(SkillPlanContractError, match="tools\\[0\\]"):
             _derive_skill_metadata("skills", json.dumps(plan))
 
-    def test_tool_missing_name_rejected(self):
+    def test_tool_empty_string_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
-        plan["stages"][0]["tools"] = [{}]
-        with pytest.raises(SkillPlanContractError, match="tools\\[0\\].name"):
+        plan["stages"][0]["tools"] = [""]
+        with pytest.raises(SkillPlanContractError, match="tools\\[0\\]"):
             _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_string_tools_accepted(self):
+        """Vec<String> — a list of non-empty strings is valid."""
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["tools"] = ["web_search", "file_read"]
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
 
     def test_missing_metrics_rejected(self):
         plan = json.loads(VALID_SKILL_PLAN)
@@ -454,6 +462,78 @@ class TestHardenedParityRejections:
         plan["stages"][0]["metrics"][0]["goal"] = float("nan")
         raw = json.dumps(plan, allow_nan=True)
         with pytest.raises(SkillPlanContractError, match="Non-finite"):
+            _derive_skill_metadata("skills", raw)
+
+    # ── ModelSpec externally-tagged enum ────────────────────────────────
+
+    def test_model_literal_variant_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"literal": "gpt-5"}
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_model_by_task_type_code_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"by_task_type": "code"}
+        plan["defaults"]["model"] = {"by_task_type": "code"}
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_model_by_task_type_default_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"by_task_type": "default"}
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    def test_model_by_task_type_unknown_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"by_task_type": "unknown_task"}
+        with pytest.raises(SkillPlanContractError, match="by_task_type"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_model_two_variant_keys_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"literal": "x", "by_task_type": "summarize"}
+        with pytest.raises(SkillPlanContractError, match="variant key"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_model_unknown_variant_key_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["model"] = {"unknown_key": "value"}
+        with pytest.raises(SkillPlanContractError, match="literal"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    # ── action.input required ───────────────────────────────────────────
+
+    def test_missing_action_input_rejected(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        del plan["stages"][0]["action"]["input"]
+        with pytest.raises(SkillPlanContractError, match="action.input"):
+            _derive_skill_metadata("skills", json.dumps(plan))
+
+    def test_action_input_null_accepted(self):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["stages"][0]["action"]["input"] = None
+        result = _derive_skill_metadata("skills", json.dumps(plan))
+        assert result is not None
+
+    # ── Duplicate key rejection ─────────────────────────────────────────
+
+    def test_duplicate_top_level_key_rejected(self):
+        """Duplicate keys in valid JSON syntax must be rejected (Python
+        last-value-wins differs from serde)."""
+        # Build valid JSON with duplicate "name" key at top level
+        raw = '{"schema_version":1,"name":"first","name":"second",' + VALID_SKILL_PLAN[1:]
+        with pytest.raises(SkillPlanContractError, match="Duplicate key"):
+            _derive_skill_metadata("skills", raw)
+
+    def test_duplicate_nested_key_rejected(self):
+        """Duplicate keys inside a nested object (stage limits) must be rejected."""
+        raw = VALID_SKILL_PLAN.replace(
+            '"max_turns": 1',
+            '"max_turns": 1, "max_turns": 2',
+        )
+        with pytest.raises(SkillPlanContractError, match="Duplicate key"):
             _derive_skill_metadata("skills", raw)
 
 
