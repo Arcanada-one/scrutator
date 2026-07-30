@@ -341,15 +341,21 @@ class TestSearchEndpointMaturityValidation:
     namespace resolution, and valid maturity+namespace forwards correctly."""
 
     @pytest.fixture(autouse=True)
-    def _override_auth(self):
-        from scrutator.auth.capabilities import NamespaceCapability, require_feeder_capability
+    def _override_auth(self, monkeypatch):
+        from scrutator.auth.dependency import require_tenant_context
+        from scrutator.auth.models import TenantContext
+        from scrutator.config import settings
         from scrutator.health import app
 
-        app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-            namespaces=frozenset({"skills", "arcanada"})
+        monkeypatch.setattr(settings, "auth_enforce", True)
+        app.dependency_overrides[require_tenant_context] = lambda: TenantContext(
+            principal_id="test-principal",
+            principal_type="service",
+            allowed_namespace_ids=frozenset({1, 2}),
+            allowed_namespace_names=frozenset({"skills", "arcanada"}),
         )
         yield
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_tenant_context, None)
 
     def test_maturity_non_skills_namespace_returns_422(self):
         """Maturity + non-skills namespace → 422 BEFORE any authz/namespace resolution."""

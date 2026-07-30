@@ -48,6 +48,43 @@ VALID_SKILL_PLAN = json.dumps(
     }
 )
 
+# Differential acceptance corpus captured from the exact ARAS consumer at
+# 80e978c9518a010bec2e662fb5ba19e094be4548, linked against serde_json
+# 1.0.149 with its default feature set (float_roundtrip disabled). Keeping the
+# oracle result beside each lexeme makes future parser changes repeatable
+# without deriving the expectation from Scrutator's implementation.
+SERDE_JSON_1_0_149_NUMBER_ORACLE = (
+    ("max-short", "1.7976931348623157e308", True),
+    ("rounded-overflow", "1.7976931348623158e308", False),
+    ("max-with-trailing-zeros", "1.797693134862315700e308", False),
+    ("below-max-with-trailing-digits", "1.797693134862315699e308", False),
+    ("rounded-finite", "1.79769313486231575e308", True),
+    ("huge-negative-exponent", "1e-" + ("9" * 1000), True),
+    ("zero-huge-positive-exponent", "0e" + ("9" * 1000), True),
+)
+
+SERDE_JSON_1_0_149_ACCEPTED = tuple(
+    pytest.param(lexeme, id=case_id) for case_id, lexeme, accepted in SERDE_JSON_1_0_149_NUMBER_ORACLE if accepted
+)
+SERDE_JSON_1_0_149_REJECTED = tuple(
+    pytest.param(lexeme, id=case_id) for case_id, lexeme, accepted in SERDE_JSON_1_0_149_NUMBER_ORACLE if not accepted
+)
+SERDE_JSON_1_0_149_ALL = tuple(
+    pytest.param(lexeme, id=case_id) for case_id, lexeme, _accepted in SERDE_JSON_1_0_149_NUMBER_ORACLE
+)
+
+
+def _plan_with_number_lexeme(context: str, lexeme: str) -> str:
+    plan = json.loads(VALID_SKILL_PLAN)
+    marker = "__NUMBER__"
+    if context == "max_cost_usd":
+        plan["stages"][0]["limits"]["max_cost_usd"] = marker
+    elif context == "metric.goal":
+        plan["stages"][0]["metrics"][0]["goal"] = marker
+    else:
+        plan["stages"][0]["action"]["input"] = {"nested": [marker]}
+    return json.dumps(plan).replace(f'"{marker}"', lexeme)
+
 
 # ── _derive_skill_metadata unit tests ─────────────────────────────────────────
 
@@ -798,6 +835,58 @@ class TestHardenedParityRejections:
         with pytest.raises(SkillPlanContractError, match="depth"):
             _derive_skill_metadata("skills", raw)
 
+    @pytest.mark.parametrize("context", ["max_cost_usd", "metric.goal", "action.input"])
+    def test_serde_valid_max_f64_lexeme_accepted_in_number_contexts(self, context):
+        plan = json.loads(VALID_SKILL_PLAN)
+        marker = "__NUMBER__"
+        if context == "max_cost_usd":
+            plan["stages"][0]["limits"]["max_cost_usd"] = marker
+        elif context == "metric.goal":
+            plan["stages"][0]["metrics"][0]["goal"] = marker
+        else:
+            plan["stages"][0]["action"]["input"] = {"nested": [marker]}
+        raw = json.dumps(plan).replace(f'"{marker}"', "1.7976931348623157e308")
+
+        assert _derive_skill_metadata("skills", raw) is not None
+
+    @pytest.mark.parametrize("context", ["max_cost_usd", "metric.goal", "action.input"])
+    def test_serde_out_of_range_rounded_float_lexeme_rejected_in_number_contexts(self, context):
+        plan = json.loads(VALID_SKILL_PLAN)
+        marker = "__NUMBER__"
+        if context == "max_cost_usd":
+            plan["stages"][0]["limits"]["max_cost_usd"] = marker
+        elif context == "metric.goal":
+            plan["stages"][0]["metrics"][0]["goal"] = marker
+        else:
+            plan["stages"][0]["action"]["input"] = {"nested": [marker]}
+        raw = json.dumps(plan).replace(f'"{marker}"', "1.7976931348623158e308")
+
+        with pytest.raises(SkillPlanContractError, match="out of range"):
+            _derive_skill_metadata("skills", raw)
+
+    @pytest.mark.parametrize("context", ["max_cost_usd", "metric.goal", "action.input"])
+    @pytest.mark.parametrize("lexeme", SERDE_JSON_1_0_149_ACCEPTED)
+    def test_serde_oracle_accepted_number_lexemes(self, context, lexeme):
+        raw = _plan_with_number_lexeme(context, lexeme)
+
+        assert _derive_skill_metadata("skills", raw) is not None
+
+    @pytest.mark.parametrize("context", ["max_cost_usd", "metric.goal", "action.input"])
+    @pytest.mark.parametrize("lexeme", SERDE_JSON_1_0_149_REJECTED)
+    def test_serde_oracle_rejected_number_lexemes(self, context, lexeme):
+        raw = _plan_with_number_lexeme(context, lexeme)
+
+        with pytest.raises(SkillPlanContractError, match="out of range"):
+            _derive_skill_metadata("skills", raw)
+
+    @pytest.mark.parametrize("lexeme", SERDE_JSON_1_0_149_ALL)
+    def test_serde_oracle_number_lexemes_remain_ignored_in_unknown_fields(self, lexeme):
+        plan = json.loads(VALID_SKILL_PLAN)
+        plan["__oracle_number__"] = "__NUMBER__"
+        raw = json.dumps(plan).replace('"__NUMBER__"', lexeme)
+
+        assert _derive_skill_metadata("skills", raw) is not None
+
     # ── 1e400 differential ──────────────────────────────────────────
 
     def test_1e400_in_action_input_value_rejected(self):
@@ -948,15 +1037,6 @@ class TestSkillPlanContractErrorHierarchy:
     def test_is_batch_index_limit_error(self):
         assert issubclass(SkillPlanContractError, BatchIndexLimitError)
 
-    def test_caught_by_existing_422_handler(self):
-        """health.py catches BatchIndexLimitError → 422. Subclass must be caught too."""
-        import inspect
-
-        from scrutator.health import index_endpoint
-
-        source = inspect.getsource(index_endpoint)
-        assert "BatchIndexLimitError" in source
-
 
 # ── HTTP endpoint: invalid skill returns typed 422 ────────────────────────────
 
@@ -1014,6 +1094,36 @@ class TestSkillIndexHttpEndpointErrors:
             f"batch index with invalid skill must return 422, got {resp.status_code}: {resp.text[:200]}"
         )
 
+    @pytest.mark.parametrize("route", ["/v1/index", "/v1/index/batch"])
+    @pytest.mark.parametrize(
+        ("invalid_case", "invalid_value"),
+        [
+            ("kind", {}),
+            ("maturity", []),
+            ("defaults-model-by-task-type", {}),
+        ],
+    )
+    def test_unhashable_enum_payload_returns_typed_422(self, route, invalid_case, invalid_value):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        plan = json.loads(VALID_SKILL_PLAN)
+        if invalid_case == "defaults-model-by-task-type":
+            plan["defaults"]["model"]["by_task_type"] = invalid_value
+        else:
+            plan[invalid_case] = invalid_value
+        document = {
+            "content": json.dumps(plan),
+            "source_path": f"skills/{invalid_case}.json",
+            "namespace": "skills",
+        }
+        payload = {"documents": [document]} if route.endswith("/batch") else document
+
+        response = TestClient(app, raise_server_exceptions=False).post(route, json=payload)
+
+        assert response.status_code == 422, response.text[:200]
+
     def test_batch_literal_lone_surrogate_returns_typed_422(self):
         from fastapi.testclient import TestClient
 
@@ -1028,6 +1138,36 @@ class TestSkillIndexHttpEndpointErrors:
             headers={"content-type": "application/json"},
         )
         assert response.status_code == 422, response.text[:200]
+
+    @pytest.mark.parametrize(
+        "raw_body",
+        [
+            b'{"documents":[{"content":"\\ud800","source_path":"same.json","namespace":"skills"},'
+            b'{"content":"ok","source_path":"same.json","namespace":"skills"}]}',
+            b'{"documents":[{"content":"\\ud800","source_path":"a.json","namespace":"skills"},'
+            b'{"content":"ok","source_path":"b.json","namespace":"arcanada"}]}',
+            b'{"documents":[{"content":"\\ud800","namespace":"skills"}]}',
+        ],
+        ids=["duplicate-path", "mixed-namespaces", "missing-source-path"],
+    )
+    def test_batch_lone_surrogate_combined_validation_error_returns_non_echoing_422(self, raw_body):
+        from fastapi.testclient import TestClient
+
+        from scrutator.health import app
+
+        response = TestClient(app, raise_server_exceptions=False).post(
+            "/v1/index/batch",
+            content=raw_body,
+            headers={"content-type": "application/json"},
+        )
+
+        assert response.status_code == 422, response.text[:200]
+        detail = response.json()["detail"]
+        assert detail
+        assert all(set(entry) == {"type", "loc", "msg"} for entry in detail)
+        assert all(entry["type"] and isinstance(entry["loc"], list) and entry["msg"] for entry in detail)
+        assert all("input" not in entry and "ctx" not in entry for entry in detail)
+        assert b"\\ud800" not in response.content
 
     def test_batch_oversized_literal_surrogate_cannot_bypass_general_cap(self):
         from fastapi.testclient import TestClient
