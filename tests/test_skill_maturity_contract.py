@@ -103,7 +103,7 @@ class TestHybridSearchMaturityFloor:
 
         sql = mock_conn.fetch.call_args[0][0]
         params = mock_conn.fetch.call_args[0]
-        assert "skill_maturity" not in sql, "no maturity predicate when floor is None"
+        assert "maturity" not in sql, "no maturity predicate when floor is None"
         # No maturity param values injected into the param list
         for p in params:
             if isinstance(p, list):
@@ -128,7 +128,7 @@ class TestHybridSearchMaturityFloor:
             )
 
         sql = mock_conn.fetch.call_args[0][0]
-        assert "skill_maturity" in sql, "maturity predicate must be in SQL"
+        assert "maturity" in sql, "maturity predicate must be in SQL"
 
     @pytest.mark.asyncio
     async def test_2way_draft_floor_binds_three_values(self):
@@ -176,7 +176,7 @@ class TestHybridSearchMaturityFloor:
             )
 
         sql = mock_conn.fetch.call_args[0][0]
-        assert "IS NULL OR" not in sql.split("skill_maturity")[-1] if "skill_maturity" in sql else True
+        assert "IS NULL OR" not in sql.split("maturity")[-1] if "maturity" in sql else True
 
     @pytest.mark.asyncio
     async def test_maturity_before_limit_in_cte(self):
@@ -206,7 +206,7 @@ class TestHybridSearchMaturityFloor:
             if cte_idx == -1:
                 continue
             limit_idx = sql.find("LIMIT", cte_idx)
-            maturity_idx = sql.find("skill_maturity", cte_idx)
+            maturity_idx = sql.find("maturity", cte_idx)
             assert maturity_idx != -1, f"maturity predicate missing from {cte} CTE"
             assert maturity_idx < limit_idx, f"maturity predicate must be before LIMIT in {cte} CTE"
 
@@ -236,7 +236,7 @@ class TestHybridSearch3WayMaturityFloor:
             )
 
         sql = mock_conn.fetch.call_args[0][0]
-        assert "skill_maturity" not in sql, "no maturity predicate when floor is None"
+        assert "maturity" not in sql, "no maturity predicate when floor is None"
 
     @pytest.mark.asyncio
     async def test_3way_production_floor_in_all_three_ctes(self):
@@ -258,7 +258,7 @@ class TestHybridSearch3WayMaturityFloor:
             )
 
         sql = mock_conn.fetch.call_args[0][0]
-        assert "skill_maturity" in sql, "maturity predicate must be in SQL"
+        assert "maturity" in sql, "maturity predicate must be in SQL"
         # Each of the three CTEs should have the predicate
         for cte in ["semantic", "fulltext", "sparse_match"]:
             cte_idx = sql.find(f"{cte} AS (")
@@ -267,7 +267,7 @@ class TestHybridSearch3WayMaturityFloor:
                 cte_idx = sql.find(cte)
             assert cte_idx != -1, f"CTE {cte} not found in SQL"
             limit_idx = sql.find("LIMIT", cte_idx)
-            maturity_idx = sql.find("skill_maturity", cte_idx)
+            maturity_idx = sql.find("maturity", cte_idx)
             assert maturity_idx != -1, f"maturity predicate missing from {cte} CTE in 3-way path"
             assert maturity_idx < limit_idx, f"maturity predicate must be before LIMIT in {cte} CTE"
 
@@ -300,7 +300,7 @@ class TestSearchWithFiltersMaturityFloor:
             )
 
         sql = mock_conn.fetch.call_args[0][0]
-        assert "skill_maturity" not in sql, "no maturity predicate when floor is None"
+        assert "maturity" not in sql, "no maturity predicate when floor is None"
 
     @pytest.mark.asyncio
     async def test_filtered_production_floor_in_both_ctes(self):
@@ -328,7 +328,7 @@ class TestSearchWithFiltersMaturityFloor:
             if cte_idx == -1:
                 continue
             limit_idx = sql.find("LIMIT", cte_idx)
-            maturity_idx = sql.find("skill_maturity", cte_idx)
+            maturity_idx = sql.find("maturity", cte_idx)
             assert maturity_idx != -1, f"maturity predicate missing from {cte} CTE in filtered path"
             assert maturity_idx < limit_idx, f"maturity predicate must be before LIMIT in {cte} CTE"
 
