@@ -88,8 +88,18 @@ class BatchIndexRequest(BaseModel):
         paths = [document.source_path for document in self.documents]
         if len(paths) != len(set(paths)):
             raise ValueError("source_path values must be unique")
-        if any(len(document.content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES for document in self.documents):
-            raise ValueError("document content exceeds batch byte limit")
+        for document in self.documents:
+            try:
+                content_size = len(document.content.encode("utf-8"))
+            except UnicodeEncodeError:
+                # Do not raise a Pydantic validation error containing the
+                # unencodable input: Starlette's validation renderer would
+                # fail while serializing that error and turn the intended 422
+                # into a 500. The index contract maps invalid Unicode to the
+                # existing safe, non-echoing client-error path.
+                continue
+            if content_size > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+                raise ValueError("document content exceeds batch byte limit")
         return self
 
 
@@ -146,6 +156,9 @@ class SearchRequest(BaseModel):
     min_score: float = 0.0
     include_content: bool = True
     group_by: Literal["document", "section"] | None = None  # SRCH-0021, opt-in, default off
+    # ARAS-0057: typed maturity floor — applied as a pre-ranking filter in every
+    # SQL candidate arm when set. Only valid for the configured skills namespace.
+    maturity: Literal["draft", "validated", "production"] | None = None
 
     @field_validator("query")
     @classmethod
