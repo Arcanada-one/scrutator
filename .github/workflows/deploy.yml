@@ -10,7 +10,7 @@ on:
 
 jobs:
   network-exposure:
-    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@d3f518ea11f28f94af9c73021fa96fb4ce3f688f # main 2026-07-22
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@b2a7c470f2d933188c9380f8d672eea73cc52019 # main 2026-07-22
     with:
       compose_paths: docker-compose.yml
       datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f
@@ -20,13 +20,13 @@ jobs:
     runs-on: [self-hosted, linux, ci-general, docker]
     steps:
       - name: Check out reviewed source
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -62,13 +62,13 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Check out deploy transaction
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Pre-deploy host readiness
         id: preflight
-        uses: Arcanada-one/datarim/.github/actions/preflight-check@f01ab2034ee99321fe627b76e98641b672e12c0b # v1, immutable pin
+        uses: Arcanada-one/datarim/.github/actions/preflight-check@b2a7c470f2d933188c9380f8d672eea73cc52019 # v1, immutable pin
         with:
           target-host: arcana-kb
           service-name: scrutator
