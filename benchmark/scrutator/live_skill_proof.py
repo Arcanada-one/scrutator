@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live proof contract for the skills-kb-discovery-probe artifact (INFRA-0365 AC-2).
+"""Live proof contract for the skills-kb-discovery-probe artifact.
 
 Validates the exact 695-byte promoted skill plan against the committed promotion
 registry.  Produces redacted evidence only — no content, no tokens, no paths beyond
@@ -49,7 +49,7 @@ CONTRACT_MISMATCH_CODE = 1
 INVALID_EVIDENCE_CODE = 2
 
 # ───────────────────────────────────────────────────────────────────────────────────
-# BLOCKED — INFRA-0365 AC-2 production-mutation verification
+# BLOCKED — production-mutation verification
 #
 # Requires the inherited explicit proof checkpoint + a dedicated feeder credential.
 # To verify: POST /v1/index with a mutated plan (e.g. altered maturity or injected
