@@ -38,11 +38,7 @@ class _ProbeHandler(BaseHTTPRequestHandler):
             (method, parsed.path),
             (404, {"detail": "not found"}, "application/json"),
         )
-        encoded = (
-            str(payload).encode("utf-8")
-            if content_type == "text/plain"
-            else json.dumps(payload).encode("utf-8")
-        )
+        encoded = str(payload).encode("utf-8") if content_type == "text/plain" else json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(encoded)))
@@ -120,15 +116,18 @@ def probe_server():
 
 
 def test_dry_run_checks_registry_without_network(tmp_path):
-    assert proof.main(
-        [
-            "--endpoint",
-            "http://127.0.0.1:1",
-            "--out-dir",
-            str(tmp_path),
-            "--dry-run",
-        ]
-    ) == proof.SUCCESS_CODE
+    assert (
+        proof.main(
+            [
+                "--endpoint",
+                "http://127.0.0.1:1",
+                "--out-dir",
+                str(tmp_path),
+                "--dry-run",
+            ]
+        )
+        == proof.SUCCESS_CODE
+    )
     assert not (tmp_path / "summary.json").exists()
 
 
@@ -187,9 +186,10 @@ def test_search_mismatch_stops_before_navigation_and_fetch(probe_server, tmp_pat
 
 
 def test_non_loopback_endpoint_is_rejected_without_a_request(tmp_path):
-    assert proof.main(
-        ["--endpoint", "http://100.70.137.104:8310", "--out-dir", str(tmp_path)]
-    ) == proof.INVALID_EVIDENCE_CODE
+    assert (
+        proof.main(["--endpoint", "http://100.70.137.104:8310", "--out-dir", str(tmp_path)])
+        == proof.INVALID_EVIDENCE_CODE
+    )
 
 
 def test_http_error_body_is_not_disclosed(probe_server, tmp_path, capsys):
