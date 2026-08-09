@@ -10,6 +10,8 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     environment = compose["services"]["scrutator"]["environment"]
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
-        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,capability-registry"
+        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
+    assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
+    assert "SCRUTATOR_CAPABILITY_PROJECTION_TENANTS" not in environment

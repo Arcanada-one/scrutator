@@ -7,7 +7,7 @@ MACHINE_ROUTES = {
     ("GET", "/v1/index/capability"): "require_feeder_capability",
     ("GET", "/v1/index/rollback-capability"): "require_rollback_capability",
     ("POST", "/v1/index"): "require_feeder_capability",
-    ("POST", "/v1/index/capability-projection"): "require_feeder_capability",
+    ("POST", "/v1/index/capability-projection"): "require_capability_projection_capability",
     ("POST", "/v1/index/batch"): "require_feeder_capability",
     ("DELETE", "/v1/index"): "require_rollback_capability",
     ("POST", "/v1/ltm/ingest"): "require_ltm_writer_capability",

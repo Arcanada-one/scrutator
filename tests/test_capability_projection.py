@@ -5,7 +5,10 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-from scrutator.auth.capabilities import NamespaceCapability, require_feeder_capability
+from scrutator.auth.capabilities import (
+    CapabilityProjectionCapability,
+    require_capability_projection_capability,
+)
 from scrutator.capability_projection import (
     CapabilityProjectionRequest,
     canonical_projection_content,
@@ -150,8 +153,8 @@ def test_model_is_closed_and_rejects_digest_or_authority_drift():
 def test_authenticated_projection_indexes_canonical_non_authority_content():
     original_namespace = settings.capability_projection_namespace_base
     settings.capability_projection_namespace_base = "capability-registry"
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({"capability-registry"})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.thin-slice"})
     )
     body = request_body()
     indexed = IndexResponse(
@@ -164,11 +167,11 @@ def test_authenticated_projection_indexes_canonical_non_authority_content():
         with patch("scrutator.health.index_document", new=AsyncMock(return_value=indexed)) as index:
             response = TestClient(app).post(
                 "/v1/index/capability-projection",
-                headers={"X-KB-Feeder-Token": "dependency-overridden"},
+                headers={"X-Capability-Projection-Token": "dependency-overridden"},
                 json=body,
             )
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
         settings.capability_projection_namespace_base = original_namespace
 
     assert response.status_code == 200
@@ -212,11 +215,11 @@ def test_authenticated_projection_indexes_canonical_non_authority_content():
     assert source_trust_tier(index.await_args.kwargs["source_path"]) == "raw"
 
 
-def test_projection_namespace_is_server_derived_and_feeder_scoped():
+def test_projection_namespace_is_server_derived_and_tenant_scoped():
     original_namespace = settings.capability_projection_namespace_base
     settings.capability_projection_namespace_base = "capability-registry"
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({"unrelated"})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.unrelated"})
     )
     try:
         response = TestClient(app).post(
@@ -224,17 +227,17 @@ def test_projection_namespace_is_server_derived_and_feeder_scoped():
             json=request_body(),
         )
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
         settings.capability_projection_namespace_base = original_namespace
     assert response.status_code == 403
-    assert response.json() == {"detail": "capability projection namespace outside feeder scope"}
+    assert response.json() == {"detail": "tenant outside capability projection scope"}
 
 
 def test_invalid_server_projection_target_fails_closed_without_indexing():
     original_namespace = settings.capability_projection_namespace_base
     settings.capability_projection_namespace_base = "../caller-controlled"
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({"../caller-controlled"})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.thin-slice"})
     )
     try:
         with patch("scrutator.health.index_document", new=AsyncMock()) as index:
@@ -243,7 +246,7 @@ def test_invalid_server_projection_target_fails_closed_without_indexing():
                 json=request_body(),
             )
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
         settings.capability_projection_namespace_base = original_namespace
     assert response.status_code == 503
     assert response.json() == {"detail": "Capability projection target is unavailable"}
@@ -251,8 +254,8 @@ def test_invalid_server_projection_target_fails_closed_without_indexing():
 
 
 def test_http_boundary_rejects_digest_drift_before_indexing():
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({settings.capability_projection_namespace_base})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.thin-slice"})
     )
     drifted = deepcopy(request_body())
     drifted["capability"]["action"] = "inspect"
@@ -260,12 +263,12 @@ def test_http_boundary_rejects_digest_drift_before_indexing():
         with patch("scrutator.health.index_document", new=AsyncMock()) as index:
             response = TestClient(app).post("/v1/index/capability-projection", json=drifted)
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
     assert response.status_code == 422
     index.assert_not_awaited()
 
 
-def test_projection_route_requires_the_existing_feeder_credential():
+def test_projection_route_rejects_the_existing_feeder_credential():
     original = (settings.feeder_token, settings.feeder_namespaces)
     settings.feeder_token = "feeder-secret"
     settings.feeder_namespaces = settings.capability_projection_namespace_base
@@ -279,7 +282,7 @@ def test_projection_route_requires_the_existing_feeder_credential():
     try:
         with patch("scrutator.health.index_document", new=AsyncMock(return_value=indexed)):
             missing = TestClient(app).post("/v1/index/capability-projection", json=body)
-            accepted = TestClient(app).post(
+            feeder_only = TestClient(app).post(
                 "/v1/index/capability-projection",
                 headers={"X-KB-Feeder-Token": "feeder-secret"},
                 json=body,
@@ -287,12 +290,80 @@ def test_projection_route_requires_the_existing_feeder_credential():
     finally:
         settings.feeder_token, settings.feeder_namespaces = original
     assert missing.status_code == 401
+    assert feeder_only.status_code == 401
+
+
+def test_projection_route_accepts_only_the_dedicated_projection_credential():
+    original = (
+        settings.__dict__.get("capability_projection_token"),
+        settings.__dict__.get("capability_projection_tenants"),
+    )
+    settings.__dict__["capability_projection_token"] = "projection-secret"
+    settings.__dict__["capability_projection_tenants"] = "tenant.thin-slice"
+    body = request_body()
+    indexed = IndexResponse(
+        chunks_indexed=1,
+        source_path=projection_source_path(body),
+        namespace=projection_namespace(body),
+        strategy_used="markdown",
+    )
+    try:
+        with patch("scrutator.health.index_document", new=AsyncMock(return_value=indexed)):
+            accepted = TestClient(app).post(
+                "/v1/index/capability-projection",
+                headers={"X-Capability-Projection-Token": "projection-secret"},
+                json=body,
+            )
+    finally:
+        if original[0] is None:
+            settings.__dict__.pop("capability_projection_token", None)
+        else:
+            settings.__dict__["capability_projection_token"] = original[0]
+        if original[1] is None:
+            settings.__dict__.pop("capability_projection_tenants", None)
+        else:
+            settings.__dict__["capability_projection_tenants"] = original[1]
     assert accepted.status_code == 200
 
 
+def test_projection_route_rejects_a_tenant_outside_the_producer_scope():
+    original = (
+        settings.__dict__.get("capability_projection_token"),
+        settings.__dict__.get("capability_projection_tenants"),
+    )
+    settings.__dict__["capability_projection_token"] = "projection-secret"
+    settings.__dict__["capability_projection_tenants"] = "tenant.allowed"
+    body = request_body(tenant_id="tenant.other")
+    indexed = IndexResponse(
+        chunks_indexed=1,
+        source_path=projection_source_path(body),
+        namespace=projection_namespace(body),
+        strategy_used="markdown",
+    )
+    try:
+        with patch("scrutator.health.index_document", new=AsyncMock(return_value=indexed)) as index:
+            response = TestClient(app).post(
+                "/v1/index/capability-projection",
+                headers={"X-Capability-Projection-Token": "projection-secret"},
+                json=body,
+            )
+    finally:
+        if original[0] is None:
+            settings.__dict__.pop("capability_projection_token", None)
+        else:
+            settings.__dict__["capability_projection_token"] = original[0]
+        if original[1] is None:
+            settings.__dict__.pop("capability_projection_tenants", None)
+        else:
+            settings.__dict__["capability_projection_tenants"] = original[1]
+    assert response.status_code == 403
+    assert response.json() == {"detail": "tenant outside capability projection scope"}
+    index.assert_not_awaited()
+
+
 def test_projection_body_limit_rejects_oversize_input_before_indexing():
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({settings.capability_projection_namespace_base})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.thin-slice"})
     )
     try:
         with patch("scrutator.health.index_document", new=AsyncMock()) as index:
@@ -302,14 +373,15 @@ def test_projection_body_limit_rejects_oversize_input_before_indexing():
                 headers={"content-type": "application/json"},
             )
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
     assert response.status_code == 413
+    assert response.json() == {"detail": "request body too large"}
     index.assert_not_awaited()
 
 
 def test_projection_sanitizes_index_failures_and_rejects_scope_drift():
-    app.dependency_overrides[require_feeder_capability] = lambda: NamespaceCapability(
-        namespaces=frozenset({settings.capability_projection_namespace_base})
+    app.dependency_overrides[require_capability_projection_capability] = lambda: CapabilityProjectionCapability(
+        tenants=frozenset({"tenant.thin-slice"})
     )
     body = request_body()
     try:
@@ -331,7 +403,7 @@ def test_projection_sanitizes_index_failures_and_rejects_scope_drift():
         ):
             drifted = TestClient(app).post("/v1/index/capability-projection", json=body)
     finally:
-        app.dependency_overrides.pop(require_feeder_capability, None)
+        app.dependency_overrides.pop(require_capability_projection_capability, None)
     assert failed.status_code == 503
     assert failed.json() == {"detail": "Capability projection indexing failed"}
     assert "private database detail" not in failed.text
