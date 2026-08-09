@@ -14,7 +14,7 @@ route addition or removal must update this page in the same pull request.
 | `GET /v1/index/capability` | Read the effective namespace scope of the authenticated feeder credential |
 | `GET /v1/index/rollback-capability` | Read the effective namespace scope and operator flag of the authenticated rollback credential |
 | `POST /v1/index` | Index one document |
-| `POST /v1/index/capability-projection` | Index one PostgreSQL-origin capability as non-authorizing search evidence |
+| `POST /v1/index/capability-projection` | Index one PostgreSQL-origin capability as non-authorizing search evidence; requires the dedicated projection-producer credential and configured tenant scope |
 | `DELETE /v1/index` | Delete one indexed source |
 | `POST /v1/index/batch` | Index a bounded same-namespace batch |
 | `POST /v1/search` | Run hybrid retrieval |
