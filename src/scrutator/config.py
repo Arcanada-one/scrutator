@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     # reader grants and is accepted only by DELETE /v1/index.
     feeder_token: str = ""
     feeder_namespaces: str = ""
+    capability_projection_token: str = ""
+    capability_projection_tenants: str = ""
     capability_projection_namespace_base: str = "capability-registry"
     rollback_token: str = ""
     rollback_namespaces: str = ""

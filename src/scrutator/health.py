@@ -9,9 +9,11 @@ from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
+    CapabilityProjectionCapability,
     FeederCapabilityResponse,
     NamespaceCapability,
     RollbackCapabilityResponse,
+    require_capability_projection_capability,
     require_feeder_capability,
     require_rollback_capability,
 )
@@ -201,7 +203,7 @@ async def index_endpoint(
 @app.post("/v1/index/capability-projection", response_model=CapabilityProjectionReceipt)
 async def capability_projection_endpoint(
     request: CapabilityProjectionRequest,
-    capability: NamespaceCapability = Depends(require_feeder_capability),
+    capability: CapabilityProjectionCapability = Depends(require_capability_projection_capability),
 ) -> CapabilityProjectionReceipt:
     """Index one PostgreSQL-origin capability as non-authorizing search evidence."""
     try:
@@ -212,10 +214,10 @@ async def capability_projection_endpoint(
             status_code=503,
             detail="Capability projection target is unavailable",
         ) from exc
-    if namespace_base not in capability.namespaces:
+    if request.tenant_id not in capability.tenants:
         raise HTTPException(
             status_code=403,
-            detail="capability projection namespace outside feeder scope",
+            detail="tenant outside capability projection scope",
         )
     namespace = capability_projection_namespace(namespace_base, request.tenant_id)
     source_path = capability_projection_source_path(

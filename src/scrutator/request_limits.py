@@ -86,5 +86,5 @@ def _replay_body(body: bytes, receive: ASGIReceive) -> ASGIReceive:
 
 
 async def _reject(scope: dict[str, Any], receive: ASGIReceive, send: ASGISend, status: int) -> None:
-    detail = "batch request body too large" if status == 413 else "invalid request body framing"
+    detail = "request body too large" if status == 413 else "invalid request body framing"
     await JSONResponse(status_code=status, content={"detail": detail})(scope, receive, send)
