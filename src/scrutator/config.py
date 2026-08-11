@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # (content_exact=True); an absent row gracefully degrades to reassembly (content_exact=False),
     # NOT the skills fail-closed 409 — evidence row-absence is an expected pre-backfill state.
     evidence_exact_bytes: bool = False
+    embedding_dense_sparse_enabled: bool = False
 
     database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"
     database_pool_min: int = 2
