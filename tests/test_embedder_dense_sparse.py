@@ -16,14 +16,17 @@ def _response(inputs: list[str]) -> MagicMock:
     response = MagicMock()
     response.status_code = 200
     response.json.return_value = {
+        "object": "list",
         "data": [
             {
                 "index": index,
-                "embedding": [float(value)] * 1024,
+                "dense": [float(value)] * 1024,
                 "sparse_weights": {value: float(value)},
             }
             for index, value in enumerate(inputs)
-        ]
+        ],
+        "model": "BAAI/bge-m3",
+        "usage": {"prompt_tokens": len(inputs), "total_tokens": len(inputs)},
     }
     return response
 
@@ -54,6 +57,27 @@ def _chunks(count: int) -> list[SimpleNamespace]:
 def test_dense_sparse_transport_defaults_off(monkeypatch):
     monkeypatch.delenv("SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED", raising=False)
     assert Settings().embedding_dense_sparse_enabled is False
+
+
+@pytest.fixture
+def exact_provider_contract_response() -> MagicMock:
+    response = _response(["7"])
+    body = response.json.return_value
+    assert set(body) == {"object", "data", "model", "usage"}
+    assert set(body["data"][0]) == {"index", "dense", "sparse_weights"}
+    return response
+
+
+@pytest.mark.asyncio
+async def test_dense_sparse_accepts_exact_provider_468844f_contract(exact_provider_contract_response):
+    client = AsyncMock()
+    client.post.return_value = exact_provider_contract_response
+
+    with patch("scrutator.search.embedder.get_client", return_value=client):
+        dense, sparse = await embed_dense_sparse(["provider fixture"])
+
+    assert dense == [[7.0] * 1024]
+    assert sparse == [{"7": 7.0}]
 
 
 @pytest.mark.asyncio
@@ -114,22 +138,22 @@ async def test_dense_sparse_retries_only_failed_page():
         (
             {
                 "data": [
-                    {"index": 1, "embedding": [0.1] * 1024, "sparse_weights": {"1": 0.1}},
-                    {"index": 0, "embedding": [0.2] * 1024, "sparse_weights": {"2": 0.2}},
+                    {"index": 1, "dense": [0.1] * 1024, "sparse_weights": {"1": 0.1}},
+                    {"index": 0, "dense": [0.2] * 1024, "sparse_weights": {"2": 0.2}},
                 ]
             },
             "index order",
         ),
         (
-            {"data": [{"index": 0, "embedding": [1e308] * 1024, "sparse_weights": {"1": 0.1}}]},
+            {"data": [{"index": 0, "dense": [1e308] * 1024, "sparse_weights": {"1": 0.1}}]},
             "dense",
         ),
         (
-            {"data": [{"index": 0, "embedding": [3.40282348e38] * 1024, "sparse_weights": {"1": 0.1}}]},
+            {"data": [{"index": 0, "dense": [3.40282348e38] * 1024, "sparse_weights": {"1": 0.1}}]},
             "dense",
         ),
         (
-            {"data": [{"index": 0, "embedding": [0.1] * 1024, "sparse_weights": {"1": float("inf")}}]},
+            {"data": [{"index": 0, "dense": [0.1] * 1024, "sparse_weights": {"1": float("inf")}}]},
             "sparse",
         ),
     ],
