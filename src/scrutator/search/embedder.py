@@ -196,7 +196,7 @@ async def _embed_dense_sparse_page(texts: list[str]) -> tuple[list[list[float]],
         raise EmbeddingError(f"Dense-sparse Embedding API returned status {response.status_code}")
 
     data = _response_data(response, len(texts))
-    dense = [item.get("embedding") for item in data]
+    dense = [item.get("dense") for item in data]
     if not all(
         isinstance(vector, list)
         and len(vector) == _DENSE_DIMENSIONS
