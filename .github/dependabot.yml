@@ -25,6 +25,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # This repo requires a cooldown on EVERY entry -- tests/test_public_surface.py
+    # asserts cooldown.default-days >= 7 for each one, and the first version of
+    # this entry omitted it and was correctly rejected by that test.
+    cooldown:
+      default-days: 7
     # Base images are where OS-level CVEs accumulate, and a digest-pinned FROM
     # cannot rot visibly -- nobody reads a sha256 and notices it is a year old.
     groups:
