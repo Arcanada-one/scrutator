@@ -9,14 +9,25 @@ from fastapi.responses import JSONResponse
 
 from scrutator import __version__
 from scrutator.auth.capabilities import (
+    CapabilityProjectionCapability,
     FeederCapabilityResponse,
     NamespaceCapability,
     RollbackCapabilityResponse,
+    require_capability_projection_capability,
     require_feeder_capability,
     require_rollback_capability,
 )
 from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
 from scrutator.auth.models import TenantContext
+from scrutator.capability_projection import (
+    CAPABILITY_PROJECTION_MAX_REQUEST_BYTES,
+    CapabilityProjectionReceipt,
+    CapabilityProjectionRequest,
+    canonical_projection_content,
+    capability_projection_namespace,
+    capability_projection_source_path,
+    validate_capability_projection_namespace_base,
+)
 from scrutator.chunker.engine import chunk_document
 from scrutator.chunker.models import ChunkRequest, ChunkResponse
 from scrutator.config import settings
@@ -108,6 +119,11 @@ app.add_middleware(
     path="/v1/index/batch",
     max_bytes=INDEX_BATCH_MAX_REQUEST_BYTES,
 )
+app.add_middleware(
+    BoundedRequestBodyMiddleware,
+    path="/v1/index/capability-projection",
+    max_bytes=CAPABILITY_PROJECTION_MAX_REQUEST_BYTES,
+)
 
 
 @app.exception_handler(RequestValidationError)
@@ -182,6 +198,60 @@ async def index_endpoint(
     except Exception as e:
         logger.exception("Index failed for %s", request.source_path)
         raise HTTPException(status_code=503, detail=f"Index failed: {type(e).__name__}: {e}") from e
+
+
+@app.post("/v1/index/capability-projection", response_model=CapabilityProjectionReceipt)
+async def capability_projection_endpoint(
+    request: CapabilityProjectionRequest,
+    capability: CapabilityProjectionCapability = Depends(require_capability_projection_capability),
+) -> CapabilityProjectionReceipt:
+    """Index one PostgreSQL-origin capability as non-authorizing search evidence."""
+    try:
+        namespace_base = validate_capability_projection_namespace_base(settings.capability_projection_namespace_base)
+    except ValueError as exc:
+        logger.error("Capability projection namespace configuration is invalid")
+        raise HTTPException(
+            status_code=503,
+            detail="Capability projection target is unavailable",
+        ) from exc
+    if request.tenant_id not in capability.tenants:
+        raise HTTPException(
+            status_code=403,
+            detail="tenant outside capability projection scope",
+        )
+    namespace = capability_projection_namespace(namespace_base, request.tenant_id)
+    source_path = capability_projection_source_path(
+        namespace_base,
+        request.tenant_id,
+        request.revision,
+    )
+    try:
+        indexed = await index_document(
+            content=canonical_projection_content(request),
+            source_path=source_path,
+            namespace=namespace,
+            project="capability-registry",
+            source_type="capability-registry",
+            max_tokens=512,
+            overlap_tokens=50,
+        )
+    except BatchIndexLimitError as exc:
+        raise HTTPException(status_code=422, detail="Capability projection exceeds index limits") from exc
+    except Exception as exc:
+        logger.exception("Capability projection indexing failed for %s", source_path)
+        raise HTTPException(status_code=503, detail="Capability projection indexing failed") from exc
+    if indexed.source_path != source_path or indexed.namespace != namespace:
+        logger.error("Capability projection index result crossed its server-derived scope")
+        raise HTTPException(status_code=503, detail="Capability projection index result is inconsistent")
+    return CapabilityProjectionReceipt(
+        tenant_id=request.tenant_id,
+        revision=request.revision,
+        digest=request.digest,
+        source_path=indexed.source_path,
+        namespace=indexed.namespace,
+        chunks_indexed=indexed.chunks_indexed,
+        strategy_used=indexed.strategy_used,
+    )
 
 
 @app.get("/v1/index/capability", response_model=FeederCapabilityResponse)

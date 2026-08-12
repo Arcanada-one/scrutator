@@ -18,6 +18,11 @@ class NamespaceCapability:
     operator: bool = False
 
 
+@dataclass(frozen=True)
+class CapabilityProjectionCapability:
+    tenants: frozenset[str]
+
+
 class FeederCapabilityResponse(BaseModel):
     schema_version: Literal[1] = 1
     namespaces: list[str]
@@ -50,6 +55,14 @@ async def require_feeder_capability(
     if not _matches(settings.feeder_token, x_kb_feeder_token):
         raise HTTPException(status_code=401, detail="feeder credential required")
     return NamespaceCapability(namespaces=_namespaces(settings.feeder_namespaces))
+
+
+async def require_capability_projection_capability(
+    x_capability_projection_token: str | None = Header(default=None),
+) -> CapabilityProjectionCapability:
+    if not _matches(settings.capability_projection_token, x_capability_projection_token):
+        raise HTTPException(status_code=401, detail="capability projection credential required")
+    return CapabilityProjectionCapability(tenants=_namespaces(settings.capability_projection_tenants))
 
 
 async def require_rollback_capability(

@@ -28,6 +28,7 @@ _EMBEDDING_API_MAX_BATCH_SIZE = 64
 _COLBERT_API_MAX_BATCH_SIZE = 16
 _DENSE_DIMENSIONS = 1024
 _FLOAT32_MAX = 3.4028235e38
+_EXACT_FLOAT32_MAX = 3.4028234663852886e38
 
 # ── Singleton httpx client ──────────────────────────────────────────
 
@@ -98,6 +99,10 @@ def _finite_number(value: object) -> bool:
 
 def _finite_dense_number(value: object) -> bool:
     return _finite_number(value) and abs(float(value)) <= _FLOAT32_MAX
+
+
+def _finite_dense_sparse_number(value: object) -> bool:
+    return _finite_number(value) and abs(float(value)) <= _EXACT_FLOAT32_MAX
 
 
 def _response_data(response: httpx.Response, expected_count: int) -> list[dict]:
@@ -178,6 +183,47 @@ async def embed_sparse(texts: list[str]) -> list[dict[str, float]]:
     for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE):
         embeddings.extend(await _embed_sparse_page(texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE]))
     return embeddings
+
+
+@_with_retry
+async def _embed_dense_sparse_page(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
+    client = await get_client()
+    response = await client.post(
+        f"{settings.embedding_api_url}/v1/embeddings/dense-sparse",
+        json={"input": texts},
+    )
+    if response.status_code != 200:
+        raise EmbeddingError(f"Dense-sparse Embedding API returned status {response.status_code}")
+
+    data = _response_data(response, len(texts))
+    dense = [item.get("dense") for item in data]
+    if not all(
+        isinstance(vector, list)
+        and len(vector) == _DENSE_DIMENSIONS
+        and all(_finite_dense_sparse_number(value) for value in vector)
+        for vector in dense
+    ):
+        raise EmbeddingError("Embedding API returned invalid dense embeddings")
+
+    sparse = [item.get("sparse_weights") for item in data]
+    if not all(
+        isinstance(vector, dict)
+        and all(isinstance(token, str) and _finite_number(weight) for token, weight in vector.items())
+        for vector in sparse
+    ):
+        raise EmbeddingError("Embedding API returned invalid sparse embeddings")
+    return dense, sparse
+
+
+async def embed_dense_sparse(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
+    """Get paired dense and sparse embeddings in ordered provider-sized pages."""
+    dense: list[list[float]] = []
+    sparse: list[dict[str, float]] = []
+    for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE):
+        page_dense, page_sparse = await _embed_dense_sparse_page(texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE])
+        dense.extend(page_dense)
+        sparse.extend(page_sparse)
+    return dense, sparse
 
 
 async def embed_single(text: str) -> list[float]:
