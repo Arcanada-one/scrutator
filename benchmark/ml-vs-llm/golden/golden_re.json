@@ -4215,7 +4215,7 @@
       {
         "source": "OPENROUTER_API_KEY",
         "relation": "has_value",
-        "target": "sk-or-v1-REDACTED"
+        "target": "sk-or-v1-REDACTED-SEC-0051"
       },
       {
         "source": "OPENROUTER_MODEL",
