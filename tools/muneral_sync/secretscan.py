@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -119,31 +120,43 @@ def _run_gitleaks(text: str) -> list[Finding]:
     if gitleaks_path is None:
         return []
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w", prefix="muneral-ltm-payload-", suffix=".json", encoding="utf-8"
-        ) as handle:
-            handle.write(text)
-            handle.flush()
+        with tempfile.TemporaryDirectory(prefix="muneral-ltm-scan-") as scan_dir:
+            payload_path = os.path.join(scan_dir, "payload.json")
+            # gitleaks >= 8.30 refuses to write its report to /dev/stdout
+            # ("Report path is not writable: open /dev/stdout: permission
+            # denied") and exits 1 with no report at all. Read back through the
+            # exit code alone, that is indistinguishable from "leaks found",
+            # so every scan raised ScanError and the caller failed closed on a
+            # healthy payload. Write the report to a real file instead.
+            report_path = os.path.join(scan_dir, "report.json")
+            with open(payload_path, "w", encoding="utf-8") as handle:
+                handle.write(text)
             process = subprocess.run(  # noqa: S603 - fixed executable and arguments, no shell
                 [
                     gitleaks_path,
                     "detect",
                     "--no-git",
                     "--source",
-                    handle.name,
+                    payload_path,
                     "--report-format",
                     "json",
                     "--report-path",
-                    "/dev/stdout",
+                    report_path,
                 ],
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
+            try:
+                with open(report_path, encoding="utf-8") as report_handle:
+                    raw_report = report_handle.read().strip()
+            except FileNotFoundError:
+                # gitleaks writes no report when it finds nothing.
+                raw_report = ""
     except (OSError, subprocess.SubprocessError):
         raise ScanError("gitleaks scan failed closed") from None
     try:
-        data = json.loads((process.stdout or "[]").strip() or "[]")
+        data = json.loads(raw_report or "[]")
     except json.JSONDecodeError:
         raise ScanError("gitleaks scan failed closed") from None
     if not isinstance(data, list) or any(not isinstance(item, dict) for item in data):
