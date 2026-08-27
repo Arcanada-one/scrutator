@@ -3,7 +3,7 @@ name: dependabot-auto-merge
 # Merges routine Dependabot updates once the repository's own CI has actually
 # concluded green.
 #
-# Design notes, both learned the hard way in SEC-0039:
+# Design notes, both learned the hard way while rolling this out:
 #
 #  1. It reacts to CI completion (workflow_run) instead of waiting for CI. An earlier
 #     version blocked on `gh pr checks --watch`; this org has a single shared
@@ -24,7 +24,7 @@ on:
   workflow_run:
     # Named explicitly per repository: workflow_run cannot glob, and check_suite
     # does NOT fire for Actions-created suites (anti-recursion rule) — verified
-    # empirically in SEC-0039, the check_suite revision never triggered.
+    # empirically, the check_suite revision never triggered.
     workflows: [benchmark-scrutator, ci, deploy, recall-regression]
     types: [completed]
 
@@ -39,7 +39,7 @@ jobs:
     # event costs nothing. Without it the job claims a runner just to discover
     # the PR is not Dependabot's — and workflow_run fires once per upstream
     # workflow, so a repo with two CI workflows spawns two jobs per push by
-    # anyone. In SEC-0039 that put 22 useless runs on the org's single
+    # anyone. In practice that put 22 useless runs on the org's single
     # ci-general runner before it was caught.
     #
     # Matching on the branch prefix rather than workflow_run.actor: the actor is
@@ -52,7 +52,7 @@ jobs:
       startsWith(github.event.workflow_run.head_branch, 'dependabot/')
     # GitHub-hosted: public repos get free unlimited hosted minutes, and the
     # org's single self-hosted ci-general runner is permanently contended —
-    # targeting it left these jobs queued indefinitely (SEC-0039). Private-repo
+    # targeting it left these jobs queued indefinitely. Private-repo
     # callers need self-hosted, since the org's PAID hosted minutes are spent.
     runs-on: ubuntu-latest
     steps:
@@ -60,6 +60,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          SELF_WORKFLOW: ${{ github.workflow }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
@@ -78,7 +80,7 @@ jobs:
 
             if [ "$author" != "dependabot[bot]" ]; then echo "skip: author=$author"; echo "::endgroup::"; continue; fi
             if [ "$draft" = "true" ]; then echo "skip: draft"; echo "::endgroup::"; continue; fi
-            if [ "$base" != "${{ github.event.repository.default_branch }}" ]; then
+            if [ "$base" != "$DEFAULT_BRANCH" ]; then
               echo "skip: base=$base"; echo "::endgroup::"; continue
             fi
 
@@ -102,7 +104,7 @@ jobs:
             # container base images, Go). There the MINOR is the compatibility
             # axis, not the major: python 3.12-slim -> 3.14-slim is a breaking
             # runtime change that major-equality alone would wave through.
-            # This exact case was merged by hand in SEC-0039 before the gate
+            # This exact case was merged by hand before the gate
             # was corrected.
             if [ -z "$from_patch" ] || [ -z "$to_patch" ]; then
               if [ "$from_minor" != "$to_minor" ]; then
@@ -127,7 +129,7 @@ jobs:
 
             # --- CI gate ------------------------------------------------------
             runs=$(gh api --paginate "repos/${REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" \
-                    --jq "[.check_runs[] | select(.name != \"${{ github.workflow }}\") | {n:.name,s:.status,c:.conclusion}]")
+                    --jq "[.check_runs[] | select(.name != \"${SELF_WORKFLOW}\") | {n:.name,s:.status,c:.conclusion}]")
             total=$(jq 'length' <<<"$runs")
             pending=$(jq '[.[]|select(.s!="completed")]|length' <<<"$runs")
             bad=$(jq '[.[]|select(.c!="success" and .c!="neutral" and .c!="skipped")]|length' <<<"$runs")
