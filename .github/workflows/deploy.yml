@@ -10,7 +10,7 @@ on:
 
 jobs:
   network-exposure:
-    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@6531b66436b6a735be41a2288082d6de09df3bfa # main 2026-07-22
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@d698584258547e6418e7d3a23285a8f494a2b905 # main 2026-07-22
     with:
       compose_paths: docker-compose.yml
       datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f
@@ -68,7 +68,7 @@ jobs:
 
       - name: Pre-deploy host readiness
         id: preflight
-        uses: Arcanada-one/datarim/.github/actions/preflight-check@6531b66436b6a735be41a2288082d6de09df3bfa # v1, immutable pin
+        uses: Arcanada-one/datarim/.github/actions/preflight-check@d698584258547e6418e7d3a23285a8f494a2b905 # v1, immutable pin
         with:
           target-host: arcana-kb
           service-name: scrutator
