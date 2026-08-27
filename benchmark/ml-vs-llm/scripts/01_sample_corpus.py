@@ -18,6 +18,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from config import GOLDEN_DIR, SAMPLE_SIZE
+from utils.redact import redact_secrets
 
 SCRUTATOR_URL = os.environ.get("SCRUTATOR_URL", "http://100.70.137.104:8310")
 NAMESPACE = "arcanada"
@@ -107,6 +108,10 @@ def collect_all_chunks(base_url: str) -> dict[str, list[dict]]:
 
             seen_ids.add(cid)
             new_count += 1
+            # The KB is private; this corpus is committed to a public repo.
+            # Chunks may carry live credentials verbatim (SEC-0051 precedent),
+            # so every sampled chunk is redacted before it can be written.
+            content = redact_secrets(content)
             sp = r.get("source_path", "unknown")
             parts = sp.strip("/").split("/")
             prefix = "/".join(parts[:2]) if len(parts) >= 2 else parts[0] if parts else "unknown"

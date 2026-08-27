@@ -211,7 +211,12 @@ def test_additive_gitleaks_scans_exact_body_and_redacts_secret(monkeypatch):
         source = Path(command[command.index("--source") + 1])
         seen.append(source.read_text())
         report = json.dumps([{"RuleID": "generic-api-key", "Secret": "never-return-this", "StartLine": 1}])
-        return SimpleNamespace(stdout=report, returncode=1)
+        # Real gitleaks writes the report to --report-path, not to stdout. A
+        # fixture that hands it back on stdout cannot reproduce the 8.30
+        # outage (report path unwritable -> exit 1, no report), which is why
+        # these tests stayed green while every live scan failed closed.
+        Path(command[command.index("--report-path") + 1]).write_text(report, encoding="utf-8")
+        return SimpleNamespace(stdout="", returncode=1)
 
     monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: "/usr/bin/gitleaks")
     monkeypatch.setattr("tools.muneral_sync.secretscan.subprocess.run", fake_run)
@@ -226,14 +231,30 @@ def test_gitleaks_absent_keeps_python_fallback(monkeypatch):
     assert scan_serialized("PGPASSWORD=still-blocked").verdict == VERDICT_CRITICAL
 
 
+def _writes_report(content: str, returncode: int):
+    """A gitleaks stand-in that delivers its report the way the real one does."""
+
+    def run(command, **_kwargs):
+        Path(command[command.index("--report-path") + 1]).write_text(content, encoding="utf-8")
+        return SimpleNamespace(stdout="", stderr="", returncode=returncode)
+
+    return run
+
+
 @pytest.mark.parametrize(
     "runner",
     [
         lambda *_args, **_kwargs: (_ for _ in ()).throw(subprocess.TimeoutExpired("gitleaks", 60)),
-        lambda *_args, **_kwargs: SimpleNamespace(stdout="not-json-with-secret-output", returncode=0),
-        lambda *_args, **_kwargs: SimpleNamespace(stdout="[]", stderr="sensitive operational error", returncode=2),
+        _writes_report("not-json-with-secret-output", 0),
+        _writes_report("[]", 2),
+        # The 8.30 outage itself: gitleaks cannot write the report, exits 1
+        # ("leaks found") and leaves no file behind. Read through the exit code
+        # alone that is indistinguishable from a real finding, so it must fail
+        # closed — and it must be REPRESENTABLE, which it was not while the
+        # fixtures handed the report back on stdout.
+        lambda *_args, **_kwargs: SimpleNamespace(stdout="", stderr="", returncode=1),
     ],
-    ids=["timeout", "malformed-report", "operational-nonzero"],
+    ids=["timeout", "malformed-report", "operational-nonzero", "report-never-written"],
 )
 def test_installed_gitleaks_operational_failures_block_without_output(monkeypatch, runner):
     monkeypatch.setattr("tools.muneral_sync.secretscan.shutil.which", lambda _name: "/usr/bin/gitleaks")

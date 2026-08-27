@@ -15,7 +15,7 @@ jobs:
     # Mandatory per documentation/mandates/cicd-convention.md § 5. This repo's harness code
     # makes outbound-only calls (no new listener) — wired anyway per repo-wide
     # convention, not because this PR introduces a compose/redis/postgres/systemd change.
-    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@b2a7c470f2d933188c9380f8d672eea73cc52019 # main 2026-07-22
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@6531b66436b6a735be41a2288082d6de09df3bfa # main 2026-07-22
     with:
       compose_paths: docker-compose.yml
       datarim_ref: d3f518ea11f28f94af9c73021fa96fb4ce3f688f

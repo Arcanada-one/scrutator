@@ -1543,7 +1543,7 @@
   },
   {
     "chunk_id": "186ef595-732c-49c0-897b-fc06196f8979",
-    "content": "# OpenRouter API Configuration\nOPENROUTER_API_KEY=sk-or-v1-REDACTED\nOPENROUTER_MODEL=google/gemini-2.0-flash-lite-001\nOPENROUTER_TEMPERATURE=0.7",
+    "content": "# OpenRouter API Configuration\nOPENROUTER_API_KEY=sk-or-v1-REDACTED-SEC-0051\nOPENROUTER_MODEL=google/gemini-2.0-flash-lite-001\nOPENROUTER_TEMPERATURE=0.7",
     "source_path": "Projects/Transcribator/Env.md",
     "source_type": "markdown",
     "namespace": "arcanada",

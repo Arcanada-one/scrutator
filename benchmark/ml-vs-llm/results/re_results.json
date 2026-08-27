@@ -743,7 +743,7 @@
           {
             "source": "OpenRouter API Configuration",
             "relation": "contains",
-            "target": "sk-or-v1-REDACTED"
+            "target": "sk-or-v1-REDACTED-SEC-0051"
           }
         ],
         "latency_ms": 10623.8,
@@ -3944,7 +3944,7 @@
           },
           {
             "source": "OPENROUTER_API_KEY",
-            "target": "sk-or-v1-REDACTED",
+            "target": "sk-or-v1-REDACTED-SEC-0051",
             "relation": "configured_with"
           },
           {
@@ -8696,7 +8696,7 @@
           },
           {
             "source": "OPENROUTER_API_KEY",
-            "target": "sk-or-v1-REDACTED",
+            "target": "sk-or-v1-REDACTED-SEC-0051",
             "relation": "is"
           },
           {
