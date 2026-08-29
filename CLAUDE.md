@@ -184,7 +184,7 @@ class Citation(BaseModel):
 
 Every `SearchResult` returned by `searcher.search()` carries a non-None `citation`; the contract is always on and has near-zero cost.
 
-## Known-Fix Recall Adapter (SRCH-0026 / LTM-0022)
+## Known-Fix Recall Adapter
 
 `src/scrutator/tools/known_fix_retriever.py` + the executable shim
 `scripts/scrutator-known-fix-retriever` implement the Datarim framework's
@@ -204,12 +204,14 @@ Three caller constraints are load-bearing and were **measured**, not assumed, ag
 **Fail-soft is total.** Missing config, unreachable KB, 401/403, malformed response, empty index
 — all degrade to `[]`, never a non-zero exit. A KB outage degrades recall; it never fails a task.
 
-**Three drop-gates run on every hit** (drop, never partial-mask): a `content_hash`/`chunk_id`
-quarantine (the forgetting primitive — retire a poisoned chunk without a re-index); the server's
-ARAS-0055 `metadata.injection` flag *plus* an independent local re-scan (an unstamped legacy
-chunk must not read as clean); and credential shapes mirroring the framework validator.
-Surviving text is neutralised — control characters stripped, fence runs defanged — so an excerpt
-cannot break out of the consumer's data block. Do not weaken a gate to raise recall.
+**Four drop-gates run on every hit** (drop, never partial-mask): a `content_hash`/`chunk_id`
+quarantine — the forgetting primitive, which retires a poisoned chunk without a re-index; the
+server's ingest-time `metadata.injection` flag *plus* an independent local re-scan, because an
+un-backfilled chunk carries no stamp and "unstamped" must not read as "clean"; credential shapes
+mirroring the framework validator, because `.gitignore` is a KB *inclusion* path; and a refusal
+to follow any redirect, since urllib's default handler would permit an `ftp:` target. Surviving
+text is neutralised — control characters stripped, fence runs defanged — so an excerpt cannot
+break out of the consumer's data block. Do not weaken a gate to raise recall.
 
 ## CI/CD
 

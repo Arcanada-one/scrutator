@@ -1,7 +1,7 @@
 # How to wire Datarim known-fix recall to Scrutator
 
-**Task:** `SRCH-0026` / `LTM-0022` — make a prior task's distilled conclusion reach the next
-task's context automatically, instead of waiting for a person to type a query.
+Make a prior task's distilled conclusion reach the next task's context automatically, instead
+of waiting for a person to type a query.
 
 This is the **read** half of the self-learning loop. The write half (a `known_fix` JSON block
 emitted at `/dr-archive`) and the local recall half (`/dr-do` Step 7.4) already ship in the
@@ -92,17 +92,19 @@ prints `[]` and exits 0. A knowledge base that is down degrades recall; it never
 
 The loop's write path indexes archives that quote external issue bodies and support prose
 verbatim, so a stranger's text can re-enter a future task wearing the highest-trust label in the
-system. Three gates run on every hit, and a rejected hit is **dropped, never partially masked**:
+system. Four gates run on every hit, and a rejected hit is **dropped, never partially masked**:
 
 1. **Quarantine** — the forgetting primitive. List a `content_hash`, `chunk_id`, or `source_id`
    in `quarantine_file`, one per line (`#` comments allowed, case-insensitive), and that chunk is
    never recalled again — no re-index required.
-2. **Injection** — the server's ingest-time `metadata.injection` flag (ARAS-0055) *and* an
+2. **Injection** — the server's ingest-time `metadata.injection` flag *and* an
    independent local re-scan, because an un-backfilled chunk carries no stamp and "unstamped"
    must not read as "clean".
 3. **Credential shapes** — mirrors the framework validator's patterns. `.gitignore` is a KB
    *inclusion* path, so a credential literal can reach the index despite every git-shaped
    scanner.
+4. **No redirect is followed.** urllib's default handler permits an `ftp:` redirect target, and
+   a `/v1/search` POST never legitimately redirects — so a 3xx is an error, not a hop.
 
 Surviving text is neutralised before it leaves the adapter: control characters stripped, fence
 runs (```` ``` ````, `~~~`) replaced with `<fence>` so an excerpt cannot break out of the
