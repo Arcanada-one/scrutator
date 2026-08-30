@@ -6,7 +6,16 @@ services:
     environment:
       # Dedicated bounded corpus written by the existing feeder credential.
       # Preserve every operator-configured namespace and append only this scope.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills"
+      #
+      # `talomnia` (SRCH-0044): the corpus began projecting Projects/Talomnia
+      # docs on 2026-08-19 into a namespace that was never on this list, so the
+      # feeder has been refused write on it and kb-reconcile has exited
+      # 4/NOPERMISSION on every run since — 765 runs as of 2026-08-30, each
+      # re-walking and re-scanning the whole 2,132-file corpus. Two files are
+      # affected: Projects/Talomnia/README.md and
+      # Projects/Talomnia/docs/TZ-Talomnia-Launch-v1.3.1.md. It is the ONLY
+      # namespace the projection produces that this list does not cover.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
