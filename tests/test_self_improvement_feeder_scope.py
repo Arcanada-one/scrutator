@@ -20,7 +20,17 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 #   dev-tools/kb-feeder/deploy/kb-reconcile-run.sh  --runtime-only-namespace <ns>
 #   dev-tools/kb-feeder/deploy/authoritative-namespaces.txt  (projected corpus)
 # Gate there: dev-tools/check-kb-feeder-grant-drift.sh.
-FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills")
+#
+# `talomnia` (2026-08-30) is the projected-corpus kind, not the runtime-only
+# kind, so it needs no --runtime-only-namespace: arcana-kb's live
+# /var/lib/kb-feeder/corpus/.authoritative-namespaces already lists it (line 52
+# of 58), which is why the feeder reported it as `missing_namespace_grants`
+# rather than halting on `unexpected_runtime_grants`. The accounting it does
+# need is the repo-side copy of that manifest, added in the paired
+# arcanada-workspace change to
+# dev-tools/kb-feeder/deploy/authoritative-namespaces.txt — without it
+# check-kb-feeder-grant-drift.sh sees a grant nobody declared.
+FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia")
 
 
 def test_appended_feeder_scopes_are_declared_for_the_kb_feeder_consumer():
@@ -49,7 +59,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     environment = compose["services"]["scrutator"]["environment"]
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
-        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills"
+        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
