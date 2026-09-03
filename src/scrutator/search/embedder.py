@@ -6,6 +6,7 @@ SRCH-0020: per-call client creation caused 503 after 2-3 index requests.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 
@@ -23,8 +24,9 @@ logger = logging.getLogger(__name__)
 
 # The shared Embedding API rejects HTTP batches larger than 64. Scrutator's
 # higher-level index pack may contain up to 256 chunks, so transport requests
-# are paged sequentially without weakening the indexer's independent caps.
+# use bounded page concurrency without weakening the indexer's independent caps.
 _EMBEDDING_API_MAX_BATCH_SIZE = 64
+_DENSE_SPARSE_PAGE_CONCURRENCY = 2
 _COLBERT_API_MAX_BATCH_SIZE = 16
 _DENSE_DIMENSIONS = 1024
 _FLOAT32_MAX = 3.4028235e38
@@ -216,11 +218,21 @@ async def _embed_dense_sparse_page(texts: list[str]) -> tuple[list[list[float]],
 
 
 async def embed_dense_sparse(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
-    """Get paired dense and sparse embeddings in ordered provider-sized pages."""
+    """Get ordered paired vectors with bounded page-level parallelism."""
+    pages = [
+        texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE]
+        for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE)
+    ]
+    semaphore = asyncio.Semaphore(_DENSE_SPARSE_PAGE_CONCURRENCY)
+
+    async def embed_page(page: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
+        async with semaphore:
+            return await _embed_dense_sparse_page(page)
+
+    page_results = await asyncio.gather(*(embed_page(page) for page in pages))
     dense: list[list[float]] = []
     sparse: list[dict[str, float]] = []
-    for offset in range(0, len(texts), _EMBEDDING_API_MAX_BATCH_SIZE):
-        page_dense, page_sparse = await _embed_dense_sparse_page(texts[offset : offset + _EMBEDDING_API_MAX_BATCH_SIZE])
+    for page_dense, page_sparse in page_results:
         dense.extend(page_dense)
         sparse.extend(page_sparse)
     return dense, sparse
