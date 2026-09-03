@@ -4,6 +4,7 @@ services:
     network_mode: host
     env_file: .env
     environment:
+      SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: "${SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED:-false}"
       # Dedicated bounded corpus written by the existing feeder credential.
       # Preserve every operator-configured namespace and append only this scope.
       #
