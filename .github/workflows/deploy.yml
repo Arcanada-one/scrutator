@@ -82,6 +82,7 @@ jobs:
         if: steps.preflight.outputs.status != 'fail'
         env:
           SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA: ${{ vars.SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA }}
+          SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: ${{ vars.SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED }}
         run: |
           deploy/scrutator-deploy-transaction.sh \
             --target-sha "${GITHUB_SHA}"

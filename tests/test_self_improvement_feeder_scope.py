@@ -64,3 +64,18 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TENANTS" not in environment
+
+
+def test_production_deploy_injects_dense_sparse_flag_without_mutating_dotenv():
+    compose = yaml.safe_load((REPO_ROOT / "docker-compose.yml").read_text())
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "deploy.yml").read_text())
+
+    environment = compose["services"]["scrutator"]["environment"]
+    assert environment["SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED"] == (
+        "${SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED:-false}"
+    )
+
+    deploy_step = next(step for step in workflow["jobs"]["deploy"]["steps"] if step.get("name") == "Deploy")
+    assert deploy_step["env"]["SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED"] == (
+        "${{ vars.SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED }}"
+    )
