@@ -184,6 +184,35 @@ class Citation(BaseModel):
 
 Every `SearchResult` returned by `searcher.search()` carries a non-None `citation`; the contract is always on and has near-zero cost.
 
+## Known-Fix Recall Adapter
+
+`src/scrutator/tools/known_fix_retriever.py` + the executable shim
+`scripts/scrutator-known-fix-retriever` implement the Datarim framework's
+`DATARIM_KNOWN_FIX_RETRIEVER` contract — the **read** half of the self-learning loop. `/dr-do`
+Step 7.4 shells out to it so a prior task's distilled conclusion reaches the next task without a
+human query. Operating guide: `documentation/how-to/known-fix-recall.md`.
+
+Three caller constraints are load-bearing and were **measured**, not assumed, against
+`datarim/dev-tools/known-fix-memory.py::run_bounded`:
+
+| Constraint | Consequence for this module |
+|---|---|
+| Child env is stripped to `PATH` (measured child env: `['LC_CTYPE', 'PATH']`) | Config comes from a FILE (`~/.config/scrutator/known-fix-retriever.json`); the module imports **stdlib only** and must not import from the `scrutator` package |
+| 3 s deadline, 64 KiB stdout cap, exit 0 required | HTTP timeout clamped to 2.5 s; stdout trimmed below 48 KiB; **every** error path prints `[]` and exits 0 |
+| Shim must be absolute, regular, non-symlink, executable | Keep the exec bit; never replace `scripts/scrutator-known-fix-retriever` with a symlink |
+
+**Fail-soft is total.** Missing config, unreachable KB, 401/403, malformed response, empty index
+— all degrade to `[]`, never a non-zero exit. A KB outage degrades recall; it never fails a task.
+
+**Four drop-gates run on every hit** (drop, never partial-mask): a `content_hash`/`chunk_id`
+quarantine — the forgetting primitive, which retires a poisoned chunk without a re-index; the
+server's ingest-time `metadata.injection` flag *plus* an independent local re-scan, because an
+un-backfilled chunk carries no stamp and "unstamped" must not read as "clean"; credential shapes
+mirroring the framework validator, because `.gitignore` is a KB *inclusion* path; and a refusal
+to follow any redirect, since urllib's default handler would permit an `ftp:` target. Surviving
+text is neutralised — control characters stripped, fence runs defanged — so an excerpt cannot
+break out of the consumer's data block. Do not weaken a gate to raise recall.
+
 ## CI/CD
 
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`) — ruff check + ruff format + pytest

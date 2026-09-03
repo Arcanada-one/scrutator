@@ -1,0 +1,7 @@
+{
+  "base_url": "http://127.0.0.1:8310",
+  "namespace": "self-improvement",
+  "token_file": "/run/credentials/known-fix-retriever/token",
+  "timeout_seconds": 2.0,
+  "quarantine_file": "~/.config/scrutator/known-fix-quarantine.txt"
+}
