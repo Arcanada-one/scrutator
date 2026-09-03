@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -109,6 +110,34 @@ async def test_dense_sparse_pages_preserve_exact_order_and_provider_limit(count,
 
 
 @pytest.mark.asyncio
+async def test_dense_sparse_page_concurrency_is_bounded_and_ordered():
+    active = 0
+    peak = 0
+
+    async def embed_page(page):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0.01)
+        result = (
+            [[float(value)] for value in page],
+            [{value: float(value)} for value in page],
+        )
+        active -= 1
+        return result
+
+    texts = [str(index) for index in range(256)]
+    with patch(
+        "scrutator.search.embedder._embed_dense_sparse_page",
+        new=embed_page,
+    ):
+        dense, sparse = await embed_dense_sparse(texts)
+    assert peak == 2
+    assert [vector[0] for vector in dense] == [float(index) for index in range(256)]
+    assert [next(iter(vector)) for vector in sparse] == texts
+
+
+@pytest.mark.asyncio
 async def test_dense_sparse_retries_only_failed_page():
     calls: list[int] = []
     failed_once = False
@@ -202,7 +231,7 @@ async def test_enabled_middle_page_failure_persists_nothing():
             patch("scrutator.search.indexer.chunk_document", return_value=SimpleNamespace(chunks=_chunks(256))),
             patch(
                 "scrutator.search.embedder._embed_dense_sparse_page",
-                new=AsyncMock(side_effect=[first_page, EmbeddingError("page two failed")]),
+                new=AsyncMock(side_effect=[first_page, EmbeddingError("page two failed"), first_page, first_page]),
             ) as pages,
             patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as namespace,
             patch("scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock) as replace,
@@ -213,7 +242,7 @@ async def test_enabled_middle_page_failure_persists_nothing():
     finally:
         settings.embedding_dense_sparse_enabled = original
 
-    assert pages.await_count == 2
+    assert pages.await_count == 4
     assert results[0].status == "failed"
     namespace.assert_not_awaited()
     replace.assert_not_awaited()
