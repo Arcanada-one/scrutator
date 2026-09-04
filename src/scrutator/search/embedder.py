@@ -193,6 +193,7 @@ async def _embed_dense_sparse_page(texts: list[str]) -> tuple[list[list[float]],
     response = await client.post(
         f"{settings.embedding_api_url}/v1/embeddings/dense-sparse",
         json={"input": texts},
+        timeout=settings.embedding_dense_sparse_timeout,
     )
     if response.status_code != 200:
         raise EmbeddingError(f"Dense-sparse Embedding API returned status {response.status_code}")

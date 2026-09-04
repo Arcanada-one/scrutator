@@ -61,6 +61,12 @@ def test_dense_sparse_transport_defaults_off(monkeypatch):
     assert Settings().embedding_dense_sparse_enabled is False
 
 
+def test_dense_sparse_transport_has_a_dedicated_bulk_timeout(monkeypatch):
+    monkeypatch.delenv("SCRUTATOR_EMBEDDING_DENSE_SPARSE_TIMEOUT", raising=False)
+    assert Settings().embedding_dense_sparse_timeout == 900.0
+    assert Settings().embedding_dense_sparse_timeout * Settings().embedding_max_retries < 3000
+
+
 @pytest.fixture
 def exact_provider_contract_response() -> MagicMock:
     response = _response(["7"])
@@ -80,6 +86,11 @@ async def test_dense_sparse_accepts_exact_provider_468844f_contract(exact_provid
 
     assert dense == [[7.0] * 1024]
     assert sparse == [{"7": 7.0}]
+    client.post.assert_awaited_once_with(
+        f"{settings.embedding_api_url}/v1/embeddings/dense-sparse",
+        json={"input": ["provider fixture"]},
+        timeout=900.0,
+    )
 
 
 @pytest.mark.asyncio
@@ -90,7 +101,8 @@ async def test_dense_sparse_accepts_exact_provider_468844f_contract(exact_provid
 async def test_dense_sparse_pages_preserve_exact_order_and_provider_limit(count, page_sizes):
     calls: list[tuple[str, list[str]]] = []
 
-    async def post(url, *, json):
+    async def post(url, *, json, timeout):
+        assert timeout == settings.embedding_dense_sparse_timeout
         page = json["input"]
         calls.append((url, page))
         return _response(page)
@@ -142,8 +154,9 @@ async def test_dense_sparse_retries_only_failed_page():
     calls: list[int] = []
     failed_once = False
 
-    async def post(_url, *, json):
+    async def post(_url, *, json, timeout):
         nonlocal failed_once
+        assert timeout == settings.embedding_dense_sparse_timeout
         page = json["input"]
         calls.append(len(page))
         if len(page) == 1 and not failed_once:
