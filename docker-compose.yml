@@ -2,6 +2,11 @@ services:
   scrutator:
     build: .
     network_mode: host
+    x-exposure-justification: >-
+      The host-network API is reachable only through the tailscale0 firewall
+      allowlist; default-deny host ingress and application JWT namespace grants
+      fail closed before data access.
+    x-exposure-expires: "2026-12-03"
     env_file: .env
     environment:
       SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: "${SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED:-false}"
