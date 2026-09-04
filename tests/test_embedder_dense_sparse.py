@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
+from tenacity import RetryError
 
 from scrutator.config import Settings, settings
 from scrutator.db.models import IndexRequest
@@ -64,7 +65,8 @@ def test_dense_sparse_transport_defaults_off(monkeypatch):
 def test_dense_sparse_transport_has_a_dedicated_bulk_timeout(monkeypatch):
     monkeypatch.delenv("SCRUTATOR_EMBEDDING_DENSE_SPARSE_TIMEOUT", raising=False)
     assert Settings().embedding_dense_sparse_timeout == 900.0
-    assert Settings().embedding_dense_sparse_timeout * Settings().embedding_max_retries < 3000
+    assert Settings().embedding_dense_sparse_max_retries == 1
+    assert Settings().embedding_dense_sparse_timeout * Settings().embedding_dense_sparse_max_retries < 1200
 
 
 @pytest.fixture
@@ -150,27 +152,24 @@ async def test_dense_sparse_page_concurrency_is_bounded_and_ordered():
 
 
 @pytest.mark.asyncio
-async def test_dense_sparse_retries_only_failed_page():
-    calls: list[int] = []
-    failed_once = False
+async def test_dense_sparse_does_not_retry_a_timed_bulk_page():
+    calls = 0
 
     async def post(_url, *, json, timeout):
-        nonlocal failed_once
+        nonlocal calls
         assert timeout == settings.embedding_dense_sparse_timeout
-        page = json["input"]
-        calls.append(len(page))
-        if len(page) == 1 and not failed_once:
-            failed_once = True
-            raise httpx.ConnectError("bounded transport failure")
-        return _response(page)
+        calls += 1
+        raise httpx.ReadTimeout("bounded transport failure")
 
     client = AsyncMock()
     client.post.side_effect = post
-    with patch("scrutator.search.embedder.get_client", return_value=client):
-        dense, sparse = await embed_dense_sparse([str(index) for index in range(65)])
+    with (
+        patch("scrutator.search.embedder.get_client", return_value=client),
+        pytest.raises(RetryError),
+    ):
+        await embed_dense_sparse(["slow page"])
 
-    assert len(dense) == len(sparse) == 65
-    assert calls == [64, 1, 1]
+    assert calls == 1
 
 
 @pytest.mark.asyncio
