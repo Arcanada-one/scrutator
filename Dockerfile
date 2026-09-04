@@ -13,8 +13,9 @@ EXPOSE 8310
 # bind lands directly on the host interface.
 # exposure: justified expires=2026-10-07 — default SCRUTATOR_HOST=0.0.0.0 kept to preserve
 #   current behaviour (prod .env may or may not set it; a 127.0.0.1 default would break mesh
-#   reachability). Public :8310 is firewall-closed on the Hetzner host (verified 2026-07-09:
-#   public IP 135.181.222.38:8310 → no answer); ingress is Tailscale-only. Tier-2 upgrade path:
+#   reachability). Public :8310 is firewall-closed on the production host (re-verified
+#   2026-09-04); ingress is Tailscale-only and API data access requires JWT namespace grants.
+#   docker-compose.yml records the bounded Tier-3 exposure contract. Tier-2 upgrade path:
 #   set SCRUTATOR_HOST=<host Tailscale IP, e.g. 100.70.137.104 (arcana-kb)> in prod .env to drop
 #   the wildcard. Ref: network-exposure-baseline (Tier-3 justified).
 CMD ["sh", "-c", "uvicorn scrutator.health:app --host \"${SCRUTATOR_HOST:-0.0.0.0}\" --port \"${SCRUTATOR_PORT:-8310}\""]
