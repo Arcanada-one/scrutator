@@ -72,24 +72,32 @@ class EmbeddingError(Exception):
 _RETRYABLE = (httpx.TransportError,)
 
 
-def _log_retry(retry_state) -> None:
+def _log_retry(retry_state, max_attempts: int) -> None:
     exception = retry_state.outcome.exception()
     logger.warning(
         "Embedding retry %d/%d: error_type=%s status_code=none",
         retry_state.attempt_number,
-        settings.embedding_max_retries,
+        max_attempts,
         type(exception).__name__,
     )
 
 
-def _with_retry(fn):
-    """Apply tenacity retry to an async embedding function."""
+def _with_retry_attempts(fn, max_attempts: int):
+    """Apply a bounded tenacity policy to an async embedding function."""
     return retry(
-        stop=stop_after_attempt(settings.embedding_max_retries),
+        stop=stop_after_attempt(max_attempts),
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(_RETRYABLE),
-        before_sleep=_log_retry,
+        before_sleep=lambda retry_state: _log_retry(retry_state, max_attempts),
     )(fn)
+
+
+def _with_retry(fn):
+    return _with_retry_attempts(fn, settings.embedding_max_retries)
+
+
+def _with_dense_sparse_retry(fn):
+    return _with_retry_attempts(fn, settings.embedding_dense_sparse_max_retries)
 
 
 # ── Public API ──────────────────────────────────────────────────────
@@ -187,7 +195,7 @@ async def embed_sparse(texts: list[str]) -> list[dict[str, float]]:
     return embeddings
 
 
-@_with_retry
+@_with_dense_sparse_retry
 async def _embed_dense_sparse_page(texts: list[str]) -> tuple[list[list[float]], list[dict[str, float]]]:
     client = await get_client()
     response = await client.post(

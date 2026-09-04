@@ -16,9 +16,11 @@ class Settings(BaseSettings):
     embedding_timeout: float = 30.0
     embedding_max_retries: int = 3
     # Bulk dense+sparse pages are materially slower than interactive requests.
-    # Three bounded attempts must still fit inside the Feeder's 3,000-second
-    # outer per-source timeout.
+    # A bounded attempt must fit inside the Feeder's outer request timeout.
     embedding_dense_sparse_timeout: float = 900.0
+    # Bulk callers own their outer retry budget. One Scrutator attempt keeps
+    # the request below KB Feeder's 1,200-second client deadline.
+    embedding_dense_sparse_max_retries: int = 1
     # SRCH-0038 (D7): the configured dense-embedder id, surfaced as provenance in POST /v1/fetch.
     embedding_model_id: str = "bge-m3"
     # SRCH-0038 (D5): namespace whose documents are labelled trust_class="skill" (a routing hint,
