@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     embedding_api_url: str = "http://localhost:8300"
     embedding_timeout: float = 30.0
     embedding_max_retries: int = 3
+    # Bulk dense+sparse pages are materially slower than interactive requests.
+    # Three bounded attempts must still fit inside the Feeder's 3,000-second
+    # outer per-source timeout.
+    embedding_dense_sparse_timeout: float = 900.0
     # SRCH-0038 (D7): the configured dense-embedder id, surfaced as provenance in POST /v1/fetch.
     embedding_model_id: str = "bge-m3"
     # SRCH-0038 (D5): namespace whose documents are labelled trust_class="skill" (a routing hint,
