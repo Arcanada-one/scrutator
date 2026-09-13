@@ -26,6 +26,31 @@ _TOMBSTONE_COUNTS = (
 )
 
 
+def _scan_summary(result: Any) -> dict[str, Any]:
+    """Reduce a scan result to its hashed findings; the wire text itself is never retained."""
+    if hasattr(result, "as_dict"):
+        summary = result.as_dict()
+    else:
+        summary = {
+            "verdict": getattr(result, "verdict", None),
+            "findings": [
+                finding.as_dict() if hasattr(finding, "as_dict") else dict(finding) for finding in result.findings
+            ],
+        }
+    findings = summary.get("findings") if isinstance(summary, dict) else None
+    # The same span recurs wherever the payload repeats a field (title, rendered content,
+    # properties): report each (rule, span) once, in first-seen order.
+    unique: dict[tuple[Any, Any], dict[str, Any]] = {}
+    for finding in findings or []:
+        if not isinstance(finding, dict):
+            continue
+        unique.setdefault(
+            (finding.get("rule"), finding.get("span_hash")),
+            {key: finding.get(key) for key in ("rule", "severity", "line", "span_hash")},
+        )
+    return {"verdict": summary.get("verdict") if isinstance(summary, dict) else None, "findings": list(unique.values())}
+
+
 def _decode_success(
     response: Any, count_fields: tuple[str, ...], *, require_completed_job: bool = False
 ) -> dict[str, int | bool]:
@@ -84,7 +109,12 @@ class LtmClient:
         except Exception as exc:
             raise ScanError("secret scanner failed closed") from exc
         if result.is_critical:
-            raise ScanError("secret scanner blocked outbound payload")
+            scan = _scan_summary(result)
+            rules = sorted({str(finding.get("rule")) for finding in scan["findings"]})
+            raise ScanError(
+                f"secret scanner blocked outbound payload: {len(scan['findings'])} finding(s), rules {rules}",
+                scan=scan,
+            )
         return serialized
 
     async def ingest(self, payload: dict[str, Any]) -> dict[str, Any]:
