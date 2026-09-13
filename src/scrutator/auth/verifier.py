@@ -199,6 +199,7 @@ async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
         settings.auth_ltm_client_id,
         settings.auth_ltm_observer_client_id,
         settings.auth_ltm_agent_client_id,
+        settings.auth_ltm_argana_client_id,
     }
     if subject != client_id or client_id not in allowed_clients:
         raise Unauthenticated("LTM M2M token client binding mismatch")
