@@ -24,6 +24,7 @@ LTM_M2M_SCOPE = "kb:ltm.read"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
 LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
 LTM_M2M_AGENT_CLIENT_ID = "arcana-agent-kb-reader"
+LTM_M2M_ARGANA_CLIENT_ID = "argana-dev"
 
 
 def _ltm_claims(**overrides):
@@ -386,6 +387,17 @@ class TestLtmM2mJwksVerification:
         assert await _verify_ltm_claims(claims) == (LTM_M2M_AGENT_CLIENT_ID, "service")
 
     @pytest.mark.asyncio
+    async def test_valid_argana_reader_profile_returns_separate_service_principal(self):
+        claims = _ltm_claims(sub=LTM_M2M_ARGANA_CLIENT_ID, client_id=LTM_M2M_ARGANA_CLIENT_ID)
+        assert await _verify_ltm_claims(claims) == (LTM_M2M_ARGANA_CLIENT_ID, "service")
+
+    @pytest.mark.asyncio
+    async def test_argana_reader_requires_matching_sub_and_client_id(self):
+        claims = _ltm_claims(sub=LTM_M2M_ARGANA_CLIENT_ID, client_id=LTM_M2M_AGENT_CLIENT_ID)
+        with pytest.raises(Unauthenticated, match="client binding mismatch"):
+            await _verify_ltm_claims(claims)
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ("overrides", "error"),
         [
@@ -561,6 +573,7 @@ class TestLtmM2mSettings:
         assert configured.auth_ltm_client_id == LTM_M2M_CLIENT_ID
         assert configured.auth_ltm_observer_client_id == LTM_M2M_OBSERVER_CLIENT_ID
         assert configured.auth_ltm_agent_client_id == LTM_M2M_AGENT_CLIENT_ID
+        assert configured.auth_ltm_argana_client_id == LTM_M2M_ARGANA_CLIENT_ID
         assert configured.auth_ltm_max_token_lifetime_seconds == 300
 
     @pytest.mark.parametrize(
@@ -574,6 +587,8 @@ class TestLtmM2mSettings:
             ("auth_ltm_agent_client_id", "other-service"),
             ("auth_ltm_agent_client_id", "*"),
             ("auth_ltm_agent_client_id", [LTM_M2M_AGENT_CLIENT_ID]),
+            ("auth_ltm_argana_client_id", "other-service"),
+            ("auth_ltm_argana_client_id", "*"),
             ("auth_ltm_max_token_lifetime_seconds", 3600),
         ],
     )

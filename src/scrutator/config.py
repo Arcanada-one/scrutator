@@ -102,6 +102,9 @@ class Settings(BaseSettings):
     auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
     auth_ltm_observer_client_id: Literal["kb-observer"] = "kb-observer"
     auth_ltm_agent_client_id: Literal["arcana-agent-kb-reader"] = "arcana-agent-kb-reader"
+    # A2-P0-3 (ARCANADA-2-PIPELINE §8 step 3): Argana dev-host reader. Same
+    # profile as the agent reader; namespace scope lives in principal_namespace_grants.
+    auth_ltm_argana_client_id: Literal["argana-dev"] = "argana-dev"
     auth_ltm_max_token_lifetime_seconds: Literal[300] = 300
     auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
