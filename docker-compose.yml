@@ -21,7 +21,14 @@ services:
       # affected: Projects/Talomnia/README.md and
       # Projects/Talomnia/docs/TZ-Talomnia-Launch-v1.3.1.md. It is the ONLY
       # namespace the projection produces that this list does not cover.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia"
+      #
+      # `kc2-store` (Arcanada 2 plan §8 step 4, 2026-09-13): the knowledge-contract
+      # revisions of talomnia-knowledge (kc2/index, rendered by
+      # kc2/tools/render_for_index.py), fed by the kb-feeder `kc2-store` lane in
+      # arcanada-workspace (dev-tools/kb-feeder/config/kc2-store/). Runtime-only
+      # kind: every reconcile runner there declares --runtime-only-namespace
+      # kc2-store in the paired change, so this append halts no batch.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
