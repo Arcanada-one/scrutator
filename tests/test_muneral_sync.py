@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from copy import deepcopy
@@ -9,7 +10,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tools.muneral_sync.cli import FULL_BACKFILL_GO, RunMode, execute, parse_args, read_cursor, write_cursor_atomic
+from tools.muneral_sync.cli import (
+    FULL_BACKFILL_GO,
+    RunMode,
+    execute,
+    main,
+    parse_args,
+    read_cursor,
+    write_cursor_atomic,
+)
 from tools.muneral_sync.client import LtmClient, ProtocolError
 from tools.muneral_sync.graph import build_ingest_payload, canonical_hash
 from tools.muneral_sync.secretscan import (
@@ -601,3 +610,168 @@ def test_cursor_write_is_atomic_rename(tmp_path):
         write_cursor_atomic(target, {"task-1": 3})
     replace.assert_called_once()
     assert replace.call_args.args[1] == target
+
+
+# --- KBSYNC-0: blocked payloads are named (hashed findings only), skipped, and bound the run ---
+
+_FAKE_VAULT_TOKEN = "hvs." + "A" * 24  # matches vault-token-hvs; never a real credential
+
+
+@pytest.mark.asyncio
+async def test_blocked_scan_error_carries_hashed_findings_and_never_cleartext(tmp_path):
+    credential = tmp_path / "writer"
+    credential.write_text("writer-token")
+    http = AsyncMock()
+    # The span recurs (title, rendered content, properties): it is reported once, not three times.
+    payload = {"content": f"token {_FAKE_VAULT_TOKEN}", "title": _FAKE_VAULT_TOKEN, "namespace": "muneral"}
+    client = LtmClient("https://kb.example/v1/ltm/ingest", credential, http=http, scanner=scan_text)
+    with pytest.raises(ScanError) as caught:
+        await client.ingest(payload)
+    error = caught.value
+    assert error.blocked is True
+    assert error.scan["verdict"] == VERDICT_CRITICAL
+    assert [finding["rule"] for finding in error.findings] == ["vault-token-hvs"]
+    assert set(error.findings[0]) == {"rule", "severity", "line", "span_hash"}
+    assert error.findings[0]["span_hash"] == hashlib.sha256(_FAKE_VAULT_TOKEN.encode()).hexdigest()
+    assert "vault-token-hvs" in str(error) and "1 finding" in str(error)
+    assert _FAKE_VAULT_TOKEN not in str(error) and _FAKE_VAULT_TOKEN not in json.dumps(error.scan)
+    http.post.assert_not_awaited()
+
+
+def test_scanner_failure_is_not_a_blocked_payload():
+    error = ScanError("secret scanner failed closed")
+    assert error.blocked is False and error.findings == []
+
+
+def _blocked_error(rule: str = "pem-private-key") -> ScanError:
+    return ScanError(
+        "secret scanner blocked outbound payload",
+        scan={
+            "verdict": VERDICT_CRITICAL,
+            "findings": [{"rule": rule, "severity": "CRITICAL", "line": 1, "span_hash": "ab" * 32}],
+        },
+    )
+
+
+@pytest.mark.asyncio
+async def test_incremental_blocked_task_is_named_skipped_and_never_advances_cursor(aggregate, tmp_path):
+    cursor = tmp_path / "cursor.json"
+    args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id="task-1", revision=2, changed_at="now", deleted=False),
+        ChangeRow(task_id="task-2", revision=9, changed_at="now", deleted=False),
+        ChangeRow(task_id="task-3", revision=4, changed_at="now", deleted=False),
+    ]
+    source.fetch_task.return_value = aggregate
+    client = AsyncMock()
+    ok = {"entities_upserted": 2, "edges_upserted": 1}
+    client.ingest.side_effect = [ok, _blocked_error(), ok]
+    report = await execute(args, source=source, client=client)
+    assert report["tasks"] == 3 and report["entities_upserted"] == 4
+    assert report["blocked"] == [
+        {
+            "task_id": "task-2",
+            "revision": 9,
+            "findings": [{"rule": "pem-private-key", "severity": "CRITICAL", "line": 1, "span_hash": "ab" * 32}],
+        }
+    ]
+    assert len(report["hashes"]) == 2
+    assert read_cursor(cursor) == {"task-1": 2, "task-3": 4}
+    assert "content" not in json.dumps(report)
+
+
+@pytest.mark.asyncio
+async def test_scanner_operational_failure_still_aborts_the_batch_and_names_the_task(aggregate, tmp_path):
+    cursor = tmp_path / "cursor.json"
+    args = parse_args(["--incremental", "--cursor-file", str(cursor), "--dsn-credential", str(tmp_path / "dsn")])
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id="task-1", revision=2, changed_at="now", deleted=False),
+        ChangeRow(task_id="task-2", revision=9, changed_at="now", deleted=False),
+    ]
+    source.fetch_task.return_value = aggregate
+    client = AsyncMock()
+    client.ingest.side_effect = [
+        {"entities_upserted": 1, "edges_upserted": 1},
+        ScanError("secret scanner failed closed"),
+    ]
+    with pytest.raises(ScanError) as caught:
+        await execute(args, source=source, client=client)
+    assert caught.value.__notes__ == ["muneral-kb-sync: while syncing Muneral task task-2"]
+    assert not cursor.exists()
+
+
+@pytest.mark.asyncio
+async def test_error_path_names_the_task_without_changing_the_exception(aggregate, tmp_path):
+    args = parse_args(
+        ["--incremental", "--cursor-file", str(tmp_path / "c"), "--dsn-credential", str(tmp_path / "dsn")]
+    )
+    source = AsyncMock()
+    source.list_incremental_changes.return_value = [
+        ChangeRow(task_id="task-missing", revision=1, changed_at="now", deleted=False)
+    ]
+    source.fetch_task.side_effect = LookupError("Muneral task not found: task-missing")
+    with pytest.raises(LookupError) as caught:
+        await execute(args, source=source, client=AsyncMock())
+    assert str(caught.value) == "Muneral task not found: task-missing"
+    assert caught.value.__notes__ == ["muneral-kb-sync: while syncing Muneral task task-missing"]
+
+
+@pytest.mark.asyncio
+async def test_max_tasks_bounds_a_run_in_task_order_and_the_next_run_continues(aggregate, tmp_path):
+    cursor = tmp_path / "cursor.json"
+    argv = [
+        "--incremental",
+        "--max-tasks",
+        "2",
+        "--cursor-file",
+        str(cursor),
+        "--dsn-credential",
+        str(tmp_path / "dsn"),
+    ]
+    args = parse_args(argv)
+    changes = [
+        ChangeRow(task_id=f"task-{index}", revision=index, changed_at="now", deleted=False) for index in range(1, 6)
+    ]
+    source = AsyncMock()
+    source.fetch_task.return_value = aggregate
+    client = AsyncMock()
+    client.ingest.return_value = {"entities_upserted": 1, "edges_upserted": 1}
+
+    source.list_incremental_changes.return_value = changes
+    report = await execute(args, source=source, client=client)
+    assert report["tasks"] == 2 and report["remaining"] == 3
+    assert read_cursor(cursor) == {"task-1": 1, "task-2": 2}
+
+    source.list_incremental_changes.return_value = changes[2:]
+    report = await execute(args, source=source, client=client)
+    assert report["tasks"] == 2 and report["remaining"] == 1
+    assert read_cursor(cursor) == {"task-1": 1, "task-2": 2, "task-3": 3, "task-4": 4}
+
+    source.list_incremental_changes.return_value = changes[4:]
+    report = await execute(args, source=source, client=client)
+    assert report["tasks"] == 1 and "remaining" not in report
+    assert client.ingest.await_count == 5
+
+
+def test_max_tasks_must_be_positive():
+    with pytest.raises(SystemExit):
+        parse_args(["--incremental", "--max-tasks", "0"])
+    assert parse_args(["--incremental"]).max_tasks is None
+    assert parse_args(["--incremental", "--timer", "--max-tasks", "200"]).max_tasks == 200
+
+
+def test_main_exits_non_zero_only_when_something_was_blocked(capsys):
+    clean = {**_report_stub(), "blocked": []}
+    blocked = {**_report_stub(), "blocked": [{"task_id": "task-2", "revision": 9, "findings": []}]}
+    with patch("tools.muneral_sync.cli._run", new=AsyncMock(return_value=clean)):
+        assert main(["--incremental"]) == 0
+    with patch("tools.muneral_sync.cli._run", new=AsyncMock(return_value=blocked)):
+        assert main(["--incremental"]) == 1
+    printed = capsys.readouterr().out.strip().splitlines()
+    assert json.loads(printed[-1])["blocked"][0]["task_id"] == "task-2"
+
+
+def _report_stub() -> dict:
+    return {"mode": "incremental", "dry_run": False, "tasks": 0, "hashes": []}
