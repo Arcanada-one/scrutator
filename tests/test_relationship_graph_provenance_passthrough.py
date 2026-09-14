@@ -35,14 +35,14 @@ _AUP_PROVENANCE = {
 
 _PAGE = f"""---
 aup_provenance:
-  schema: {_AUP_PROVENANCE['schema']}
-  source_repo: {_AUP_PROVENANCE['source_repo']}
-  source_commit: {_AUP_PROVENANCE['source_commit']}
-  graph_file: {_AUP_PROVENANCE['graph_file']}
-  graph_digest: {_AUP_PROVENANCE['graph_digest']}
-  built_at_utc: "{_AUP_PROVENANCE['built_at_utc']}"
-  node_id: "{_AUP_PROVENANCE['node_id']}"
-  node_type: {_AUP_PROVENANCE['node_type']}
+  schema: {_AUP_PROVENANCE["schema"]}
+  source_repo: {_AUP_PROVENANCE["source_repo"]}
+  source_commit: {_AUP_PROVENANCE["source_commit"]}
+  graph_file: {_AUP_PROVENANCE["graph_file"]}
+  graph_digest: {_AUP_PROVENANCE["graph_digest"]}
+  built_at_utc: "{_AUP_PROVENANCE["built_at_utc"]}"
+  node_id: "{_AUP_PROVENANCE["node_id"]}"
+  node_type: {_AUP_PROVENANCE["node_type"]}
   edge_provenance_summary:
     deterministic: 3
     inferred: 0
