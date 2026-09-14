@@ -30,7 +30,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # arcanada-workspace change to
 # dev-tools/kb-feeder/deploy/authoritative-namespaces.txt — without it
 # check-kb-feeder-grant-drift.sh sees a grant nobody declared.
-FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia")
+#
+# `kc2-store` (2026-09-13, Arcanada 2 plan §8 step 4) is the runtime-only kind, like
+# `self-improvement`: it is fed by its own kb-feeder lane (arcanada-workspace
+# dev-tools/kb-feeder/config/kc2-store/, runner kb-kc2-store-reconcile-run.sh) and is
+# declared with --runtime-only-namespace kc2-store in ALL THREE reconcile runners
+# there (core, self-improvement, kc2-store) in the paired arcanada-workspace change —
+# every lane's run sees the whole feeder token, so every runner must expect it.
+FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia", "kc2-store")
 
 
 def test_appended_feeder_scopes_are_declared_for_the_kb_feeder_consumer():
@@ -59,7 +66,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     environment = compose["services"]["scrutator"]["environment"]
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
-        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia"
+        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
