@@ -68,7 +68,7 @@ def test_service_has_exact_identity_credentials_and_incremental_entrypoint():
     assert "LoadCredential=muneral-db-dsn:/etc/muneral-kb-sync/muneral-db-dsn" in body
     assert "LoadCredential=ltm-writer-token:/etc/muneral-kb-sync/ltm-writer-token" in body
     assert "StateDirectory=muneral-kb-sync/runtime" in body
-    assert "ExecStart=/opt/muneral-kb-sync/current/bin/muneral-kb-sync --incremental --timer" in body
+    assert "ExecStart=/opt/muneral-kb-sync/current/bin/muneral-kb-sync --incremental --timer --max-tasks 200" in body
 
 
 def test_service_hardening_and_retry_are_bounded():

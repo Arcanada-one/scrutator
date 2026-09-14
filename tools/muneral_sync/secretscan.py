@@ -37,7 +37,26 @@ _ENTROPY_THRESHOLD = 4.0
 
 
 class ScanError(RuntimeError):
-    """Outbound payload failed or could not complete the secret-scan gate."""
+    """Outbound payload failed or could not complete the secret-scan gate.
+
+    ``scan`` is ``ScanResult.as_dict()`` (rule, severity, line, span_hash — never cleartext)
+    when the payload was blocked by a critical finding, and ``None`` when the scanner itself
+    could not complete: a blocked payload may be skipped by the caller, a failed scanner never.
+    """
+
+    def __init__(self, message: str, *, scan: dict[str, object] | None = None) -> None:
+        super().__init__(message)
+        self.scan = scan
+
+    @property
+    def blocked(self) -> bool:
+        return self.scan is not None
+
+    @property
+    def findings(self) -> list[dict[str, object]]:
+        if not self.scan:
+            return []
+        return [dict(finding) for finding in self.scan.get("findings", []) if isinstance(finding, dict)]
 
 
 def _sha256(text: str) -> str:

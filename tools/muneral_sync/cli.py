@@ -14,6 +14,7 @@ from typing import Any
 
 from .client import LtmClient
 from .graph import build_ingest_payload
+from .secretscan import ScanError
 from .source import ChangeRow, MuneralSource
 
 FULL_BACKFILL_GO = "FULL-MUNERAL-BACKFILL"
@@ -36,6 +37,7 @@ class Arguments:
     writer_credential: Path
     cursor_file: Path
     endpoint: str
+    max_tasks: int | None = None
 
 
 def parse_args(argv: list[str] | None = None) -> Arguments:
@@ -51,7 +53,14 @@ def parse_args(argv: list[str] | None = None) -> Arguments:
     parser.add_argument("--writer-credential", type=Path, default=Path("/run/credentials/ltm-writer-token"))
     parser.add_argument("--cursor-file", type=Path, default=Path("/var/lib/muneral-kb-sync/cursor.json"))
     parser.add_argument("--endpoint", default="https://kb.arcanada.ai/v1/ltm/ingest")
+    parser.add_argument(
+        "--max-tasks",
+        type=int,
+        help="bound one run to the first N pending changes (task-id order); the rest wait for the next run",
+    )
     parsed = parser.parse_args(argv)
+    if parsed.max_tasks is not None and parsed.max_tasks < 1:
+        parser.error("--max-tasks must be a positive integer")
     mode = RunMode.TASK if parsed.task_id else RunMode.INCREMENTAL if parsed.incremental else RunMode.ALL
     if mode is RunMode.ALL and not parsed.dry_run and parsed.operator_go != FULL_BACKFILL_GO:
         parser.error(f"live --all requires --operator-go {FULL_BACKFILL_GO}")
@@ -68,6 +77,7 @@ def parse_args(argv: list[str] | None = None) -> Arguments:
         writer_credential=parsed.writer_credential,
         cursor_file=parsed.cursor_file,
         endpoint=parsed.endpoint,
+        max_tasks=parsed.max_tasks,
     )
 
 
@@ -129,7 +139,14 @@ def _empty_report(args: Arguments) -> dict[str, Any]:
         "entities_upserted": 0,
         "edges_upserted": 0,
         "idempotent_noops": 0,
+        "blocked": [],
     }
+
+
+def _name_task(exc: BaseException, task_id: str) -> BaseException:
+    """Attach the Muneral task being processed to an error without changing its type or message."""
+    exc.add_note(f"muneral-kb-sync: while syncing Muneral task {task_id}")
+    return exc
 
 
 async def execute(args: Arguments, *, source: Any, client: Any | None) -> dict[str, Any]:
@@ -139,31 +156,48 @@ async def execute(args: Arguments, *, source: Any, client: Any | None) -> dict[s
     edge_keys: set[tuple[str, str, str]] = set()
     project_ids: set[str] = set()
     report = _empty_report(args)
+    if args.max_tasks is not None and len(changes) > args.max_tasks:
+        report["remaining"] = len(changes) - args.max_tasks
+        changes = changes[: args.max_tasks]
     for change in changes:
         report["tasks"] += 1
-        if change.deleted:
-            report["tombstones"] += 1
+        try:
+            if change.deleted:
+                report["tombstones"] += 1
+                if not args.dry_run:
+                    if client is None:
+                        raise RuntimeError("live sync requires an LTM client")
+                    await client.tombstone("muneral", f"muneral://task/{change.task_id}")
+                next_revisions[change.task_id] = change.revision
+                continue
+            aggregate = await source.fetch_task(change.task_id)
+            payload = build_ingest_payload(aggregate)
             if not args.dry_run:
                 if client is None:
                     raise RuntimeError("live sync requires an LTM client")
-                await client.tombstone("muneral", f"muneral://task/{change.task_id}")
-            next_revisions[change.task_id] = change.revision
-            continue
-        aggregate = await source.fetch_task(change.task_id)
-        payload = build_ingest_payload(aggregate)
+                try:
+                    result = await client.ingest(payload)
+                except ScanError as exc:
+                    if not exc.blocked:
+                        raise
+                    # A blocked payload is recorded and skipped: the cursor never advances past it,
+                    # so the task is re-scanned on every run until its source content is clean.
+                    report["blocked"].append(
+                        {"task_id": change.task_id, "revision": change.revision, "findings": exc.findings}
+                    )
+                    continue
+                report["entities_upserted"] += result["entities_upserted"]
+                report["edges_upserted"] += result["edges_upserted"]
+                report["idempotent_noops"] += int(result.get("idempotent_noop", False))
+        except Exception as exc:
+            _name_task(exc, change.task_id)
+            raise
         graph = payload["structured_graph"]
         entity_keys.update((entity["name"], entity["entity_type"]) for entity in graph["entities"])
         edge_keys.update((edge["source"], edge["target"], edge["relation"]) for edge in graph["edges"])
         if payload.get("project"):
             project_ids.add(str(payload["project"]))
         report["hashes"].append(graph["content_hash"])
-        if not args.dry_run:
-            if client is None:
-                raise RuntimeError("live sync requires an LTM client")
-            result = await client.ingest(payload)
-            report["entities_upserted"] += result["entities_upserted"]
-            report["edges_upserted"] += result["edges_upserted"]
-            report["idempotent_noops"] += int(result.get("idempotent_noop", False))
         next_revisions[change.task_id] = change.revision
     report["projects"] = len(project_ids)
     report["entities"] = len(entity_keys)
@@ -190,7 +224,9 @@ async def _run(args: Arguments) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     report = asyncio.run(_run(parse_args(argv)))
     print(json.dumps(report, sort_keys=True, separators=(",", ":")))
-    return 0
+    # Every clean task synced and the cursor advanced, but a blocked task is an unresolved
+    # condition at the source: the run is reported as failed until nothing is blocked.
+    return 1 if report["blocked"] else 0
 
 
 if __name__ == "__main__":
