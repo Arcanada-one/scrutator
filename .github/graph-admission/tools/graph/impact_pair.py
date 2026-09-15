@@ -226,7 +226,37 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
         for kind in kinds:
             required.update(matrix["edge_types"].get(kind, {}).get("mandatory", []))
         required = {v for v in required if node["type"] in matrix["verifiers"][v]["applies_to_nodes"]}
-        if node["type"] == "code_unit" and Path(node.get("path", "")).suffix not in impact.CODE_EXTS:
+        # AUP-GRAPH-009 polyglot2, second site. This function recomputes the matrix minimum
+        # independently of verify.py, so the discharge has to exist in BOTH or the gate refuses a
+        # receipt the producer issued correctly: measured on scrutator, verify.py dropped the
+        # obligation and this one did not, giving `required_by_entity omits mandatory base/head
+        # verifier obligations`. `type_check` applies to code_unit, deployable_unit and route; a node
+        # that is not TypeScript can never discharge it, whichever of the three it is.
+        if node["type"] in ("code_unit", "route") and Path(node.get("path", "")).suffix not in impact.CODE_EXTS:
+            required.discard("type_check")
+        if node["type"] == "deployable_unit" and not _deployable_has_ts(node.get("path", ""), before, after):
             required.discard("type_check")
         result[eid] = sorted(required)
     return result
+
+
+def _deployable_has_ts(dep_path: str, before: impact.GraphIndex, after: impact.GraphIndex) -> bool:
+    """Does this deployable contain TypeScript, as the graph sees it?
+
+    verify.py reads the tree; here only the two graph indexes are in hand, so membership is decided
+    by the nodes that live under the deployable's path. Vendored copies are excluded for the same
+    reason as there — a caller does not type-check somebody else's shipped code, and
+    `.github/graph-admission/**` is a vendored copy of this very tool.
+    """
+    prefix = "" if dep_path.rstrip("/") in ("", ".") else dep_path.rstrip("/") + "/"
+    for idx in (before, after):
+        for n in idx.nodes.values():
+            p = n.get("path") or ""
+            if not p.startswith(prefix):
+                continue
+            rel = p[len(prefix):]
+            if rel.startswith(".github/graph-admission/") or "node_modules/" in rel or rel.startswith("vendor/"):
+                continue
+            if Path(rel).suffix in impact.CODE_EXTS:
+                return True
+    return False

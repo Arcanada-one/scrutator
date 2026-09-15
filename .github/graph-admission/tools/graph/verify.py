@@ -822,7 +822,23 @@ class Verify:
                 for e in self.head_fwd.get(ent["id"], []) + [x for x in self.idx.doc["edges"] if x["from"] == ent["id"]]:
                     req |= set(m["edge_types"].get(e["type"], {}).get("mandatory", []))
             req = {v for v in req if ntype in m["verifiers"][v]["applies_to_nodes"]}
-            if ntype == "code_unit" and not self.is_ts(ent["node"].get("path", "")):
+            # AUP-GRAPH-009 polyglot2. `type_check` applies to three node types (code_unit,
+            # deployable_unit, route) but the "this file is not TypeScript" discharge existed for ONE
+            # of them. The same fact was answered two different ways: a non-TS code_unit had the
+            # requirement dropped, while a deployable unit kept it and could only ever record
+            # `no tsconfig for deployable`, and a Python route recorded `type_check produced no
+            # verdict`. Both are permanent: nothing an author can do in a Python or Rust repository
+            # produces a tsc verdict, so the change is pinned at paused_safe for good — which is
+            # exactly the pressure that makes someone substitute a `kind: other` verifier, and the
+            # gate rightly refuses that. Measured on Arcanada-one/scrutator (1.78MB Python, zero TS):
+            # deployable_unit:. not_measured, admission paused_safe, permanently.
+            #
+            # A MISSING tsconfig is NOT the same fact and keeps its not_measured: such a deployable
+            # holds TypeScript the compiler was never pointed at, which is a real coverage gap. So
+            # the discriminator is the tree, never the absence of a config file.
+            if ntype in ("code_unit", "route") and not self.is_ts(ent["node"].get("path", "")):
+                req.discard("type_check")
+            if ntype == "deployable_unit" and not self.deployable_has_ts(ent["node"].get("path", "")):
                 req.discard("type_check")
             for s in self.selected:
                 if ntype in m["verifiers"][s]["applies_to_nodes"]:
@@ -836,6 +852,27 @@ class Verify:
     @staticmethod
     def is_ts(path: str) -> bool:
         return os.path.splitext(path)[1] in CODE_EXTS or path.endswith((".js", ".mjs", ".cjs", ".jsx"))
+
+    def deployable_has_ts(self, dep_path: str) -> bool:
+        """Does this deployable actually contain TypeScript the compiler could check?
+
+        Read from the HEAD tree, not from the presence of a tsconfig: a config can be absent from a
+        TypeScript deployable (a real coverage gap, which must stay not_measured) and a config can
+        never appear in a tree that has no TypeScript at all (not applicable). Only the tree tells
+        the two apart. node_modules and vendored bundles are excluded — a caller does not type-check
+        somebody else's shipped code, and `.github/graph-admission/**` in particular is a vendored
+        copy of this very tool.
+        """
+        prefix = "" if dep_path.rstrip("/") in ("", ".") else dep_path.rstrip("/") + "/"
+        for p in self.tree_head.paths:
+            if not p.startswith(prefix):
+                continue
+            rel = p[len(prefix):]
+            if rel.startswith(".github/graph-admission/") or "node_modules/" in rel or rel.startswith("vendor/"):
+                continue
+            if os.path.splitext(rel)[1] in CODE_EXTS:
+                return True
+        return False
 
     def needing(self, verifier: str) -> list[str]:
         return sorted(e for e, ent in self.entities.items() if verifier in ent["required"] and verifier not in self.disabled)
@@ -1720,6 +1757,11 @@ FAULTS = [
      "edits": [("apps/api/src/tasks/tasks.controller.ts", "append", "// route touched by the canary battery\n", None)]},
     {"id": "S00-clean", "verifier": None, "entity": None, "what": "comment-only edit of tasks.service.ts: nothing may fail",
      "edits": [("apps/api/src/tasks/tasks.service.ts", "append", "// touched by verify0 selftest (no semantic change)\n", None)]},
+    {"id": "S01-clean-python", "verifier": None, "entity": None,
+     "what": "comment-only edit of a Python unit: its deployable enters the impact set, and AUP-GRAPH-009 "
+             "polyglot2 says a deployable holding no TypeScript carries no type_check obligation — without "
+             "that rule this fixture is pinned at not_measured 'no tsconfig for deployable' forever",
+     "edits": [("services/report/src/report/metrics.py", "append", "# touched by verify0 selftest (no semantic change)\n", None)]},
     {"id": "F01-type-check-caller", "verifier": "type_check", "entity": "code_unit:apps/api/src/tasks/tasks.controller.ts",
      "what": "service method renamed (findOne → findById): the caller no longer compiles, the changed unit itself does",
      "edits": [("apps/api/src/tasks/tasks.service.ts", "replace", "async findOne(taskId: string)", "async findById(taskId: string)")]},
@@ -1897,17 +1939,47 @@ def selftest(a) -> int:
         if fault["verifier"] is None:
             check(f"{fid}: no entity failed", not failed, failed={k: v["reason"][:100] for k, v in failed.items()})
             nm = {v["entity"]: v["reason"][:80] for v in rec["verdicts"] if v["verdict"] == "not_measured"}
+            # `RC-02 not evaluable` joins the list for the same reason the others are on it: the
+            # verifier reports that its own precondition is absent, not that the entity went
+            # unchecked. RC-02 asks whether a controller is registered under the NestJS root module,
+            # and a Python service has no src/main.ts to read — the check is inapplicable, and saying
+            # so is more honest than a verdict. Distinct from polyglot2 above, which removes an
+            # obligation that can never be discharged; this one keeps not_measured and merely stops
+            # the selftest from reading an inapplicable verifier as an omission.
             allowed = all(e.startswith(("work_item:", "receipt:")) or "inferred edge" in r or "does not include" in r or "unavailable" in r
-                          or "not run" in r or "INFERRED_BOUNDARY_WITHOUT_CANARY" in r for e, r in nm.items())
+                          or "not run" in r or "INFERRED_BOUNDARY_WITHOUT_CANARY" in r or "not evaluable" in r for e, r in nm.items())
             check(f"{fid}: not_measured only for work items / receipts / inferred boundary / canary-required entities / uncovered spec ({len(nm)})",
                   allowed, not_measured=nm)
             check(f"{fid}: admission is paused_safe (not_measured blocks unqualified admission), never admitted", rec["admission"]["verdict"] == "paused_safe")
             v_serv = by.get("code_unit:apps/api/src/tasks/tasks.service.ts", {})
-            check(f"{fid}: the changed unit is verified by type_check + fitness_rules + contract_diff (its required set: no config / model edge of its own)",
-                  v_serv.get("verdict") == "verified" and {"v-fitness", "v-type-check-apps-api-tsconfig", "v-contract-diff"} <= set(v_serv.get("verifier_ids", [])),
-                  got=v_serv.get("verifier_ids"), verdict=v_serv.get("verdict"), reason=v_serv.get("reason", "")[:200])
-            check(f"{fid}: pre-existing findings are frozen, not failed (reuse marker @arcanada/canonical-json, undeclared env keys)",
-                  "frozen" in v_serv.get("reason", ""), reason=v_serv.get("reason", "")[:300])
+            if v_serv:  # asserted where the TypeScript unit is in the impact set; S01 edits a Python one
+                check(f"{fid}: the changed unit is verified by type_check + fitness_rules + contract_diff (its required set: no config / model edge of its own)",
+                      v_serv.get("verdict") == "verified" and {"v-fitness", "v-type-check-apps-api-tsconfig", "v-contract-diff"} <= set(v_serv.get("verifier_ids", [])),
+                      got=v_serv.get("verifier_ids"), verdict=v_serv.get("verdict"), reason=v_serv.get("reason", "")[:200])
+                check(f"{fid}: pre-existing findings are frozen, not failed (reuse marker @arcanada/canonical-json, undeclared env keys)",
+                      "frozen" in v_serv.get("reason", ""), reason=v_serv.get("reason", "")[:300])
+            # AUP-GRAPH-009 polyglot2: a deployable holding no TypeScript must not carry a type_check
+            # obligation it can never discharge. The fixture's Rust and Python deployables are the
+            # subject; apps/api is the control, and it must KEEP the requirement — a rule that drops
+            # the obligation everywhere would pass the first half of this check and is caught by the
+            # second.
+            non_ts = {e: by[e] for e in ("deployable_unit:crates/greeter-core", "deployable_unit:crates/greeter-cli",
+                                         "deployable_unit:services/report") if e in by}
+            # Assert on the OBLIGATION, not on one phrasing of its failure. An earlier version of
+            # this check looked for "no tsconfig for deployable" and a mutant that removed the rule
+            # SURVIVED it: without the discharge the reason reads "required verifier type_check
+            # produced no verdict" instead, and a string match on the other wording stayed green.
+            bad = {e: v.get("reason", "")[:90] for e, v in non_ts.items()
+                   if "type_check" in v.get("reason", "") or v.get("verdict") == "not_measured"}
+            ts_dep = by.get("deployable_unit:apps/api", {})
+            # The control is asserted only where it is in scope. An assertion that cannot fail on a
+            # fixture proves nothing about it, and `0 Rust/Python` would read as a pass — so the
+            # subject count is printed and S01 is the fixture that makes it non-zero.
+            ctl_ok = ("v-type-check-apps-api-tsconfig" in set(ts_dep.get("verifier_ids", []))) if ts_dep else True
+            check(f"{fid}: {len(non_ts)} non-TypeScript deployable(s) carry no type_check obligation"
+                  + (", TypeScript control still does" if ts_dep else " (TS control out of scope here)"),
+                  not bad and ctl_ok,
+                  non_ts_blocked_on_tsconfig=bad, ts_deployable_verifiers=ts_dep.get("verifier_ids"))
             continue
         if fault["verifier"] == "canary":
             legacy = by.get(fault["entity"], {})
