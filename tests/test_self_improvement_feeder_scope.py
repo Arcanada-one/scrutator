@@ -37,7 +37,21 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # declared with --runtime-only-namespace kc2-store in ALL THREE reconcile runners
 # there (core, self-improvement, kc2-store) in the paired arcanada-workspace change —
 # every lane's run sees the whole feeder token, so every runner must expect it.
-FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia", "kc2-store")
+# `governance` (2026-09-19) is the PROJECTED-CORPUS kind, like `talomnia` and
+# unlike `kc2-store`: kb_feeder/taxonomy.py routes governance/ to its own
+# namespace, so the projection itself declares it in .authoritative-namespaces
+# and no --runtime-only-namespace is needed. Verified before appending it here:
+# `governance` appears in /home/dev/.kb-feeder/export/.authoritative-namespaces
+# while `skills` and `self-improvement` do not — which is exactly the
+# distinction the 2026-08-02 outage above turns on.
+#
+# Why it was appended at all: KB-024 measured that the program of record
+# (Arcanada-one/arcanada-universal-program, 643 .md including every DEC-AUP
+# decision) reaches the knowledge base through nothing, and KB-023 measured
+# that the governance material which DOES arrive resolved to `misc`. Ingestion
+# then halted on missing_namespace_grants=governance — the feeder had the
+# namespace and not the write scope.
+FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia", "kc2-store", "governance")
 
 
 def test_appended_feeder_scopes_are_declared_for_the_kb_feeder_consumer():
@@ -66,7 +80,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     environment = compose["services"]["scrutator"]["environment"]
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
-        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store"
+        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
