@@ -28,7 +28,7 @@ services:
       # arcanada-workspace (dev-tools/kb-feeder/config/kc2-store/). Runtime-only
       # kind: every reconcile runner there declares --runtime-only-namespace
       # kc2-store in the paired change, so this append halts no batch.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store"
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
