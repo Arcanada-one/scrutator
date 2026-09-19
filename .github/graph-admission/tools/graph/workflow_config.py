@@ -162,6 +162,20 @@ def validate(raw):
                 if 'secrets' in job and not isinstance(job['secrets'], (str, dict)):
                     raise ValueError('unsupported secrets shape')
             else:
+                # MEASURED 2026-09-19. `environment:` made every change to a
+                # workflow using it REFUSED — reproduced on the already-merged
+                # b4aadf23, so the file could not be edited at all. It is
+                # ordinary GitHub syntax that this bounded checker does not
+                # cover, which is exactly what OutOfScope is for: reporting it
+                # as `failed` claims the workflow is malformed when the truth
+                # is that nothing was measured about the deployment
+                # environment, its protection rules or its reviewers.
+                #
+                # It is raised OutOfScope rather than added to the allowed set,
+                # because allowing it would report `verified` — a claim that
+                # the field was checked, when nothing about it is.
+                if 'environment' in job:
+                    raise OutOfScope('job-level `environment` outside this bounded checker')
                 mapping(job, 'name needs if runs-on permissions env defaults concurrency outputs '
                              'steps timeout-minutes continue-on-error services strategy')
             common(job)
