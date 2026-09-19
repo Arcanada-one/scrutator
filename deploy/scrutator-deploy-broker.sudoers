@@ -13,4 +13,19 @@
 # this line, or adding a second entry, re-opens the escalation it exists to
 # close.
 Cmnd_Alias SCRUTATOR_DEPLOY = /usr/local/sbin/scrutator-deploy-broker deploy *, /usr/local/sbin/scrutator-deploy-broker status
+# MEASURED 2026-09-19. NOSETENV alone made the deploy impossible: the
+# transaction refused with "deploy-surface change requires an externally
+# reviewed exact target SHA" while the CI step had the value. sudo was
+# dropping it.
+#
+# The attestation is deliberately an ENVIRONMENT variable, not an argument:
+# it comes from the repository/environment variable a reviewer sets, so it
+# cannot be supplied by whoever makes the call. Passing it as an argument
+# would defeat what it attests.
+#
+# NOSETENV stays — it is what stops the caller shipping arbitrary environment
+# into a root process — and exactly three variables are named instead. The
+# broker validates each: two against a 40-hex pattern, one against a closed
+# set of values.
+Defaults!SCRUTATOR_DEPLOY env_keep += "SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED GITHUB_EVENT_NAME"
 ci-runner ALL=(root) NOPASSWD:NOSETENV: SCRUTATOR_DEPLOY
