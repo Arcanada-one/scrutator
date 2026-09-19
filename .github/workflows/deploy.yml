@@ -84,13 +84,13 @@ jobs:
           SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA: ${{ vars.SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA }}
           SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: ${{ vars.SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED }}
         run: |
-          # MEASURED 2026-09-19 (KB-028). This called the transaction script
-          # directly out of the checkout, and after the INFRA-0417 move it
-          # failed with "detected dubious ownership in repository at
-          # /srv/apps/scrutator": the checkout is root:root and this runner is
-          # ci-runner. The authority the deploy needs did not migrate with the
-          # service — /etc/sudoers.d had a rule for five neighbouring services
-          # and none for scrutator.
+          # MEASURED 2026-09-19. This called the transaction script directly
+          # out of the checkout. After the service moved hosts that failed with
+          # "detected dubious ownership in repository at /srv/apps/scrutator":
+          # the production checkout is root:root and this runner is ci-runner.
+          # The authority the deploy needs did not migrate with the service —
+          # sudoers carried a deploy rule for five neighbouring services and
+          # none for this one.
           #
           # It now goes through the broker, which changes two things. The call
           # carries authority via a sudoers rule naming that one path. And the

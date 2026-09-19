@@ -93,7 +93,14 @@ def test_deploy_runs_state_preflight_before_compose():
     candidate = transaction[transaction.index("deploy_candidate()") : transaction.index("rollback_transaction()")]
     script = (REPO_ROOT / "scripts" / "deploy.sh").read_text()
 
-    assert "deploy/scrutator-deploy-transaction.sh" in deploy
+    # MEASURED 2026-09-19 (KB-028). The step used to run the transaction
+    # script straight out of the checkout; after the INFRA-0417 move that
+    # failed with "detected dubious ownership" because the production checkout
+    # is root:root and the runner is ci-runner. It now goes through the broker,
+    # which runs the ROOT-OWNED copy of the same transaction — so what this
+    # test protects is unchanged (the deploy runs the transaction, not compose
+    # directly); only the path to it moved.
+    assert "scrutator-deploy-broker deploy" in deploy
     assert candidate.index("deploy/ltm-reflect-state-preflight.sh") < candidate.index("compose_project")
     assert script.index("deploy/ltm-reflect-state-preflight.sh") < script.index("docker compose up")
 
