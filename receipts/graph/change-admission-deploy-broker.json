@@ -1,0 +1,204 @@
+{
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption \u21d2 refused; not_measured without exemption \u21d2 paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "verdict": "admitted"
+ },
+ "captured_at_utc": "2026-09-19T00:06:05Z",
+ "change_set": {
+  "base": "bf2f2fd07d26a0068b85f5986c2c8c992babe3d1",
+  "files": [
+   {
+    "kind": "doc",
+    "node_id": "document:deploy/README-broker.md",
+    "node_ids": [
+     "document:deploy/README-broker.md"
+    ],
+    "path": "deploy/README-broker.md",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "new": true,
+    "path": "deploy/scrutator-deploy-broker",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "new": true,
+    "path": "deploy/scrutator-deploy-broker.sudoers",
+    "status": "A"
+   }
+  ],
+  "head": "f1a016c2f71071b5cb3c3bcb6c6ad29bb3c86df3",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "empty_impact_explanation": {
+  "graph_metadata": {
+   "changed_node_known_to_graph": false,
+   "edge_types": "all",
+   "extractors": [
+    "imports",
+    "routes",
+    "contracts",
+    "prisma",
+    "config",
+    "reuse",
+    "di",
+    "queue",
+    "tests",
+    "http_client",
+    "deployables",
+    "docs",
+    "work_items",
+    "receipts",
+    "rust",
+    "python"
+   ],
+   "language_coverage": [
+    "typescript",
+    "javascript",
+    "prisma",
+    "markdown",
+    "json-receipts",
+    "rust",
+    "python"
+   ],
+   "max_depth": 3,
+   "per_file": [
+    {
+     "kind": "other",
+     "path": "deploy/scrutator-deploy-broker",
+     "why": "new file (status A): no consumer can exist in the graph before it is committed"
+    },
+    {
+     "kind": "other",
+     "path": "deploy/scrutator-deploy-broker.sudoers",
+     "why": "new file (status A): no consumer can exist in the graph before it is committed"
+    }
+   ],
+   "reverse_edges_of_changed_nodes": 0
+  },
+  "reason": "AUTHOR-CONFIRMED, replacing the generated draft. The impact set is empty and that is the correct prediction, for a reason the graph cannot see.\n\nAll three files are new and unreferenced BY DESIGN, not incidentally. deploy/scrutator-deploy-broker is not called from this repository at all: it is installed to /usr/local/sbin on arcana-prd by an operator, and invoked there through the sudoers rule shipped beside it. That is the point of the gh-triage precedent it follows \u2014 a deploy script taken from the checkout would let any change to it take effect with the same push, so the copy here is the source of truth for review and reinstallation, never the artefact that runs.\n\nConsequently no edge from this change can reach running code until a human installs it, and a graph edge to it would be the defect rather than the evidence: if any workflow in this repository referenced deploy/scrutator-deploy-broker, the boundary would already be broken.\n\nWhat the change does NOT touch, checked rather than assumed: deploy/scrutator-deploy-transaction.sh is unmodified, so the deploy's behaviour \u2014 surface-SHA verification, image build, health gate, rollback of source/image/env/timer state \u2014 is byte-identical to what is already reviewed and already running. The broker only supplies the authority to invoke it.\n\nVerifier run: v-doc-reference exit 0. The sudoers file and the README are documentation surfaces and were verified as such."
+ },
+ "exemptions": [],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:30625e2357323ff2ad3f019cc808891c8f63ea67341e0e03cc3e8d8040f9ad00",
+  "path": "/home/dev/aup/aup-broker/receipts/graph/change-admission-deploy-broker.d/graph-bf2f2fd07d26.json",
+  "source_commit": "bf2f2fd07d26a0068b85f5986c2c8c992babe3d1"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:bd91deeb9b053bfe357f752ea84da21acf7bdb645052e5897674ad6688d41921",
+  "path": "/home/dev/aup/aup-broker/receipts/graph/change-admission-deploy-broker.d/graph-head-f1a016c2f710.json",
+  "source_commit": "f1a016c2f71071b5cb3c3bcb6c6ad29bb3c86df3",
+  "staleness": {
+   "checked_at_utc": "2026-09-19T00:06:06Z",
+   "checked_nodes": 238,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 0
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = \u22c3 edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i\u2026",
+  "profile: (auto-detected); baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "head tree f1a016c2f710 exported with git archive into /tmp/arcana-verify/export-f1a016c2f710 (node_modules linked from the repository for []; workspace packages built: none); the repository was not written"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260919T000605Z-f1a016c2",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/aup-broker"
+ },
+ "revision_selection": {
+  "base": [],
+  "head": [
+   "document:deploy/README-broker.md"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-19T00:06:06Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "tree": {
+  "commit": "f1a016c2f71071b5cb3c3bcb6c6ad29bb3c86df3",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "document:deploy/README-broker.md",
+   "reason": "v-doc-reference: 0 reference(s) resolve at head",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-doc-reference"
+   ]
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
+   "duration_s": 0.0,
+   "entities": [
+    "document:deploy/README-broker.md"
+   ],
+   "exit_code": 0,
+   "id": "v-doc-reference",
+   "kind": "doc_reference",
+   "output_ref": "/home/dev/aup/aup-broker/receipts/graph/change-admission-deploy-broker.d/v-doc-reference.txt",
+   "started_at_utc": "2026-09-19T00:06:07Z",
+   "summary": "1 document(s), 0 failed"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": {
+     "code": "EMPTY_IMPACT_REQUIRES_EXPLANATION",
+     "revision": "base",
+     "text": "non-documentation change with an empty impact set: a prediction that must be explained in the receipt (empty_impact_explanation), never an approval"
+    }
+   },
+   {
+    "code": {
+     "code": "EMPTY_IMPACT_REQUIRES_EXPLANATION",
+     "revision": "head",
+     "text": "non-documentation change with an empty impact set: a prediction that must be explained in the receipt (empty_impact_explanation), never an approval"
+    }
+   }
+  ],
+  "required_by_entity": {
+   "document:deploy/README-broker.md": [
+    "doc_reference"
+   ]
+  },
+  "seconds": {
+   "prepare": 0.57,
+   "total": 2.11,
+   "verifiers": 0.0
+  }
+ }
+}

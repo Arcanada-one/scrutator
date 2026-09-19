@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# scrutator-deploy-broker — root-owned entry point for the Scrutator deploy.
+#
+# WHY THIS EXISTS (KB-028, measured 2026-09-19). Scrutator moved to arcana-prd
+# in the INFRA-0417 consolidation. Its checkout at /srv/apps/scrutator is
+# root:root, as every service checkout on this host is, and the runner that now
+# serves the deploy runs as ci-runner. The deploy transaction is not a reader:
+# it runs `git reset --hard` on the production tree and stops and starts the KB
+# timers. So the deploy failed with "detected dubious ownership", and
+# /etc/sudoers.d — which carries a deploy rule for auth-arcana, control-arcana,
+# arcanada-support, the compose broker and talomnia — had no rule for scrutator
+# at all. The service migrated; its authority did not.
+#
+# The fix the error message suggests, `git config --global --add safe.directory`
+# for ci-runner, is wrong twice: it does not grant write access to root-owned
+# files, and insofar as it worked it would declare a production checkout
+# writable by the CI account because a message suggested a command.
+#
+# WHAT THIS IS NOT. It is not a second implementation of the deploy. The
+# transaction script already exists, is already reviewed, and already does the
+# hard parts (surface-SHA verification, image build, health gate, exact
+# rollback of source/image/env/timer state). This broker only makes it callable
+# with authority, and the sudoers rule names this path and nothing else.
+#
+# THE SCRIPT IS NOT TAKEN FROM THE CHECKOUT the workflow provides. It is run
+# from /srv/apps/scrutator/deploy/, which is root-owned. gh-triage in
+# arcanada-workspace records why: "a deploy script that ships itself would let
+# any change to it take effect with the same push". A change to the transaction
+# script therefore reaches production the same way any other change does —
+# through a deploy of the previously reviewed script — and never by being the
+# change that runs itself.
+set -euo pipefail
+IFS=$'\n\t'
+
+readonly PROJECT_ROOT=/srv/apps/scrutator
+readonly TRANSACTION="$PROJECT_ROOT/deploy/scrutator-deploy-transaction.sh"
+readonly SHA_RE='^[0-9a-f]{40}$'
+
+die() { printf 'scrutator-deploy-broker: %s\n' "$1" >&2; exit 2; }
+
+[ "$(id -u)" -eq 0 ] || die "must run as root (invoke through sudo)"
+
+case "${1:-}" in
+  deploy) ;;
+  status)
+    # Read-only: what is running, for the drift question KB-025 is about.
+    git -C "$PROJECT_ROOT" rev-parse HEAD
+    exit 0
+    ;;
+  *) die "usage: scrutator-deploy-broker deploy <40-hex-sha> | status" ;;
+esac
+shift
+
+target="${1:-}"
+[[ "$target" =~ $SHA_RE ]] || die "target sha must be 40 lowercase hex characters"
+shift || true
+[ "$#" -eq 0 ] || die "unexpected extra arguments: $*"
+
+# The transaction must be the root-owned one, not something dropped in by a
+# writable path. Checked rather than assumed, because a broker that runs
+# whatever sits at a path is not a boundary.
+[ -f "$TRANSACTION" ] || die "transaction script missing: $TRANSACTION"
+owner="$(stat -c '%U:%G' "$TRANSACTION")"
+[ "$owner" = "root:root" ] || die "transaction script is $owner, expected root:root"
+[ -x "$TRANSACTION" ] || die "transaction script is not executable"
+
+# Only the variables the transaction documents are passed through, and each is
+# validated here rather than trusted. An unvalidated pass-through is how a
+# broker becomes a shell.
+env_args=()
+if [ -n "${SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA:-}" ]; then
+  [[ "$SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA" =~ $SHA_RE ]] \
+    || die "SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA must be 40 lowercase hex characters"
+  env_args+=("SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA=$SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA")
+fi
+if [ -n "${SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED:-}" ]; then
+  case "$SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED" in
+    true|false) env_args+=("SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED=$SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED") ;;
+    *) die "SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED must be true or false" ;;
+  esac
+fi
+if [ -n "${GITHUB_EVENT_NAME:-}" ]; then
+  case "$GITHUB_EVENT_NAME" in
+    push|workflow_dispatch) env_args+=("GITHUB_EVENT_NAME=$GITHUB_EVENT_NAME") ;;
+    *) die "GITHUB_EVENT_NAME must be push or workflow_dispatch" ;;
+  esac
+fi
+
+cd "$PROJECT_ROOT"
+exec env -i \
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  HOME=/root \
+  "${env_args[@]}" \
+  "$TRANSACTION" --target-sha "$target"
