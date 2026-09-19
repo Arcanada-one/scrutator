@@ -99,8 +99,16 @@ validate_repository() {
     local branch remote_sha
     [[ -f .env && ! -L .env ]] || die ".env is missing or unsafe"
     [[ -z "$(git status --porcelain)" ]] || die "deployment checkout is dirty"
-    branch="$(git symbolic-ref --quiet --short HEAD)"
-    [[ "$branch" == "main" ]] || die "deployment checkout must be on main"
+    # MEASURED 2026-09-19. Without `|| true` this line KILLED the script under
+    # `set -e`: in a detached HEAD `git symbolic-ref` exits non-zero, so the
+    # deploy died here — one line before the message that explains why — and
+    # reported exit 1 with nothing on stdout or stderr. The diagnostic below
+    # was unreachable in exactly the case it was written for.
+    #
+    # A non-zero exit here is an ANSWER ("there is no branch"), not a failure,
+    # so it is captured and judged rather than allowed to abort.
+    branch="$(git symbolic-ref --quiet --short HEAD || true)"
+    [[ "$branch" == "main" ]] || die "deployment checkout must be on main (HEAD is ${branch:-detached at $(git rev-parse --short HEAD)})"
     PREVIOUS_SHA="$(git rev-parse HEAD)"
     [[ "$PREVIOUS_SHA" =~ ^[0-9a-f]{40}$ ]] || die "current source SHA is invalid"
     git fetch origin main
