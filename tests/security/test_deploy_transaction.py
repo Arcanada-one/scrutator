@@ -759,10 +759,16 @@ def test_deploy_workflow_uses_trusted_semantic_gate_and_restricted_runner_group(
     assert "docker compose up -d --build" not in workflow
     assert "git pull --ff-only" not in workflow
     assert "systemctl stop" not in workflow
+    # MEASURED 2026-09-19. The property is that the deploy targets THE COMMIT
+    # THAT TRIGGERED IT and never "whatever is checked out" — the assertion
+    # used to check it through the transaction's own --target-sha flag. The
+    # broker takes the same commit as its argument and passes it to the
+    # transaction as --target-sha, so the property holds; it is now asserted
+    # where the workflow actually states it.
     assert (
         textwrap.dedent(
             """
-        --target-sha "${GITHUB_SHA}"
+        sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
         """
         ).strip()
         in workflow
