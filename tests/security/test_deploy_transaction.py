@@ -748,14 +748,27 @@ def test_deploy_workflow_uses_trusted_semantic_gate_and_restricted_runner_group(
 
     assert "permissions:\n  contents: read" in workflow
     assert "actions/checkout@" not in workflow or "actions/checkout@v4" not in workflow
-    assert "deploy/scrutator-deploy-transaction.sh" in workflow
+    # MEASURED 2026-09-19. The step used to run the transaction script straight
+    # out of the checkout; after the service moved hosts that failed with
+    # "detected dubious ownership" — the production checkout is root:root and
+    # the runner is ci-runner. The broker runs the ROOT-OWNED copy of the same
+    # transaction, so what this assertion protects is unchanged (the deploy
+    # goes through the transaction, never straight to compose or systemctl);
+    # only the path to it moved.
+    assert "scrutator-deploy-broker deploy" in workflow
     assert "docker compose up -d --build" not in workflow
     assert "git pull --ff-only" not in workflow
     assert "systemctl stop" not in workflow
+    # MEASURED 2026-09-19. The property is that the deploy targets THE COMMIT
+    # THAT TRIGGERED IT and never "whatever is checked out" — the assertion
+    # used to check it through the transaction's own --target-sha flag. The
+    # broker takes the same commit as its argument and passes it to the
+    # transaction as --target-sha, so the property holds; it is now asserted
+    # where the workflow actually states it.
     assert (
         textwrap.dedent(
             """
-        --target-sha "${GITHUB_SHA}"
+        sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
         """
         ).strip()
         in workflow

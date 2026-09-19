@@ -84,5 +84,20 @@ jobs:
           SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA: ${{ vars.SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA }}
           SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: ${{ vars.SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED }}
         run: |
-          deploy/scrutator-deploy-transaction.sh \
-            --target-sha "${GITHUB_SHA}"
+          # MEASURED 2026-09-19. This called the transaction script directly
+          # out of the checkout. After the service moved hosts that failed with
+          # "detected dubious ownership in repository at /srv/apps/scrutator":
+          # the production checkout is root:root and this runner is ci-runner.
+          # The authority the deploy needs did not migrate with the service —
+          # sudoers carried a deploy rule for five neighbouring services and
+          # none for this one.
+          #
+          # It now goes through the broker, which changes two things. The call
+          # carries authority via a sudoers rule naming that one path. And the
+          # script that runs is the ROOT-OWNED copy under /srv/apps/scrutator,
+          # not the one this checkout brought: a deploy script taken from the
+          # checkout would let any change to it take effect with the same push
+          # (the gh-triage precedent). A change to the transaction therefore
+          # reaches production through an ordinary deploy of the previously
+          # reviewed copy.
+          sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
