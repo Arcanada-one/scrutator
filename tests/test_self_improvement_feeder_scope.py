@@ -51,7 +51,34 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # that the governance material which DOES arrive resolved to `misc`. Ingestion
 # then halted on missing_namespace_grants=governance — the feeder had the
 # namespace and not the write scope.
-FEEDER_APPENDED_SCOPES = ("self-improvement", "arcanada-design-system", "skills", "talomnia", "kc2-store", "governance")
+# The five Datarim corpus scopes (2026-09-22) are the RUNTIME-ONLY kind, like `kc2-store` and
+# `self-improvement`: they are produced by the kb-feeder `history-datarim` lane
+# (arcanada-workspace dev-tools/kb-feeder/config/history-datarim/, runner
+# kb-history-datarim-reconcile-run.sh) rather than by the core projection, so each one needs a
+# --runtime-only-namespace declaration in EVERY reconcile runner there — core, self-improvement,
+# kc2-store, program and history-datarim. All five runners are updated in the paired
+# arcanada-workspace change (PR #1221); every run sees the whole feeder token, so a runner that
+# does not expect a scope halts its batch, which is precisely the 2026-08-02 outage above.
+#
+# Why five and not one `history-datarim`: measured, only ~20-27% of that corpus is about the
+# Datarim framework — the rest is the history of the Arcanada ecosystem that happened to be
+# recorded in it. The cut is by shelf life of the claim: `decisions` (1,323), `lessons` (802),
+# `research` (169), `history-datarim` (619). `unreviewed` is the third verdict for a document no
+# rule reaches; it is empty today and declared anyway, because a document that acquires it later
+# would otherwise be refused at write time and disappear silently.
+FEEDER_APPENDED_SCOPES = (
+    "self-improvement",
+    "arcanada-design-system",
+    "skills",
+    "talomnia",
+    "kc2-store",
+    "governance",
+    "decisions",
+    "lessons",
+    "research",
+    "history-datarim",
+    "unreviewed",
+)
 
 
 def test_appended_feeder_scopes_are_declared_for_the_kb_feeder_consumer():
@@ -80,7 +107,8 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     environment = compose["services"]["scrutator"]["environment"]
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
-        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance"
+        "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,"
+        "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment

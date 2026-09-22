@@ -1,0 +1,277 @@
+{
+ "admission": {
+  "rule": "admitted_with_exemptions requires every non-verified entity to carry a valid exemption (owner + expiry); exemptions are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-09-22T10:32:08Z",
+ "change_set": {
+  "base": "f6a4c57640cfc35e00d4edaf8e0e4df881f12abb",
+  "files": [
+   {
+    "kind": "config",
+    "path": "docker-compose.yml",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_self_improvement_feeder_scope.py",
+    "node_ids": [
+     "code_unit:tests/test_self_improvement_feeder_scope.py"
+    ],
+    "path": "tests/test_self_improvement_feeder_scope.py",
+    "status": "M"
+   }
+  ],
+  "head": "203c53ec438ed0caaa17539ee7dfb953adf21cc9",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "entity": "receipt:receipts/graph/change-admission-governance-scope.json",
+   "expires_at_utc": "2026-12-31T00:00:00Z",
+   "owner": "KBSYNC executor (Datarim teardown, arcanada-workspace#1221)",
+   "reason": "Historical receipt, superseded by this one. It enters the impact set through a `verifies` edge onto tests/test_self_improvement_feeder_scope.py, the file this change edits, so its assertion about that file is now stale. It cannot be re-verified: its required-verifier set is empty (no verifier re-measures a historical receipt) and I14 forbids re-validating an asserted historical claim. This receipt records the new measurement of the same file.",
+   "ref": "receipts/graph/change-admission-history-datarim-namespaces.json"
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:7fc5976d3e4fc8b006585f26bc2e4517a1fd235ebce55583c63d67c093d7cd6f",
+  "path": "/home/dev/kbsync-car/out/car.d/graph-f6a4c57640cf.json",
+  "source_commit": "f6a4c57640cfc35e00d4edaf8e0e4df881f12abb"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:f76197825208bbda6ef3769e5e6ad5d13abb1fdc107c91ec0e65d061ac5aad6f",
+  "path": "/home/dev/kbsync-car/out/car.d/graph-head-203c53ec438e.json",
+  "source_commit": "203c53ec438ed0caaa17539ee7dfb953adf21cc9",
+  "staleness": {
+   "checked_at_utc": "2026-09-22T10:32:09Z",
+   "checked_nodes": 240,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:tests/test_self_improvement_feeder_scope.py",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:tests/test_self_improvement_feeder_scope.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:tests/test_self_improvement_feeder_scope.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     }
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-governance-scope.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-governance-scope.json",
+      "provenance": "deterministic",
+      "to": "code_unit:tests/test_self_improvement_feeder_scope.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-governance-scope.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-governance-scope.json",
+        "provenance": "deterministic",
+        "to": "code_unit:tests/test_self_improvement_feeder_scope.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-governance-scope.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-governance-scope.json",
+        "provenance": "deterministic",
+        "to": "code_unit:tests/test_self_improvement_feeder_scope.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 2
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: (auto-detected); baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "Exemption attached by the admitting agent after the verifier draft paused_safe on one not_measured entity. The two entities this change actually touches (code_unit:tests/test_self_improvement_feeder_scope.py and deployable_unit:.) are both `verified` by v-fitness; neither verdict was edited."
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260922T103208Z-203c53ec",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/kbsync-car/scrut"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:tests/test_self_improvement_feeder_scope.py",
+   "deployable_unit:.",
+   "receipt:receipts/graph/change-admission-governance-scope.json"
+  ],
+  "head": [
+   "code_unit:tests/test_self_improvement_feeder_scope.py",
+   "deployable_unit:.",
+   "receipt:receipts/graph/change-admission-governance-scope.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-22T10:32:09Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "tree": {
+  "commit": "203c53ec438ed0caaa17539ee7dfb953adf21cc9",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:tests/test_self_improvement_feeder_scope.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-fitness: no new violation in .",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "receipt:receipts/graph/change-admission-governance-scope.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "verdict": "not_measured"
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:tests/test_self_improvement_feeder_scope.py",
+    "deployable_unit:."
+   ],
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/home/dev/kbsync-car/out/car.d/v-fitness.json",
+   "started_at_utc": "2026-09-22T10:32:10Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  }
+ ],
+ "verify": {
+  "events": [],
+  "required_by_entity": {
+   "code_unit:tests/test_self_improvement_feeder_scope.py": [
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules"
+   ],
+   "receipt:receipts/graph/change-admission-governance-scope.json": []
+  },
+  "seconds": {
+   "prepare": 0.74,
+   "total": 2.98,
+   "verifiers": 0.0
+  }
+ },
+ "work_item": "SRCH-0037"
+}
