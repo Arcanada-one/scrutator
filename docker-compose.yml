@@ -28,7 +28,28 @@ services:
       # arcanada-workspace (dev-tools/kb-feeder/config/kc2-store/). Runtime-only
       # kind: every reconcile runner there declares --runtime-only-namespace
       # kc2-store in the paired change, so this append halts no batch.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance"
+      #
+      # The Datarim corpus (2026-09-22): Datarim is being switched off, and its 2,913 documents
+      # reached this index through nothing at all — the kb-feeder denylist refuses `**/datarim/**`
+      # for the core projection and the history lane existed only as a proposal.
+      #
+      # FIVE namespaces, not one. Measured: only ~20-27% of that corpus is about the Datarim
+      # framework; the rest is the history of the Arcanada ecosystem that merely happened to be
+      # recorded in it, so a single `history-datarim` name would file live knowledge as dead. The
+      # cut is by shelf life of the claim — `decisions` (1,323: cards, PRDs, plans, verdicts),
+      # `lessons` (802: reflections and insights), `research` (169), `history-datarim` (619: the
+      # framework's own work, sessions, snapshots, runtime) — plus `unreviewed`, the third verdict
+      # for a document no rule reaches.
+      #
+      # `unreviewed` is declared deliberately. It is empty today, but a document that acquires it
+      # later would otherwise be refused at write time and vanish — the exact silent burial the
+      # verdict exists to prevent.
+      #
+      # Runtime-only kind, paired as kc2-store was: deploy/kb-history-datarim-reconcile-run.sh in
+      # arcanada-workspace declares --runtime-only-namespace for every one of these five in the
+      # same change (PR #1221), so this append halts no batch. The 2026-08-02 incident was these
+      # two halves landing separately.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
