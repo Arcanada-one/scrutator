@@ -68,6 +68,15 @@ on:
         required: false
         default: ''
         type: string
+      derived_artefact_node_version:
+        description: >-
+          AUP-GRAPH-006:gate5b. Node version installed ONLY when the caller carries
+          .arcana/derived-artefacts.v1.json, so that the gate can run the caller's own declared verifier
+          (B6.4) and re-run it against a corrupted artefact (B6.5). Ignored by every caller that declares
+          nothing.
+        required: false
+        default: '22'
+        type: string
       signing_key_fingerprint:
         description: >-
           AUP-GRAPH-006:gate2b. The `SHA256:…` fingerprint of the Ed25519 key the caller trusts to sign
@@ -110,6 +119,60 @@ jobs:
         with:
           python-version: '3.12'
 
+      # AUP-GRAPH-006:gate5b (B6). A DECLARED DERIVED ARTEFACT is admitted only if the gate can RUN the
+      # caller's own verifier — accept the honest tree, then REFUSE it with one byte corrupted. That needs
+      # the caller's toolchain, which this job otherwise has no reason to install, so these steps are
+      # guarded on the declaration existing: a caller that declares nothing pays nothing, and the gate's
+      # 16 s stays 16 s. NON-COVERAGE, stated in derived-artefacts.v1.md §6: this knows about exactly ONE
+      # ecosystem. A caller in another needs its own toolchain, and the honest remedy is a
+      # declaration-driven toolchain field — named here, not built.
+      - name: Does this repository declare derived artefacts? (B6)
+        id: derived
+        run: |
+          set -euo pipefail
+          if [ -f .arcana/derived-artefacts.v1.json ]; then
+            echo "declared=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "declared=no" >> "$GITHUB_OUTPUT"
+          fi
+          # B6.4 runs the caller's own verifier, and a verifier that records its toolchain compares
+          # what it ran on against what the evidence was built with. The input's default cannot know
+          # that: muneral pins engines.node 24.20.0 and its own test job installs exactly that, so
+          # the gate measured the artefact on the default 22 and reported TOOLCHAIN_MISMATCH —
+          # a red that says nothing about the artefact. The caller cannot fix it in its ci.yml
+          # either: pin_only_edit refuses a bundle refresh whose ci.yml carries any line that is not
+          # the program_ref pin, and rightly so.
+          # So the version is read from where the caller already declares it. An exact pin only
+          # ("24.20.0", not "^24"): a range would install some other patch and reintroduce the same
+          # mismatch under a different number. Nothing declared, or a range, falls back to the input.
+          node_version=""
+          if [ -f package.json ]; then
+            node_version=$(python3 -c "import json;print((json.load(open('package.json')).get('engines') or {}).get('node',''))" 2>/dev/null || true)
+          fi
+          case "$node_version" in
+            [0-9]*.[0-9]*.[0-9]*) : ;;
+            *) node_version="" ;;
+          esac
+          echo "node_version=$node_version" >> "$GITHUB_OUTPUT"
+
+      - name: Node toolchain for the declared verifier (B6)
+        if: steps.derived.outputs.declared == 'yes'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: ${{ steps.derived.outputs.node_version || inputs.derived_artefact_node_version }}
+
+      - name: Corepack for the declared verifier (B6)
+        if: steps.derived.outputs.declared == 'yes'
+        run: |
+          set -euo pipefail
+          # `corepack enable --install-directory` lstat()s the directory and exits 1 if it does not
+          # exist ("Internal Error: ENOENT ... lstat '/home/runner/work/_temp/corepack-bin'").
+          # Measured on the real subject: muneral #73's first run failed here, and the gate failed
+          # CLOSED — it skipped the admission run and reported red rather than passing without B6.
+          mkdir -p "${RUNNER_TEMP}/corepack-bin"
+          corepack enable --install-directory "${RUNNER_TEMP}/corepack-bin"
+          echo "${RUNNER_TEMP}/corepack-bin" >> "$GITHUB_PATH"
+
       - name: Resolve the change range
         id: range
         env:
@@ -135,6 +198,44 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/graph-admission"
           printf '%s' "${PR_BODY:-}" > "${RUNNER_TEMP}/graph-admission/pr-body.txt"
 
+      # A2-108. THE PROGRAM REPOSITORY GATES ITSELF, and it is the one caller that cannot use a
+      # vendored bundle: the tools it would vendor are the tools it ships, so a committed copy would
+      # be a second, drifting truth, and the gate would judge a change to `tools/graph/` against an
+      # older version of itself. Here the bundle is built from THIS pull request's own head tree into
+      # the runner's temp directory — never committed, never stale by construction.
+      #
+      # The guard is `github.repository`, which in a reusable workflow is the CALLING repository and
+      # is not a workflow input: a caller cannot set it, so no caller can reach this path to escape
+      # bundle verification. In every other repository the step is skipped and nothing changes.
+      #
+      # The signature is made with a key generated in this job and thrown away with it. What that
+      # proves is exactly what the gate then reports as `BUNDLE_SIGNATURE_UNPINNED` — self-consistency,
+      # not provenance — and `not_measured` is never a pass (DEC-AUP-0008 I4). There is no provenance
+      # claim a repository can make about its own tools by signing them; what stands behind these
+      # tools is this repository's git history and its review, which is the honest answer rather than
+      # a ceremony that looks cryptographic.
+      - name: Build the gate bundle from this repository's own tree (program repository only)
+        id: selftools
+        if: github.repository == 'Arcanada-one/arcanada-universal-program'
+        env:
+          PROGRAM_REF: ${{ inputs.program_ref }}
+        run: |
+          set -euo pipefail
+          key="${RUNNER_TEMP}/self-bundle-signing-key"
+          ssh-keygen -t ed25519 -N '' -q -f "$key" \
+            -C 'ephemeral GraphAdmissionBundle/v1 key — generated and discarded inside one CI job'
+          # `ci_gate.py bundle --sign-key` also copies the signing public key over the repository's
+          # own contracts/graph-verified-change/bundle-signing-key.pub (ci_gate.py:174) — it assumes
+          # it is being run BY the signing host TO publish a new key. Here it is a side effect on the
+          # tree under test, so the committed bytes are put back before anything reads them.
+          committed='contracts/graph-verified-change/bundle-signing-key.pub'
+          cp "$committed" "${RUNNER_TEMP}/committed-signing-key.pub"
+          python3 tools/graph/ci_gate.py bundle \
+            --out "${RUNNER_TEMP}/self-bundle" --program-ref "$PROGRAM_REF" --sign-key "$key"
+          cp "${RUNNER_TEMP}/committed-signing-key.pub" "$committed"
+          git diff --quiet -- "$committed"
+          echo "path=${RUNNER_TEMP}/self-bundle" >> "$GITHUB_OUTPUT"
+
       - name: Run the admission gate from the pinned program SHA
         id: gate
         # EVERY value this step needs arrives through `env:`, never through a `${{ }}` expansion
@@ -146,7 +247,7 @@ jobs:
         env:
           RECEIPT_GLOBS: ${{ inputs.receipt_globs }}
           BUILD_GRAPH: ${{ inputs.build_graph }}
-          TOOLS_PATH: ${{ inputs.tools_path }}
+          TOOLS_PATH: ${{ steps.selftools.outputs.path || inputs.tools_path }}
           PROGRAM_REF: ${{ inputs.program_ref }}
           ENFORCEMENT: ${{ inputs.enforcement }}
           REPO_NAME: ${{ github.repository }}
