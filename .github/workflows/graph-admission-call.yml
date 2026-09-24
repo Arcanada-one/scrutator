@@ -26,8 +26,16 @@
 name: graph-admission
 
 on:
+  # A2-238: NO branch filter. A filter can only name the bases someone thought of in advance, and a
+  # stacked pull request is by definition based on a branch nobody named — so `branches: [main]` left
+  # the whole gate silent on exactly the pull requests our cards produce (an EMPTY check list, not a
+  # red one). `edited` is here for A2-239's finding: a self-update receipt can only live in the pull
+  # request BODY (B1 SELF_UPDATE_SHAPE forbids a receipt file outside the bundle), and without
+  # `edited` a corrected body starts no new run — the pull request had to be closed and reopened to
+  # be re-judged. Naming the types means naming all four: the list REPLACES the default
+  # [opened, synchronize, reopened].
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened, edited]
 
 permissions:
   contents: read
