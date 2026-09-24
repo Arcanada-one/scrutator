@@ -260,3 +260,4 @@ Scrutator is the search foundation for the entire [Arcanada](https://arcanada.ai
 ## License
 
 [MIT](LICENSE)
+# smuggled
