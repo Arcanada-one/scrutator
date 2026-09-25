@@ -82,6 +82,7 @@ jobs:
           ops-bot-emit: "false"
 
       - name: Deploy
+        id: deploy
         if: steps.preflight.outputs.status != 'fail'
         env:
           SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA: ${{ vars.SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA }}
@@ -104,3 +105,126 @@ jobs:
           # reaches production through an ordinary deploy of the previously
           # reviewed copy.
           sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
+
+      # AUP-GRAPH-008 rule C5: the `post` canary is required within the plan's window after the
+      # deploy, and a missing one leaves the deploy paused_safe. Until A2-311 there was none, so
+      # every `provides_route` entity of this repository came out of graph-admission not_measured
+      # with INFERRED_BOUNDARY_WITHOUT_CANARY — 36 of the 41 unmeasured entities of A2-308's
+      # receipt — and an admission that is structurally red teaches merging through it.
+      #
+      # This probes the RESIDENT version over loopback on the service host. It is the only place
+      # A2-308's fix can be observed as deployed rather than as tested: an unauthenticated
+      # `POST /v1/edges` must answer 403. A 200 there means the hole is open again, and this step
+      # is red.
+      #
+      # The result is a CanaryResult/v1 bound to an immutable Git subject, so it can be committed
+      # as a record document on top of this very commit and cashed by a later admission
+      # (DEC-AUP-0040 R1). It is uploaded rather than pushed: this job holds `contents: read`, and
+      # a deploy workflow that can write to its own repository is a different trust story.
+      - name: Post-deploy canary (rule C5)
+        id: canary
+        if: steps.preflight.outputs.status != 'fail'
+        env:
+          # Read-scoped M2M token for the read probe. Absent, that probe is `not_measured` —
+          # rule C3 — never green and never red. The value is never printed and never written
+          # into the result document.
+          SCRUTATOR_CANARY_TOKEN: ${{ secrets.SCRUTATOR_CANARY_TOKEN }}
+        run: |
+          set -uo pipefail
+          # The producer is stdlib-only, so the host's interpreter is enough and no toolchain is
+          # installed onto a production host to run it. An ABSENT interpreter is reported, never
+          # skipped over: a canary that quietly does not run is the state this card is fixing.
+          if ! command -v python3 >/dev/null 2>&1; then
+            echo "::error title=canary::python3 is not on this runner — the post-deploy canary could not run (rule C5)"
+            exit 1
+          fi
+          # Two plans, two different claims, both red-able.
+          #   route-presence  — generated from the application's routing table: every route of the
+          #                     service is probed unauthenticated and body-less, and must not answer
+          #                     404. That is the mutant class AUP-GRAPH-007 could not measure.
+          #   production      — the named probes: A2-308's refusal, and a real authenticated read.
+          #
+          # `-I` (A2-329): a plain `python3 tools/canary_probe.py` puts tools/ first on sys.path, so
+          # a new tools/json.py would run inside the probe without the probe changing. Isolated mode
+          # drops the script directory; that is why the deploy surface lists this ONE file, not tools/.
+          for plan in scrutator-route-presence scrutator-production; do
+            python3 -I tools/canary_probe.py \
+              --plan "deploy/canary/${plan}.plan.json" \
+              --phase post \
+              --base-url http://127.0.0.1:8310 \
+              --repo . \
+              --out "${RUNNER_TEMP}/canary/${plan}-post.json" || true
+          done
+
+      - name: Upload the canary result
+        if: always() && steps.canary.outcome != 'skipped'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: canary-post-${{ github.sha }}
+          path: ${{ runner.temp }}/canary/*.json
+          if-no-files-found: warn
+
+      # A probe that could not run is `not_measured` and must NOT fail the deploy (rule C3): an
+      # unreachable contour or an unset credential is absence of measurement, not a regression.
+      # A `failed` row is a measurement, and it fails.
+      - name: Fail the deploy on a failed canary entity
+        id: canary_verdict
+        if: always() && steps.canary.outcome != 'skipped'
+        run: |
+          set -euo pipefail
+          results="${RUNNER_TEMP}/canary"
+          python3 - "$results" <<'PYCHECK'
+          import json, os, pathlib, sys
+          def verdict(value):
+              # Read by "Deploy outcome" below. Absent GITHUB_OUTPUT (a local run) is not an error.
+              if os.environ.get("GITHUB_OUTPUT"):
+                  with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+                      out.write(f"verdict={value}\n")
+          failed, unmeasured = [], []
+          files = sorted(pathlib.Path(sys.argv[1]).glob("*-post.json"))
+          if len(files) != 2:
+              verdict("missing")
+              print(f"::error title=canary::{len(files)} result(s), expected one per plan — rule C5 not satisfied")
+              sys.exit(1)
+          for path in files:
+              doc = json.load(open(path))
+              for row in doc["entity_verdicts"]:
+                  print(f"{row['verdict']:12} {row['entity']}  {row['reason'][:160]}")
+                  if row["verdict"] == "failed":
+                      failed.append(row["entity"])
+                  elif row["verdict"] == "not_measured":
+                      unmeasured.append(row["entity"])
+          if failed:
+              verdict("failed")
+              print(f"::error title=canary::the resident version failed {len(failed)} entity(ies): {', '.join(sorted(set(failed)))}")
+              sys.exit(1)
+          if unmeasured:
+              print(f"::warning title=canary::not_measured (never a pass): {', '.join(sorted(set(unmeasured)))}")
+          verdict("not_measured" if unmeasured else "passed")
+          PYCHECK
+
+      # A2-329 (measured on 4123b28): a red canary fails this run AFTER the target is live, and from
+      # outside the run a failed Deploy looked the same whether production changed or not. The run
+      # stays red either way (rule C5 is not softened); this step only says WHICH red it is, as a
+      # job-summary line and a check-run annotation titled `deploy: …` that the check-runs API
+      # returns. It reads outcomes and changes nothing, so it cannot alter the deploy sequence.
+      - name: Deploy outcome (deployed vs canary)
+        if: always()
+        env:
+          PREFLIGHT: ${{ steps.preflight.outputs.status }}
+          DEPLOYED: ${{ steps.deploy.outcome }}
+          CANARY: ${{ steps.canary_verdict.outputs.verdict }}
+        run: |
+          set -euo pipefail
+          case "${DEPLOYED:-skipped}:${CANARY:-none}" in
+            success:passed)       level=notice  title="deploy: DEPLOYED, canary green" ;;
+            success:not_measured) level=warning title="deploy: DEPLOYED, canary partly not_measured" ;;
+            success:failed)       level=error   title="deploy: DEPLOYED, canary RED" ;;
+            success:*)            level=error   title="deploy: DEPLOYED, canary produced no verdict" ;;
+            failure:*)            level=error   title="deploy: target NOT live (transaction failed: refused, rolled back, or exit 90 = rollback failed; see Deploy log)" ;;
+            cancelled:*)          level=error   title="deploy: INTERRUPTED (production state unknown; read the transaction outcome file)" ;;
+            *)                    level=error   title="deploy: NOT DEPLOYED (transaction did not run; preflight=${PREFLIGHT:-unknown})" ;;
+          esac
+          message="target=${GITHUB_SHA} transaction=${DEPLOYED:-skipped} canary=${CANARY:-none}"
+          echo "::${level} title=${title}::${message}"
+          printf '### %s\n\n`%s`\n' "$title" "$message" >>"$GITHUB_STEP_SUMMARY"
