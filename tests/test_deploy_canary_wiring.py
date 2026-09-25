@@ -57,7 +57,10 @@ def test_the_plan_the_workflow_names_exists_and_carries_the_a2_308_probe():
     plan = json.loads(PLAN.read_text(encoding="utf-8"))
     assert plan["schema"] == "CanaryPlan/v1"
     negative = next(p for p in plan["probes"] if p["path"] == "/v1/edges" and p["method"] == "POST")
-    assert negative["expect"]["status_in"] == [403]
+    # 401 and 403 are BOTH the A2-308 fix — which one answers depends on the grace-window flag,
+    # measured on the real application in A2-311 §4. A 2xx is the hole, and no 2xx is accepted.
+    assert negative["expect"]["status_in"] == [401, 403]
+    assert not any(200 <= code < 300 for code in negative["expect"]["status_in"])
     assert negative["body"] == []
     assert negative.get("auth") == "none"
     assert negative["mutating"] is True and plan["owner"], "rule C4: a non-safe method needs an owner"
