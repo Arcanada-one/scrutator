@@ -74,6 +74,68 @@ async def conn():
         await connection.close()
 
 
+class TestWeightPrecision:
+    async def test_real_column_silently_rounds_2_24_plus_1(self, conn):
+        """The defect, reproduced: this is what the column did before migration 006."""
+        await _fresh_table(conn, weight_type="real")
+        a, b = await _chunk(conn), await _chunk(conn)
+        await conn.execute(
+            "INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight) "
+            "VALUES ($1::uuid, $2::uuid, 'tokens', $3)",
+            a,
+            b,
+            UNREPRESENTABLE_IN_REAL,
+        )
+        stored = await conn.fetchval("SELECT weight FROM graph_edges")
+        assert int(stored) == 16_777_216
+        assert int(stored) != UNREPRESENTABLE_IN_REAL  # rounded down, no error raised
+
+    async def test_numeric_column_keeps_2_24_plus_1_exactly(self, conn):
+        await _fresh_table(conn)
+        a, b = await _chunk(conn), await _chunk(conn)
+        await conn.execute(
+            "INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight) "
+            "VALUES ($1::uuid, $2::uuid, 'tokens', $3)",
+            a,
+            b,
+            UNREPRESENTABLE_IN_REAL,
+        )
+        stored = await conn.fetchval("SELECT weight FROM graph_edges")
+        assert int(stored) == UNREPRESENTABLE_IN_REAL
+
+    async def test_migration_006_converts_an_existing_real_column(self, conn):
+        """Run the migration file itself — not a paraphrase of it."""
+        await _fresh_table(conn, weight_type="real")
+        a, b = await _chunk(conn), await _chunk(conn)
+        await conn.execute(
+            "INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight) "
+            "VALUES ($1::uuid, $2::uuid, 'similarity', 0.85)",
+            a,
+            b,
+        )
+        await conn.execute(MIGRATION_006.read_text())
+
+        column_type = await conn.fetchval(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_name = 'graph_edges' AND column_name = 'weight'"
+        )
+        assert column_type == "numeric"
+        # The text cast is what keeps this 0.85 instead of 0.850000023841858.
+        assert str(await conn.fetchval("SELECT weight FROM graph_edges")) == "0.85"
+
+        # and the migrated column now holds what REAL could not
+        c, d = await _chunk(conn), await _chunk(conn)
+        await conn.execute(
+            "INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight) "
+            "VALUES ($1::uuid, $2::uuid, 'tokens', $3)",
+            c,
+            d,
+            UNREPRESENTABLE_IN_REAL,
+        )
+        stored = await conn.fetchval("SELECT weight FROM graph_edges WHERE edge_type = 'tokens'")
+        assert int(stored) == UNREPRESENTABLE_IN_REAL
+
+
 class TestUpsertAccounting:
     """`created` must be rows that did not exist, not edges handed to the statement."""
 
