@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -952,12 +953,44 @@ async def hybrid_search(
     return results
 
 
-async def insert_edges(edges: list[dict[str, Any]], allowed_namespace_ids: frozenset[int] | None = None) -> int:
-    """Batch insert graph edges. ON CONFLICT → update weight. Returns count."""
+@dataclass(frozen=True)
+class EdgeWriteResult:
+    """What an `insert_edges` call actually did to the table (A2-308).
+
+    `created` used to be the number of edges the caller handed in that survived the
+    namespace filter — it was incremented after the statement ran, so an upsert that
+    changed nothing still counted. A run that inserted zero rows reported `created: 5`,
+    which made idempotence unprovable from the API response.
+    """
+
+    created: int = 0
+    updated: int = 0
+    out_of_scope: int = 0
+    conflicts: tuple[str, ...] = ()
+
+    @property
+    def written(self) -> int:
+        return self.created + self.updated
+
+
+async def insert_edges(
+    edges: list[dict[str, Any]], allowed_namespace_ids: frozenset[int] | None = None
+) -> EdgeWriteResult:
+    """Batch upsert graph edges, reporting exactly what happened to each row.
+
+    Ownership: `created_by` is the tag `delete_edges_by_creator` retires edges by, so an
+    upsert from a DIFFERENT creator is refused rather than resolved silently. Overwriting
+    would make the row unreachable by its real writer's retirement pass; ignoring the
+    difference would leave the previous owner's tag on a weight somebody else wrote. Both
+    are silent; the refusal is reported in `conflicts`.
+    """
     if not edges:
-        return 0
+        return EdgeWriteResult()
     pool = await get_pool()
-    inserted = 0
+    created = 0
+    updated = 0
+    out_of_scope = 0
+    conflicts: list[str] = []
     async with pool.acquire() as conn:
         for edge in edges:
             if allowed_namespace_ids is not None:
@@ -976,13 +1009,18 @@ async def insert_edges(edges: list[dict[str, Any]], allowed_namespace_ids: froze
                     sorted(allowed_namespace_ids),
                 )
                 if not permitted:
+                    out_of_scope += 1
                     continue
-            await conn.execute(
+            # `xmax = 0` distinguishes a genuine INSERT from the UPDATE branch of the
+            # upsert — the only way to tell them apart in one round trip.
+            row = await conn.fetchrow(
                 """
                 INSERT INTO graph_edges (source_chunk_id, target_chunk_id, edge_type, weight, created_by)
                 VALUES ($1::uuid, $2::uuid, $3, $4, $5)
                 ON CONFLICT (source_chunk_id, target_chunk_id, edge_type)
                 DO UPDATE SET weight = EXCLUDED.weight
+                WHERE graph_edges.created_by = EXCLUDED.created_by
+                RETURNING (xmax = 0) AS was_insert
                 """,
                 edge["source_chunk_id"],
                 edge["target_chunk_id"],
@@ -990,8 +1028,14 @@ async def insert_edges(edges: list[dict[str, Any]], allowed_namespace_ids: froze
                 edge.get("weight", 1.0),
                 edge.get("created_by", "dreamer"),
             )
-            inserted += 1
-    return inserted
+            if row is None:
+                # The DO UPDATE ... WHERE was false: the row exists under another creator.
+                conflicts.append(f"{edge['source_chunk_id']}->{edge['target_chunk_id']}:{edge['edge_type']}")
+            elif row["was_insert"]:
+                created += 1
+            else:
+                updated += 1
+    return EdgeWriteResult(created=created, updated=updated, out_of_scope=out_of_scope, conflicts=tuple(conflicts))
 
 
 async def get_edges_for_chunk(

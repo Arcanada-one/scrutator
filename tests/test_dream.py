@@ -186,7 +186,10 @@ class TestInsertEdges:
     @pytest.mark.asyncio
     async def test_insert_edges_batch(self):
         mock_conn = AsyncMock()
-        mock_conn.execute = AsyncMock(return_value="INSERT 0 1")
+        # A2-308: the upsert now RETURNS `xmax = 0` so a real INSERT can be told apart from
+        # the DO UPDATE branch. The real behaviour of that column is pinned against a live
+        # Postgres in tests/test_graph_edges_integration.py, not here.
+        mock_conn.fetchrow = AsyncMock(return_value={"was_insert": True})
         mock_pool = _make_pool_mock(mock_conn)
 
         async def fake_get_pool():
@@ -195,7 +198,7 @@ class TestInsertEdges:
         with patch("scrutator.db.repository.get_pool", side_effect=fake_get_pool):
             from scrutator.db.repository import insert_edges
 
-            count = await insert_edges(
+            result = await insert_edges(
                 [
                     {
                         "source_chunk_id": "a1",
@@ -213,8 +216,10 @@ class TestInsertEdges:
                     },
                 ]
             )
-            assert count == 2
-            assert mock_conn.execute.call_count == 2
+            assert result.created == 2
+            assert result.updated == 0
+            assert result.conflicts == ()
+            assert mock_conn.fetchrow.call_count == 2
 
     @pytest.mark.asyncio
     async def test_insert_edges_empty(self):
@@ -223,8 +228,9 @@ class TestInsertEdges:
         with patch("scrutator.db.repository.get_pool", mock_get_pool):
             from scrutator.db.repository import insert_edges
 
-            count = await insert_edges([])
-            assert count == 0
+            result = await insert_edges([])
+            assert result.created == 0
+            assert result.written == 0
             mock_get_pool.assert_not_called()
 
 
@@ -607,14 +613,19 @@ class TestDreamAPI:
             assert data["stats"]["total_chunks"] == 0
 
     def test_create_edges_endpoint(self):
-        from scrutator.health import app
-
         # A2-308: mutating routes now require the `kb:ltm.write` scope, so this test
         # must present a write-scoped principal instead of relying on the
         # unauthenticated grace-window context.
+        from scrutator.db.repository import EdgeWriteResult
+        from scrutator.health import app
+
         with (
             override_tenant_context(app),
-            patch("scrutator.health.insert_edges", new_callable=AsyncMock, return_value=2),
+            patch(
+                "scrutator.health.insert_edges",
+                new_callable=AsyncMock,
+                return_value=EdgeWriteResult(created=2),
+            ),
         ):
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.post(

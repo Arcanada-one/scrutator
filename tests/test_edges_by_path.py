@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from scrutator.db.models import ChunkLookupResult
+from scrutator.db.repository import EdgeWriteResult
 from scrutator.dream.models import EdgeCreateByPath, EdgeCreateByPathResponse
 
 # ── Model validation tests ────────────────────────────────────────
@@ -85,7 +86,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ) as mock_insert,
         ):
             from scrutator.dream.edges import create_edges_by_path
@@ -138,7 +139,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ),
         ):
             from scrutator.dream.edges import create_edges_by_path
@@ -178,7 +179,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ) as mock_insert,
         ):
             from scrutator.dream.edges import create_edges_by_path

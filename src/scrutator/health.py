@@ -455,8 +455,15 @@ async def dream_analyze_endpoint(
 @app.post("/v1/edges")
 async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(require_ltm_write_scope)) -> dict:
     try:
-        count = await insert_edges([e.model_dump() for e in edges], ctx.allowed_namespace_ids)
-        return {"created": count}
+        result = await insert_edges([e.model_dump() for e in edges], ctx.allowed_namespace_ids)
+        # A2-308: `created` counts rows that did not exist before, not edges accepted for
+        # upsert. `updated`/`conflicts`/`out_of_scope` are additive.
+        return {
+            "created": result.created,
+            "updated": result.updated,
+            "out_of_scope": result.out_of_scope,
+            "conflicts": list(result.conflicts),
+        }
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Edge creation failed: {e}") from e
 

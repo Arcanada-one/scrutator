@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scrutator.db.repository import get_chunks_by_source_path, insert_edges
+from scrutator.db.repository import EdgeWriteResult, get_chunks_by_source_path, insert_edges
 from scrutator.dream.models import EdgeCreateByPath, EdgeCreateByPathResponse
 
 
@@ -64,9 +64,14 @@ async def create_edges_by_path(
 
     allowed_namespace_ids = frozenset({namespace_id}) if namespace_id is not None else None
     if not resolved:
-        created = 0
+        result = EdgeWriteResult()
     elif allowed_namespace_ids is None:
-        created = await insert_edges(resolved)
+        result = await insert_edges(resolved)
     else:
-        created = await insert_edges(resolved, allowed_namespace_ids)
-    return EdgeCreateByPathResponse(created=created, not_found=sorted(not_found))
+        result = await insert_edges(resolved, allowed_namespace_ids)
+    return EdgeCreateByPathResponse(
+        created=result.created,
+        not_found=sorted(not_found),
+        updated=result.updated,
+        conflicts=list(result.conflicts),
+    )

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
 from scrutator.auth.models import TenantContext
+from scrutator.db.repository import EdgeWriteResult
 from scrutator.health import app
 from scrutator.memory.models import MemoryStats
 from tests.conftest import override_tenant_context
@@ -53,7 +54,11 @@ def test_edge_read_and_write_forward_the_tenant_scope_to_repository():
     }
     with (
         override_tenant_context(app, TENANT_A),
-        patch("scrutator.health.insert_edges", new_callable=AsyncMock, return_value=1) as insert,
+        patch(
+            "scrutator.health.insert_edges",
+            new_callable=AsyncMock,
+            return_value=EdgeWriteResult(created=1),
+        ) as insert,
         patch("scrutator.health.get_edges_for_chunk", new_callable=AsyncMock, return_value=[]) as get_edges,
         TestClient(app) as client,
     ):
