@@ -309,7 +309,7 @@ def test_partial_job_preserves_processed_chunk_count():
 
 def test_job_status_endpoint_renders_partial_with_sanitized_error():
     job = {
-        "id": "job-1",
+        "id": "3f2b8c1e-0000-4000-8000-000000000001",
         "namespace_id": 7,
         "source_path": "muneral://task/1",
         "status": "partial",
@@ -323,7 +323,7 @@ def test_job_status_endpoint_renders_partial_with_sanitized_error():
         patch("scrutator.ltm.router.repository.get_ltm_job", new_callable=AsyncMock, return_value=job),
         TestClient(app) as client,
     ):
-        response = client.get("/v1/ltm/jobs/job-1")
+        response = client.get("/v1/ltm/jobs/3f2b8c1e-0000-4000-8000-000000000001")
 
     assert response.status_code == 200
     assert response.json()["status"] == "partial"
