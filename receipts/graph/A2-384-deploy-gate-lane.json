@@ -1,0 +1,681 @@
+{
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
+  "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-09-25T23:44:14Z",
+ "change_set": {
+  "base": "88d27300307e4344866f271f972b8f9de62fa168",
+  "files": [
+   {
+    "kind": "config",
+    "path": ".github/actionlint.yaml",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/workflows/deploy.yml",
+    "node_ids": [
+     "code_unit:.github/workflows/deploy.yml"
+    ],
+    "path": ".github/workflows/deploy.yml",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/security/test_deploy_transaction.py",
+    "node_ids": [
+     "code_unit:tests/security/test_deploy_transaction.py"
+    ],
+    "path": "tests/security/test_deploy_transaction.py",
+    "status": "M"
+   }
+  ],
+  "head": "6deaee4e23439cc7e0be5a67e6b11e3e2ec357f0",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:tests/security/test_deploy_transaction.py",
+   "expires_at_utc": "2026-11-24T00:00:00Z",
+   "owner": "A2-384 admitting agent (Arcanada)",
+   "reason": "The change to this test is one assertion: the exact-target gate asks for `runs-on: [deploy-gate]` and no job asks for ci-general. It is measured by execution, not by a canary: `pytest tests/security/test_deploy_transaction.py` on this head, 31 passed / 2 skipped (A2-384 report). The live half (a deploy-gate runner actually taking verify-exact-target on push to main) cannot be canaried before the lane runners are registered — 0 of 16 org runners carry the label (A2-372/A2-380) — and is the green half of the lane runbook, step 5 (documentation/runbooks/deploy-gate-enablement.md in arcanada-workspace). admit_change.py exempt covers structural (bundle-refresh) exemptions only, so this one is attached before the verdict with an owner and an expiry, as A2-329 did for deploy.yml."
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:7d117adbd5debfccf237f0d1a4162527be76a656a1388887792da9b4fa4a546f",
+  "path": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/graph-88d27300307e.json",
+  "source_commit": "88d27300307e4344866f271f972b8f9de62fa168"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:d118c44f18a311fd0bf01c619606471377210c712bd8795e2500a73221ae49a4",
+  "path": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/graph-head-6deaee4e2343.json",
+  "source_commit": "6deaee4e23439cc7e0be5a67e6b11e3e2ec357f0",
+  "staleness": {
+   "checked_at_utc": "2026-09-25T23:44:16Z",
+   "checked_nodes": 264,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:.github/workflows/deploy.yml",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/workflows/deploy.yml",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/workflows/deploy.yml",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     }
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "document:CLAUDE.md",
+    "node_type": "document",
+    "path": [
+     {
+      "edge_type": "documents",
+      "from": "document:CLAUDE.md",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "document:CLAUDE.md",
+      "node_type": "document",
+      "path": [
+       {
+        "edge_type": "documents",
+        "from": "document:CLAUDE.md",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "doc reference check (path/id still resolves)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "document:CLAUDE.md",
+      "node_type": "document",
+      "path": [
+       {
+        "edge_type": "documents",
+        "from": "document:CLAUDE.md",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "doc reference check (path/id still resolves)"
+     }
+    ],
+    "verifier_hint": "doc reference check (path/id still resolves)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 6
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: /home/dev/aup/arc2/runs/A2-384/work/scrutator/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 1 attached from ../../verify-work/scr-exemptions.json"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260925T234414Z-6deaee4e",
+ "receipt_path": "receipts/graph/A2-384-deploy-gate-lane.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/arc2/runs/A2-384/work/scrutator"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:.github/workflows/deploy.yml",
+   "code_unit:tests/security/test_deploy_transaction.py",
+   "deployable_unit:.",
+   "document:CLAUDE.md",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json"
+  ],
+  "head": [
+   "code_unit:.github/workflows/deploy.yml",
+   "code_unit:tests/security/test_deploy_transaction.py",
+   "deployable_unit:.",
+   "document:CLAUDE.md",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-25T23:44:15Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
+    "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
+   },
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-308-scope-enforcement.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:ce8163da9ee7d02f35b8a7c9b23eea5ba30a68423b81764243fa4320c536b8bc",
+    "head": "sha256:ce8163da9ee7d02f35b8a7c9b23eea5ba30a68423b81764243fa4320c536b8bc"
+   },
+   "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-311-contracts-and-canary.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:cff3f2d1cd0c2ea73acd83f9d06761a28b744f2e8904073b10c272294f479b79",
+    "head": "sha256:cff3f2d1cd0c2ea73acd83f9d06761a28b744f2e8904073b10c272294f479b79"
+   },
+   "entity": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-329-deploy-surface-canary.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6",
+    "head": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6"
+   },
+   "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-deploy-through-broker.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  }
+ ],
+ "tree": {
+  "commit": "6deaee4e23439cc7e0be5a67e6b11e3e2ec357f0",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:.github/workflows/deploy.yml",
+   "reason": "v-workflow-config-28802fbf11c83a2e: bounded workflow configuration shape valid; expressions, shell, actions and hosted execution NOT_MEASURED; v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-workflow-config-28802fbf11c83a2e"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_deploy_transaction.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-config-schema",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: 0 errors; v-fitness: no new violation in .",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  },
+  {
+   "entity": "document:CLAUDE.md",
+   "reason": "v-doc-reference: 1 reference(s) resolve at head",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-doc-reference"
+   ]
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-384/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
+   "duration_s": 0.95,
+   "entities": [
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T23:44:17Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
+  },
+  {
+   "command": "workflow_config.validate exact head bytes",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/deploy.yml"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/deploy.yml": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-workflow-config-28802fbf11c83a2e",
+   "kind": "config_schema",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-09-25T23:44:18Z",
+   "summary": "bounded workflow configuration shape valid; expressions, shell, actions and hosted execution NOT_MEASURED"
+  },
+  {
+   "command": "verify.py config_schema: keys read at head ⊆ declared keys",
+   "duration_s": 0.54,
+   "entities": [
+    "code_unit:tests/security/test_deploy_transaction.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:tests/security/test_deploy_transaction.py": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-config-schema",
+   "kind": "config_schema",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-09-25T23:44:18Z",
+   "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 4 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/deploy.yml",
+    "code_unit:tests/security/test_deploy_transaction.py",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/deploy.yml": "verified",
+    "code_unit:tests/security/test_deploy_transaction.py": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T23:44:19Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  },
+  {
+   "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
+   "duration_s": 0.0,
+   "entities": [
+    "document:CLAUDE.md"
+   ],
+   "entity_verdicts": {
+    "document:CLAUDE.md": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-doc-reference",
+   "kind": "doc_reference",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-09-25T23:44:19Z",
+   "summary": "1 document(s), 0 failed"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:tests/security/test_deploy_transaction.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:tests/security/test_deploy_transaction.py": "not_measured"
+   },
+   "exit_code": 0,
+   "id": "v-canary",
+   "kind": "canary",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-384/verify-work/scr3/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T23:44:19Z",
+   "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 1 not_measured of 1 entities"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "4 affected entity(ies) owe no verdict (receipt: 4): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:.github/workflows/deploy.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_deploy_transaction.py": [
+    "canary",
+    "config_schema",
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "document:CLAUDE.md": [
+    "doc_reference"
+   ],
+   "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json": [],
+   "receipt:receipts/graph/A2-329-deploy-surface-canary.json": [],
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json": []
+  },
+  "seconds": {
+   "prepare": 0.82,
+   "total": 4.59,
+   "verifiers": 1.49
+  }
+ },
+ "work_item": "A2-384"
+}
