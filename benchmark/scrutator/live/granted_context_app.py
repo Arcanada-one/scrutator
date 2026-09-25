@@ -16,6 +16,7 @@ from fastapi import Depends, HTTPException
 from scrutator.auth.dependency import require_tenant_context
 from scrutator.auth.models import TenantContext
 from scrutator.auth.rebac_client import resolve_allowed_namespaces
+from scrutator.config import settings
 from scrutator.db.connection import get_pool
 from scrutator.health import app
 
@@ -43,6 +44,9 @@ async def build_benchmark_context() -> TenantContext:
         principal_type="service",
         allowed_namespace_ids=allowed_ids,
         allowed_namespace_names=allowed_names,
+        # A2-308: the benchmark only measures search. Read scope only — a harness that
+        # cannot write cannot corrupt the corpus it is measuring against.
+        scopes=frozenset({settings.auth_ltm_scope}),
     )
 
 
