@@ -1,0 +1,9 @@
+{
+  "schema": "VerifyProfile/v1",
+  "_why": "The HTTP contract of this Python service is published as TypeScript because the graph-verified-change verifier reads contracts from *.ts only (contract_diff.py:236). That one file is therefore the repository's only TypeScript project, and it is declared HERE rather than at the repository root on purpose: impact.py:289 treats a root package.json or tsconfig*.json as a global-configuration change and expands the impact set of every future pull request to the whole graph. A nested project costs nothing to a change that does not touch it.",
+  "deployables": {
+    ".": {
+      "tsconfig": ["contracts/http/tsconfig.json"]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@arcanada/scrutator-http-contract",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The generated HTTP contract of Scrutator. Not published and not built: it exists so the graph-verified-change verifier can type-check and diff the contract, and so a TypeScript consumer can import the same schemas the service answers with.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "zod": "4.6.5"
+  }
+}
