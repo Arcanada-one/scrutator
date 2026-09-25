@@ -279,6 +279,8 @@ export const EdgeCreateByPathSchema = z.object({
 export const EdgeCreateByPathResponseSchema = z.object({
     created: z.number().int(),
     not_found: z.array(z.string()),
+    updated: z.number().int().optional(),
+    conflicts: z.array(z.string()).optional(),
   });
 
 export const EdgeInfoSchema = z.object({
