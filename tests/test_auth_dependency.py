@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from scrutator.auth.models import TenantContext
+from scrutator.auth.models import TenantContext, VerifiedPrincipal
 from scrutator.auth.verifier import Unauthenticated
 
 
@@ -87,7 +87,9 @@ class TestRequireTenantContextFailClosed:
             patch(
                 "scrutator.auth.dependency.verify_bearer_token",
                 new_callable=AsyncMock,
-                return_value=("svc-1", "service"),
+                return_value=VerifiedPrincipal(
+                    principal_id="svc-1", principal_type="service", scopes=frozenset({"kb:ltm.read"})
+                ),
             ),
             patch(
                 "scrutator.auth.dependency.resolve_allowed_namespaces",
@@ -114,6 +116,7 @@ class TestResolveNamespaceSelector:
             principal_type="service",
             allowed_namespace_ids=frozenset({7}),
             allowed_namespace_names=frozenset({"arcanada"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         result = await resolve_namespace_selector(ctx, None)
         assert result == 7
@@ -127,6 +130,7 @@ class TestResolveNamespaceSelector:
             principal_type="service",
             allowed_namespace_ids=frozenset({7, 8}),
             allowed_namespace_names=frozenset({"arcanada", "ltm-bench"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         with pytest.raises(HTTPException) as exc_info:
             await resolve_namespace_selector(ctx, None)
@@ -141,6 +145,7 @@ class TestResolveNamespaceSelector:
             principal_type="service",
             allowed_namespace_ids=frozenset(),
             allowed_namespace_names=frozenset(),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         with pytest.raises(HTTPException) as exc_info:
             await resolve_namespace_selector(ctx, None)
@@ -155,6 +160,7 @@ class TestResolveNamespaceSelector:
             principal_type="service",
             allowed_namespace_ids=frozenset({7}),
             allowed_namespace_names=frozenset({"arcanada"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         with pytest.raises(HTTPException) as exc_info:
             await resolve_namespace_selector(ctx, "someone-elses-namespace")
@@ -169,6 +175,7 @@ class TestResolveNamespaceSelector:
             principal_type="service",
             allowed_namespace_ids=frozenset({7, 8}),
             allowed_namespace_names=frozenset({"arcanada", "ltm-bench"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         mock_conn = AsyncMock()
         mock_conn.fetchrow.return_value = {"id": 8}

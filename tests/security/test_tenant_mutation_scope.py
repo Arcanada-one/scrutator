@@ -8,10 +8,13 @@ from scrutator.memory.models import MemoryStats
 from tests.conftest import override_tenant_context
 
 TENANT_A = TenantContext(
-    principal_id="tenant-a-reader",
+    principal_id="tenant-a-writer",
     principal_type="service",
     allowed_namespace_ids=frozenset({7}),
     allowed_namespace_names=frozenset({"tenant-a"}),
+    # A2-308: holds the write scope on purpose — these tests must keep failing on the
+    # NAMESPACE boundary, not stop early at the scope gate.
+    scopes=frozenset({"kb:ltm.read", "kb:ltm.write"}),
 )
 
 

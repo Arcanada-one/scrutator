@@ -609,7 +609,13 @@ class TestDreamAPI:
     def test_create_edges_endpoint(self):
         from scrutator.health import app
 
-        with patch("scrutator.health.insert_edges", new_callable=AsyncMock, return_value=2):
+        # A2-308: mutating routes now require the `kb:ltm.write` scope, so this test
+        # must present a write-scoped principal instead of relying on the
+        # unauthenticated grace-window context.
+        with (
+            override_tenant_context(app),
+            patch("scrutator.health.insert_edges", new_callable=AsyncMock, return_value=2),
+        ):
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.post(
                 "/v1/edges",
@@ -624,13 +630,14 @@ class TestDreamAPI:
     def test_create_edges_validation_error(self):
         from scrutator.health import app
 
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(
-            "/v1/edges",
-            json=[
-                {"source_chunk_id": "a1", "target_chunk_id": "b2", "edge_type": ""},
-            ],
-        )
+        with override_tenant_context(app):
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.post(
+                "/v1/edges",
+                json=[
+                    {"source_chunk_id": "a1", "target_chunk_id": "b2", "edge_type": ""},
+                ],
+            )
         assert resp.status_code == 422
 
     def test_get_edges_endpoint(self):

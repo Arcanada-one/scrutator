@@ -16,12 +16,14 @@ READER = TenantContext(
     principal_type="service",
     allowed_namespace_ids=frozenset({7}),
     allowed_namespace_names=frozenset({"muneral"}),
+    scopes=frozenset({"kb:ltm.read"}),
 )
 ANONYMOUS = TenantContext(
     principal_id="anonymous",
     principal_type="service",
     allowed_namespace_ids=frozenset(),
     allowed_namespace_names=frozenset(),
+    scopes=frozenset(),
 )
 BODY = {"namespace": "muneral", "source_path": "muneral://task/task-2"}
 

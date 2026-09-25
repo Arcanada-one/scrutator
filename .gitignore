@@ -35,3 +35,6 @@ htmlcov/
 
 # Datarim (local workflow state)
 datarim/
+
+# A2-308 mutation battery scratch copies
+.a2-308-mutation/

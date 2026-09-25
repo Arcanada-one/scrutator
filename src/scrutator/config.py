@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     auth_ltm_issuer: Literal["https://auth.arcanada.ai"] = "https://auth.arcanada.ai"
     auth_ltm_audience: Literal["urn:arcanada:scrutator:ltm"] = "urn:arcanada:scrutator:ltm"
     auth_ltm_scope: Literal["kb:ltm.read"] = "kb:ltm.read"
+    # A2-308: mutation authority is a SEPARATE scope. Pinned as a Literal for the same
+    # reason as its read sibling — an env typo must fail at startup, not widen the grant.
+    auth_ltm_write_scope: Literal["kb:ltm.write"] = "kb:ltm.write"
     auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
     auth_ltm_observer_client_id: Literal["kb-observer"] = "kb-observer"
     auth_ltm_agent_client_id: Literal["arcana-agent-kb-reader"] = "arcana-agent-kb-reader"

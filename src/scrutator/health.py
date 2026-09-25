@@ -17,7 +17,11 @@ from scrutator.auth.capabilities import (
     require_feeder_capability,
     require_rollback_capability,
 )
-from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
+from scrutator.auth.dependency import (
+    require_ltm_write_scope,
+    require_tenant_context,
+    resolve_namespace_selector,
+)
 from scrutator.auth.models import TenantContext
 from scrutator.capability_projection import (
     CAPABILITY_PROJECTION_MAX_REQUEST_BYTES,
@@ -403,7 +407,7 @@ async def get_chunks(
 
 @app.post("/v1/namespaces", response_model=NamespaceInfo)
 async def create_namespace(
-    request: NamespaceCreate, ctx: TenantContext = Depends(require_tenant_context)
+    request: NamespaceCreate, ctx: TenantContext = Depends(require_ltm_write_scope)
 ) -> NamespaceInfo:
     # Privileged write: namespace creation requires a verified principal — never permitted
     # for the grace-window anonymous context, even while SCRUTATOR_AUTH_ENFORCE=False.
@@ -449,7 +453,7 @@ async def dream_analyze_endpoint(
 
 
 @app.post("/v1/edges")
-async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(require_tenant_context)) -> dict:
+async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(require_ltm_write_scope)) -> dict:
     try:
         count = await insert_edges([e.model_dump() for e in edges], ctx.allowed_namespace_ids)
         return {"created": count}
@@ -470,7 +474,7 @@ async def get_edges(chunk_id: str, ctx: TenantContext = Depends(require_tenant_c
 async def delete_edges(
     created_by: str,
     namespace: str | None = None,
-    ctx: TenantContext = Depends(require_tenant_context),
+    ctx: TenantContext = Depends(require_ltm_write_scope),
 ) -> dict:
     namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
@@ -484,7 +488,7 @@ async def delete_edges(
 async def create_edges_by_path_endpoint(
     edges: list[EdgeCreateByPath],
     namespace: str | None = None,
-    ctx: TenantContext = Depends(require_tenant_context),
+    ctx: TenantContext = Depends(require_ltm_write_scope),
 ) -> EdgeCreateByPathResponse:
     namespace_id = await resolve_namespace_selector(ctx, namespace)
     try:
@@ -498,7 +502,7 @@ async def create_edges_by_path_endpoint(
 
 @app.post("/v1/memories", response_model=MemoryIndexResponse)
 async def create_memory(
-    record: MemoryRecord, ctx: TenantContext = Depends(require_tenant_context)
+    record: MemoryRecord, ctx: TenantContext = Depends(require_ltm_write_scope)
 ) -> MemoryIndexResponse:
     namespace_id = await resolve_namespace_selector(ctx, record.namespace)
     try:
@@ -509,7 +513,7 @@ async def create_memory(
 
 @app.post("/v1/memories/bulk", response_model=MemoryBulkResponse)
 async def create_memories_bulk(
-    request: MemoryBulkRequest, ctx: TenantContext = Depends(require_tenant_context)
+    request: MemoryBulkRequest, ctx: TenantContext = Depends(require_ltm_write_scope)
 ) -> MemoryBulkResponse:
     namespace_ids = {
         namespace: await resolve_namespace_selector(ctx, namespace)
@@ -544,7 +548,7 @@ async def memory_stats_endpoint(ctx: TenantContext = Depends(require_tenant_cont
 async def delete_memories(
     actor: str,
     namespace: str | None = None,
-    ctx: TenantContext = Depends(require_tenant_context),
+    ctx: TenantContext = Depends(require_ltm_write_scope),
 ) -> dict:
     from scrutator.db.repository import delete_memories_by_actor
 

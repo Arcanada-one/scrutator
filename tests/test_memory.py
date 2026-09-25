@@ -333,26 +333,34 @@ class TestServiceGetStats:
 class TestMemoryAPI:
     def test_create_memory_validation_error(self):
         from scrutator.health import app
+        from tests.conftest import override_tenant_context
 
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post("/v1/memories", json={"content": "", "actor": "dreamer"})
+        # A2-308: auth now runs before body validation on a mutating route, so the caller
+        # must be authorized for the 422 to be what the route actually answers.
+        with override_tenant_context(app):
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.post("/v1/memories", json={"content": "", "actor": "dreamer"})
         assert resp.status_code == 422
 
     def test_create_memory_invalid_type(self):
         from scrutator.health import app
+        from tests.conftest import override_tenant_context
 
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(
-            "/v1/memories",
-            json={"content": "test", "actor": "dreamer", "memory_type": "bogus"},
-        )
+        with override_tenant_context(app):
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.post(
+                "/v1/memories",
+                json={"content": "test", "actor": "dreamer", "memory_type": "bogus"},
+            )
         assert resp.status_code == 422
 
     def test_bulk_empty_rejected(self):
         from scrutator.health import app
+        from tests.conftest import override_tenant_context
 
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post("/v1/memories/bulk", json={"memories": []})
+        with override_tenant_context(app):
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.post("/v1/memories/bulk", json={"memories": []})
         assert resp.status_code == 422
 
     def test_recall_validation_error(self):

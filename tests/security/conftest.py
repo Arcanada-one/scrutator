@@ -10,6 +10,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from scrutator.auth.models import VerifiedPrincipal
+
 # Fixture "namespaces table" backing the auth.dependency name<->id lookups.
 NAMESPACE_TABLE = {1: "arcanada", 2: "secret-tenant"}
 
@@ -44,8 +46,19 @@ def make_namespace_pool_mock():
     return mock_pool
 
 
+# A2-308: the scope set a simulated principal proved. These tests are about the NAMESPACE
+# boundary, so the default carries the write scope — otherwise a cross-tenant write would be
+# refused at the scope gate and the test would pass without exercising what it names.
+FULL_SCOPES = frozenset({"kb:ltm.read", "kb:ltm.write"})
+READ_SCOPES = frozenset({"kb:ltm.read"})
+
+
 @contextmanager
-def mock_authenticated_principal(principal_id: str, allowed_namespace_ids: frozenset[int]):
+def mock_authenticated_principal(
+    principal_id: str,
+    allowed_namespace_ids: frozenset[int],
+    scopes: frozenset[str] = FULL_SCOPES,
+):
     """Simulate a verified principal scoped to allowed_namespace_ids — no real JWKS/OpenFGA
     network call, no assumption about live Auth Arcana reachability (HARD-GATE compliant)."""
     mock_pool = make_namespace_pool_mock()
@@ -53,7 +66,7 @@ def mock_authenticated_principal(principal_id: str, allowed_namespace_ids: froze
         patch(
             "scrutator.auth.dependency.verify_bearer_token",
             new_callable=AsyncMock,
-            return_value=(principal_id, "service"),
+            return_value=VerifiedPrincipal(principal_id=principal_id, principal_type="service", scopes=scopes),
         ),
         patch(
             "scrutator.auth.dependency.resolve_allowed_namespaces",

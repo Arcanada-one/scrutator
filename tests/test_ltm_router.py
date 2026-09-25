@@ -1,17 +1,30 @@
 """Tests for LTM-0013 router endpoints — POST /reflect, GET /meta_facts."""
 
+from contextlib import contextmanager
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
 from scrutator.config import settings
 from scrutator.ltm.models import FactType, MetaFact, ReflectRunSummary
+from tests.conftest import override_tenant_context
 
 
 def _client():
     from scrutator.health import app
 
     return TestClient(app, raise_server_exceptions=False)
+
+
+@contextmanager
+def _write_authorized():
+    """A2-308: `/v1/ltm/reflect` writes meta-facts and spends an LLM budget, so it now
+    requires the `kb:ltm.write` scope. These tests are about the endpoint's behaviour, not
+    its authorization (that is tests/security/test_route_scope_enforcement.py)."""
+    from scrutator.health import app
+
+    with override_tenant_context(app):
+        yield
 
 
 def _summary(**over):
@@ -43,6 +56,7 @@ def _fact(**over):
 class TestReflectEndpoint:
     def test_reflect_dry_run_returns_preview(self):
         with (
+            _write_authorized(),
             patch(
                 "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
@@ -61,6 +75,7 @@ class TestReflectEndpoint:
 
     def test_reflect_persist_omits_preview(self):
         with (
+            _write_authorized(),
             patch(
                 "scrutator.ltm.router.resolve_namespace_selector",
                 new_callable=AsyncMock,
@@ -79,7 +94,8 @@ class TestReflectEndpoint:
         original = settings.ltm_reflect_enabled
         settings.ltm_reflect_enabled = False
         try:
-            resp = _client().post("/v1/ltm/reflect", json={"namespace": "arcanada"})
+            with _write_authorized():
+                resp = _client().post("/v1/ltm/reflect", json={"namespace": "arcanada"})
             assert resp.status_code == 503
         finally:
             settings.ltm_reflect_enabled = original

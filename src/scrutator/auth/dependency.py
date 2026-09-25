@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
 
 from scrutator.auth.models import TenantContext
 from scrutator.auth.rebac_client import resolve_allowed_namespaces
@@ -39,7 +39,7 @@ async def require_tenant_context(request: Request) -> TenantContext:
     """FastAPI dependency: verify the bearer credential, resolve the allowed-namespace set."""
     authorization = request.headers.get("authorization")
     try:
-        principal_id, principal_type = await verify_bearer_token(authorization)
+        principal = await verify_bearer_token(authorization)
     except Unauthenticated as exc:
         if settings.auth_enforce:
             raise HTTPException(status_code=401, detail="unauthenticated") from exc
@@ -54,15 +54,20 @@ async def require_tenant_context(request: Request) -> TenantContext:
             principal_type="service",
             allowed_namespace_ids=frozenset(),
             allowed_namespace_names=frozenset(),
+            # An unverified caller proved no scope. During the grace window it keeps
+            # reaching read routes (that is what the window is for) but it can no longer
+            # reach a mutation: nothing granted it the write scope.
+            scopes=frozenset(),
         )
 
-    allowed_ids = await resolve_allowed_namespaces(principal_id)
+    allowed_ids = await resolve_allowed_namespaces(principal.principal_id)
     allowed_names = await _namespace_ids_to_names(allowed_ids)
     return TenantContext(
-        principal_id=principal_id,
-        principal_type=principal_type,
+        principal_id=principal.principal_id,
+        principal_type=principal.principal_type,
         allowed_namespace_ids=allowed_ids,
         allowed_namespace_names=allowed_names,
+        scopes=principal.scopes,
     )
 
 
@@ -91,3 +96,20 @@ async def resolve_namespace_selector(ctx: TenantContext, requested: str | None) 
     if row is None or row["id"] not in ctx.allowed_namespace_ids:
         raise HTTPException(status_code=403, detail=f"namespace '{requested}' not in caller's allowed set")
     return row["id"]
+
+
+async def require_ltm_write_scope(ctx: TenantContext = Depends(require_tenant_context)) -> TenantContext:
+    """Authorize a MUTATION (A2-308). Depend on this instead of `require_tenant_context`.
+
+    Namespace grants answer "whose data?"; they never answered "may this credential change
+    anything at all?". Until A2-308 no route asked the second question, so a token scoped
+    `kb:ltm.read` could create and delete graph edges, write memories, create namespaces and
+    start a billed reflect run. 403 (not 401): the caller is authenticated, the credential
+    simply does not carry the authority for this verb.
+    """
+    if settings.auth_ltm_write_scope not in ctx.scopes:
+        raise HTTPException(
+            status_code=403,
+            detail=f"scope '{settings.auth_ltm_write_scope}' required for this operation",
+        )
+    return ctx
