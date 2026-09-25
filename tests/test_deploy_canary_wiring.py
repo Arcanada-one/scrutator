@@ -14,6 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,3 +102,67 @@ def test_not_measured_is_reported_but_does_not_fail_the_deploy(tmp_path):
     )
     assert done.returncode == 0, done.stdout + done.stderr
     assert "::warning" in done.stdout and "not_measured" in done.stdout
+
+
+# A2-329. A red canary fails the run AFTER the target is live; from outside the run that red looked
+# the same as a deploy that never happened. The outcome step says which red it is. Its shell is
+# extracted from the workflow and run here, so a rewording that loses the distinction goes red.
+def _outcome_step():
+    return next(s for s in _deploy_steps() if s.get("name") == "Deploy outcome (deployed vs canary)")
+
+
+def _run_outcome(tmp_path, deployed, canary, preflight="pass"):
+    summary = tmp_path / "summary.md"
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "GITHUB_SHA": "a" * 40,
+        "GITHUB_STEP_SUMMARY": str(summary),
+        "PREFLIGHT": preflight,
+        "DEPLOYED": deployed,
+        "CANARY": canary,
+    }
+    done = subprocess.run(["bash", "-c", _outcome_step()["run"]], env=env, capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    return done.stdout, summary.read_text()
+
+
+def test_the_outcome_step_always_runs_and_reads_the_real_step_ids():
+    step, ids = _outcome_step(), {s.get("id") for s in _deploy_steps()}
+    assert step["if"] == "always()"
+    for ref in ("steps.deploy.outcome", "steps.canary_verdict.outputs.verdict", "steps.preflight.outputs.status"):
+        assert ref in json.dumps(step["env"])
+        assert ref.split(".")[1] in ids, f"{ref} names a step id that does not exist"
+
+
+@pytest.mark.parametrize(
+    ("deployed", "canary", "annotation"),
+    [
+        ("success", "failed", "::error title=deploy: DEPLOYED, canary RED::"),
+        ("success", "passed", "::notice title=deploy: DEPLOYED, canary green::"),
+        ("success", "not_measured", "::warning title=deploy: DEPLOYED, canary partly not_measured::"),
+        ("success", "", "::error title=deploy: DEPLOYED, canary produced no verdict::"),
+        ("failure", "", "::error title=deploy: target NOT live"),
+        ("cancelled", "", "::error title=deploy: INTERRUPTED"),
+        ("skipped", "", "::error title=deploy: NOT DEPLOYED (transaction did not run; preflight=fail)"),
+    ],
+)
+def test_deployed_and_canary_red_is_distinguishable_from_not_deployed(tmp_path, deployed, canary, annotation):
+    out, summary = _run_outcome(tmp_path, deployed, canary, preflight="fail" if deployed == "skipped" else "pass")
+    assert out.startswith(annotation), out
+    assert f"transaction={deployed}" in out and "a" * 40 in summary
+
+
+def test_the_verdict_script_hands_its_verdict_to_the_outcome_step(tmp_path, monkeypatch):
+    """The value the outcome step reads is what the REAL verdict script writes, not a fixture of it."""
+    for rows, expected in (
+        ([{"entity": "route:POST /v1/edges", "verdict": "failed", "reason": "200"}], "failed"),
+        ([{"entity": "route:GET /health", "verdict": "verified", "reason": "200"}], "passed"),
+        ([{"entity": "route:GET /x", "verdict": "not_measured", "reason": "no token"}], "not_measured"),
+    ):
+        case = tmp_path / expected
+        case.mkdir()
+        output = case / "github_output"
+        output.write_text("")
+        monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+        _run_check(rows, case)
+        assert output.read_text() == f"verdict={expected}\n"
