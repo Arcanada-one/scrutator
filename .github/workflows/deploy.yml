@@ -101,3 +101,87 @@ jobs:
           # reaches production through an ordinary deploy of the previously
           # reviewed copy.
           sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
+
+      # AUP-GRAPH-008 rule C5: the `post` canary is required within the plan's window after the
+      # deploy, and a missing one leaves the deploy paused_safe. Until A2-311 there was none, so
+      # every `provides_route` entity of this repository came out of graph-admission not_measured
+      # with INFERRED_BOUNDARY_WITHOUT_CANARY — 36 of the 41 unmeasured entities of A2-308's
+      # receipt — and an admission that is structurally red teaches merging through it.
+      #
+      # This probes the RESIDENT version over loopback on the service host. It is the only place
+      # A2-308's fix can be observed as deployed rather than as tested: an unauthenticated
+      # `POST /v1/edges` must answer 403. A 200 there means the hole is open again, and this step
+      # is red.
+      #
+      # The result is a CanaryResult/v1 bound to an immutable Git subject, so it can be committed
+      # as a record document on top of this very commit and cashed by a later admission
+      # (DEC-AUP-0040 R1). It is uploaded rather than pushed: this job holds `contents: read`, and
+      # a deploy workflow that can write to its own repository is a different trust story.
+      - name: Post-deploy canary (rule C5)
+        id: canary
+        if: steps.preflight.outputs.status != 'fail'
+        env:
+          # Read-scoped M2M token for the read probe. Absent, that probe is `not_measured` —
+          # rule C3 — never green and never red. The value is never printed and never written
+          # into the result document.
+          SCRUTATOR_CANARY_TOKEN: ${{ secrets.SCRUTATOR_CANARY_TOKEN }}
+        run: |
+          set -uo pipefail
+          # The producer is stdlib-only, so the host's interpreter is enough and no toolchain is
+          # installed onto a production host to run it. An ABSENT interpreter is reported, never
+          # skipped over: a canary that quietly does not run is the state this card is fixing.
+          if ! command -v python3 >/dev/null 2>&1; then
+            echo "::error title=canary::python3 is not on this runner — the post-deploy canary could not run (rule C5)"
+            exit 1
+          fi
+          # Two plans, two different claims, both red-able.
+          #   route-presence  — generated from the application's routing table: every route of the
+          #                     service is probed unauthenticated and body-less, and must not answer
+          #                     404. That is the mutant class AUP-GRAPH-007 could not measure.
+          #   production      — the named probes: A2-308's refusal, and a real authenticated read.
+          for plan in scrutator-route-presence scrutator-production; do
+            python3 tools/canary_probe.py \
+              --plan "deploy/canary/${plan}.plan.json" \
+              --phase post \
+              --base-url http://127.0.0.1:8310 \
+              --repo . \
+              --out "${RUNNER_TEMP}/canary/${plan}-post.json" || true
+          done
+
+      - name: Upload the canary result
+        if: always() && steps.canary.outcome != 'skipped'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: canary-post-${{ github.sha }}
+          path: ${{ runner.temp }}/canary/*.json
+          if-no-files-found: warn
+
+      # A probe that could not run is `not_measured` and must NOT fail the deploy (rule C3): an
+      # unreachable contour or an unset credential is absence of measurement, not a regression.
+      # A `failed` row is a measurement, and it fails.
+      - name: Fail the deploy on a failed canary entity
+        if: always() && steps.canary.outcome != 'skipped'
+        run: |
+          set -euo pipefail
+          results="${RUNNER_TEMP}/canary"
+          python3 - "$results" <<'PYCHECK'
+          import json, pathlib, sys
+          failed, unmeasured = [], []
+          files = sorted(pathlib.Path(sys.argv[1]).glob("*-post.json"))
+          if len(files) != 2:
+              print(f"::error title=canary::{len(files)} result(s), expected one per plan — rule C5 not satisfied")
+              sys.exit(1)
+          for path in files:
+              doc = json.load(open(path))
+              for row in doc["entity_verdicts"]:
+                  print(f"{row['verdict']:12} {row['entity']}  {row['reason'][:160]}")
+                  if row["verdict"] == "failed":
+                      failed.append(row["entity"])
+                  elif row["verdict"] == "not_measured":
+                      unmeasured.append(row["entity"])
+          if failed:
+              print(f"::error title=canary::the resident version failed {len(failed)} entity(ies): {', '.join(sorted(set(failed)))}")
+              sys.exit(1)
+          if unmeasured:
+              print(f"::warning title=canary::not_measured (never a pass): {', '.join(sorted(set(unmeasured)))}")
+          PYCHECK

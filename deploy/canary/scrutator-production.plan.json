@@ -1,0 +1,62 @@
+{
+  "schema": "CanaryPlan/v1",
+  "id": "scrutator-production",
+  "environment": "kb-production",
+  "base_url": "http://127.0.0.1:8000",
+  "owner": "Arcanada (control session) — scrutator deploy transaction",
+  "read_only": false,
+  "api_key_env": "SCRUTATOR_CANARY_TOKEN",
+  "_why": [
+    "AUP-GRAPH-007 could not measure the provides_route class offline: 13 detected mutants against a minimum of 20, and 50 of its 65 route mutants were path or verb rewrites that no type-checker and no unit test can observe. The verifier matrix therefore marks provides_route canary_required, and rule C1 says an entity stays not_measured until a canary result lists it.",
+    "read_only is false because of `edges-write-requires-scope` alone. That probe does not write — it exists to observe a 403 — but if the resident version ever accepted it, it WOULD write, and rule C4 asks what the probe could do, not what we intend. Declaring it mutating with a named owner is the honest reading; describing a POST as read-only would not be."
+  ],
+  "probes": [
+    {
+      "id": "health-read",
+      "method": "GET",
+      "path": "/health",
+      "auth": "none",
+      "expect": {
+        "status_in": [200],
+        "route_present": true,
+        "json_has": ["status", "service", "version"],
+        "version_key": "version"
+      },
+      "entities": [
+        "route:GET /health",
+        "code_unit:src/scrutator/health.py"
+      ]
+    },
+    {
+      "id": "namespaces-read",
+      "method": "GET",
+      "path": "/v1/namespaces",
+      "auth": "bearer",
+      "_why": "The read half of the contour: a route that answers from the database with a real read-scoped token. Without the token this is not_measured (rule C3), never green.",
+      "expect": {
+        "status_in": [200],
+        "route_present": true
+      },
+      "entities": [
+        "route:GET /v1/namespaces"
+      ]
+    },
+    {
+      "id": "edges-write-requires-scope",
+      "method": "POST",
+      "path": "/v1/edges",
+      "mutating": true,
+      "auth": "none",
+      "body": [],
+      "_why": "A2-308: a token carrying only kb:ltm.read reached insert_edges through this route, and an unauthenticated caller reached it too while the grace window was open. The fix is only real on the deployed contour, and this is the probe that says so. An empty edge list is sent on purpose: were the refusal ever to regress, the request that got through would write nothing.",
+      "_status_why": "Both refusals are accepted because BOTH are the fix, and which one answers depends on a runtime flag this probe must not depend on. Measured on the real application at 835357a+A2-311, no database: with SCRUTATOR_AUTH_ENFORCE=false (the grace window, the production setting at the time of writing) an unauthenticated POST /v1/edges answers 403 — the grace-window context carries no scope and require_ltm_write_scope refuses the verb; with the flag on it answers 401, refused at the door before any verb is considered. What must never happen is a 2xx, which is what the hole looked like: A2-308 measured 200 with `{\"created\":[]}` on the parent commit.",
+      "expect": {
+        "status_in": [401, 403],
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/edges"
+      ]
+    }
+  ]
+}
