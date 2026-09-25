@@ -2,6 +2,7 @@
 
 import logging
 from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -469,9 +470,11 @@ async def create_edges(edges: list[EdgeCreate], ctx: TenantContext = Depends(req
 
 
 @app.get("/v1/edges/{chunk_id}", response_model=list[EdgeInfo])
-async def get_edges(chunk_id: str, ctx: TenantContext = Depends(require_tenant_context)) -> list[EdgeInfo]:
+async def get_edges(chunk_id: UUID, ctx: TenantContext = Depends(require_tenant_context)) -> list[EdgeInfo]:
+    # Typed so a malformed id is the caller's 422. As `str` it reached the `$1::uuid` cast and came
+    # back as a 503 carrying the driver's error text (A2-324, measured on production).
     try:
-        rows = await get_edges_for_chunk(chunk_id, ctx.allowed_namespace_ids)
+        rows = await get_edges_for_chunk(str(chunk_id), ctx.allowed_namespace_ids)
         return [EdgeInfo(**r) for r in rows]
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to get edges: {e}") from e

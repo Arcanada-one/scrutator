@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -257,9 +258,12 @@ async def delete_source(
 
 
 @router.get("/jobs/{job_id}", response_model=LtmJob)
-async def get_job(job_id: str, ctx: TenantContext = Depends(require_tenant_context)) -> LtmJob:
-    """Get job status — scoped to the caller's allowed-namespace set."""
-    job = await repository.get_ltm_job(job_id)
+async def get_job(job_id: UUID, ctx: TenantContext = Depends(require_tenant_context)) -> LtmJob:
+    """Get job status — scoped to the caller's allowed-namespace set.
+
+    `job_id` is typed so a malformed id is the caller's 422, not a 500 from the `$1::uuid` cast
+    (A2-324: `/v1/ltm/jobs/canary-probe` answered 500 on production)."""
+    job = await repository.get_ltm_job(str(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     if job["namespace_id"] not in ctx.allowed_namespace_ids:

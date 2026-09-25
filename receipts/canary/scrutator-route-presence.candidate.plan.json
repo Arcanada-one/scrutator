@@ -1,12 +1,12 @@
 {
   "schema": "CanaryPlan/v1",
   "id": "scrutator-route-presence",
-  "environment": "kb-production",
-  "base_url": "http://127.0.0.1:8310",
+  "environment": "a2-324-candidate-local",
+  "base_url": "http://127.0.0.1:35217",
   "openapi_path": "/openapi.json",
-  "owner": "Arcanada (control session) — scrutator deploy transaction",
+  "owner": "Arcanada (control session) \u2014 scrutator deploy transaction",
   "read_only": false,
-  "_generated_by": "tools/gen_canary_plan.py — DO NOT EDIT BY HAND",
+  "_generated_by": "tools/gen_canary_plan.py \u2014 DO NOT EDIT BY HAND",
   "_claim": "Presence only: the resident version still serves this path with this verb. Every probe is unauthenticated and carries no body. A route is present when the resident OpenAPI declares it AND the answer is not the router's own no-match (405, or a 404 byte-identical to the fingerprint of an unrouted sibling path); a handler's 404 for an absent resource is a served route (A2-324).",
   "probes": [
     {
@@ -519,5 +519,6 @@
       ],
       "mutating": true
     }
-  ]
+  ],
+  "_derived_from": "deploy/canary/scrutator-route-presence.plan.json @880d9fc; environment/base_url rewritten: a pre-merge run against the CANDIDATE served locally with no database, never production"
 }

@@ -34,8 +34,10 @@ from pathlib import Path
 
 SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
 PATH_PARAM = re.compile(r"\{[^}]+\}")
-# A syntactically valid id that indexes nothing. Every probe is refused or rejected before the
-# value is used; it exists so the URL is well formed.
+# A syntactically valid id that indexes nothing; it exists so the URL is well formed. It is NOT
+# always refused before use: while SCRUTATOR_AUTH_ENFORCE is off an unauthenticated GET reaches the
+# handler, which looks the id up and answers 404 for an absent resource (A2-324) — a read, and the
+# reason presence is not read off the status code.
 PLACEHOLDER = "00000000-0000-0000-0000-000000000000"
 
 OWNER = "Arcanada (control session) — scrutator deploy transaction"
@@ -120,6 +122,9 @@ def build(app) -> dict:
                 "id": re.sub(r"[^a-z0-9]+", "-", f"{method} {path}".lower()).strip("-"),
                 "method": method,
                 "path": PATH_PARAM.sub(PLACEHOLDER, path),
+                # The template as the resident OpenAPI spells it: presence is decided against that
+                # document, not read off a 404 the handler may legitimately answer (A2-324).
+                "route": path,
                 "auth": "none",
                 "expect": {"route_present": True},
                 "entities": entities,
@@ -133,13 +138,16 @@ def build(app) -> dict:
         "id": "scrutator-route-presence",
         "environment": "kb-production",
         "base_url": "http://127.0.0.1:8310",
+        "openapi_path": "/openapi.json",
         "owner": OWNER,
         "read_only": False,
         "_generated_by": "tools/gen_canary_plan.py — DO NOT EDIT BY HAND",
         "_claim": (
             "Presence only: the resident version still serves this path with this verb. Every probe "
-            "is unauthenticated and carries no body, so 401, 403 and 422 are all reached before the "
-            "handler; 404 is the mutant this plan exists to catch."
+            "is unauthenticated and carries no body. A route is present when the resident OpenAPI "
+            "declares it AND the answer is not the router's own no-match (405, or a 404 byte-identical "
+            "to the fingerprint of an unrouted sibling path); a handler's 404 for an absent resource "
+            "is a served route (A2-324)."
         ),
         "probes": probes,
     }
