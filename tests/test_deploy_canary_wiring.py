@@ -31,12 +31,17 @@ def _check_script() -> str:
     return re.search(r"<<'PYCHECK'\n(.*?)\nPYCHECK", step["run"], re.S).group(1)
 
 
-def _run_check(rows, tmp_path) -> subprocess.CompletedProcess:
-    result = tmp_path / "canary.json"
-    result.write_text(json.dumps({"entity_verdicts": rows}), encoding="utf-8")
+def _run_check(rows, tmp_path, plans=2) -> subprocess.CompletedProcess:
+    """Run the workflow's own verdict script over a directory of results, as the step does."""
+    results = tmp_path / "canary"
+    results.mkdir()
+    for index in range(plans):
+        (results / f"plan{index}-post.json").write_text(
+            json.dumps({"entity_verdicts": rows if index == 0 else []}), encoding="utf-8"
+        )
     script = tmp_path / "check.py"
     script.write_text(_check_script(), encoding="utf-8")
-    return subprocess.run([sys.executable, str(script), str(result)], capture_output=True, text=True)
+    return subprocess.run([sys.executable, str(script), str(results)], capture_output=True, text=True)
 
 
 def test_the_deploy_job_runs_the_committed_plan_after_the_deploy():
@@ -46,7 +51,7 @@ def test_the_deploy_job_runs_the_committed_plan_after_the_deploy():
     assert names.index("Deploy") < names.index(canary["name"]), "the canary must observe the deployed version"
     run = canary["run"]
     assert "tools/canary_probe.py" in run
-    assert "deploy/canary/scrutator-production.plan.json" in run
+    assert "scrutator-production" in run and "scrutator-route-presence" in run
     assert "--phase post" in run
     # the credential arrives through the environment and is never echoed
     assert "SCRUTATOR_CANARY_TOKEN" in json.dumps(canary.get("env", {}))
@@ -80,6 +85,13 @@ def test_a_failed_entity_fails_the_deploy_step(tmp_path):
 def test_all_green_passes(tmp_path):
     done = _run_check([{"entity": "route:GET /health", "verdict": "verified", "reason": "status 200"}], tmp_path)
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_a_missing_plan_result_fails_the_step(tmp_path):
+    """Rule C5: a canary that did not run is not a pass. One result where two were planned is red."""
+    done = _run_check([{"entity": "route:GET /health", "verdict": "verified", "reason": "ok"}], tmp_path, plans=1)
+    assert done.returncode == 1, done.stdout
+    assert "expected one per plan" in done.stdout
 
 
 def test_not_measured_is_reported_but_does_not_fail_the_deploy(tmp_path):
