@@ -49,8 +49,9 @@
       "auth": "none",
       "body": [],
       "_why": "A2-308: a token carrying only kb:ltm.read reached insert_edges through this route, and an unauthenticated caller reached it too while the grace window was open. The fix is only real on the deployed contour, and this is the probe that says so. An empty edge list is sent on purpose: were the refusal ever to regress, the request that got through would write nothing.",
+      "_status_why": "Both refusals are accepted because BOTH are the fix, and which one answers depends on a runtime flag this probe must not depend on. Measured on the real application at 835357a+A2-311, no database: with SCRUTATOR_AUTH_ENFORCE=false (the grace window, the production setting at the time of writing) an unauthenticated POST /v1/edges answers 403 — the grace-window context carries no scope and require_ltm_write_scope refuses the verb; with the flag on it answers 401, refused at the door before any verb is considered. What must never happen is a 2xx, which is what the hole looked like: A2-308 measured 200 with `{\"created\":[]}` on the parent commit.",
       "expect": {
-        "status_in": [403],
+        "status_in": [401, 403],
         "route_present": true
       },
       "entities": [
