@@ -27,6 +27,21 @@ Rules this implements, each one falsifiable in tests/test_canary_probe.py:
   DEC-AUP-0040  the result is bound to an immutable Git subject (GitCanarySubject/v1 over a
       MeasuredGitSource/v1 claim), because evidence about one tree must never vouch for another's.
 
+Route presence (A2-324) is NOT read off the status code alone. The first production run went red
+on `GET /v1/ltm/jobs/{job_id}`: the probe's placeholder id named no job, the HANDLER answered 404
+"Job not found", and "404 => the route is gone" called a served route missing. A 404 is ambiguous —
+the router saying no route matched, or a handler saying no such resource — and so is a 405, which
+says the PATH matched and the VERB did not (a rewritten verb, the other half of the mutant class).
+Two observations decide instead, neither of which the handler's own answer can supply:
+  - the resident version's OpenAPI document must declare this path template with this verb. It is
+    generated from the routing table the process is serving, so a route removed from the
+    application is absent from it; a route it does not declare is `failed` whatever the status;
+  - a 404 must be distinguishable from the router's own no-match answer, fingerprinted live on the
+    same contour by a GET to an unrouted sibling path (`<path>/__canary_unrouted__`). A 404 whose
+    body is byte-identical to that fingerprint IS the no-match answer: `failed`. A different body
+    is a handler answering "absent", and with the declaration that is a served route.
+When neither decides (OpenAPI unreadable and no usable fingerprint) the verdict is `not_measured`.
+
 Secrets: a token is read from the environment, sent in a header, and never written to the result,
 the log or the evidence file. Response bodies are recorded only as a length and a sha256.
 """
@@ -67,7 +82,94 @@ def git(repo: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(repo), *args], text=True).strip()
 
 
-def probe(base_url: str, spec: dict, token: str | None, timeout: float) -> dict:
+UNROUTED_SUFFIX = "/__canary_unrouted__"
+
+
+def fetch(url: str, timeout: float) -> tuple[int | None, bytes]:
+    """An unauthenticated GET that treats a 4xx/5xx as an observation. (None, b"") if it could not run."""
+    request = urllib.request.Request(url, method="GET")
+    request.add_header("User-Agent", "aup-orchestrator/1.0")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status, response.read()
+    except urllib.error.HTTPError as error:
+        return error.code, error.read(65536)
+    except Exception:  # noqa: BLE001 — absence of an observation, handled by the caller
+        return None, b""
+
+
+class Resident:
+    """What the resident version says about its own routing table, read once per run.
+
+    `declares(method, template)` is True/False when the OpenAPI document was read, None when it was
+    not — an unreadable document is absence of measurement, never evidence either way."""
+
+    def __init__(self, base_url: str, openapi_path: str, timeout: float):
+        self.url = base_url.rstrip("/") + openapi_path
+        self.timeout = timeout
+        self._paths: dict | None = None
+        self.observation: dict | None = None
+
+    def paths(self) -> dict | None:
+        if self.observation is None:
+            status, payload = fetch(self.url, self.timeout)
+            self.observation = {"url": self.url, "status": status, "sha256": sha_bytes(payload)}
+            try:
+                document = json.loads(payload) if status == 200 else None
+                paths = document.get("paths") if isinstance(document, dict) else None
+                self._paths = paths if isinstance(paths, dict) else None
+            except ValueError:
+                self._paths = None
+            self.observation["paths"] = None if self._paths is None else len(self._paths)
+        return self._paths
+
+    def declares(self, method: str, template: str) -> bool | None:
+        paths = self.paths()
+        if paths is None:
+            return None
+        operations = paths.get(template)
+        return isinstance(operations, dict) and method.lower() in operations
+
+
+def route_presence(
+    base_url: str, spec: dict, method: str, status: int, payload: bytes, resident: Resident | None, timeout: float
+) -> tuple[str, str, dict]:
+    """(outcome, reason, extra result fields) for `expect.route_present` — see the module docstring."""
+    template = spec.get("route", spec["path"])
+    declared = resident.declares(method, template) if resident is not None else None
+    extra: dict = {"route": template, "declared_by_resident_openapi": declared}
+    if declared is False:
+        return "failed", f"the resident OpenAPI does not declare {method} {template}: the route is NOT served", extra
+    if 500 <= status < 600:
+        # A 5xx says the route is reachable, and says nothing trustworthy about it: the observation
+        # is of a fault. Rule C3's third verdict is what that is — never a pass, never a regression.
+        return "not_measured", f"status {status}: the contour answered with a fault, not with the route", extra
+    if status == 405:
+        return "failed", f"405: the path matches but {method} is NOT served on it", extra
+    if status != 404:
+        suffix = "; declared in the resident OpenAPI" if declared else ""
+        return "verified", f"status {status} != 404: the route is served{suffix}", extra
+    unrouted_status, unrouted_body = fetch(base_url.rstrip("/") + spec["path"].rstrip("/") + UNROUTED_SUFFIX, timeout)
+    fingerprint = sha_bytes(unrouted_body) if unrouted_status == 404 else None
+    extra["unrouted_404_sha256"] = fingerprint
+    if fingerprint is not None and fingerprint == sha_bytes(payload):
+        return "failed", "404 identical to the router's own no-match answer: the route is NOT served", extra
+    if declared and fingerprint is not None:
+        return (
+            "verified",
+            "404 from the handler (body differs from the router's no-match answer) on a route the resident "
+            "OpenAPI declares: the resource is absent, the route is served",
+            extra,
+        )
+    return (
+        "not_measured",
+        f"404 not attributable: resident OpenAPI {'unreadable' if declared is None else 'declares it'}, "
+        f"no-match fingerprint {'unavailable' if fingerprint is None else 'differs'}",
+        extra,
+    )
+
+
+def probe(base_url: str, spec: dict, token: str | None, timeout: float, resident: Resident | None = None) -> dict:
     url = base_url.rstrip("/") + spec["path"]
     method = spec.get("method", "GET").upper()
     body = json.dumps(spec["body"]).encode() if "body" in spec else None
@@ -130,17 +232,11 @@ def probe(base_url: str, spec: dict, token: str | None, timeout: float) -> dict:
             outcome = "failed"
             reasons.append(f"status {status} not in {expect['status_in']}")
     if expect.get("route_present"):
-        if status == 404:
-            outcome = "failed"
-            reasons.append("404: the route is NOT served by the resident version")
-        elif 500 <= status < 600:
-            # A 5xx says the route is reachable, and says nothing trustworthy about it: the
-            # observation is of a fault. Rule C3's third verdict is what that is — never a pass,
-            # and never a regression of the route either.
-            outcome = "not_measured"
-            reasons.append(f"status {status}: the contour answered with a fault, not with the route")
-        else:
-            reasons.append(f"status {status} != 404: the route is served")
+        presence, reason, extra = route_presence(base_url, spec, method, status, payload, resident, timeout)
+        result.update(extra)
+        if RANK[presence] > RANK[outcome]:
+            outcome = presence
+        reasons.append(reason)
     text = payload.decode("utf-8", "replace")
     for key in expect.get("json_has", []):
         try:
@@ -210,6 +306,7 @@ def run(plan: dict, base_url: str, phase: str, repo: Path, out: Path, timeout: f
     subject, _ = subject_of(repo, out.with_name(out.stem + ".source-evidence.json"))
 
     results, resident = [], None
+    openapi = Resident(base_url, plan.get("openapi_path", "/openapi.json"), timeout)
     for spec in plan["probes"]:
         if offline:
             results.append(
@@ -226,7 +323,7 @@ def run(plan: dict, base_url: str, phase: str, repo: Path, out: Path, timeout: f
                 }
             )
             continue
-        result = probe(base_url, spec, token, timeout)
+        result = probe(base_url, spec, token, timeout, openapi)
         resident = result.get("observed_version") or resident
         results.append(result)
 
@@ -266,6 +363,7 @@ def run(plan: dict, base_url: str, phase: str, repo: Path, out: Path, timeout: f
         "phase": phase,
         "read_only": read_only,
         "resident_version": resident,
+        "resident_openapi": openapi.observation,
         "subject": subject,
         "probes": results,
         "entity_verdicts": sorted(rows.values(), key=lambda r: r["entity"]),

@@ -3,15 +3,17 @@
   "id": "scrutator-route-presence",
   "environment": "kb-production",
   "base_url": "http://127.0.0.1:8310",
+  "openapi_path": "/openapi.json",
   "owner": "Arcanada (control session) — scrutator deploy transaction",
   "read_only": false,
   "_generated_by": "tools/gen_canary_plan.py — DO NOT EDIT BY HAND",
-  "_claim": "Presence only: the resident version still serves this path with this verb. Every probe is unauthenticated and carries no body, so 401, 403 and 422 are all reached before the handler; 404 is the mutant this plan exists to catch.",
+  "_claim": "Presence only: the resident version still serves this path with this verb. Every probe is unauthenticated and carries no body. A route is present when the resident OpenAPI declares it AND the answer is not the router's own no-match (405, or a 404 byte-identical to the fingerprint of an unrouted sibling path); a handler's 404 for an absent resource is a served route (A2-324).",
   "probes": [
     {
       "id": "delete-v1-edges",
       "method": "DELETE",
       "path": "/v1/edges",
+      "route": "/v1/edges",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -26,6 +28,7 @@
       "id": "delete-v1-index",
       "method": "DELETE",
       "path": "/v1/index",
+      "route": "/v1/index",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -40,6 +43,7 @@
       "id": "delete-v1-ltm-source",
       "method": "DELETE",
       "path": "/v1/ltm/source",
+      "route": "/v1/ltm/source",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -54,6 +58,7 @@
       "id": "delete-v1-memories",
       "method": "DELETE",
       "path": "/v1/memories",
+      "route": "/v1/memories",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -68,6 +73,7 @@
       "id": "get-health",
       "method": "GET",
       "path": "/health",
+      "route": "/health",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -81,6 +87,7 @@
       "id": "get-v1-chunks",
       "method": "GET",
       "path": "/v1/chunks",
+      "route": "/v1/chunks",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -94,6 +101,7 @@
       "id": "get-v1-edges-chunk-id",
       "method": "GET",
       "path": "/v1/edges/00000000-0000-0000-0000-000000000000",
+      "route": "/v1/edges/{chunk_id}",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -107,6 +115,7 @@
       "id": "get-v1-index-capability",
       "method": "GET",
       "path": "/v1/index/capability",
+      "route": "/v1/index/capability",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -120,6 +129,7 @@
       "id": "get-v1-index-rollback-capability",
       "method": "GET",
       "path": "/v1/index/rollback-capability",
+      "route": "/v1/index/rollback-capability",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -133,6 +143,7 @@
       "id": "get-v1-ltm-entities",
       "method": "GET",
       "path": "/v1/ltm/entities",
+      "route": "/v1/ltm/entities",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -146,6 +157,7 @@
       "id": "get-v1-ltm-events",
       "method": "GET",
       "path": "/v1/ltm/events",
+      "route": "/v1/ltm/events",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -159,6 +171,7 @@
       "id": "get-v1-ltm-graph",
       "method": "GET",
       "path": "/v1/ltm/graph",
+      "route": "/v1/ltm/graph",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -172,6 +185,7 @@
       "id": "get-v1-ltm-jobs-job-id",
       "method": "GET",
       "path": "/v1/ltm/jobs/00000000-0000-0000-0000-000000000000",
+      "route": "/v1/ltm/jobs/{job_id}",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -185,6 +199,7 @@
       "id": "get-v1-ltm-meta-facts",
       "method": "GET",
       "path": "/v1/ltm/meta_facts",
+      "route": "/v1/ltm/meta_facts",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -198,6 +213,7 @@
       "id": "get-v1-memories-stats",
       "method": "GET",
       "path": "/v1/memories/stats",
+      "route": "/v1/memories/stats",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -211,6 +227,7 @@
       "id": "get-v1-namespaces",
       "method": "GET",
       "path": "/v1/namespaces",
+      "route": "/v1/namespaces",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -224,6 +241,7 @@
       "id": "get-v1-navigate-outline",
       "method": "GET",
       "path": "/v1/navigate/outline",
+      "route": "/v1/navigate/outline",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -237,6 +255,7 @@
       "id": "get-v1-navigate-section",
       "method": "GET",
       "path": "/v1/navigate/section",
+      "route": "/v1/navigate/section",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -250,6 +269,7 @@
       "id": "get-v1-stats",
       "method": "GET",
       "path": "/v1/stats",
+      "route": "/v1/stats",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -263,6 +283,7 @@
       "id": "post-v1-chunk",
       "method": "POST",
       "path": "/v1/chunk",
+      "route": "/v1/chunk",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -277,6 +298,7 @@
       "id": "post-v1-dream-analyze",
       "method": "POST",
       "path": "/v1/dream/analyze",
+      "route": "/v1/dream/analyze",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -291,6 +313,7 @@
       "id": "post-v1-edges",
       "method": "POST",
       "path": "/v1/edges",
+      "route": "/v1/edges",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -305,6 +328,7 @@
       "id": "post-v1-edges-by-path",
       "method": "POST",
       "path": "/v1/edges/by-path",
+      "route": "/v1/edges/by-path",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -319,6 +343,7 @@
       "id": "post-v1-fetch",
       "method": "POST",
       "path": "/v1/fetch",
+      "route": "/v1/fetch",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -333,6 +358,7 @@
       "id": "post-v1-index",
       "method": "POST",
       "path": "/v1/index",
+      "route": "/v1/index",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -347,6 +373,7 @@
       "id": "post-v1-index-batch",
       "method": "POST",
       "path": "/v1/index/batch",
+      "route": "/v1/index/batch",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -361,6 +388,7 @@
       "id": "post-v1-index-capability-projection",
       "method": "POST",
       "path": "/v1/index/capability-projection",
+      "route": "/v1/index/capability-projection",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -375,6 +403,7 @@
       "id": "post-v1-ltm-ingest",
       "method": "POST",
       "path": "/v1/ltm/ingest",
+      "route": "/v1/ltm/ingest",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -389,6 +418,7 @@
       "id": "post-v1-ltm-recall",
       "method": "POST",
       "path": "/v1/ltm/recall",
+      "route": "/v1/ltm/recall",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -403,6 +433,7 @@
       "id": "post-v1-ltm-reflect",
       "method": "POST",
       "path": "/v1/ltm/reflect",
+      "route": "/v1/ltm/reflect",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -417,6 +448,7 @@
       "id": "post-v1-memories",
       "method": "POST",
       "path": "/v1/memories",
+      "route": "/v1/memories",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -431,6 +463,7 @@
       "id": "post-v1-memories-bulk",
       "method": "POST",
       "path": "/v1/memories/bulk",
+      "route": "/v1/memories/bulk",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -445,6 +478,7 @@
       "id": "post-v1-memories-recall",
       "method": "POST",
       "path": "/v1/memories/recall",
+      "route": "/v1/memories/recall",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -459,6 +493,7 @@
       "id": "post-v1-namespaces",
       "method": "POST",
       "path": "/v1/namespaces",
+      "route": "/v1/namespaces",
       "auth": "none",
       "expect": {
         "route_present": true
@@ -473,6 +508,7 @@
       "id": "post-v1-search",
       "method": "POST",
       "path": "/v1/search",
+      "route": "/v1/search",
       "auth": "none",
       "expect": {
         "route_present": true

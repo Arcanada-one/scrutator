@@ -668,7 +668,7 @@ class TestDreamAPI:
 
         with patch("scrutator.health.get_edges_for_chunk", new_callable=AsyncMock, return_value=mock_edges):
             client = TestClient(app, raise_server_exceptions=False)
-            resp = client.get("/v1/edges/a1")
+            resp = client.get("/v1/edges/00000000-0000-0000-0000-0000000000a1")
             assert resp.status_code == 200
             data = resp.json()
             assert len(data) == 1
