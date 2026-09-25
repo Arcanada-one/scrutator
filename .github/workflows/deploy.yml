@@ -134,12 +134,19 @@ jobs:
             echo "::error title=canary::python3 is not on this runner — the post-deploy canary could not run (rule C5)"
             exit 1
           fi
-          python3 tools/canary_probe.py \
-            --plan deploy/canary/scrutator-production.plan.json \
-            --phase post \
-            --base-url http://127.0.0.1:8310 \
-            --repo . \
-            --out "${RUNNER_TEMP}/canary/scrutator-production-post.json" || true
+          # Two plans, two different claims, both red-able.
+          #   route-presence  — generated from the application's routing table: every route of the
+          #                     service is probed unauthenticated and body-less, and must not answer
+          #                     404. That is the mutant class AUP-GRAPH-007 could not measure.
+          #   production      — the named probes: A2-308's refusal, and a real authenticated read.
+          for plan in scrutator-route-presence scrutator-production; do
+            python3 tools/canary_probe.py \
+              --plan "deploy/canary/${plan}.plan.json" \
+              --phase post \
+              --base-url http://127.0.0.1:8310 \
+              --repo . \
+              --out "${RUNNER_TEMP}/canary/${plan}-post.json" || true
+          done
 
       - name: Upload the canary result
         if: always() && steps.canary.outcome != 'skipped'
@@ -156,23 +163,25 @@ jobs:
         if: always() && steps.canary.outcome != 'skipped'
         run: |
           set -euo pipefail
-          result="${RUNNER_TEMP}/canary/scrutator-production-post.json"
-          if [ ! -f "$result" ]; then
-            echo "::error title=canary::no canary result was produced — rule C5 not satisfied"
-            exit 1
-          fi
-          python3 - "$result" <<'PYCHECK'
-          import json, sys
-          doc = json.load(open(sys.argv[1]))
-          failed = [r for r in doc["entity_verdicts"] if r["verdict"] == "failed"]
-          unmeasured = [r for r in doc["entity_verdicts"] if r["verdict"] == "not_measured"]
-          for row in doc["entity_verdicts"]:
-              print(f"{row['verdict']:12} {row['entity']}  {row['reason'][:160]}")
+          results="${RUNNER_TEMP}/canary"
+          python3 - "$results" <<'PYCHECK'
+          import json, pathlib, sys
+          failed, unmeasured = [], []
+          files = sorted(pathlib.Path(sys.argv[1]).glob("*-post.json"))
+          if len(files) != 2:
+              print(f"::error title=canary::{len(files)} result(s), expected one per plan — rule C5 not satisfied")
+              sys.exit(1)
+          for path in files:
+              doc = json.load(open(path))
+              for row in doc["entity_verdicts"]:
+                  print(f"{row['verdict']:12} {row['entity']}  {row['reason'][:160]}")
+                  if row["verdict"] == "failed":
+                      failed.append(row["entity"])
+                  elif row["verdict"] == "not_measured":
+                      unmeasured.append(row["entity"])
           if failed:
-              names = ", ".join(r["entity"] for r in failed)
-              print(f"::error title=canary::the resident version failed {len(failed)} probe(s): {names}")
+              print(f"::error title=canary::the resident version failed {len(failed)} entity(ies): {', '.join(sorted(set(failed)))}")
               sys.exit(1)
           if unmeasured:
-              names = ", ".join(r["entity"] for r in unmeasured)
-              print(f"::warning title=canary::not_measured (never a pass): {names}")
+              print(f"::warning title=canary::not_measured (never a pass): {', '.join(sorted(set(unmeasured)))}")
           PYCHECK
