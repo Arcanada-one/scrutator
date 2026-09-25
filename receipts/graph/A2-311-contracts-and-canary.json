@@ -5,9 +5,9 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-09-25T07:10:23Z",
+ "captured_at_utc": "2026-09-25T08:12:03Z",
  "change_set": {
-  "base": "413ab7eaff3ca2be0852f54adedca06c8f461fee",
+  "base": "ad15d8771776c3e48e24a349f4c3073df31cab8a",
   "files": [
    {
     "kind": "config",
@@ -143,6 +143,15 @@
     "status": "A"
    },
    {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+    "node_ids": [
+     "receipt:receipts/graph/A2-311-contracts-and-canary.json"
+    ],
+    "path": "receipts/graph/A2-311-contracts-and-canary.json",
+    "status": "A"
+   },
+   {
     "kind": "other",
     "node_id": "code_unit:tests/test_canary_plan.py",
     "node_ids": [
@@ -206,7 +215,7 @@
     "status": "A"
    }
   ],
-  "head": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "head": "db2119e9e04a5f0b9899ed13b9b66c25bf1cc528",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -222,19 +231,19 @@
  "graph": {
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:79d0bdbd10b6d5b40c27427e68b59d84c4f2039cb7126a23b73b96c0aefa51b2",
-  "path": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/graph-413ab7eaff3c.json",
-  "source_commit": "413ab7eaff3ca2be0852f54adedca06c8f461fee"
+  "graph_digest": "sha256:44af91b3e2ef03f8e43f5fffb504edffec0cfa71d73cd43245db463885290930",
+  "path": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/graph-ad15d8771776.json",
+  "source_commit": "ad15d8771776c3e48e24a349f4c3073df31cab8a"
  },
  "head_graph": {
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:e9eb0864482efb63855bd9a2d422807f2e98f11d66aa39b29cda40b8ee0c6a89",
-  "path": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/graph-head-845907f5f8bc.json",
-  "source_commit": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "graph_digest": "sha256:569fc15b4e9e69375aa48f579ca51456060f00b005873c9cb0d8a6d5e8b88e6c",
+  "path": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/graph-head-db2119e9e04a.json",
+  "source_commit": "db2119e9e04a5f0b9899ed13b9b66c25bf1cc528",
   "staleness": {
-   "checked_at_utc": "2026-09-25T07:10:24Z",
-   "checked_nodes": 255,
+   "checked_at_utc": "2026-09-25T08:12:04Z",
+   "checked_nodes": 259,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -354,6 +363,60 @@
    {
     "boundary": "intra_unit",
     "depth": 1,
+    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
     "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
     "node_type": "receipt",
     "path": [
@@ -413,28 +476,29 @@
   "inferred_tail": [],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 3
+  "total": 4
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
-  "profile: /home/dev/aup/arc2/runs/A2-311/work/scrutator/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 1 attached from /home/dev/aup/arc2/runs/A2-311/out/exemptions.json"
+  "profile: /home/dev/aup/arc2/runs/A2-312/work/scrutator/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 1 attached from /home/dev/aup/arc2/runs/A2-312/work/scrutator/../../exemptions.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.0.1"
  },
- "receipt_id": "car-verify-20260925T071023Z-845907f5",
+ "receipt_id": "car-verify-20260925T081203Z-db2119e9",
  "receipt_path": "receipts/graph/A2-311-contracts-and-canary.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/arc2/runs/A2-311/work/scrutator"
+  "path": "/home/dev/aup/arc2/runs/A2-312/work/scrutator"
  },
  "revision_selection": {
   "base": [
    "code_unit:.github/workflows/deploy.yml",
    "deployable_unit:.",
    "document:CLAUDE.md",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json"
   ],
   "head": [
@@ -528,6 +592,8 @@
    "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema",
    "deployable_unit:.",
    "document:CLAUDE.md",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json"
   ],
   "schema": "RevisionImpactSelection/v1",
@@ -535,12 +601,38 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-09-25T07:10:24Z",
+  "checked_at_utc": "2026-09-25T08:12:04Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
  },
  "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
+    "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
+   },
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-308-scope-enforcement.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:ce50385a7a2b4ac1e007417d6ef6b42ca2497c5f67d28d0c5a37e61741c3dd49"
+   },
+   "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-311-contracts-and-canary.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/A2-311-contracts-and-canary.json for work item A2-311",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/A2-311-contracts-and-canary.json",
+    "work_item": "A2-311"
+   }
+  },
   {
    "content_hash": {
     "base": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6",
@@ -554,7 +646,7 @@
   }
  ],
  "tree": {
-  "commit": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "commit": "db2119e9e04a5f0b9899ed13b9b66c25bf1cc528",
   "dirty": false
  },
  "verdicts": [
@@ -1285,8 +1377,8 @@
  ],
  "verifiers": [
   {
-   "command": "/home/dev/aup/arc2/runs/A2-311/work/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-311/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
-   "duration_s": 1.02,
+   "command": "/home/dev/aup/arc2/runs/A2-312/work/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-312/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
+   "duration_s": 0.95,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
     "deployable_unit:."
@@ -1298,12 +1390,12 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-09-25T07:10:25Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T08:12:06Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=413ab7eaff3c, head=845907f5f8bc, graph=head graph)",
+   "command": "tools/graph/contract_diff.py.run_diff(base=ad15d8771776, head=db2119e9e04a, graph=head graph)",
    "duration_s": 0.03,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -1472,8 +1564,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-09-25T07:10:26Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-09-25T08:12:07Z",
    "summary": "0→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -1488,8 +1580,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-09-25T07:10:26Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-09-25T08:12:07Z",
    "summary": "workflow configuration not measured: job-level `environment` outside this bounded checker"
   },
   {
@@ -1522,8 +1614,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-09-25T07:10:26Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T08:12:07Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -1538,17 +1630,23 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-09-25T07:10:26Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-312/wd-reissue/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-09-25T08:12:07Z",
    "summary": "1 document(s), 0 failed"
   }
  ],
  "verify": {
   "events": [
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/A2-311-contracts-and-canary.json is the previous version of the one this run is writing, for the same work item A2-311 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "1 affected entity(ies) owe no verdict (receipt: 1): unchanged at both revisions and given no verifier by the matrix"
+    "text": "3 affected entity(ies) owe no verdict (receipt: 3): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -1826,12 +1924,14 @@
    "document:CLAUDE.md": [
     "doc_reference"
    ],
+   "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json": [],
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": []
   },
   "seconds": {
-   "prepare": 0.77,
-   "total": 3.94,
-   "verifiers": 1.05
+   "prepare": 0.8,
+   "total": 3.91,
+   "verifiers": 0.98
   }
  },
  "work_item": "A2-311"
