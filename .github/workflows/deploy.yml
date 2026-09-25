@@ -101,3 +101,78 @@ jobs:
           # reaches production through an ordinary deploy of the previously
           # reviewed copy.
           sudo -n /usr/local/sbin/scrutator-deploy-broker deploy "${GITHUB_SHA}"
+
+      # AUP-GRAPH-008 rule C5: the `post` canary is required within the plan's window after the
+      # deploy, and a missing one leaves the deploy paused_safe. Until A2-311 there was none, so
+      # every `provides_route` entity of this repository came out of graph-admission not_measured
+      # with INFERRED_BOUNDARY_WITHOUT_CANARY — 36 of the 41 unmeasured entities of A2-308's
+      # receipt — and an admission that is structurally red teaches merging through it.
+      #
+      # This probes the RESIDENT version over loopback on the service host. It is the only place
+      # A2-308's fix can be observed as deployed rather than as tested: an unauthenticated
+      # `POST /v1/edges` must answer 403. A 200 there means the hole is open again, and this step
+      # is red.
+      #
+      # The result is a CanaryResult/v1 bound to an immutable Git subject, so it can be committed
+      # as a record document on top of this very commit and cashed by a later admission
+      # (DEC-AUP-0040 R1). It is uploaded rather than pushed: this job holds `contents: read`, and
+      # a deploy workflow that can write to its own repository is a different trust story.
+      - name: Post-deploy canary (rule C5)
+        id: canary
+        if: steps.preflight.outputs.status != 'fail'
+        env:
+          # Read-scoped M2M token for the read probe. Absent, that probe is `not_measured` —
+          # rule C3 — never green and never red. The value is never printed and never written
+          # into the result document.
+          SCRUTATOR_CANARY_TOKEN: ${{ secrets.SCRUTATOR_CANARY_TOKEN }}
+        run: |
+          set -uo pipefail
+          # The producer is stdlib-only, so the host's interpreter is enough and no toolchain is
+          # installed onto a production host to run it. An ABSENT interpreter is reported, never
+          # skipped over: a canary that quietly does not run is the state this card is fixing.
+          if ! command -v python3 >/dev/null 2>&1; then
+            echo "::error title=canary::python3 is not on this runner — the post-deploy canary could not run (rule C5)"
+            exit 1
+          fi
+          python3 tools/canary_probe.py \
+            --plan deploy/canary/scrutator-production.plan.json \
+            --phase post \
+            --base-url http://127.0.0.1:8310 \
+            --repo . \
+            --out "${RUNNER_TEMP}/canary/scrutator-production-post.json" || true
+
+      - name: Upload the canary result
+        if: always() && steps.canary.outcome != 'skipped'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: canary-post-${{ github.sha }}
+          path: ${{ runner.temp }}/canary/*.json
+          if-no-files-found: warn
+
+      # A probe that could not run is `not_measured` and must NOT fail the deploy (rule C3): an
+      # unreachable contour or an unset credential is absence of measurement, not a regression.
+      # A `failed` row is a measurement, and it fails.
+      - name: Fail the deploy on a failed canary entity
+        if: always() && steps.canary.outcome != 'skipped'
+        run: |
+          set -euo pipefail
+          result="${RUNNER_TEMP}/canary/scrutator-production-post.json"
+          if [ ! -f "$result" ]; then
+            echo "::error title=canary::no canary result was produced — rule C5 not satisfied"
+            exit 1
+          fi
+          python3 - "$result" <<'PYCHECK'
+          import json, sys
+          doc = json.load(open(sys.argv[1]))
+          failed = [r for r in doc["entity_verdicts"] if r["verdict"] == "failed"]
+          unmeasured = [r for r in doc["entity_verdicts"] if r["verdict"] == "not_measured"]
+          for row in doc["entity_verdicts"]:
+              print(f"{row['verdict']:12} {row['entity']}  {row['reason'][:160]}")
+          if failed:
+              names = ", ".join(r["entity"] for r in failed)
+              print(f"::error title=canary::the resident version failed {len(failed)} probe(s): {names}")
+              sys.exit(1)
+          if unmeasured:
+              names = ", ".join(r["entity"] for r in unmeasured)
+              print(f"::warning title=canary::not_measured (never a pass): {names}")
+          PYCHECK
