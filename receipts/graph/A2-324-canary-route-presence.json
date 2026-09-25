@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-09-25T11:26:31Z",
+ "captured_at_utc": "2026-09-25T11:35:13Z",
  "change_set": {
   "base": "4123b28197e71118a81e88d8f2966a2e71e77ce7",
   "files": [
@@ -49,6 +49,15 @@
     "kind": "receipt",
     "new": true,
     "path": "receipts/canary/scrutator-route-presence.candidate.plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/A2-324-canary-route-presence.json",
+    "node_ids": [
+     "receipt:receipts/graph/A2-324-canary-route-presence.json"
+    ],
+    "path": "receipts/graph/A2-324-canary-route-presence.json",
     "status": "A"
    },
    {
@@ -159,7 +168,7 @@
     "status": "M"
    }
   ],
-  "head": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "head": "a9b9c39f7d947a50f7a584a7bf89328660b3667c",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -442,18 +451,18 @@
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:005fae4be0b2b9fcdc35b63da63ac9f66595694ae111ca3898fc22aac0abe20b",
-  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/graph-4123b28197e7.json",
+  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/graph-4123b28197e7.json",
   "source_commit": "4123b28197e71118a81e88d8f2966a2e71e77ce7"
  },
  "head_graph": {
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:27c292e5ae6f05e929da6ff6c3f7cb0b5444560cb72341379537e73863d32fc0",
-  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/graph-head-65400388eceb.json",
-  "source_commit": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "graph_digest": "sha256:45ba40860029032b04c30800173ba5e90dc2bfb8633ae701bc4a29c8ffc55be9",
+  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/graph-head-a9b9c39f7d94.json",
+  "source_commit": "a9b9c39f7d947a50f7a584a7bf89328660b3667c",
   "staleness": {
-   "checked_at_utc": "2026-09-25T11:26:33Z",
-   "checked_nodes": 260,
+   "checked_at_utc": "2026-09-25T11:35:15Z",
+   "checked_nodes": 261,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -1582,7 +1591,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.0.1"
  },
- "receipt_id": "car-verify-20260925T112631Z-65400388",
+ "receipt_id": "car-verify-20260925T113513Z-a9b9c39f",
  "receipt_path": "receipts/graph/A2-324-canary-route-presence.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -1681,6 +1690,7 @@
    "deployable_unit:.",
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "receipt:receipts/graph/A2-324-canary-route-presence.json",
    "route:DELETE /source",
    "route:DELETE /v1/edges",
    "route:DELETE /v1/index",
@@ -1723,7 +1733,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-09-25T11:26:33Z",
+  "checked_at_utc": "2026-09-25T11:35:15Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -1750,10 +1760,25 @@
    "path": "receipts/graph/A2-311-contracts-and-canary.json",
    "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
    "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:c1781400300dddcf245e53abeb2a9e5a89fc3fe3f47007f28395094129dad2c5"
+   },
+   "entity": "receipt:receipts/graph/A2-324-canary-route-presence.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-324-canary-route-presence.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/A2-324-canary-route-presence.json for work item A2-324",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/A2-324-canary-route-presence.json",
+    "work_item": "A2-324"
+   }
   }
  ],
  "tree": {
-  "commit": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "commit": "a9b9c39f7d947a50f7a584a7bf89328660b3667c",
   "dirty": false
  },
  "verdicts": [
@@ -2328,7 +2353,7 @@
  "verifiers": [
   {
    "command": "/home/dev/aup/arc2/runs/A2-324/work/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-324/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
-   "duration_s": 1.02,
+   "duration_s": 0.97,
    "entities": [
     "deployable_unit:."
    ],
@@ -2338,13 +2363,13 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-09-25T11:26:35Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T11:35:17Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=4123b28197e7, head=65400388eceb, graph=head graph)",
-   "duration_s": 0.07,
+   "command": "tools/graph/contract_diff.py.run_diff(base=4123b28197e7, head=a9b9c39f7d94, graph=head graph)",
+   "duration_s": 0.06,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -2430,8 +2455,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-09-25T11:26:36Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-09-25T11:35:18Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -2516,8 +2541,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-09-25T11:26:36Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-09-25T11:35:18Z",
    "summary": "36 route(s), 0 failed"
   },
   {
@@ -2580,8 +2605,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-09-25T11:26:36Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T11:35:18Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -2672,8 +2697,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-canary.json",
-   "started_at_utc": "2026-09-25T11:26:36Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork5/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T11:35:18Z",
    "summary": "0 canary result(s); 0 verified / 0 failed / 39 not_measured of 39 entities"
   }
  ],
@@ -2690,9 +2715,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/A2-324-canary-route-presence.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/A2-324-canary-route-presence.json is the previous version of the one this run is writing, for the same work item A2-324 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "2 affected entity(ies) owe no verdict (receipt: 2): unchanged at both revisions and given no verifier by the matrix"
+    "text": "3 affected entity(ies) owe no verdict (receipt: 3): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -2780,6 +2811,7 @@
    ],
    "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
    "receipt:receipts/graph/A2-311-contracts-and-canary.json": [],
+   "receipt:receipts/graph/A2-324-canary-route-presence.json": [],
    "route:DELETE /source": [
     "canary",
     "contract_diff",
@@ -2962,9 +2994,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.93,
-   "total": 4.42,
-   "verifiers": 1.09
+   "prepare": 0.9,
+   "total": 4.26,
+   "verifiers": 1.03
   }
  },
  "work_item": "A2-324"
