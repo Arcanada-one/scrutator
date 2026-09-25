@@ -23,6 +23,11 @@ readonly DEPLOY_SURFACE=(
     compose.yaml
     deploy
     scripts/deploy.sh
+    # A2-329 (measured 2026-09-25): the deploy job runs this file on the production host out of
+    # the TARGET checkout (post-deploy canary, rule C5), and its verdict decides the run. Outside
+    # the surface it changed by push with no reviewed SHA. ONE file, not tools/: the job runs it
+    # with `python3 -I`, so tools/ is not on its import path (a sibling cannot shadow a module).
+    tools/canary_probe.py
 )
 
 TARGET_SHA=""
