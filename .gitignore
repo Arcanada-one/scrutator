@@ -38,3 +38,12 @@ datarim/
 
 # A2-308 mutation battery scratch copies
 .a2-308-mutation/
+
+# The contract project is type-checked, never built or published.
+node_modules/
+# NOT a convenience: impact.py:287 classifies a file named package-lock.json as the global-fallback
+# trigger at ANY depth — the `is_root` guard on the line below it does not cover lockfiles — so a
+# committed lockfile here would expand the impact set of the pull request that touches it to every
+# node of the graph. Both devDependencies are pinned to exact versions and neither has a transitive
+# dependency (`npm ls --all` lists two packages), so the manifest pins the whole tree on its own.
+contracts/http/package-lock.json

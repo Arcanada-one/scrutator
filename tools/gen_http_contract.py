@@ -206,7 +206,12 @@ def render(document: dict) -> str:
     for name in order:
         body = bodies[name]
         if name in lazy:
+            # A recursive schema needs both the runtime thunk and an explicit type annotation:
+            # without one `tsc` answers TS7022 ("implicitly has type any ... referenced in its own
+            # initializer") and the type_check verifier of the same route would go red.
             body = f"z.lazy(() => {body})"
+            out.append(f"export const {symbol_of(name)}: z.ZodType = {body};\n")
+            continue
         out.append(f"export const {symbol_of(name)} = {body};\n")
     return "\n".join(out)
 

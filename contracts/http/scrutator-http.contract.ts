@@ -561,7 +561,7 @@ export const NamespaceInfoSchema = z.object({
     chunk_count: z.number().int().optional(),
   });
 
-export const OutlineNodeSchema = z.lazy(() => z.object({
+export const OutlineNodeSchema: z.ZodType = z.lazy(() => z.object({
     title: z.string(),
     anchor: z.string(),
     depth: z.number().int(),
