@@ -1,0 +1,124 @@
+{
+ "base_url": "http://127.0.0.1:35217",
+ "captured_at_utc": "2026-09-25T11:06:05Z",
+ "card": "A2-311",
+ "counters": {
+  "failed": 0,
+  "not_measured": 1,
+  "verified": 2
+ },
+ "entity_verdicts": [
+  {
+   "entity": "code_unit:src/scrutator/health.py",
+   "probe_ids": [
+    "health-read"
+   ],
+   "reason": "health-read: status 200 in [200]; status 200 != 404: the route is served; declared in the resident OpenAPI; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "verdict": "verified"
+  },
+  {
+   "entity": "route:GET /health",
+   "probe_ids": [
+    "health-read"
+   ],
+   "reason": "health-read: status 200 in [200]; status 200 != 404: the route is served; declared in the resident OpenAPI; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "verdict": "verified"
+  },
+  {
+   "entity": "route:GET /v1/namespaces",
+   "probe_ids": [
+    "namespaces-read"
+   ],
+   "reason": "namespaces-read: the canary credential is not configured on this host (rule C3)",
+   "verdict": "not_measured"
+  },
+  {
+   "entity": "route:POST /v1/edges",
+   "probe_ids": [
+    "edges-write-requires-scope"
+   ],
+   "reason": "edges-write-requires-scope: status 403 in [401, 403]; status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified"
+  }
+ ],
+ "environment": "a2-324-candidate-local",
+ "model": "none: deterministic HTTP producer",
+ "mutating_owner": "Arcanada (control session) \u2014 scrutator deploy transaction",
+ "phase": "pre",
+ "plan": {
+  "digest": "sha256:ed5687568566afca3c458bfeaa3f6911eac5293464ecb5197bc762669af438b0",
+  "id": "scrutator-production",
+  "path": "scrutator-production.candidate.plan.json"
+ },
+ "probes": [
+  {
+   "body_bytes": 55,
+   "body_sha256": "b62a141314dbab95de485e7fd83b81baf7f35987c03c39d2ecfb592c0462c71a",
+   "declared_by_resident_openapi": true,
+   "elapsed_ms": 22,
+   "executed": true,
+   "id": "health-read",
+   "kind": "http",
+   "method": "GET",
+   "observed_version": "0.3.0",
+   "outcome": "verified",
+   "reason": "status 200 in [200]; status 200 != 404: the route is served; declared in the resident OpenAPI; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "route": "/health",
+   "status": 200,
+   "url": "http://127.0.0.1:35217/health"
+  },
+  {
+   "elapsed_ms": 0,
+   "executed": false,
+   "id": "namespaces-read",
+   "kind": "http",
+   "method": "GET",
+   "outcome": "not_measured",
+   "reason": "the canary credential is not configured on this host (rule C3)",
+   "status": null,
+   "url": "http://127.0.0.1:35217/v1/namespaces"
+  },
+  {
+   "body_bytes": 61,
+   "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
+   "declared_by_resident_openapi": true,
+   "elapsed_ms": 0,
+   "executed": true,
+   "id": "edges-write-requires-scope",
+   "kind": "http",
+   "method": "POST",
+   "outcome": "verified",
+   "reason": "status 403 in [401, 403]; status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "route": "/v1/edges",
+   "status": 403,
+   "url": "http://127.0.0.1:35217/v1/edges"
+  }
+ ],
+ "producer": {
+  "tool": "tools/canary_probe.py",
+  "version": "1.0.0"
+ },
+ "read_only": false,
+ "resident_openapi": {
+  "paths": 31,
+  "sha256": "cb86bf8b557be2eee56cb4d29c733a86b6e3fad44d5d0d557d4229b1a06c09b6",
+  "status": 200,
+  "url": "http://127.0.0.1:35217/openapi.json"
+ },
+ "resident_version": "0.3.0",
+ "rules": [
+  "C3 a probe that could not run is not_measured, never verified",
+  "C4 probes are read-only unless the plan declares mutating with an owner"
+ ],
+ "schema": "CanaryResult/v1",
+ "subject": {
+  "commit": "880d9fce7be92775b401f07cc786c6e5aef81d3f",
+  "evidence": {
+   "path": "A2-324-scrutator-production-candidate.source-evidence.json",
+   "sha256": "4b1ca504509fdeaedad06f23acd05abc0bf9a7bcc88f9185763f4f6a57ce3ba1",
+   "source_field": "commit"
+  },
+  "schema": "GitCanarySubject/v1",
+  "tree": "c02b02d35276a890410d7f2c0f5d26282d080c02"
+ }
+}
