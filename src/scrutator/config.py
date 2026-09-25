@@ -138,6 +138,11 @@ class Settings(BaseSettings):
     # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
     rls_enabled: bool = False
 
+    # A2-308: DSN for the live-Postgres tests (tests/test_graph_edges_integration.py). Empty
+    # in every deployment — the service never reads it; it is declared here because the key
+    # exists and an undeclared key is exactly what config_schema is meant to catch.
+    test_dsn: str = ""
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 
