@@ -342,7 +342,15 @@ def _serve_mutant(tmp_path, stale_openapi: bool = False):
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
     sock.close()
-    env = {"PATH": "/usr/bin:/bin", "PYTHONPATH": str(work / "src")}
+    import os
+
+    # Inherit the interpreter's environment (CI installs into a site the bare PATH does not reach)
+    # and point the database at nothing: the mutant must never reach a Postgres on this host.
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(work / "src"),
+        "SCRUTATOR_DATABASE_URL": "postgresql://none:none@127.0.0.1:1/none",
+    }
     process = subprocess.Popen(
         [
             sys.executable,
