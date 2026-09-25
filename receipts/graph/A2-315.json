@@ -5,10 +5,16 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-09-25T08:24:46Z",
+ "captured_at_utc": "2026-09-25T09:00:19Z",
  "change_set": {
   "base": "ad15d8771776c3e48e24a349f4c3073df31cab8a",
   "files": [
+   {
+    "kind": "config",
+    "path": ".github/actionlint.yaml",
+    "status": "M",
+    "uncovered": true
+   },
    {
     "kind": "config",
     "node_id": "code_unit:.github/workflows/deploy.yml",
@@ -17,9 +23,27 @@
     ],
     "path": ".github/workflows/deploy.yml",
     "status": "M"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/A2-315.json",
+    "node_ids": [
+     "receipt:receipts/graph/A2-315.json"
+    ],
+    "path": "receipts/graph/A2-315.json",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/security/test_deploy_transaction.py",
+    "node_ids": [
+     "code_unit:tests/security/test_deploy_transaction.py"
+    ],
+    "path": "tests/security/test_deploy_transaction.py",
+    "status": "M"
    }
   ],
-  "head": "c511edc83b7736a3f25acd3632f15f3c51bf11a5",
+  "head": "7e2d65903bf67da236bab9d13dec7657fff69a8c",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -34,12 +58,12 @@
  "head_graph": {
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:d20d57b908894582184303db50199cdd26387b745c9ff2451e09f683c7ac514c",
-  "path": "/tmp/arcana-verify/verifier-out/graph-head-c511edc83b77.json",
-  "source_commit": "c511edc83b7736a3f25acd3632f15f3c51bf11a5",
+  "graph_digest": "sha256:54210fb1fd84a6fb1c86e67db63bdf4b8ba2203d6834f64c7c99b027c86861b6",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-7e2d65903bf6.json",
+  "source_commit": "7e2d65903bf67da236bab9d13dec7657fff69a8c",
   "staleness": {
-   "checked_at_utc": "2026-09-25T08:24:48Z",
-   "checked_nodes": 250,
+   "checked_at_utc": "2026-09-25T09:00:20Z",
+   "checked_nodes": 251,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -282,7 +306,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.0.1"
  },
- "receipt_id": "car-verify-20260925T082446Z-c511edc8",
+ "receipt_id": "car-verify-20260925T090019Z-7e2d6590",
  "receipt_path": "receipts/graph/A2-315.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -291,6 +315,7 @@
  "revision_selection": {
   "base": [
    "code_unit:.github/workflows/deploy.yml",
+   "code_unit:tests/security/test_deploy_transaction.py",
    "deployable_unit:.",
    "document:CLAUDE.md",
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
@@ -298,9 +323,11 @@
   ],
   "head": [
    "code_unit:.github/workflows/deploy.yml",
+   "code_unit:tests/security/test_deploy_transaction.py",
    "deployable_unit:.",
    "document:CLAUDE.md",
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-315.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json"
   ],
   "schema": "RevisionImpactSelection/v1",
@@ -308,7 +335,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-09-25T08:24:48Z",
+  "checked_at_utc": "2026-09-25T09:00:20Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -327,6 +354,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:2118276f9ba1557137b3dd27bb068a8c798c3bdea7f77c8bd6b8a6aec010be3b"
+   },
+   "entity": "receipt:receipts/graph/A2-315.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-315.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/A2-315.json for work item A2-315",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/A2-315.json",
+    "work_item": "A2-315"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6",
     "head": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6"
    },
@@ -338,7 +380,7 @@
   }
  ],
  "tree": {
-  "commit": "c511edc83b7736a3f25acd3632f15f3c51bf11a5",
+  "commit": "7e2d65903bf67da236bab9d13dec7657fff69a8c",
   "dirty": false
  },
  "verdicts": [
@@ -349,6 +391,16 @@
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-28802fbf11c83a2e"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_deploy_transaction.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-config-schema",
+    "v-fitness"
    ]
   },
   {
@@ -382,25 +434,43 @@
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-09-25T08:24:50Z",
+   "started_at_utc": "2026-09-25T09:00:21Z",
    "summary": "workflow configuration not measured: job-level `environment` outside this bounded checker"
+  },
+  {
+   "command": "verify.py config_schema: keys read at head ⊆ declared keys",
+   "duration_s": 0.48,
+   "entities": [
+    "code_unit:tests/security/test_deploy_transaction.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:tests/security/test_deploy_transaction.py": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-config-schema",
+   "kind": "config_schema",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-09-25T09:00:21Z",
+   "summary": "2 source(s), 0 new / 26 frozen undeclared reads, 0 failed; 4 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
    "duration_s": 0.0,
    "entities": [
     "code_unit:.github/workflows/deploy.yml",
+    "code_unit:tests/security/test_deploy_transaction.py",
     "deployable_unit:."
    ],
    "entity_verdicts": {
     "code_unit:.github/workflows/deploy.yml": "verified",
+    "code_unit:tests/security/test_deploy_transaction.py": "verified",
     "deployable_unit:.": "verified"
    },
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-09-25T08:24:50Z",
+   "started_at_utc": "2026-09-25T09:00:22Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -416,20 +486,47 @@
    "id": "v-doc-reference",
    "kind": "doc_reference",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-09-25T08:24:50Z",
+   "started_at_utc": "2026-09-25T09:00:22Z",
    "summary": "1 document(s), 0 failed"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:tests/security/test_deploy_transaction.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:tests/security/test_deploy_transaction.py": "not_measured"
+   },
+   "exit_code": 0,
+   "id": "v-canary",
+   "kind": "canary",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T09:00:22Z",
+   "summary": "0 canary result(s); 0 verified / 0 failed / 1 not_measured of 1 entities"
   }
  ],
  "verify": {
   "events": [
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/A2-315.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/A2-315.json is the previous version of the one this run is writing, for the same work item A2-315 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "2 affected entity(ies) owe no verdict (receipt: 2): unchanged at both revisions and given no verifier by the matrix"
+    "text": "3 affected entity(ies) owe no verdict (receipt: 3): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
    "code_unit:.github/workflows/deploy.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_deploy_transaction.py": [
+    "canary",
     "config_schema",
     "fitness_rules"
    ],
@@ -440,12 +537,13 @@
     "doc_reference"
    ],
    "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/A2-315.json": [],
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": []
   },
   "seconds": {
-   "prepare": 1.07,
-   "total": 4.0,
-   "verifiers": 0.0
+   "prepare": 0.74,
+   "total": 3.19,
+   "verifiers": 0.48
   }
  },
  "work_item": "A2-315"
