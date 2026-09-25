@@ -1,0 +1,114 @@
+{
+ "base_url": "http://127.0.0.1:58311",
+ "captured_at_utc": "2026-09-25T06:58:51Z",
+ "card": "A2-311",
+ "counters": {
+  "failed": 0,
+  "not_measured": 1,
+  "verified": 2
+ },
+ "entity_verdicts": [
+  {
+   "entity": "code_unit:src/scrutator/health.py",
+   "probe_ids": [
+    "health-read"
+   ],
+   "reason": "health-read: status 200 in [200]; status 200 != 404: the route is served; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "verdict": "verified"
+  },
+  {
+   "entity": "route:GET /health",
+   "probe_ids": [
+    "health-read"
+   ],
+   "reason": "health-read: status 200 in [200]; status 200 != 404: the route is served; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "verdict": "verified"
+  },
+  {
+   "entity": "route:GET /v1/namespaces",
+   "probe_ids": [
+    "namespaces-read"
+   ],
+   "reason": "namespaces-read: the canary credential is not configured on this host (rule C3)",
+   "verdict": "not_measured"
+  },
+  {
+   "entity": "route:POST /v1/edges",
+   "probe_ids": [
+    "edges-write-requires-scope"
+   ],
+   "reason": "edges-write-requires-scope: status 403 in [401, 403]; status 403 != 404: the route is served",
+   "verdict": "verified"
+  }
+ ],
+ "environment": "kb-production",
+ "model": "none: deterministic HTTP producer",
+ "mutating_owner": "Arcanada (control session) \u2014 scrutator deploy transaction",
+ "phase": "post",
+ "plan": {
+  "digest": "sha256:87b84216f57c1cc501966233dbcdc366bfd35f90dc308982a8dcc9a3b71f1234",
+  "id": "scrutator-production",
+  "path": "scrutator-production.plan.json"
+ },
+ "probes": [
+  {
+   "body_bytes": 55,
+   "body_sha256": "b62a141314dbab95de485e7fd83b81baf7f35987c03c39d2ecfb592c0462c71a",
+   "elapsed_ms": 22,
+   "executed": true,
+   "id": "health-read",
+   "kind": "http",
+   "method": "GET",
+   "observed_version": "0.3.0",
+   "outcome": "verified",
+   "reason": "status 200 in [200]; status 200 != 404: the route is served; key `status` present; key `service` present; key `version` present; resident version 0.3.0",
+   "status": 200,
+   "url": "http://127.0.0.1:58311/health"
+  },
+  {
+   "elapsed_ms": 0,
+   "executed": false,
+   "id": "namespaces-read",
+   "kind": "http",
+   "method": "GET",
+   "outcome": "not_measured",
+   "reason": "the canary credential is not configured on this host (rule C3)",
+   "status": null,
+   "url": "http://127.0.0.1:58311/v1/namespaces"
+  },
+  {
+   "body_bytes": 61,
+   "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
+   "elapsed_ms": 0,
+   "executed": true,
+   "id": "edges-write-requires-scope",
+   "kind": "http",
+   "method": "POST",
+   "outcome": "verified",
+   "reason": "status 403 in [401, 403]; status 403 != 404: the route is served",
+   "status": 403,
+   "url": "http://127.0.0.1:58311/v1/edges"
+  }
+ ],
+ "producer": {
+  "tool": "tools/canary_probe.py",
+  "version": "1.0.0"
+ },
+ "read_only": false,
+ "resident_version": "0.3.0",
+ "rules": [
+  "C3 a probe that could not run is not_measured, never verified",
+  "C4 probes are read-only unless the plan declares mutating with an owner"
+ ],
+ "schema": "CanaryResult/v1",
+ "subject": {
+  "commit": "2856044fe2f8ae97a1c4120a21228b926d8e3be0",
+  "evidence": {
+   "path": "scrutator-production-post.source-evidence.json",
+   "sha256": "053276d46a64b24e8a79a09e75dc1bd4756d51c15656021df7e216dd5c383f9f",
+   "source_field": "commit"
+  },
+  "schema": "GitCanarySubject/v1",
+  "tree": "b01851cb8f69eff0d6251ff30227101d2b61851c"
+ }
+}
