@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -49,7 +48,12 @@ def _graph_routes() -> set[str]:
 
 def _plan_entities() -> set[str]:
     plan = json.loads(PLAN.read_text(encoding="utf-8"))
-    return {e for probe in plan["probes"] for e in probe["entities"]}
+    return {e for probe in plan["probes"] for e in probe["entities"] if e.startswith("route:")}
+
+
+def _plan_controllers() -> set[str]:
+    plan = json.loads(PLAN.read_text(encoding="utf-8"))
+    return {e for probe in plan["probes"] for e in probe["entities"] if e.startswith("code_unit:")}
 
 
 def test_the_committed_plan_equals_the_application():
@@ -78,30 +82,33 @@ def test_no_probe_sends_a_body_or_a_credential():
         assert "body" not in probe, probe["id"]
         assert probe["auth"] == "none", probe["id"]
         assert probe["expect"] == {"route_present": True}, probe["id"]
+        assert any(e.startswith("route:") for e in probe["entities"]), probe["id"]
         if probe["method"] not in ("GET", "HEAD", "OPTIONS"):
             assert probe["mutating"] is True, f"rule C4: {probe['id']}"
     assert plan["owner"]
 
 
-def test_a_renamed_route_is_caught(tmp_path):
-    """The mutant class the offline verifiers cannot see: a path rewrite answers 404."""
-    module = _generator()
+def test_a_prefixed_router_is_probed_at_the_served_path_and_named_at_the_decorator_path():
+    """The translation nine routes depend on, asserted on the committed plan.
 
-    class _Route:
-        def __init__(self, path):
-            self.path = path
-            self.methods = {"GET"}
-
-    class _App:
-        def openapi(self):
-            return {"paths": {"/v1/ltm/graph": {"get": {}}, "/health": {"get": {}}}}
-
-    plan = module.build(_App())
-    ids = {e for p in plan["probes"] for e in p["entities"]}
-    assert ids == {"route:GET /graph", "route:GET /health"}
+    `build_graph` records `@router.get("/graph")` as `route:GET /graph` and never applies the
+    router's `/v1/ltm` prefix, while the URL that must be probed is `/v1/ltm/graph`. Get this
+    backwards either way and the canary covers nothing while looking complete.
+    """
+    plan = json.loads(PLAN.read_text(encoding="utf-8"))
+    graph_probe = next(p for p in plan["probes"] if p["path"] == "/v1/ltm/graph")
+    assert "route:GET /graph" in graph_probe["entities"]
+    assert "code_unit:src/scrutator/ltm/router.py" in graph_probe["entities"]
+    assert not any("/v1/ltm" in e for e in graph_probe["entities"])
 
 
-@pytest.mark.skipif(os.environ.get("SCRUTATOR_SKIP_SLOW"), reason="opt-out for slow graph build")
+def test_every_controller_is_named_too():
+    """verify.py holds the CONTROLLER on an inferred boundary as well as the route: a canary that
+    names only routes leaves src/scrutator/ltm/router.py not_measured while all nine of its routes
+    are verified."""
+    assert _plan_controllers() == {"code_unit:src/scrutator/health.py", "code_unit:src/scrutator/ltm/router.py"}
+
+
 def test_the_two_plans_do_not_contradict_each_other():
     """Both plans may name the same route; `verify.py` takes the WORST verdict, so a presence probe
     can never paper over a failed refusal probe."""

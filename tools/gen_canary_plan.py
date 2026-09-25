@@ -26,6 +26,7 @@ language, and `tests/test_canary_plan.py` asserts the two agree by building the 
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import re
 import sys
@@ -38,6 +39,37 @@ PATH_PARAM = re.compile(r"\{[^}]+\}")
 PLACEHOLDER = "00000000-0000-0000-0000-000000000000"
 
 OWNER = "Arcanada (control session) — scrutator deploy transaction"
+
+
+def served_routes(app):
+    """Every APIRoute of the application, including those behind an included router.
+
+    FastAPI 0.141 wraps an included router in an opaque `_IncludedRouter`; its `original_router`
+    holds the real routes. Walked rather than special-cased, so a second router added later is
+    covered without touching this file.
+    """
+    out, stack = [], list(app.routes)
+    while stack:
+        route = stack.pop()
+        inner = getattr(route, "original_router", None)
+        if inner is not None:
+            stack.extend(inner.routes)
+            continue
+        if getattr(route, "endpoint", None) is not None and getattr(route, "methods", None):
+            out.append(route)
+    return out
+
+
+def declaring_file(endpoint) -> str | None:
+    """The repository-relative path of the module that declares this endpoint, or None."""
+    source = inspect.getsourcefile(endpoint)
+    if not source:
+        return None
+    path = Path(source).resolve()
+    for parent in path.parents:
+        if (parent / "pyproject.toml").exists():
+            return path.relative_to(parent).as_posix()
+    return None
 
 
 def decorator_paths() -> dict:
@@ -64,21 +96,33 @@ def decorator_paths() -> dict:
 
 def build(app) -> dict:
     written = decorator_paths()
+    served = app.openapi().get("paths", {})
+    declared_by = {}
+    for route in served_routes(app):
+        source = declaring_file(route.endpoint)
+        for method in route.methods:
+            declared_by[(method, route.path)] = source
     probes = []
-    document = app.openapi()
-    for path, operations in document.get("paths", {}).items():
+    for path, operations in served.items():
         for verb in operations:
             method = verb.upper()
             if method not in ("GET", "POST", "PUT", "PATCH", "DELETE"):
                 continue
             entity_path = written.get(path, path)
+            entities = [f"route:{method} {entity_path}"]
+            # The controller is an entity too, and it is the one that carries the
+            # `inferred_boundary` hold in verify.py: a canary that names only the route leaves
+            # src/scrutator/ltm/router.py not_measured while every route it serves is verified.
+            source = declared_by.get((method, path))
+            if source:
+                entities.append(f"code_unit:{source}")
             probe = {
                 "id": re.sub(r"[^a-z0-9]+", "-", f"{method} {path}".lower()).strip("-"),
                 "method": method,
                 "path": PATH_PARAM.sub(PLACEHOLDER, path),
                 "auth": "none",
                 "expect": {"route_present": True},
-                "entities": [f"route:{method} {entity_path}"],
+                "entities": entities,
             }
             if method not in SAFE_METHODS:
                 probe["mutating"] = True

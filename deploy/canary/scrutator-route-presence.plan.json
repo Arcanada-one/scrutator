@@ -17,7 +17,8 @@
         "route_present": true
       },
       "entities": [
-        "route:DELETE /v1/edges"
+        "route:DELETE /v1/edges",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -30,7 +31,8 @@
         "route_present": true
       },
       "entities": [
-        "route:DELETE /v1/index"
+        "route:DELETE /v1/index",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -43,7 +45,8 @@
         "route_present": true
       },
       "entities": [
-        "route:DELETE /source"
+        "route:DELETE /source",
+        "code_unit:src/scrutator/ltm/router.py"
       ],
       "mutating": true
     },
@@ -56,7 +59,8 @@
         "route_present": true
       },
       "entities": [
-        "route:DELETE /v1/memories"
+        "route:DELETE /v1/memories",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -69,7 +73,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /health"
+        "route:GET /health",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -81,7 +86,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/chunks"
+        "route:GET /v1/chunks",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -93,7 +99,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/edges/{chunk_id}"
+        "route:GET /v1/edges/{chunk_id}",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -105,7 +112,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/index/capability"
+        "route:GET /v1/index/capability",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -117,7 +125,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/index/rollback-capability"
+        "route:GET /v1/index/rollback-capability",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -129,7 +138,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /entities"
+        "route:GET /entities",
+        "code_unit:src/scrutator/ltm/router.py"
       ]
     },
     {
@@ -141,7 +151,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /events"
+        "route:GET /events",
+        "code_unit:src/scrutator/ltm/router.py"
       ]
     },
     {
@@ -153,7 +164,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /graph"
+        "route:GET /graph",
+        "code_unit:src/scrutator/ltm/router.py"
       ]
     },
     {
@@ -165,7 +177,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /jobs/{job_id}"
+        "route:GET /jobs/{job_id}",
+        "code_unit:src/scrutator/ltm/router.py"
       ]
     },
     {
@@ -177,7 +190,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /meta_facts"
+        "route:GET /meta_facts",
+        "code_unit:src/scrutator/ltm/router.py"
       ]
     },
     {
@@ -189,7 +203,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/memories/stats"
+        "route:GET /v1/memories/stats",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -201,7 +216,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/namespaces"
+        "route:GET /v1/namespaces",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -213,7 +229,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/navigate/outline"
+        "route:GET /v1/navigate/outline",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -225,7 +242,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/navigate/section"
+        "route:GET /v1/navigate/section",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -237,7 +255,8 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/stats"
+        "route:GET /v1/stats",
+        "code_unit:src/scrutator/health.py"
       ]
     },
     {
@@ -249,7 +268,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/chunk"
+        "route:POST /v1/chunk",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -262,7 +282,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/dream/analyze"
+        "route:POST /v1/dream/analyze",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -275,7 +296,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/edges"
+        "route:POST /v1/edges",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -288,7 +310,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/edges/by-path"
+        "route:POST /v1/edges/by-path",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -301,7 +324,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/fetch"
+        "route:POST /v1/fetch",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -314,7 +338,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/index"
+        "route:POST /v1/index",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -327,7 +352,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/index/batch"
+        "route:POST /v1/index/batch",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -340,7 +366,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/index/capability-projection"
+        "route:POST /v1/index/capability-projection",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -353,7 +380,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /ingest"
+        "route:POST /ingest",
+        "code_unit:src/scrutator/ltm/router.py"
       ],
       "mutating": true
     },
@@ -366,7 +394,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /recall"
+        "route:POST /recall",
+        "code_unit:src/scrutator/ltm/router.py"
       ],
       "mutating": true
     },
@@ -379,7 +408,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /reflect"
+        "route:POST /reflect",
+        "code_unit:src/scrutator/ltm/router.py"
       ],
       "mutating": true
     },
@@ -392,7 +422,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/memories"
+        "route:POST /v1/memories",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -405,7 +436,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/memories/bulk"
+        "route:POST /v1/memories/bulk",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -418,7 +450,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/memories/recall"
+        "route:POST /v1/memories/recall",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -431,7 +464,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/namespaces"
+        "route:POST /v1/namespaces",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     },
@@ -444,7 +478,8 @@
         "route_present": true
       },
       "entities": [
-        "route:POST /v1/search"
+        "route:POST /v1/search",
+        "code_unit:src/scrutator/health.py"
       ],
       "mutating": true
     }
