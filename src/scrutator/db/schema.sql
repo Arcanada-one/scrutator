@@ -76,7 +76,10 @@ CREATE TABLE IF NOT EXISTS graph_edges (
     source_chunk_id UUID REFERENCES chunks(id) ON DELETE CASCADE,
     target_chunk_id UUID REFERENCES chunks(id) ON DELETE CASCADE,
     edge_type TEXT NOT NULL,
-    weight REAL DEFAULT 1.0,
+    -- NUMERIC, not REAL: this column holds both similarity fractions and the integer cost
+    -- quantities of Part 5 §5.2. float32 is exact for integers only below 2^24, and live
+    -- values already reach 9.6e6 (A2-308, migration 006).
+    weight NUMERIC DEFAULT 1.0,
     created_by TEXT DEFAULT 'dreamer',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(source_chunk_id, target_chunk_id, edge_type)

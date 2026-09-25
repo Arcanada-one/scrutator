@@ -15,7 +15,12 @@ from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from pydantic import ValidationError
 
 import scrutator.auth.verifier as verifier_module
-from scrutator.auth.verifier import Unauthenticated, verify_bearer_token, verify_oidc_token
+from scrutator.auth.verifier import (
+    Unauthenticated,
+    parse_scopes,
+    verify_bearer_token,
+    verify_oidc_token,
+)
 from scrutator.config import Settings
 
 LTM_M2M_ISSUER = "https://auth.arcanada.ai"
@@ -53,6 +58,21 @@ async def _verify_ltm_claims(claims, *, algorithm="EdDSA"):
     token = jwt.encode(claims, private_key, algorithm=algorithm)
     signing_key = MagicMock()
     signing_key.key = public_key
+    mock_jwks_client = MagicMock()
+    mock_jwks_client.get_signing_key_from_jwt.return_value = signing_key
+    with patch("scrutator.auth.verifier._get_jwks_client", return_value=mock_jwks_client):
+        principal = await verify_bearer_token(f"Bearer {token}")
+    # A2-308 changed the return type to VerifiedPrincipal; these tests assert on the
+    # identity pair, so unpack it here rather than rewriting every assertion.
+    return principal.principal_id, principal.principal_type
+
+
+async def _verify_ltm_principal(claims):
+    """Same path as `_verify_ltm_claims`, returning the whole principal (scopes included)."""
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    token = jwt.encode(claims, private_key, algorithm="EdDSA")
+    signing_key = MagicMock()
+    signing_key.key = private_key.public_key()
     mock_jwks_client = MagicMock()
     mock_jwks_client.get_signing_key_from_jwt.return_value = signing_key
     with patch("scrutator.auth.verifier._get_jwks_client", return_value=mock_jwks_client):
@@ -102,7 +122,8 @@ class TestServiceTokenIntrospection:
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = False
             with patch("scrutator.auth.verifier.httpx.AsyncClient", return_value=mock_client):
-                principal_id, principal_type = await verify_bearer_token("Bearer arc_api_abcdef")
+                principal = await verify_bearer_token("Bearer arc_api_abcdef")
+                principal_id, principal_type = principal.principal_id, principal.principal_type
 
         assert principal_id == "svc-42"
         assert principal_type == "service"
@@ -261,7 +282,8 @@ class TestOidcJwksVerification:
                     },
                 ),
             ):
-                principal_id, principal_type = await verify_bearer_token("Bearer eyJhbGciOiJSUzI1NiJ9.fake.token")
+                principal = await verify_bearer_token("Bearer eyJhbGciOiJSUzI1NiJ9.fake.token")
+                principal_id, principal_type = principal.principal_id, principal.principal_type
 
         assert principal_id == "user-7"
         assert principal_type == "user"
@@ -595,3 +617,53 @@ class TestLtmM2mSettings:
     def test_trust_profile_cannot_be_widened_by_configuration(self, field, value):
         with pytest.raises(ValidationError):
             Settings(**{field: value})
+
+
+class TestScopeParsing:
+    """A2-308 — `parse_scopes` replaced an exact string equality. It must not have widened
+    anything except the one scope this service now understands."""
+
+    def test_required_scope_alone_is_granted(self):
+        granted = parse_scopes("kb:ltm.read", required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+        assert granted == frozenset({"kb:ltm.read"})
+
+    def test_required_plus_optional_is_granted(self):
+        granted = parse_scopes("kb:ltm.read kb:ltm.write", required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+        assert granted == frozenset({"kb:ltm.read", "kb:ltm.write"})
+
+    def test_order_does_not_matter(self):
+        granted = parse_scopes("kb:ltm.write kb:ltm.read", required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+        assert granted == frozenset({"kb:ltm.read", "kb:ltm.write"})
+
+    def test_missing_required_scope_denies(self):
+        with pytest.raises(Unauthenticated):
+            parse_scopes("kb:ltm.write", required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+
+    def test_unknown_scope_denies_instead_of_being_ignored(self):
+        with pytest.raises(Unauthenticated):
+            parse_scopes("kb:ltm.read kb:ltm.admin", required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+
+    def test_non_string_claim_denies(self):
+        for claim in (None, ["kb:ltm.read"], 7, {"scope": "kb:ltm.read"}):
+            with pytest.raises(Unauthenticated):
+                parse_scopes(claim, required="kb:ltm.read", optional=frozenset({"kb:ltm.write"}))
+
+    def test_unconfigured_required_scope_denies_rather_than_matching_everything(self):
+        """An empty `required` must never mean "any token passes"."""
+        with pytest.raises(Unauthenticated):
+            parse_scopes("kb:ltm.read", required="", optional=frozenset())
+
+    def test_substring_of_the_required_scope_is_not_the_required_scope(self):
+        with pytest.raises(Unauthenticated):
+            parse_scopes("kb:ltm.rea", required="kb:ltm.read", optional=frozenset())
+
+    @pytest.mark.asyncio
+    async def test_ltm_token_with_write_scope_verifies_and_carries_it(self):
+        principal = await _verify_ltm_principal(_ltm_claims(scope="kb:ltm.read kb:ltm.write"))
+        assert principal.scopes == frozenset({"kb:ltm.read", "kb:ltm.write"})
+
+    @pytest.mark.asyncio
+    async def test_ltm_token_with_only_the_read_scope_carries_no_write_authority(self):
+        principal = await _verify_ltm_principal(_ltm_claims())
+        assert principal.scopes == frozenset({"kb:ltm.read"})
+        assert "kb:ltm.write" not in principal.scopes

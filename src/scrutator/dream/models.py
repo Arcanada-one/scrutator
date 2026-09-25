@@ -132,10 +132,20 @@ class EdgeCreateByPath(BaseModel):
 
 
 class EdgeCreateByPathResponse(BaseModel):
-    """Response for edge creation by path."""
+    """Response for edge creation by path.
+
+    A2-308: `created` is now the number of rows that did not exist before. `updated` and
+    `conflicts` are additive (defaulted) so an existing consumer parsing only `created` and
+    `not_found` keeps working — but `created` no longer over-reports: it used to be the
+    number of edges accepted for upsert, so a second, no-op run reported the same figure as
+    the first and idempotence could not be shown from the response.
+    """
 
     created: int
     not_found: list[str]
+    updated: int = 0
+    # Edge keys refused because the row exists under a different `created_by`.
+    conflicts: list[str] = []
 
 
 class EdgeInfo(BaseModel):

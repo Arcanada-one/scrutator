@@ -14,6 +14,7 @@ class TestTenantContext:
             principal_type="service",
             allowed_namespace_ids=frozenset({1, 2}),
             allowed_namespace_names=frozenset({"arcanada", "ltm-bench"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         assert ctx.principal_id == "svc-1"
         assert ctx.principal_type == "service"
@@ -27,6 +28,7 @@ class TestTenantContext:
             principal_type="service",
             allowed_namespace_ids=frozenset({1}),
             allowed_namespace_names=frozenset({"arcanada"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         with pytest.raises((AttributeError, TypeError)):
             ctx.principal_id = "svc-2"
@@ -37,6 +39,7 @@ class TestTenantContext:
             principal_type="user",
             allowed_namespace_ids=frozenset(),
             allowed_namespace_names=frozenset(),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         assert ctx.principal_type == "user"
 
@@ -47,5 +50,6 @@ class TestTenantContext:
             principal_type="service",
             allowed_namespace_ids=frozenset(),
             allowed_namespace_names=frozenset(),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         assert ctx.allowed_namespace_ids == frozenset()

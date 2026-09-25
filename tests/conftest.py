@@ -60,16 +60,31 @@ def build_indexed_doc(
     return doc_id, content_hash, rows
 
 
+# A2-308: the two bearer scopes. `READ_SCOPES` is what every live LTM principal holds
+# today; `FULL_SCOPES` additionally authorizes mutations.
+READ_SCOPES = frozenset({"kb:ltm.read"})
+FULL_SCOPES = frozenset({"kb:ltm.read", "kb:ltm.write"})
+
+
 def make_tenant_context(
     namespace_ids: frozenset[int] = frozenset({1}),
     namespace_names: frozenset[str] = frozenset({"arcanada"}),
     principal_id: str = "test-principal",
+    scopes: frozenset[str] = FULL_SCOPES,
 ) -> TenantContext:
+    """Build a tenant context for a route test.
+
+    `scopes` defaults to FULL so the pre-A2-308 tests keep exercising their own subject
+    (namespace scoping, payload handling) rather than all failing at the scope gate. That
+    the gate itself bites is proved separately, against the real verifier and a real signed
+    token, in tests/security/test_route_scope_enforcement.py.
+    """
     return TenantContext(
         principal_id=principal_id,
         principal_type="service",
         allowed_namespace_ids=namespace_ids,
         allowed_namespace_names=namespace_names,
+        scopes=scopes,
     )
 
 

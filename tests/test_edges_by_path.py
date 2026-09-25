@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from scrutator.db.models import ChunkLookupResult
+from scrutator.db.repository import EdgeWriteResult
 from scrutator.dream.models import EdgeCreateByPath, EdgeCreateByPathResponse
 
 # ── Model validation tests ────────────────────────────────────────
@@ -85,7 +86,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ) as mock_insert,
         ):
             from scrutator.dream.edges import create_edges_by_path
@@ -138,7 +139,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ),
         ):
             from scrutator.dream.edges import create_edges_by_path
@@ -178,7 +179,7 @@ class TestCreateEdgesByPath:
             patch(
                 "scrutator.dream.edges.insert_edges",
                 new_callable=AsyncMock,
-                return_value=1,
+                return_value=EdgeWriteResult(created=1),
             ) as mock_insert,
         ):
             from scrutator.dream.edges import create_edges_by_path
@@ -226,16 +227,20 @@ class TestEdgesByPathAPI:
 
     def test_edges_by_path_validation_empty_edge_type(self):
         from scrutator.health import app
+        from tests.conftest import override_tenant_context
 
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.post(
-            "/v1/edges/by-path",
-            json=[
-                {
-                    "source_path": "wiki/AI/ML.md",
-                    "target_path": "wiki/AI/DL.md",
-                    "edge_type": "  ",
-                },
-            ],
-        )
+        # A2-308: a write-scoped principal, so the 422 is the route's own verdict on the
+        # body rather than the scope gate answering first.
+        with override_tenant_context(app):
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.post(
+                "/v1/edges/by-path",
+                json=[
+                    {
+                        "source_path": "wiki/AI/ML.md",
+                        "target_path": "wiki/AI/DL.md",
+                        "edge_type": "  ",
+                    },
+                ],
+            )
         assert resp.status_code == 422

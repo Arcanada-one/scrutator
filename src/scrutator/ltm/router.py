@@ -9,7 +9,11 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 
 from scrutator.auth.capabilities import NamespaceCapability, require_ltm_writer_capability
-from scrutator.auth.dependency import require_tenant_context, resolve_namespace_selector
+from scrutator.auth.dependency import (
+    require_ltm_write_scope,
+    require_tenant_context,
+    resolve_namespace_selector,
+)
 from scrutator.auth.models import TenantContext
 from scrutator.config import settings
 from scrutator.db import repository
@@ -381,7 +385,7 @@ async def get_graph(
 
 
 @router.post("/reflect", response_model=ReflectResponse)
-async def reflect(req: ReflectRequest, ctx: TenantContext = Depends(require_tenant_context)) -> ReflectResponse:
+async def reflect(req: ReflectRequest, ctx: TenantContext = Depends(require_ltm_write_scope)) -> ReflectResponse:
     """LTM-0013 — manual trigger for one reflect run."""
     if not settings.ltm_reflect_enabled:
         raise HTTPException(status_code=503, detail="reflect disabled by config")

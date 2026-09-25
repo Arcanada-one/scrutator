@@ -12,6 +12,7 @@ ANON = TenantContext(
     principal_type="anonymous",
     allowed_namespace_ids=frozenset(),
     allowed_namespace_names=frozenset(),
+    scopes=frozenset(),
 )
 BODY = {"content": "# safe", "source_path": "wiki/a.md", "namespace": "wiki"}
 
@@ -28,6 +29,7 @@ def test_index_rejects_read_principal_without_feeder_token():
         principal_type="service",
         allowed_namespace_ids=frozenset({7}),
         allowed_namespace_names=frozenset({"wiki"}),
+        scopes=frozenset({"kb:ltm.read"}),
     )
     with override_tenant_context(app, reader), TestClient(app) as client:
         response = client.post("/v1/index", json=BODY)

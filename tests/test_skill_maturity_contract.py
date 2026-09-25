@@ -353,6 +353,7 @@ class TestSearchEndpointMaturityValidation:
             principal_type="service",
             allowed_namespace_ids=frozenset({1, 2}),
             allowed_namespace_names=frozenset({"skills", "arcanada"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
         yield
         app.dependency_overrides.pop(require_tenant_context, None)
@@ -667,6 +668,7 @@ class TestSearchEndpointValidSkillsForwardsMaturity:
             principal_type="service",
             allowed_namespace_ids=frozenset({42}),
             allowed_namespace_names=frozenset({"skills", "arcanada"}),
+            scopes=frozenset({"kb:ltm.read"}),
         )
 
         mock_search = AsyncMock()

@@ -16,6 +16,7 @@ import httpx
 import jwt
 from jwt import PyJWKClient
 
+from scrutator.auth.models import VerifiedPrincipal
 from scrutator.config import settings
 
 
@@ -29,10 +30,33 @@ _jwks_client_url: str | None = None
 LTM_M2M_ISSUER = "https://auth.arcanada.ai"
 LTM_M2M_AUDIENCE = "urn:arcanada:scrutator:ltm"
 LTM_M2M_SCOPE = "kb:ltm.read"
+LTM_M2M_WRITE_SCOPE = "kb:ltm.write"
 LTM_M2M_CLIENT_ID = "muneral-kb-sync"
 LTM_M2M_OBSERVER_CLIENT_ID = "kb-observer"
 LTM_M2M_AGENT_CLIENT_ID = "arcana-agent-kb-reader"
 _LTM_REQUIRED_CLAIMS = ("exp", "iat", "nbf", "iss", "aud", "sub", "client_id", "scope")
+
+
+def parse_scopes(raw: object, *, required: str, optional: frozenset[str]) -> frozenset[str]:
+    """Parse an OAuth `scope` claim into the set it grants — fail-closed (A2-308).
+
+    Replaces an exact string equality (`scope == required`). The relaxation is deliberately
+    the smallest one that can express "this token may also write": the claim must still be a
+    space-separated string, must still carry `required`, and every other value in it must be
+    one this service knows. An unrecognized scope denies rather than being ignored, so a
+    widened or attacker-shaped claim can never ride along unnoticed.
+    """
+    if not isinstance(raw, str):
+        raise Unauthenticated("scope claim must be a string")
+    if not required:
+        raise Unauthenticated("required scope not configured")
+    granted = frozenset(raw.split())
+    if required not in granted:
+        raise Unauthenticated("token scope mismatch")
+    unknown = granted - {required} - optional
+    if unknown:
+        raise Unauthenticated("token carries unrecognized scopes")
+    return granted
 
 
 def _get_jwks_client(jwks_url: str) -> PyJWKClient:
@@ -49,11 +73,11 @@ def _get_jwks_client(jwks_url: str) -> PyJWKClient:
     return _jwks_client
 
 
-async def verify_service_token(token: str) -> tuple[str, str]:
+async def verify_service_token(token: str) -> VerifiedPrincipal:
     """Verify an `arc_api_*` service token via Auth Arcana introspection.
 
-    Returns (principal_id, "service"). Raises Unauthenticated on any failure
-    (network error, non-200, inactive token, missing principal_id) — fail-closed.
+    Raises Unauthenticated on any failure (network error, non-200, inactive token,
+    missing principal_id, unrecognized scope) — fail-closed.
     """
     if not settings.auth_arcana_introspect_url:
         raise Unauthenticated("Auth Arcana introspection endpoint not configured")
@@ -81,13 +105,16 @@ async def verify_service_token(token: str) -> tuple[str, str]:
         raise Unauthenticated("service-token resource profile not configured")
     if data.get("audience") != settings.auth_service_audience:
         raise Unauthenticated("service token audience mismatch")
-    if data.get("scope") != settings.auth_service_scope:
-        raise Unauthenticated("service token scope mismatch")
-    return principal_id, "service"
+    scopes = parse_scopes(
+        data.get("scope"),
+        required=settings.auth_service_scope,
+        optional=frozenset({settings.auth_ltm_write_scope}),
+    )
+    return VerifiedPrincipal(principal_id=principal_id, principal_type="service", scopes=scopes)
 
 
-async def verify_oidc_token(token: str) -> tuple[str, str]:
-    """Verify a legacy interactive OIDC token. Returns (principal_id, "user").
+async def verify_oidc_token(token: str) -> VerifiedPrincipal:
+    """Verify a legacy interactive OIDC token. Returns the principal and its scopes.
 
     Any JWKS lookup failure (host unreachable, network error) or JWT validation failure
     (expired, bad signature, malformed) raises Unauthenticated — fail-closed, never
@@ -118,7 +145,11 @@ async def verify_oidc_token(token: str) -> tuple[str, str]:
     scopes = claims.get("scope")
     if not isinstance(scopes, str) or settings.auth_oidc_scope not in scopes.split():
         raise Unauthenticated("OIDC token scope mismatch")
-    return principal_id, "user"
+    # This profile has always tolerated extra scopes, so it is NOT narrowed to an
+    # allowlist here (that would revoke live interactive sessions). Only the two scopes
+    # this service understands are carried forward; anything else stays inert.
+    granted = frozenset(scopes.split()) & {settings.auth_oidc_scope, settings.auth_ltm_write_scope}
+    return VerifiedPrincipal(principal_id=principal_id, principal_type="user", scopes=granted)
 
 
 def _unverified_claims(token: str) -> dict:
@@ -162,12 +193,13 @@ def _is_ltm_m2m_candidate(token: str, claims: dict) -> bool:
         header.get("alg") == "EdDSA"
         or LTM_M2M_AUDIENCE in audiences
         or LTM_M2M_SCOPE in scopes
+        or LTM_M2M_WRITE_SCOPE in scopes
         or client_id in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID, LTM_M2M_AGENT_CLIENT_ID}
         or subject in {LTM_M2M_CLIENT_ID, LTM_M2M_OBSERVER_CLIENT_ID, LTM_M2M_AGENT_CLIENT_ID}
     )
 
 
-async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
+async def verify_ltm_m2m_token(token: str) -> VerifiedPrincipal:
     """Verify a dedicated LTM reader JWT under an exact, fail-closed profile."""
     if not settings.auth_arcana_jwks_url:
         raise Unauthenticated("Auth Arcana JWKS endpoint not configured")
@@ -191,8 +223,11 @@ async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
         raise Unauthenticated("LTM M2M token issuer mismatch")
     if claims.get("aud") != settings.auth_ltm_audience:
         raise Unauthenticated("LTM M2M token audience mismatch")
-    if claims.get("scope") != settings.auth_ltm_scope:
-        raise Unauthenticated("LTM M2M token scope mismatch")
+    scopes = parse_scopes(
+        claims.get("scope"),
+        required=settings.auth_ltm_scope,
+        optional=frozenset({settings.auth_ltm_write_scope}),
+    )
     subject = claims.get("sub")
     client_id = claims.get("client_id")
     allowed_clients = {
@@ -217,11 +252,11 @@ async def verify_ltm_m2m_token(token: str) -> tuple[str, str]:
         or expires_at - issued_at != settings.auth_ltm_max_token_lifetime_seconds
     ):
         raise Unauthenticated("LTM M2M token lifetime mismatch")
-    return client_id, "service"
+    return VerifiedPrincipal(principal_id=client_id, principal_type="service", scopes=scopes)
 
 
-async def verify_bearer_token(authorization: str | None) -> tuple[str, str]:
-    """Verify an `Authorization` header value. Returns (principal_id, principal_type).
+async def verify_bearer_token(authorization: str | None) -> VerifiedPrincipal:
+    """Verify an `Authorization` header value. Returns the verified principal + its scopes.
 
     Fail-closed: missing header, malformed scheme, or any verification error raises
     Unauthenticated.

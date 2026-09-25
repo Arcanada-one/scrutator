@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     auth_ltm_issuer: Literal["https://auth.arcanada.ai"] = "https://auth.arcanada.ai"
     auth_ltm_audience: Literal["urn:arcanada:scrutator:ltm"] = "urn:arcanada:scrutator:ltm"
     auth_ltm_scope: Literal["kb:ltm.read"] = "kb:ltm.read"
+    # A2-308: mutation authority is a SEPARATE scope. Pinned as a Literal for the same
+    # reason as its read sibling — an env typo must fail at startup, not widen the grant.
+    auth_ltm_write_scope: Literal["kb:ltm.write"] = "kb:ltm.write"
     auth_ltm_client_id: Literal["muneral-kb-sync"] = "muneral-kb-sync"
     auth_ltm_observer_client_id: Literal["kb-observer"] = "kb-observer"
     auth_ltm_agent_client_id: Literal["arcana-agent-kb-reader"] = "arcana-agent-kb-reader"
@@ -134,6 +137,11 @@ class Settings(BaseSettings):
 
     # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
     rls_enabled: bool = False
+
+    # A2-308: DSN for the live-Postgres tests (tests/test_graph_edges_integration.py). Empty
+    # in every deployment — the service never reads it; it is declared here because the key
+    # exists and an undeclared key is exactly what config_schema is meant to catch.
+    test_dsn: str = ""
 
     model_config = {"env_prefix": "SCRUTATOR_"}
 
