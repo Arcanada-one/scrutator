@@ -1,0 +1,973 @@
+{
+ "admission": {
+  "rule": "admitted_with_exemptions requires every non-verified entity to carry a valid exemption (owner + expiry). The structural exemption issued here covers only the entities its code may cover; anything else that is not verified still pauses or refuses this change on its own.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-09-25T17:47:20Z",
+ "change_set": {
+  "base": "3aad564789d043db72e36ba08facea9835341f16",
+  "files": [
+   {
+    "kind": "config",
+    "path": ".github/graph-admission/BUNDLE.json",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "path": ".github/graph-admission/BUNDLE.json.sig",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "path": ".github/graph-admission/contracts/graph-verified-change/admission-gate.v1.json",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "path": ".github/graph-admission/contracts/graph-verified-change/verifier-matrix.v1.json",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+    "node_ids": [
+     "code_unit:.github/graph-admission/tools/graph/admit_change.py"
+    ],
+    "path": ".github/graph-admission/tools/graph/admit_change.py",
+    "status": "M"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+    "node_ids": [
+     "code_unit:.github/graph-admission/tools/graph/impact_pair.py"
+    ],
+    "path": ".github/graph-admission/tools/graph/impact_pair.py",
+    "status": "M"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/graph-admission/tools/graph/verify.py",
+    "node_ids": [
+     "code_unit:.github/graph-admission/tools/graph/verify.py"
+    ],
+    "path": ".github/graph-admission/tools/graph/verify.py",
+    "status": "M"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+    "node_ids": [
+     "code_unit:.github/graph-admission/tools/graph/workflow_config.py"
+    ],
+    "path": ".github/graph-admission/tools/graph/workflow_config.py",
+    "status": "M"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/workflows/graph-admission-call.yml",
+    "node_ids": [
+     "code_unit:.github/workflows/graph-admission-call.yml"
+    ],
+    "path": ".github/workflows/graph-admission-call.yml",
+    "status": "M"
+   }
+  ],
+  "head": "597dfd15e993b425b63c644823038bc80a2141fb",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "change_binding": {
+    "base": "3aad564789d043db72e36ba08facea9835341f16",
+    "digest": "sha256:57795898a0a28cf8b242c23e24eb1904436b3d7947205f4965dd539a0fca2974",
+    "head": "597dfd15e993b425b63c644823038bc80a2141fb"
+   },
+   "code": "GATE_SELF_UPDATE",
+   "entity": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+   "evidence": {
+    "case": "gate_self_update",
+    "checks": [
+     {
+      "code": "SELF_UPDATE_SHAPE",
+      "detail": "all 9 changed path(s) are bundle-managed at base or head, except 1 caller workflow file(s) whose ONLY change is the program_ref pin, updated to the head bundle's own program_ref (9eea3f3e21db) — the pin lives outside the bundle by design, so that the bundle cannot vouch for it",
+      "id": "B1",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_BASE_BRANCH_MERGE",
+      "detail": "no merge commit on the first-parent line of this range — nothing was merged in",
+      "id": "B1M",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_DERIVED_ARTEFACT",
+      "detail": "no changed path outside the bundle claims to be a derived artefact — the arm is vacuous here, and vacuous is not the same as measured: nothing was licensed",
+      "id": "B6",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_KEY_CONTINUITY",
+      "detail": "the head bundle's BUNDLE.json verifies with the sshsig.py of base 3aad564789d0 against the SIGNING-KEY.pub of base 3aad564789d0 (SHA256:9QFqysn44UjA8rXyfHjItP3b2Oadhnbf1bDNqXrsCig) — the key the repository already trusted, in a tree this pull request did not write",
+      "id": "B2",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_SELFTEST",
+      "detail": "the head bundle's ci_gate.py --selftest passes, 48 arm(s). Self-consistency, made meaningful only by B2 — admit_change.py --selftest is NOT runnable from a vendored bundle (its fixture set is not bundled: `fixture-drift`), which is non-coverage, not a pass",
+      "id": "B3",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_MONOTONIC",
+      "detail": "no policy check id is dropped (20 → 21) and the battery does not shrink (48 → 48 arm(s)) — a proxy for «the update does not weaken the gate», never a comparison of semantics",
+      "id": "B4",
+      "verdict": "verified"
+     },
+     {
+      "code": "SELF_UPDATE_PROVENANCE",
+      "detail": "program_ref 46cbdc0adfd7 → 9eea3f3e21db; a caller's CI cannot read the private program repository, so this is the pointer an auditor follows, never an enforced check",
+      "id": "B5",
+      "verdict": "not_measured"
+     },
+     {
+      "code": "SELF_UPDATE_WORKFLOW_INTEGRITY",
+      "detail": "all 1 vendored executing workflow(s) hash at head 597dfd15e993 to the sha256 the signed head manifest records and to its recorded git blob OID — a workflow change is admissible, a workflow change the manifest does not attest is not",
+      "id": "B8",
+      "verdict": "verified"
+     }
+    ],
+    "selftest": {
+     "base": {
+      "arms": 48,
+      "exit_code": 0
+     },
+     "head": {
+      "arms": 48,
+      "exit_code": 0
+     }
+    },
+    "signature": {
+     "key_fingerprint": "SHA256:9QFqysn44UjA8rXyfHjItP3b2Oadhnbf1bDNqXrsCig",
+     "key_from": "3aad564789d0:.github/graph-admission/SIGNING-KEY.pub",
+     "reason": "SIGNATURE_VALID",
+     "verified": true,
+     "verifier_from": "3aad564789d0:.github/graph-admission/tools/graph/sshsig.py"
+    }
+   },
+   "expires_at_utc": "2026-09-26T17:48:09Z",
+   "expiry_rule": "the DIGEST is the expiry, not the clock: this exemption is void for any other diff. expires_at_utc is a 24 h backstop because C10 requires an expiry, and removing that requirement would weaken a check",
+   "owner": "control-arcana-devs",
+   "reason": "the claim that the vendored bundle at head is the pinned program-repo code the repository already trusted the key of, and that its own battery passes and has not shrunk",
+   "scope": "a check retained by id but WEAKENED IN BODY, with its mutant weakened alongside it — B4 counts ids and arms, not semantics; this is the largest residual; key compromise, rotation or revocation: B2 proves the same key as before, never the right key; there is no transparency log (carried hole from gate2b); the base of the induction: the first installation of a bundle is BUNDLE_INSTALLED_BY_PR, explicitly not_measured — a tripwire, not a proof; executing pull-request-controlled code in CI, which the gate job already did; the structural-exemption battery of the new bundle itself: B3's nested selftest skips it to terminate, so a refresh that breaks ONLY the gate4b arms passes B3 and is caught, if at all, by the program-side receipt (B5); a declared derived artefact beyond ONE corrupted byte: B6.5 proves the caller's verifier notices A corruption of each declared file, never EVERY corruption — a verifier that binds only part of a file passes B6.5 and leaves the rest free. Exhaustive coverage is a full mutation census of the caller's artefact (85 sites / ~42 min for muneral) and is refused for cost, stated with the arithmetic, never as a solved problem; whether the declared verifier job is REQUIRED in branch protection: B6.6 reads the caller's `verifier_job` / `verifier_conclusion` workflow inputs (gate2a's, unchanged) and proves the named job succeeded on this head — not that GitHub would block a merge without it; a declared path the graph builder does not model: it has no dependents and satisfies B6.3's impact bound VACUOUSLY. That is A4's coverage gap inherited by the declaration, reported through C17 as not_measured, never as a pass; a head workflow rewritten so that it never invokes the gate at all, or invokes it and reports success regardless: no arm of any battery runs to contradict a job that did not run. B8 refuses the pull request that edits the vendored workflow and verify_bundle refuses the next run, but the required status check is satisfied by a job matching the check's NAME. That residual is closed by branch protection in the caller, measured as required in ONE of four callers on 2026-09-24 (DEC-AUP-0036 card C3), and by nothing in this contract.; whether the bytes a bundle ships stand at the program commit it names: B5 remains not_measured and is NOT in the eligibility conjunction. DEC-AUP-0036 R1 now binds the PRODUCER (built from the git object store at program_ref, refusing a dirty tree with BUNDLE_SOURCE_NOT_AT_REF and writing no signature) and R2 records each file's git blob OID so a caller can CONTRADICT the claim offline with git hash-object. Neither makes B5 a verdict — R3's B5a split is a later card, and until it lands the provenance claim is falsifiable but unenforced."
+  },
+  {
+   "change_binding": {
+    "base": "3aad564789d043db72e36ba08facea9835341f16",
+    "digest": "sha256:57795898a0a28cf8b242c23e24eb1904436b3d7947205f4965dd539a0fca2974",
+    "head": "597dfd15e993b425b63c644823038bc80a2141fb"
+   },
+   "code": "GATE_SELF_UPDATE",
+   "entity": "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+   "evidence_ref": "exemptions[0].evidence — one battery per change, measured once",
+   "expires_at_utc": "2026-09-26T17:48:09Z",
+   "expiry_rule": "the DIGEST is the expiry, not the clock: this exemption is void for any other diff. expires_at_utc is a 24 h backstop because C10 requires an expiry, and removing that requirement would weaken a check",
+   "owner": "control-arcana-devs",
+   "reason": "the claim that the vendored bundle at head is the pinned program-repo code the repository already trusted the key of, and that its own battery passes and has not shrunk",
+   "scope_ref": "exemptions[0].scope"
+  },
+  {
+   "change_binding": {
+    "base": "3aad564789d043db72e36ba08facea9835341f16",
+    "digest": "sha256:57795898a0a28cf8b242c23e24eb1904436b3d7947205f4965dd539a0fca2974",
+    "head": "597dfd15e993b425b63c644823038bc80a2141fb"
+   },
+   "code": "GATE_SELF_UPDATE",
+   "entity": "code_unit:.github/graph-admission/tools/graph/verify.py",
+   "evidence_ref": "exemptions[0].evidence — one battery per change, measured once",
+   "expires_at_utc": "2026-09-26T17:48:09Z",
+   "expiry_rule": "the DIGEST is the expiry, not the clock: this exemption is void for any other diff. expires_at_utc is a 24 h backstop because C10 requires an expiry, and removing that requirement would weaken a check",
+   "owner": "control-arcana-devs",
+   "reason": "the claim that the vendored bundle at head is the pinned program-repo code the repository already trusted the key of, and that its own battery passes and has not shrunk",
+   "scope_ref": "exemptions[0].scope"
+  },
+  {
+   "change_binding": {
+    "base": "3aad564789d043db72e36ba08facea9835341f16",
+    "digest": "sha256:57795898a0a28cf8b242c23e24eb1904436b3d7947205f4965dd539a0fca2974",
+    "head": "597dfd15e993b425b63c644823038bc80a2141fb"
+   },
+   "code": "GATE_SELF_UPDATE",
+   "entity": "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+   "evidence_ref": "exemptions[0].evidence — one battery per change, measured once",
+   "expires_at_utc": "2026-09-26T17:48:09Z",
+   "expiry_rule": "the DIGEST is the expiry, not the clock: this exemption is void for any other diff. expires_at_utc is a 24 h backstop because C10 requires an expiry, and removing that requirement would weaken a check",
+   "owner": "control-arcana-devs",
+   "reason": "the claim that the vendored bundle at head is the pinned program-repo code the repository already trusted the key of, and that its own battery passes and has not shrunk",
+   "scope_ref": "exemptions[0].scope"
+  },
+  {
+   "change_binding": {
+    "base": "3aad564789d043db72e36ba08facea9835341f16",
+    "digest": "sha256:57795898a0a28cf8b242c23e24eb1904436b3d7947205f4965dd539a0fca2974",
+    "head": "597dfd15e993b425b63c644823038bc80a2141fb"
+   },
+   "code": "GATE_SELF_UPDATE",
+   "entity": "gate_self_update:Arcanada-one/scrutator@597dfd15e993",
+   "evidence_ref": "exemptions[0].evidence — one battery per change, measured once",
+   "expires_at_utc": "2026-09-26T17:48:09Z",
+   "expiry_rule": "the DIGEST is the expiry, not the clock: this exemption is void for any other diff. expires_at_utc is a 24 h backstop because C10 requires an expiry, and removing that requirement would weaken a check",
+   "owner": "control-arcana-devs",
+   "reason": "the claim that the vendored bundle at head is the pinned program-repo code the repository already trusted the key of, and that its own battery passes and has not shrunk",
+   "scope_ref": "exemptions[0].scope"
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:82dac6d4556c56856e48073a5de3628f03a32af85780eb9c4bea927f60af2cd3",
+  "path": "/tmp/arcana-verify/verifier-out/graph-3aad564789d0.json",
+  "source_commit": "3aad564789d043db72e36ba08facea9835341f16"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:6d8279de73d626188ff0af20e1c9b998fcda179d89816b8020dca19f5bb09dca",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-597dfd15e993.json",
+  "source_commit": "597dfd15e993b425b63c644823038bc80a2141fb",
+  "staleness": {
+   "checked_at_utc": "2026-09-25T17:47:22Z",
+   "checked_nodes": 263,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     }
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-a2-256.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-a2-256.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-a2-256.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 7
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: /home/dev/aup/arc2/ctl-bundle/scr2/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "head tree 597dfd15e993 exported with git archive into /tmp/arcana-verify/export-597dfd15e993 (node_modules linked from the repository for ['contracts/http']; workspace packages built: none); the repository was not written",
+  "AUP-GRAPH-006:gate4b — GATE_SELF_UPDATE issued by `tools/graph/admit_change.py exempt` over 5 entity(ies), bound to sha256:57795898a0a28cf8… (3aad564789d0..597dfd15e993); the digest, not the clock, is the expiry."
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260925T174720Z-597dfd15",
+ "receipt_path": "receipts/graph/ctl-bundle-refresh-20260925.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/arc2/ctl-bundle/scr2"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+   "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+   "code_unit:.github/graph-admission/tools/graph/verify.py",
+   "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+   "code_unit:.github/workflows/graph-admission-call.yml",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/change-admission-a2-256.json",
+   "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+   "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+   "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+   "receipt:receipts/graph/change-admission-bundle-a81a6d5.json"
+  ],
+  "head": [
+   "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+   "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+   "code_unit:.github/graph-admission/tools/graph/verify.py",
+   "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+   "code_unit:.github/workflows/graph-admission-call.yml",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/change-admission-a2-256.json",
+   "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+   "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+   "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+   "receipt:receipts/graph/change-admission-bundle-a81a6d5.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-25T17:47:22Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
+    "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
+   },
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-308-scope-enforcement.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:4bbe4675e655e9849bd58db8aa66bff3b148878e074c9bc5ce108566f151b4f8",
+    "head": "sha256:4bbe4675e655e9849bd58db8aa66bff3b148878e074c9bc5ce108566f151b4f8"
+   },
+   "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-a2-256.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:247635db7812d8328f3b92793b192bbcca22d8f7483b74a6f34c4135a5ce54e2",
+    "head": "sha256:247635db7812d8328f3b92793b192bbcca22d8f7483b74a6f34c4135a5ce54e2"
+   },
+   "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-bundle-46cbdc0.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:13cb13ff53508222ecfd7dfc048ef3744395e795b7fff5b68de8f6345a4db908",
+    "head": "sha256:13cb13ff53508222ecfd7dfc048ef3744395e795b7fff5b68de8f6345a4db908"
+   },
+   "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-bundle-5fde907.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:2b8675128e0d5e0f298ba09552abc51581052d58558e2a35a0c3af91a48ff9b8",
+    "head": "sha256:2b8675128e0d5e0f298ba09552abc51581052d58558e2a35a0c3af91a48ff9b8"
+   },
+   "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-bundle-966bcf3.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:d95a7072b9154a19d0d0e793a7a984b923998da66670a0a9e27997c97f6080f5",
+    "head": "sha256:d95a7072b9154a19d0d0e793a7a984b923998da66670a0a9e27997c97f6080f5"
+   },
+   "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-bundle-a81a6d5.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  }
+ ],
+ "tree": {
+  "commit": "2a8a4929321c46538aa8b587be955874a65f59cc",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-config-schema",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:.github/graph-admission/tools/graph/verify.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-config-schema",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:.github/workflows/graph-admission-call.yml",
+   "reason": "v-workflow-config-60a4bd100e640545: bounded workflow configuration shape valid; expressions, shell, actions and hosted execution NOT_MEASURED; v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-workflow-config-60a4bd100e640545"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: 0 errors; v-fitness: no new violation in .",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  },
+  {
+   "entity": "gate_self_update:Arcanada-one/scrutator@597dfd15e993",
+   "reason": "the impact of this change is not computable by the graph: this change is the vendored admission-gate bundle itself, whose tools are the code that would do the measuring. Covered by the typed exemption GATE_SELF_UPDATE, whose evidence the gate re-measures on every evaluation (C16).",
+   "verdict": "not_measured"
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "/home/dev/aup/arc2/ctl-bundle/scr2/contracts/http/node_modules/.bin/tsc -p /tmp/arcana-verify/export-597dfd15e993/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
+   "duration_s": 0.93,
+   "entities": [
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T17:47:23Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
+  },
+  {
+   "command": "workflow_config.validate exact head bytes",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/graph-admission-call.yml"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/graph-admission-call.yml": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-workflow-config-60a4bd100e640545",
+   "kind": "config_schema",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-09-25T17:47:24Z",
+   "summary": "bounded workflow configuration shape valid; expressions, shell, actions and hosted execution NOT_MEASURED"
+  },
+  {
+   "command": "verify.py config_schema: keys read at head ⊆ declared keys",
+   "duration_s": 0.6,
+   "entities": [
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+    "code_unit:.github/graph-admission/tools/graph/verify.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py": "verified",
+    "code_unit:.github/graph-admission/tools/graph/verify.py": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-config-schema",
+   "kind": "config_schema",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-09-25T17:47:24Z",
+   "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 4 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+    "code_unit:.github/graph-admission/tools/graph/impact_pair.py",
+    "code_unit:.github/graph-admission/tools/graph/verify.py",
+    "code_unit:.github/graph-admission/tools/graph/workflow_config.py",
+    "code_unit:.github/workflows/graph-admission-call.yml",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py": "verified",
+    "code_unit:.github/graph-admission/tools/graph/impact_pair.py": "verified",
+    "code_unit:.github/graph-admission/tools/graph/verify.py": "verified",
+    "code_unit:.github/graph-admission/tools/graph/workflow_config.py": "verified",
+    "code_unit:.github/workflows/graph-admission-call.yml": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T17:47:25Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py",
+    "code_unit:.github/graph-admission/tools/graph/verify.py"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/graph-admission/tools/graph/admit_change.py": "not_measured",
+    "code_unit:.github/graph-admission/tools/graph/verify.py": "not_measured"
+   },
+   "exit_code": 0,
+   "id": "v-canary",
+   "kind": "canary",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T17:47:25Z",
+   "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 2 not_measured of 2 entities"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "6 affected entity(ies) owe no verdict (receipt: 6): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:.github/graph-admission/tools/graph/admit_change.py": [
+    "canary",
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:.github/graph-admission/tools/graph/impact_pair.py": [
+    "fitness_rules"
+   ],
+   "code_unit:.github/graph-admission/tools/graph/verify.py": [
+    "canary",
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:.github/graph-admission/tools/graph/workflow_config.py": [
+    "fitness_rules"
+   ],
+   "code_unit:.github/workflows/graph-admission-call.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/change-admission-a2-256.json": [],
+   "receipt:receipts/graph/change-admission-bundle-46cbdc0.json": [],
+   "receipt:receipts/graph/change-admission-bundle-5fde907.json": [],
+   "receipt:receipts/graph/change-admission-bundle-966bcf3.json": [],
+   "receipt:receipts/graph/change-admission-bundle-a81a6d5.json": []
+  },
+  "seconds": {
+   "prepare": 0.9,
+   "total": 4.64,
+   "verifiers": 1.53
+  }
+ },
+ "work_item": "AUP-GRAPH-006"
+}
