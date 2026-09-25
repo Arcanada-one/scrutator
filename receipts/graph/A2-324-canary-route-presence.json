@@ -1,0 +1,2971 @@
+{
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
+  "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-09-25T11:26:31Z",
+ "change_set": {
+  "base": "4123b28197e71118a81e88d8f2966a2e71e77ce7",
+  "files": [
+   {
+    "kind": "config",
+    "path": "deploy/canary/scrutator-route-presence.plan.json",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/A2-324-scrutator-production-candidate.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/A2-324-scrutator-production-candidate.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/A2-324-scrutator-route-presence-candidate.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/A2-324-scrutator-route-presence-candidate.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/scrutator-production.candidate.plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/scrutator-route-presence.candidate.plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "route",
+    "node_id": "code_unit:src/scrutator/health.py",
+    "node_ids": [
+     "code_unit:src/scrutator/health.py",
+     "route:DELETE /v1/edges",
+     "route:DELETE /v1/index",
+     "route:DELETE /v1/memories",
+     "route:GET /health",
+     "route:GET /v1/chunks",
+     "route:GET /v1/edges/{chunk_id}",
+     "route:GET /v1/index/capability",
+     "route:GET /v1/index/rollback-capability",
+     "route:GET /v1/memories/stats",
+     "route:GET /v1/namespaces",
+     "route:GET /v1/navigate/outline",
+     "route:GET /v1/navigate/section",
+     "route:GET /v1/stats",
+     "route:POST /v1/chunk",
+     "route:POST /v1/dream/analyze",
+     "route:POST /v1/edges",
+     "route:POST /v1/edges/by-path",
+     "route:POST /v1/fetch",
+     "route:POST /v1/index",
+     "route:POST /v1/index/batch",
+     "route:POST /v1/index/capability-projection",
+     "route:POST /v1/memories",
+     "route:POST /v1/memories/bulk",
+     "route:POST /v1/memories/recall",
+     "route:POST /v1/namespaces",
+     "route:POST /v1/search"
+    ],
+    "path": "src/scrutator/health.py",
+    "status": "M"
+   },
+   {
+    "kind": "route",
+    "node_id": "code_unit:src/scrutator/ltm/router.py",
+    "node_ids": [
+     "code_unit:src/scrutator/ltm/router.py",
+     "route:DELETE /source",
+     "route:GET /entities",
+     "route:GET /events",
+     "route:GET /graph",
+     "route:GET /jobs/{job_id}",
+     "route:GET /meta_facts",
+     "route:POST /ingest",
+     "route:POST /recall",
+     "route:POST /reflect"
+    ],
+    "path": "src/scrutator/ltm/router.py",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_canary_probe.py",
+    "node_ids": [
+     "code_unit:tests/test_canary_probe.py"
+    ],
+    "path": "tests/test_canary_probe.py",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_dream.py",
+    "node_ids": [
+     "code_unit:tests/test_dream.py"
+    ],
+    "path": "tests/test_dream.py",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_ltm_writer_auth.py",
+    "node_ids": [
+     "code_unit:tests/test_ltm_writer_auth.py"
+    ],
+    "path": "tests/test_ltm_writer_auth.py",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_path_param_parsing.py",
+    "node_ids": [
+     "code_unit:tests/test_path_param_parsing.py"
+    ],
+    "path": "tests/test_path_param_parsing.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tools/canary_probe.py",
+    "node_ids": [
+     "code_unit:tools/canary_probe.py"
+    ],
+    "path": "tools/canary_probe.py",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tools/gen_canary_plan.py",
+    "node_ids": [
+     "code_unit:tools/gen_canary_plan.py"
+    ],
+    "path": "tools/gen_canary_plan.py",
+    "status": "M"
+   }
+  ],
+  "head": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "code": "BENCHMARK_APP_NOT_DEPLOYED",
+   "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "A benchmark-only application under benchmark/scrutator/live, never deployed to a contour a canary could observe; it is in the impact set because it imports scrutator.health, which this change edits. Its own suite (pytest benchmark/scrutator/tests, ci.yml) is the measurement that exists; no canary plan lists it."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "code_unit:src/scrutator/health.py",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-edges-chunk-id: status 503: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "code_unit:src/scrutator/ltm/router.py",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-ltm-jobs-job-id: status 500: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:DELETE /source",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:DELETE /v1/edges",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): delete-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:DELETE /v1/index",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): delete-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:DELETE /v1/memories",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): delete-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "BENCHMARK_APP_NOT_DEPLOYED",
+   "entity": "route:GET /__benchmark/fingerprint",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "A benchmark-only application under benchmark/scrutator/live, never deployed to a contour a canary could observe; it is in the impact set because it imports scrutator.health, which this change edits. Its own suite (pytest benchmark/scrutator/tests, ci.yml) is the measurement that exists; no canary plan lists it."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /entities",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-ltm-entities: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /events",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-ltm-events: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /graph",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-ltm-graph: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /health",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-health: status 200 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "route:GET /jobs/{job_id}",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-ltm-jobs-job-id: status 500: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /meta_facts",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-ltm-meta-facts: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /v1/chunks",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-chunks: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "route:GET /v1/edges/{chunk_id}",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-edges-chunk-id: status 503: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /v1/index/capability",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-index-capability: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /v1/index/rollback-capability",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-index-rollback-capability: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "route:GET /v1/memories/stats",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-memories-stats: status 503: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "route:GET /v1/namespaces",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-namespaces: status 503: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /v1/navigate/outline",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-navigate-outline: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:GET /v1/navigate/section",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): get-v1-navigate-section: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_CANDIDATE_WITHOUT_DATABASE",
+   "entity": "route:GET /v1/stats",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "not_measured by the pre-merge canary (receipts/canary/A2-324-scrutator-route-presence-candidate.json): get-v1-stats: status 503: the contour answered with a fault, not with the route. The candidate was served with its database deliberately unreachable (a shared Postgres listens on this host's :5432 and mutating probes must not reach it); a route that reaches the database answers 5xx, which rule C3 makes not_measured. Production, GET-only, 2026-09-25T11:03Z, resident 4123b28, with this change's probe: verified. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /ingest",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-ltm-ingest: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /recall",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-ltm-recall: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /reflect",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-ltm-reflect: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/chunk",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-chunk: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/dream/analyze",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-dream-analyze: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/edges",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/edges/by-path",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-edges-by-path: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/fetch",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-fetch: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/index",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/index/batch",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-index-batch: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/index/capability-projection",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-index-capability-projection: status 401 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/memories",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/memories/bulk",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-memories-bulk: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/memories/recall",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-memories-recall: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/namespaces",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-namespaces: status 403 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  },
+  {
+   "code": "CANARY_EVIDENCE_NOT_CASHABLE",
+   "entity": "route:POST /v1/search",
+   "expires_at_utc": "2026-10-09T00:00:00Z",
+   "owner": "A2-324 admitting agent (Arcanada)",
+   "reason": "MEASURED verified by the pre-merge canary of the candidate 880d9fc, committed as receipts/canary/A2-324-scrutator-route-presence-candidate.json (subject bound to 880d9fc, record commit 463a596): post-v1-search: status 422 != 404: the route is served; declared in the resident OpenAPI. verify.py cannot cash it here: rel_ref (tools/graph/verify.py:176) resolves output_ref against the PROGRAM checkout, so a canary verifier output for a foreign repository is always an absolute host path and the gate refuses it (CANARY_CLAIM_WITHOUT_COMMITTED_EVIDENCE) — measured on this change, reported as a defect in the A2-324 report. The post-deploy canary (rule C5) re-measures it on the resident version."
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:005fae4be0b2b9fcdc35b63da63ac9f66595694ae111ca3898fc22aac0abe20b",
+  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/graph-4123b28197e7.json",
+  "source_commit": "4123b28197e71118a81e88d8f2966a2e71e77ce7"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:27c292e5ae6f05e929da6ff6c3f7cb0b5444560cb72341379537e73863d32fc0",
+  "path": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/graph-head-65400388eceb.json",
+  "source_commit": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "staleness": {
+   "checked_at_utc": "2026-09-25T11:26:33Z",
+   "checked_nodes": 260,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/helpers/capability_projection_server.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/helpers/capability_projection_server.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/helpers/capability_projection_server.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/helpers/capability_projection_server.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/helpers/capability_projection_server.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/helpers/capability_projection_server.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/security/test_batch_body_limit.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/security/test_batch_body_limit.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_batch_body_limit.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_batch_body_limit.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_batch_body_limit.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_batch_body_limit.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/security/test_machine_capability_auth.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/security/test_machine_capability_auth.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_machine_capability_auth.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_machine_capability_auth.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_machine_capability_auth.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_machine_capability_auth.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/security/test_route_auth_manifest.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/security/test_route_auth_manifest.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_route_auth_manifest.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_route_auth_manifest.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_route_auth_manifest.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_route_auth_manifest.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/security/test_route_scope_enforcement.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/security/test_route_scope_enforcement.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_route_scope_enforcement.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_route_scope_enforcement.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_route_scope_enforcement.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_route_scope_enforcement.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/security/test_tenant_mutation_scope.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/security/test_tenant_mutation_scope.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_tenant_mutation_scope.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_tenant_mutation_scope.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/security/test_tenant_mutation_scope.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/security/test_tenant_mutation_scope.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_capability_projection.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_capability_projection.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_capability_projection.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_capability_projection.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_capability_projection.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_capability_projection.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_delete_source.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_delete_source.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_delete_source.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_delete_source.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_delete_source.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_delete_source.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_feeder_capability.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_feeder_capability.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_feeder_capability.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_feeder_capability.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_feeder_capability.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_feeder_capability.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_health.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_health.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_health.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_health.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_health.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_health.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_index_batch.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_index_batch.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_index_batch.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_index_batch.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_index_batch.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_index_batch.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_index_writer_auth.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_index_writer_auth.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_index_writer_auth.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_index_writer_auth.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_index_writer_auth.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_index_writer_auth.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_ltm_source_delete.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_ltm_source_delete.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_ltm_source_delete.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_ltm_source_delete.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_ltm_source_delete.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_ltm_source_delete.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_ltm_structured_ingest.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_ltm_structured_ingest.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/ltm/router.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_ltm_structured_ingest.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_ltm_structured_ingest.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/ltm/router.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_ltm_structured_ingest.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_ltm_structured_ingest.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/ltm/router.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "code_unit:tests/test_public_surface.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:tests/test_public_surface.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_public_surface.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_public_surface.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "code_unit:tests/test_public_surface.py",
+      "node_type": "code_unit",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:tests/test_public_surface.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "type-check / compile of the importer"
+     }
+    ],
+    "verifier_hint": "type-check / compile of the importer"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:src/scrutator/health.py",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:src/scrutator/health.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:src/scrutator/health.py",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     }
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "provenance": "deterministic",
+      "to": "code_unit:tests/test_canary_probe.py",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:tests/test_canary_probe.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+        "provenance": "deterministic",
+        "to": "code_unit:tests/test_canary_probe.py",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 2,
+    "entity": "route:GET /__benchmark/fingerprint",
+    "node_type": "route",
+    "path": [
+     {
+      "edge_type": "imports",
+      "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+      "provenance": "deterministic",
+      "to": "code_unit:src/scrutator/health.py",
+      "via": "python-absolute-import"
+     },
+     {
+      "edge_type": "provides_route",
+      "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+      "provenance": "deterministic",
+      "to": "route:GET /__benchmark/fingerprint",
+      "via": "fastapi-decorator"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 2,
+      "entity": "route:GET /__benchmark/fingerprint",
+      "node_type": "route",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       },
+       {
+        "edge_type": "provides_route",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "route:GET /__benchmark/fingerprint",
+        "via": "fastapi-decorator"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "controller compile + contract-diff + route/config consistency"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 2,
+      "entity": "route:GET /__benchmark/fingerprint",
+      "node_type": "route",
+      "path": [
+       {
+        "edge_type": "imports",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "code_unit:src/scrutator/health.py",
+        "via": "python-absolute-import"
+       },
+       {
+        "edge_type": "provides_route",
+        "from": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+        "provenance": "deterministic",
+        "to": "route:GET /__benchmark/fingerprint",
+        "via": "fastapi-decorator"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "controller compile + contract-diff + route/config consistency"
+     }
+    ],
+    "verifier_hint": "controller compile + contract-diff + route/config consistency"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 20
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: /home/dev/aup/arc2/runs/A2-324/work/scrutator/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 39 attached from ../exemptions-A2-324-v2.json"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260925T112631Z-65400388",
+ "receipt_path": "receipts/graph/A2-324-canary-route-presence.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/arc2/runs/A2-324/work/scrutator"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "code_unit:src/scrutator/health.py",
+   "code_unit:src/scrutator/ltm/router.py",
+   "code_unit:tests/helpers/capability_projection_server.py",
+   "code_unit:tests/security/test_batch_body_limit.py",
+   "code_unit:tests/security/test_machine_capability_auth.py",
+   "code_unit:tests/security/test_route_auth_manifest.py",
+   "code_unit:tests/security/test_route_scope_enforcement.py",
+   "code_unit:tests/security/test_tenant_mutation_scope.py",
+   "code_unit:tests/test_canary_probe.py",
+   "code_unit:tests/test_capability_projection.py",
+   "code_unit:tests/test_delete_source.py",
+   "code_unit:tests/test_dream.py",
+   "code_unit:tests/test_feeder_capability.py",
+   "code_unit:tests/test_health.py",
+   "code_unit:tests/test_index_batch.py",
+   "code_unit:tests/test_index_writer_auth.py",
+   "code_unit:tests/test_ltm_source_delete.py",
+   "code_unit:tests/test_ltm_structured_ingest.py",
+   "code_unit:tests/test_ltm_writer_auth.py",
+   "code_unit:tests/test_public_surface.py",
+   "code_unit:tools/canary_probe.py",
+   "code_unit:tools/gen_canary_plan.py",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "route:DELETE /source",
+   "route:DELETE /v1/edges",
+   "route:DELETE /v1/index",
+   "route:DELETE /v1/memories",
+   "route:GET /__benchmark/fingerprint",
+   "route:GET /entities",
+   "route:GET /events",
+   "route:GET /graph",
+   "route:GET /health",
+   "route:GET /jobs/{job_id}",
+   "route:GET /meta_facts",
+   "route:GET /v1/chunks",
+   "route:GET /v1/edges/{chunk_id}",
+   "route:GET /v1/index/capability",
+   "route:GET /v1/index/rollback-capability",
+   "route:GET /v1/memories/stats",
+   "route:GET /v1/namespaces",
+   "route:GET /v1/navigate/outline",
+   "route:GET /v1/navigate/section",
+   "route:GET /v1/stats",
+   "route:POST /ingest",
+   "route:POST /recall",
+   "route:POST /reflect",
+   "route:POST /v1/chunk",
+   "route:POST /v1/dream/analyze",
+   "route:POST /v1/edges",
+   "route:POST /v1/edges/by-path",
+   "route:POST /v1/fetch",
+   "route:POST /v1/index",
+   "route:POST /v1/index/batch",
+   "route:POST /v1/index/capability-projection",
+   "route:POST /v1/memories",
+   "route:POST /v1/memories/bulk",
+   "route:POST /v1/memories/recall",
+   "route:POST /v1/namespaces",
+   "route:POST /v1/search"
+  ],
+  "head": [
+   "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "code_unit:src/scrutator/health.py",
+   "code_unit:src/scrutator/ltm/router.py",
+   "code_unit:tests/helpers/capability_projection_server.py",
+   "code_unit:tests/security/test_batch_body_limit.py",
+   "code_unit:tests/security/test_machine_capability_auth.py",
+   "code_unit:tests/security/test_route_auth_manifest.py",
+   "code_unit:tests/security/test_route_scope_enforcement.py",
+   "code_unit:tests/security/test_tenant_mutation_scope.py",
+   "code_unit:tests/test_canary_probe.py",
+   "code_unit:tests/test_capability_projection.py",
+   "code_unit:tests/test_delete_source.py",
+   "code_unit:tests/test_dream.py",
+   "code_unit:tests/test_feeder_capability.py",
+   "code_unit:tests/test_health.py",
+   "code_unit:tests/test_index_batch.py",
+   "code_unit:tests/test_index_writer_auth.py",
+   "code_unit:tests/test_ltm_source_delete.py",
+   "code_unit:tests/test_ltm_structured_ingest.py",
+   "code_unit:tests/test_ltm_writer_auth.py",
+   "code_unit:tests/test_path_param_parsing.py",
+   "code_unit:tests/test_public_surface.py",
+   "code_unit:tools/canary_probe.py",
+   "code_unit:tools/gen_canary_plan.py",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "route:DELETE /source",
+   "route:DELETE /v1/edges",
+   "route:DELETE /v1/index",
+   "route:DELETE /v1/memories",
+   "route:GET /__benchmark/fingerprint",
+   "route:GET /entities",
+   "route:GET /events",
+   "route:GET /graph",
+   "route:GET /health",
+   "route:GET /jobs/{job_id}",
+   "route:GET /meta_facts",
+   "route:GET /v1/chunks",
+   "route:GET /v1/edges/{chunk_id}",
+   "route:GET /v1/index/capability",
+   "route:GET /v1/index/rollback-capability",
+   "route:GET /v1/memories/stats",
+   "route:GET /v1/namespaces",
+   "route:GET /v1/navigate/outline",
+   "route:GET /v1/navigate/section",
+   "route:GET /v1/stats",
+   "route:POST /ingest",
+   "route:POST /recall",
+   "route:POST /reflect",
+   "route:POST /v1/chunk",
+   "route:POST /v1/dream/analyze",
+   "route:POST /v1/edges",
+   "route:POST /v1/edges/by-path",
+   "route:POST /v1/fetch",
+   "route:POST /v1/index",
+   "route:POST /v1/index/batch",
+   "route:POST /v1/index/capability-projection",
+   "route:POST /v1/memories",
+   "route:POST /v1/memories/bulk",
+   "route:POST /v1/memories/recall",
+   "route:POST /v1/namespaces",
+   "route:POST /v1/search"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-25T11:26:33Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
+    "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
+   },
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-308-scope-enforcement.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:ce8163da9ee7d02f35b8a7c9b23eea5ba30a68423b81764243fa4320c536b8bc",
+    "head": "sha256:ce8163da9ee7d02f35b8a7c9b23eea5ba30a68423b81764243fa4320c536b8bc"
+   },
+   "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-311-contracts-and-canary.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  }
+ ],
+ "tree": {
+  "commit": "65400388eceb1b7c41ebf7dab3a32708955b845a",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:src/scrutator/health.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:src/scrutator/ltm/router.py",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/helpers/capability_projection_server.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_batch_body_limit.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_machine_capability_auth.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_route_auth_manifest.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_route_scope_enforcement.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/security/test_tenant_mutation_scope.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_canary_probe.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_capability_projection.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_delete_source.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_dream.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_feeder_capability.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_health.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_index_batch.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_index_writer_auth.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_ltm_source_delete.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_ltm_structured_ingest.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_ltm_writer_auth.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_path_param_parsing.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_public_surface.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tools/canary_probe.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tools/gen_canary_plan.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: 0 errors; v-fitness: no new violation in .",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  },
+  {
+   "entity": "route:DELETE /source",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:DELETE /v1/edges",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:DELETE /v1/index",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:DELETE /v1/memories",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /__benchmark/fingerprint",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /entities",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /events",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /graph",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /health",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /jobs/{job_id}",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /meta_facts",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/chunks",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/edges/{chunk_id}",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/index/capability",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/index/rollback-capability",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/memories/stats",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/namespaces",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/navigate/outline",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/navigate/section",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /v1/stats",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /ingest",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /recall",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /reflect",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/chunk",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/dream/analyze",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/edges",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/edges/by-path",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/fetch",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/index",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/index/batch",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/index/capability-projection",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/memories",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/memories/bulk",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/memories/recall",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/namespaces",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:POST /v1/search",
+   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "/home/dev/aup/arc2/runs/A2-324/work/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-324/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
+   "duration_s": 1.02,
+   "entities": [
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T11:26:35Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
+  },
+  {
+   "command": "tools/graph/contract_diff.py.run_diff(base=4123b28197e7, head=65400388eceb, graph=head graph)",
+   "duration_s": 0.07,
+   "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "code_unit:src/scrutator/health.py",
+    "code_unit:src/scrutator/ltm/router.py",
+    "route:DELETE /source",
+    "route:DELETE /v1/edges",
+    "route:DELETE /v1/index",
+    "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
+    "route:GET /entities",
+    "route:GET /events",
+    "route:GET /graph",
+    "route:GET /health",
+    "route:GET /jobs/{job_id}",
+    "route:GET /meta_facts",
+    "route:GET /v1/chunks",
+    "route:GET /v1/edges/{chunk_id}",
+    "route:GET /v1/index/capability",
+    "route:GET /v1/index/rollback-capability",
+    "route:GET /v1/memories/stats",
+    "route:GET /v1/namespaces",
+    "route:GET /v1/navigate/outline",
+    "route:GET /v1/navigate/section",
+    "route:GET /v1/stats",
+    "route:POST /ingest",
+    "route:POST /recall",
+    "route:POST /reflect",
+    "route:POST /v1/chunk",
+    "route:POST /v1/dream/analyze",
+    "route:POST /v1/edges",
+    "route:POST /v1/edges/by-path",
+    "route:POST /v1/fetch",
+    "route:POST /v1/index",
+    "route:POST /v1/index/batch",
+    "route:POST /v1/index/capability-projection",
+    "route:POST /v1/memories",
+    "route:POST /v1/memories/bulk",
+    "route:POST /v1/memories/recall",
+    "route:POST /v1/namespaces",
+    "route:POST /v1/search"
+   ],
+   "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
+    "code_unit:src/scrutator/health.py": "verified",
+    "code_unit:src/scrutator/ltm/router.py": "verified",
+    "route:DELETE /source": "verified",
+    "route:DELETE /v1/edges": "verified",
+    "route:DELETE /v1/index": "verified",
+    "route:DELETE /v1/memories": "verified",
+    "route:GET /__benchmark/fingerprint": "verified",
+    "route:GET /entities": "verified",
+    "route:GET /events": "verified",
+    "route:GET /graph": "verified",
+    "route:GET /health": "verified",
+    "route:GET /jobs/{job_id}": "verified",
+    "route:GET /meta_facts": "verified",
+    "route:GET /v1/chunks": "verified",
+    "route:GET /v1/edges/{chunk_id}": "verified",
+    "route:GET /v1/index/capability": "verified",
+    "route:GET /v1/index/rollback-capability": "verified",
+    "route:GET /v1/memories/stats": "verified",
+    "route:GET /v1/namespaces": "verified",
+    "route:GET /v1/navigate/outline": "verified",
+    "route:GET /v1/navigate/section": "verified",
+    "route:GET /v1/stats": "verified",
+    "route:POST /ingest": "verified",
+    "route:POST /recall": "verified",
+    "route:POST /reflect": "verified",
+    "route:POST /v1/chunk": "verified",
+    "route:POST /v1/dream/analyze": "verified",
+    "route:POST /v1/edges": "verified",
+    "route:POST /v1/edges/by-path": "verified",
+    "route:POST /v1/fetch": "verified",
+    "route:POST /v1/index": "verified",
+    "route:POST /v1/index/batch": "verified",
+    "route:POST /v1/index/capability-projection": "verified",
+    "route:POST /v1/memories": "verified",
+    "route:POST /v1/memories/bulk": "verified",
+    "route:POST /v1/memories/recall": "verified",
+    "route:POST /v1/namespaces": "verified",
+    "route:POST /v1/search": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-contract-diff",
+   "kind": "contract_diff",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-09-25T11:26:36Z",
+   "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
+  },
+  {
+   "command": "verify.py route_config_consistency RC-01 prefix / RC-02 registration / RC-03 served",
+   "duration_s": 0.0,
+   "entities": [
+    "route:DELETE /source",
+    "route:DELETE /v1/edges",
+    "route:DELETE /v1/index",
+    "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
+    "route:GET /entities",
+    "route:GET /events",
+    "route:GET /graph",
+    "route:GET /health",
+    "route:GET /jobs/{job_id}",
+    "route:GET /meta_facts",
+    "route:GET /v1/chunks",
+    "route:GET /v1/edges/{chunk_id}",
+    "route:GET /v1/index/capability",
+    "route:GET /v1/index/rollback-capability",
+    "route:GET /v1/memories/stats",
+    "route:GET /v1/namespaces",
+    "route:GET /v1/navigate/outline",
+    "route:GET /v1/navigate/section",
+    "route:GET /v1/stats",
+    "route:POST /ingest",
+    "route:POST /recall",
+    "route:POST /reflect",
+    "route:POST /v1/chunk",
+    "route:POST /v1/dream/analyze",
+    "route:POST /v1/edges",
+    "route:POST /v1/edges/by-path",
+    "route:POST /v1/fetch",
+    "route:POST /v1/index",
+    "route:POST /v1/index/batch",
+    "route:POST /v1/index/capability-projection",
+    "route:POST /v1/memories",
+    "route:POST /v1/memories/bulk",
+    "route:POST /v1/memories/recall",
+    "route:POST /v1/namespaces",
+    "route:POST /v1/search"
+   ],
+   "entity_verdicts": {
+    "route:DELETE /source": "verified",
+    "route:DELETE /v1/edges": "verified",
+    "route:DELETE /v1/index": "verified",
+    "route:DELETE /v1/memories": "verified",
+    "route:GET /__benchmark/fingerprint": "verified",
+    "route:GET /entities": "verified",
+    "route:GET /events": "verified",
+    "route:GET /graph": "verified",
+    "route:GET /health": "verified",
+    "route:GET /jobs/{job_id}": "verified",
+    "route:GET /meta_facts": "verified",
+    "route:GET /v1/chunks": "verified",
+    "route:GET /v1/edges/{chunk_id}": "verified",
+    "route:GET /v1/index/capability": "verified",
+    "route:GET /v1/index/rollback-capability": "verified",
+    "route:GET /v1/memories/stats": "verified",
+    "route:GET /v1/namespaces": "verified",
+    "route:GET /v1/navigate/outline": "verified",
+    "route:GET /v1/navigate/section": "verified",
+    "route:GET /v1/stats": "verified",
+    "route:POST /ingest": "verified",
+    "route:POST /recall": "verified",
+    "route:POST /reflect": "verified",
+    "route:POST /v1/chunk": "verified",
+    "route:POST /v1/dream/analyze": "verified",
+    "route:POST /v1/edges": "verified",
+    "route:POST /v1/edges/by-path": "verified",
+    "route:POST /v1/fetch": "verified",
+    "route:POST /v1/index": "verified",
+    "route:POST /v1/index/batch": "verified",
+    "route:POST /v1/index/capability-projection": "verified",
+    "route:POST /v1/memories": "verified",
+    "route:POST /v1/memories/bulk": "verified",
+    "route:POST /v1/memories/recall": "verified",
+    "route:POST /v1/namespaces": "verified",
+    "route:POST /v1/search": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-route-config",
+   "kind": "config_schema",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-09-25T11:26:36Z",
+   "summary": "36 route(s), 0 failed"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "code_unit:src/scrutator/health.py",
+    "code_unit:src/scrutator/ltm/router.py",
+    "code_unit:tests/helpers/capability_projection_server.py",
+    "code_unit:tests/security/test_batch_body_limit.py",
+    "code_unit:tests/security/test_machine_capability_auth.py",
+    "code_unit:tests/security/test_route_auth_manifest.py",
+    "code_unit:tests/security/test_route_scope_enforcement.py",
+    "code_unit:tests/security/test_tenant_mutation_scope.py",
+    "code_unit:tests/test_canary_probe.py",
+    "code_unit:tests/test_capability_projection.py",
+    "code_unit:tests/test_delete_source.py",
+    "code_unit:tests/test_dream.py",
+    "code_unit:tests/test_feeder_capability.py",
+    "code_unit:tests/test_health.py",
+    "code_unit:tests/test_index_batch.py",
+    "code_unit:tests/test_index_writer_auth.py",
+    "code_unit:tests/test_ltm_source_delete.py",
+    "code_unit:tests/test_ltm_structured_ingest.py",
+    "code_unit:tests/test_ltm_writer_auth.py",
+    "code_unit:tests/test_path_param_parsing.py",
+    "code_unit:tests/test_public_surface.py",
+    "code_unit:tools/canary_probe.py",
+    "code_unit:tools/gen_canary_plan.py",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
+    "code_unit:src/scrutator/health.py": "verified",
+    "code_unit:src/scrutator/ltm/router.py": "verified",
+    "code_unit:tests/helpers/capability_projection_server.py": "verified",
+    "code_unit:tests/security/test_batch_body_limit.py": "verified",
+    "code_unit:tests/security/test_machine_capability_auth.py": "verified",
+    "code_unit:tests/security/test_route_auth_manifest.py": "verified",
+    "code_unit:tests/security/test_route_scope_enforcement.py": "verified",
+    "code_unit:tests/security/test_tenant_mutation_scope.py": "verified",
+    "code_unit:tests/test_canary_probe.py": "verified",
+    "code_unit:tests/test_capability_projection.py": "verified",
+    "code_unit:tests/test_delete_source.py": "verified",
+    "code_unit:tests/test_dream.py": "verified",
+    "code_unit:tests/test_feeder_capability.py": "verified",
+    "code_unit:tests/test_health.py": "verified",
+    "code_unit:tests/test_index_batch.py": "verified",
+    "code_unit:tests/test_index_writer_auth.py": "verified",
+    "code_unit:tests/test_ltm_source_delete.py": "verified",
+    "code_unit:tests/test_ltm_structured_ingest.py": "verified",
+    "code_unit:tests/test_ltm_writer_auth.py": "verified",
+    "code_unit:tests/test_path_param_parsing.py": "verified",
+    "code_unit:tests/test_public_surface.py": "verified",
+    "code_unit:tools/canary_probe.py": "verified",
+    "code_unit:tools/gen_canary_plan.py": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T11:26:36Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "code_unit:src/scrutator/health.py",
+    "code_unit:src/scrutator/ltm/router.py",
+    "route:DELETE /source",
+    "route:DELETE /v1/edges",
+    "route:DELETE /v1/index",
+    "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
+    "route:GET /entities",
+    "route:GET /events",
+    "route:GET /graph",
+    "route:GET /health",
+    "route:GET /jobs/{job_id}",
+    "route:GET /meta_facts",
+    "route:GET /v1/chunks",
+    "route:GET /v1/edges/{chunk_id}",
+    "route:GET /v1/index/capability",
+    "route:GET /v1/index/rollback-capability",
+    "route:GET /v1/memories/stats",
+    "route:GET /v1/namespaces",
+    "route:GET /v1/navigate/outline",
+    "route:GET /v1/navigate/section",
+    "route:GET /v1/stats",
+    "route:POST /ingest",
+    "route:POST /recall",
+    "route:POST /reflect",
+    "route:POST /v1/chunk",
+    "route:POST /v1/dream/analyze",
+    "route:POST /v1/edges",
+    "route:POST /v1/edges/by-path",
+    "route:POST /v1/fetch",
+    "route:POST /v1/index",
+    "route:POST /v1/index/batch",
+    "route:POST /v1/index/capability-projection",
+    "route:POST /v1/memories",
+    "route:POST /v1/memories/bulk",
+    "route:POST /v1/memories/recall",
+    "route:POST /v1/namespaces",
+    "route:POST /v1/search"
+   ],
+   "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
+    "code_unit:src/scrutator/health.py": "not_measured",
+    "code_unit:src/scrutator/ltm/router.py": "not_measured",
+    "route:DELETE /source": "not_measured",
+    "route:DELETE /v1/edges": "not_measured",
+    "route:DELETE /v1/index": "not_measured",
+    "route:DELETE /v1/memories": "not_measured",
+    "route:GET /__benchmark/fingerprint": "not_measured",
+    "route:GET /entities": "not_measured",
+    "route:GET /events": "not_measured",
+    "route:GET /graph": "not_measured",
+    "route:GET /health": "not_measured",
+    "route:GET /jobs/{job_id}": "not_measured",
+    "route:GET /meta_facts": "not_measured",
+    "route:GET /v1/chunks": "not_measured",
+    "route:GET /v1/edges/{chunk_id}": "not_measured",
+    "route:GET /v1/index/capability": "not_measured",
+    "route:GET /v1/index/rollback-capability": "not_measured",
+    "route:GET /v1/memories/stats": "not_measured",
+    "route:GET /v1/namespaces": "not_measured",
+    "route:GET /v1/navigate/outline": "not_measured",
+    "route:GET /v1/navigate/section": "not_measured",
+    "route:GET /v1/stats": "not_measured",
+    "route:POST /ingest": "not_measured",
+    "route:POST /recall": "not_measured",
+    "route:POST /reflect": "not_measured",
+    "route:POST /v1/chunk": "not_measured",
+    "route:POST /v1/dream/analyze": "not_measured",
+    "route:POST /v1/edges": "not_measured",
+    "route:POST /v1/edges/by-path": "not_measured",
+    "route:POST /v1/fetch": "not_measured",
+    "route:POST /v1/index": "not_measured",
+    "route:POST /v1/index/batch": "not_measured",
+    "route:POST /v1/index/capability-projection": "not_measured",
+    "route:POST /v1/memories": "not_measured",
+    "route:POST /v1/memories/bulk": "not_measured",
+    "route:POST /v1/memories/recall": "not_measured",
+    "route:POST /v1/namespaces": "not_measured",
+    "route:POST /v1/search": "not_measured"
+   },
+   "exit_code": 0,
+   "id": "v-canary",
+   "kind": "canary",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-324/work/vwork4/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T11:26:36Z",
+   "summary": "0 canary result(s); 0 verified / 0 failed / 39 not_measured of 39 entities"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "INAPPLICABLE_FRAMEWORK",
+    "reason": "the tree carries no NestJS dependency: an absent framework is a fact about the repository, not a measurement of the route",
+    "routes": 36,
+    "rules": [
+     "rc01",
+     "rc02"
+    ],
+    "verifier": "route_config_consistency"
+   },
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "2 affected entity(ies) owe no verdict (receipt: 2): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:benchmark/scrutator/live/granted_context_app.py": [
+    "canary",
+    "contract_diff",
+    "fitness_rules"
+   ],
+   "code_unit:src/scrutator/health.py": [
+    "canary",
+    "contract_diff",
+    "fitness_rules"
+   ],
+   "code_unit:src/scrutator/ltm/router.py": [
+    "canary",
+    "contract_diff",
+    "fitness_rules"
+   ],
+   "code_unit:tests/helpers/capability_projection_server.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_batch_body_limit.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_machine_capability_auth.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_route_auth_manifest.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_route_scope_enforcement.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/security/test_tenant_mutation_scope.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_canary_probe.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_capability_projection.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_delete_source.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_dream.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_feeder_capability.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_health.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_index_batch.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_index_writer_auth.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_ltm_source_delete.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_ltm_structured_ingest.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_ltm_writer_auth.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_path_param_parsing.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_public_surface.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tools/canary_probe.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tools/gen_canary_plan.py": [
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/A2-311-contracts-and-canary.json": [],
+   "route:DELETE /source": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:DELETE /v1/edges": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:DELETE /v1/index": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:DELETE /v1/memories": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /__benchmark/fingerprint": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /entities": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /events": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /graph": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /health": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /jobs/{job_id}": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /meta_facts": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/chunks": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/edges/{chunk_id}": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/index/capability": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/index/rollback-capability": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/memories/stats": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/namespaces": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/navigate/outline": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/navigate/section": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /v1/stats": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /ingest": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /recall": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /reflect": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/chunk": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/dream/analyze": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/edges": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/edges/by-path": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/fetch": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/index": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/index/batch": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/index/capability-projection": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/memories": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/memories/bulk": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/memories/recall": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/namespaces": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:POST /v1/search": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ]
+  },
+  "seconds": {
+   "prepare": 0.93,
+   "total": 4.42,
+   "verifiers": 1.09
+  }
+ },
+ "work_item": "A2-324"
+}
