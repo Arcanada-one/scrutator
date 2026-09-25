@@ -1,0 +1,1838 @@
+{
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
+  "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-09-25T07:10:23Z",
+ "change_set": {
+  "base": "413ab7eaff3ca2be0852f54adedca06c8f461fee",
+  "files": [
+   {
+    "kind": "config",
+    "new": true,
+    "path": ".arcana/verify.json",
+    "status": "A"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/workflows/deploy.yml",
+    "node_ids": [
+     "code_unit:.github/workflows/deploy.yml"
+    ],
+    "path": ".github/workflows/deploy.yml",
+    "status": "M"
+   },
+   {
+    "kind": "other",
+    "path": ".gitignore",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "config",
+    "new": true,
+    "path": "contracts/http/package.json",
+    "status": "A"
+   },
+   {
+    "kind": "code",
+    "node_id": "code_unit:contracts/http/scrutator-http.contract.ts",
+    "node_ids": [
+     "code_unit:contracts/http/scrutator-http.contract.ts",
+     "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
+     "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
+     "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
+     "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
+     "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
+     "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema",
+     "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema"
+    ],
+    "path": "contracts/http/scrutator-http.contract.ts",
+    "status": "A"
+   },
+   {
+    "kind": "config",
+    "new": true,
+    "path": "contracts/http/tsconfig.json",
+    "status": "A"
+   },
+   {
+    "kind": "config",
+    "new": true,
+    "path": "deploy/canary/scrutator-production.plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "config",
+    "new": true,
+    "path": "deploy/canary/scrutator-route-presence.plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_canary_plan.py",
+    "node_ids": [
+     "code_unit:tests/test_canary_plan.py"
+    ],
+    "path": "tests/test_canary_plan.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_canary_probe.py",
+    "node_ids": [
+     "code_unit:tests/test_canary_probe.py"
+    ],
+    "path": "tests/test_canary_probe.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_deploy_canary_wiring.py",
+    "node_ids": [
+     "code_unit:tests/test_deploy_canary_wiring.py"
+    ],
+    "path": "tests/test_deploy_canary_wiring.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tests/test_http_contract.py",
+    "node_ids": [
+     "code_unit:tests/test_http_contract.py"
+    ],
+    "path": "tests/test_http_contract.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tools/canary_probe.py",
+    "node_ids": [
+     "code_unit:tools/canary_probe.py"
+    ],
+    "path": "tools/canary_probe.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tools/gen_canary_plan.py",
+    "node_ids": [
+     "code_unit:tools/gen_canary_plan.py"
+    ],
+    "path": "tools/gen_canary_plan.py",
+    "status": "A"
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:tools/gen_http_contract.py",
+    "node_ids": [
+     "code_unit:tools/gen_http_contract.py"
+    ],
+    "path": "tools/gen_http_contract.py",
+    "status": "A"
+   }
+  ],
+  "head": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "code": "WORKFLOW_CONFIG_OUT_OF_SCOPE",
+   "entity": "code_unit:.github/workflows/deploy.yml",
+   "expires_at_utc": "2026-11-24T00:00:00Z",
+   "owner": "A2-311 admitting agent (Arcanada)",
+   "reason": "workflow_config.py:309 raises OutOfScope for a job-level `environment:` and the deploy job has carried `environment: kb-production` since before this change — the verdict states a bound of the checker, not a property of this edit. It is NOT a structural case (admit_change.py exempt refused it: 'this is an ordinary change and the ordinary rule applies'), so it is attached here, with an owner and an expiry, as exemptions-before-the-verdict.v1 §2 prescribes. The measurement that would replace it is program-side: `environment` has a bounded shape (a string, or a mapping of name/url) exactly like `schedule` and `workflow_dispatch.inputs`, which were moved out of OutOfScope for this same reason in A2-246 and A2-233. The program pull request that does so is linked from this pull request; the expiry is the date by which a bundle refresh must have carried it here."
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:79d0bdbd10b6d5b40c27427e68b59d84c4f2039cb7126a23b73b96c0aefa51b2",
+  "path": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/graph-413ab7eaff3c.json",
+  "source_commit": "413ab7eaff3ca2be0852f54adedca06c8f461fee"
+ },
+ "head_graph": {
+  "builder_version": "1.0.1",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:e9eb0864482efb63855bd9a2d422807f2e98f11d66aa39b29cda40b8ee0c6a89",
+  "path": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/graph-head-845907f5f8bc.json",
+  "source_commit": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "staleness": {
+   "checked_at_utc": "2026-09-25T07:10:24Z",
+   "checked_nodes": 255,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:.github/workflows/deploy.yml",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/workflows/deploy.yml",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "deployable_unit:.",
+      "node_type": "deployable_unit",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.github/workflows/deploy.yml",
+        "provenance": "deterministic",
+        "to": "deployable_unit:.",
+        "via": "containment"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     }
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "document:CLAUDE.md",
+    "node_type": "document",
+    "path": [
+     {
+      "edge_type": "documents",
+      "from": "document:CLAUDE.md",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "document:CLAUDE.md",
+      "node_type": "document",
+      "path": [
+       {
+        "edge_type": "documents",
+        "from": "document:CLAUDE.md",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "doc reference check (path/id still resolves)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "document:CLAUDE.md",
+      "node_type": "document",
+      "path": [
+       {
+        "edge_type": "documents",
+        "from": "document:CLAUDE.md",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "doc reference check (path/id still resolves)"
+     }
+    ],
+    "verifier_hint": "doc reference check (path/id still resolves)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/deploy.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 1,
+      "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/deploy.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "deterministic_core",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 3
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: /home/dev/aup/arc2/runs/A2-311/work/scrutator/.arcana/verify.json; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 1 attached from /home/dev/aup/arc2/runs/A2-311/out/exemptions.json"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.0.1"
+ },
+ "receipt_id": "car-verify-20260925T071023Z-845907f5",
+ "receipt_path": "receipts/graph/A2-311-contracts-and-canary.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/arc2/runs/A2-311/work/scrutator"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:.github/workflows/deploy.yml",
+   "deployable_unit:.",
+   "document:CLAUDE.md",
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json"
+  ],
+  "head": [
+   "code_unit:.github/workflows/deploy.yml",
+   "code_unit:contracts/http/scrutator-http.contract.ts",
+   "code_unit:tests/test_canary_plan.py",
+   "code_unit:tests/test_canary_probe.py",
+   "code_unit:tests/test_deploy_canary_wiring.py",
+   "code_unit:tests/test_http_contract.py",
+   "code_unit:tools/canary_probe.py",
+   "code_unit:tools/gen_canary_plan.py",
+   "code_unit:tools/gen_http_contract.py",
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
+   "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
+   "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
+   "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
+   "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema",
+   "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema",
+   "deployable_unit:.",
+   "document:CLAUDE.md",
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-09-25T07:10:24Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6",
+    "head": "sha256:f441d2f5e694f69d2308e7f03a8a3630846e349e63b73bf732b2197546141ce6"
+   },
+   "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-deploy-through-broker.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  }
+ ],
+ "tree": {
+  "commit": "845907f5f8bc2aaa57a68da0d31a9530a49ad1cc",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:.github/workflows/deploy.yml",
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow configuration not measured: job-level `environment` outside this bounded checker",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-fitness",
+    "v-workflow-config-28802fbf11c83a2e"
+   ]
+  },
+  {
+   "entity": "code_unit:contracts/http/scrutator-http.contract.ts",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: project compiles, 0 errors; v-contract-diff: 79 contract edge(s) verified (consumer ⊆ provider); v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff",
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_canary_plan.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_canary_probe.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_deploy_canary_wiring.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_http_contract.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tools/canary_probe.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tools/gen_canary_plan.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tools/gen_http_contract.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema",
+   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-contract-diff"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: 0 errors; v-fitness: no new violation in .",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  },
+  {
+   "entity": "document:CLAUDE.md",
+   "reason": "v-doc-reference: 1 reference(s) resolve at head",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-doc-reference"
+   ]
+  }
+ ],
+ "verifiers": [
+  {
+   "command": "/home/dev/aup/arc2/runs/A2-311/work/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/arc2/runs/A2-311/work/scrutator/contracts/http/tsconfig.json --noEmit --incremental false --listFiles",
+   "duration_s": 1.02,
+   "entities": [
+    "code_unit:contracts/http/scrutator-http.contract.ts",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-09-25T07:10:25Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
+  },
+  {
+   "command": "tools/graph/contract_diff.py.run_diff(base=413ab7eaff3c, head=845907f5f8bc, graph=head graph)",
+   "duration_s": 0.03,
+   "entities": [
+    "code_unit:contracts/http/scrutator-http.contract.ts",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
+    "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
+    "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema",
+    "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema"
+   ],
+   "entity_verdicts": {
+    "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#CitationSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#EntitySchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema": "verified",
+    "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-contract-diff",
+   "kind": "contract_diff",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-09-25T07:10:26Z",
+   "summary": "0→80 contracts, breaking 0, edges {'verified': 79}"
+  },
+  {
+   "command": "workflow_config.validate exact head bytes",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/deploy.yml"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/deploy.yml": "not_measured"
+   },
+   "exit_code": 1,
+   "id": "v-workflow-config-28802fbf11c83a2e",
+   "kind": "config_schema",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-09-25T07:10:26Z",
+   "summary": "workflow configuration not measured: job-level `environment` outside this bounded checker"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/deploy.yml",
+    "code_unit:contracts/http/scrutator-http.contract.ts",
+    "code_unit:tests/test_canary_plan.py",
+    "code_unit:tests/test_canary_probe.py",
+    "code_unit:tests/test_deploy_canary_wiring.py",
+    "code_unit:tests/test_http_contract.py",
+    "code_unit:tools/canary_probe.py",
+    "code_unit:tools/gen_canary_plan.py",
+    "code_unit:tools/gen_http_contract.py",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/deploy.yml": "verified",
+    "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
+    "code_unit:tests/test_canary_plan.py": "verified",
+    "code_unit:tests/test_canary_probe.py": "verified",
+    "code_unit:tests/test_deploy_canary_wiring.py": "verified",
+    "code_unit:tests/test_http_contract.py": "verified",
+    "code_unit:tools/canary_probe.py": "verified",
+    "code_unit:tools/gen_canary_plan.py": "verified",
+    "code_unit:tools/gen_http_contract.py": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T07:10:26Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  },
+  {
+   "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
+   "duration_s": 0.0,
+   "entities": [
+    "document:CLAUDE.md"
+   ],
+   "entity_verdicts": {
+    "document:CLAUDE.md": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-doc-reference",
+   "kind": "doc_reference",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-311/out/wd-own2/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-09-25T07:10:26Z",
+   "summary": "1 document(s), 0 failed"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "1 affected entity(ies) owe no verdict (receipt: 1): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:.github/workflows/deploy.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:contracts/http/scrutator-http.contract.ts": [
+    "contract_diff",
+    "fitness_rules",
+    "type_check"
+   ],
+   "code_unit:tests/test_canary_plan.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_canary_probe.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_deploy_canary_wiring.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tests/test_http_contract.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tools/canary_probe.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tools/gen_canary_plan.py": [
+    "fitness_rules"
+   ],
+   "code_unit:tools/gen_http_contract.py": [
+    "fitness_rules"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#CitationSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#EntitySchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema": [
+    "contract_diff"
+   ],
+   "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema": [
+    "contract_diff"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "document:CLAUDE.md": [
+    "doc_reference"
+   ],
+   "receipt:receipts/graph/change-admission-deploy-through-broker.json": []
+  },
+  "seconds": {
+   "prepare": 0.77,
+   "total": 3.94,
+   "verifiers": 1.05
+  }
+ },
+ "work_item": "A2-311"
+}
