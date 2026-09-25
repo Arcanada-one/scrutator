@@ -81,8 +81,13 @@ def probe(base_url: str, spec: dict, token: str | None, timeout: float) -> dict:
             # not a failed measurement. A contour whose canary secret is unset must not turn the
             # admission red — it must leave the entity `not_measured`, which is never a pass.
             return {
-                "id": spec["id"], "kind": "http", "method": method, "url": url, "status": None,
-                "outcome": "not_measured", "executed": False,
+                "id": spec["id"],
+                "kind": "http",
+                "method": method,
+                "url": url,
+                "status": None,
+                "outcome": "not_measured",
+                "executed": False,
                 "reason": "the canary credential is not configured on this host (rule C3)",
                 "elapsed_ms": 0,
             }
@@ -128,6 +133,12 @@ def probe(base_url: str, spec: dict, token: str | None, timeout: float) -> dict:
         if status == 404:
             outcome = "failed"
             reasons.append("404: the route is NOT served by the resident version")
+        elif 500 <= status < 600:
+            # A 5xx says the route is reachable, and says nothing trustworthy about it: the
+            # observation is of a fault. Rule C3's third verdict is what that is — never a pass,
+            # and never a regression of the route either.
+            outcome = "not_measured"
+            reasons.append(f"status {status}: the contour answered with a fault, not with the route")
         else:
             reasons.append(f"status {status} != 404: the route is served")
     text = payload.decode("utf-8", "replace")

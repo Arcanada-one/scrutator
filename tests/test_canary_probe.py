@@ -135,6 +135,46 @@ def test_a_regressed_403_turns_the_entity_red(contour, repo, monkeypatch):
     assert "403" in row["reason"]
 
 
+def test_a_5xx_is_not_measured_not_a_served_route(contour, repo, monkeypatch):
+    """A fault is reachable, which is not the same as observed. Never a pass, never a regression."""
+    module = _canary_probe()
+    monkeypatch.setattr(_Stub, "edges_status", 503)
+    plan = _plan()
+    plan["probes"] = [
+        {
+            "id": "p",
+            "method": "POST",
+            "path": "/v1/edges",
+            "mutating": True,
+            "auth": "none",
+            "expect": {"route_present": True},
+            "entities": ["route:POST /v1/edges"],
+        }
+    ]
+    document = _run(module, plan, contour, repo, repo / "receipts" / "canary" / "fault.json")
+    row = document["entity_verdicts"][0]
+    assert row["verdict"] == "not_measured" and "503" in row["reason"]
+
+
+def test_a_renamed_route_is_a_failed_entity(contour, repo):
+    """404 is the mutant class the offline verifiers cannot see."""
+    module = _canary_probe()
+    plan = _plan()
+    plan["probes"] = [
+        {
+            "id": "p",
+            "method": "GET",
+            "path": "/healthz",
+            "auth": "none",
+            "expect": {"route_present": True},
+            "entities": ["route:GET /health"],
+        }
+    ]
+    document = _run(module, plan, contour, repo, repo / "receipts" / "canary" / "renamed.json")
+    row = document["entity_verdicts"][0]
+    assert row["verdict"] == "failed" and "404" in row["reason"]
+
+
 def test_an_unreachable_contour_is_not_measured_never_verified(repo):
     module, evidence = _canary_probe(), _canary_evidence()
     document = _run(module, _plan(), "http://127.0.0.1:9", repo, repo / "receipts" / "canary" / "down.json")
