@@ -17,7 +17,10 @@ jobs:
       runner_labels: '["self-hosted","linux","arcana-prod"]'
 
   verify-exact-target:
-    runs-on: [self-hosted, linux, ci-general, docker]
+    # A2-315: pre-deploy gates run on the dedicated `deploy-gate` lane, not on `ci-general`, where
+    # KC2 batteries held all five slots for hours (argana 95 min, muneral 150 min in the queue on
+    # 2026-09-24/25). The lane's runners carry ONLY that label (--no-default-labels): nothing else lands there.
+    runs-on: [deploy-gate]
     steps:
       - name: Check out reviewed source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
