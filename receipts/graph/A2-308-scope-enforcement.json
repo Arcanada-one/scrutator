@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-09-25T05:37:42Z",
+ "captured_at_utc": "2026-09-25T06:08:19Z",
  "change_set": {
   "base": "413ab7eaff3ca2be0852f54adedca06c8f461fee",
   "files": [
@@ -19,6 +19,16 @@
     "path": ".gitignore",
     "status": "M",
     "uncovered": true
+   },
+   {
+    "kind": "route",
+    "node_id": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "node_ids": [
+     "code_unit:benchmark/scrutator/live/granted_context_app.py",
+     "route:GET /__benchmark/fingerprint"
+    ],
+    "path": "benchmark/scrutator/live/granted_context_app.py",
+    "status": "M"
    },
    {
     "kind": "receipt",
@@ -317,7 +327,7 @@
     "status": "M"
    }
   ],
-  "head": "2d206bf15b3542de7c72e30250887020cce23f24",
+  "head": "81aeb8a1cd3d3fb3cc3968e15be666bc5de28f17",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -326,17 +336,17 @@
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:79d0bdbd10b6d5b40c27427e68b59d84c4f2039cb7126a23b73b96c0aefa51b2",
-  "path": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/graph-413ab7eaff3c.json",
+  "path": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/graph-413ab7eaff3c.json",
   "source_commit": "413ab7eaff3ca2be0852f54adedca06c8f461fee"
  },
  "head_graph": {
   "builder_version": "1.0.1",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:d39245f0d9a7f5a7fe667cc1cb81d3ea687c17408248c62cd3506be0389e92af",
-  "path": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/graph-head-2d206bf15b35.json",
-  "source_commit": "2d206bf15b3542de7c72e30250887020cce23f24",
+  "graph_digest": "sha256:e5ee2f8223089dd748f74e33fba598301c83203f8d32ce924bb4c05e68afb583",
+  "path": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/graph-head-81aeb8a1cd3d.json",
+  "source_commit": "81aeb8a1cd3d3fb3cc3968e15be666bc5de28f17",
   "staleness": {
-   "checked_at_utc": "2026-09-25T05:37:44Z",
+   "checked_at_utc": "2026-09-25T06:08:21Z",
    "checked_nodes": 250,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -2442,60 +2452,6 @@
         "from": "code_unit:.env.example",
         "provenance": "deterministic",
         "to": "code_unit:benchmark/scrutator/harness.py",
-        "via": "global-fallback"
-       }
-      ],
-      "revision": "head",
-      "section": "deterministic_core",
-      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-     }
-    ],
-    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 0,
-    "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-    "node_type": "code_unit",
-    "path": [
-     {
-      "edge_type": "deploys_to",
-      "from": "code_unit:.env.example",
-      "provenance": "deterministic",
-      "to": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-      "via": "global-fallback"
-     }
-    ],
-    "revision_paths": [
-     {
-      "boundary": "intra_unit",
-      "depth": 0,
-      "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-      "node_type": "code_unit",
-      "path": [
-       {
-        "edge_type": "deploys_to",
-        "from": "code_unit:.env.example",
-        "provenance": "deterministic",
-        "to": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-        "via": "global-fallback"
-       }
-      ],
-      "revision": "base",
-      "section": "deterministic_core",
-      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-     },
-     {
-      "boundary": "intra_unit",
-      "depth": 0,
-      "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-      "node_type": "code_unit",
-      "path": [
-       {
-        "edge_type": "deploys_to",
-        "from": "code_unit:.env.example",
-        "provenance": "deterministic",
-        "to": "code_unit:benchmark/scrutator/live/granted_context_app.py",
         "via": "global-fallback"
        }
       ],
@@ -14097,60 +14053,6 @@
      }
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 0,
-    "entity": "route:GET /__benchmark/fingerprint",
-    "node_type": "route",
-    "path": [
-     {
-      "edge_type": "deploys_to",
-      "from": "code_unit:.env.example",
-      "provenance": "deterministic",
-      "to": "route:GET /__benchmark/fingerprint",
-      "via": "global-fallback"
-     }
-    ],
-    "revision_paths": [
-     {
-      "boundary": "intra_unit",
-      "depth": 0,
-      "entity": "route:GET /__benchmark/fingerprint",
-      "node_type": "route",
-      "path": [
-       {
-        "edge_type": "deploys_to",
-        "from": "code_unit:.env.example",
-        "provenance": "deterministic",
-        "to": "route:GET /__benchmark/fingerprint",
-        "via": "global-fallback"
-       }
-      ],
-      "revision": "base",
-      "section": "deterministic_core",
-      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-     },
-     {
-      "boundary": "intra_unit",
-      "depth": 0,
-      "entity": "route:GET /__benchmark/fingerprint",
-      "node_type": "route",
-      "path": [
-       {
-        "edge_type": "deploys_to",
-        "from": "code_unit:.env.example",
-        "provenance": "deterministic",
-        "to": "route:GET /__benchmark/fingerprint",
-        "via": "global-fallback"
-       }
-      ],
-      "revision": "head",
-      "section": "deterministic_core",
-      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-     }
-    ],
-    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    }
   ],
   "edge_types": "all",
@@ -14164,7 +14066,7 @@
   "inferred_tail": [],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; global fallback: every node of the graph is affected (depth 0, synthetic containment hop); reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 256
+  "total": 254
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.0.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
@@ -14174,7 +14076,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.0.1"
  },
- "receipt_id": "car-verify-20260925T053742Z-2d206bf1",
+ "receipt_id": "car-verify-20260925T060819Z-81aeb8a1",
  "receipt_path": "receipts/graph/A2-308-scope-enforcement.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -14182,6 +14084,7 @@
  },
  "revision_selection": {
   "base": [
+   "code_unit:benchmark/scrutator/live/granted_context_app.py",
    "code_unit:src/scrutator/auth/dependency.py",
    "code_unit:src/scrutator/auth/models.py",
    "code_unit:src/scrutator/auth/verifier.py",
@@ -14210,6 +14113,7 @@
    "route:DELETE /v1/edges",
    "route:DELETE /v1/index",
    "route:DELETE /v1/memories",
+   "route:GET /__benchmark/fingerprint",
    "route:GET /entities",
    "route:GET /events",
    "route:GET /graph",
@@ -14243,6 +14147,7 @@
    "route:POST /v1/search"
   ],
   "head": [
+   "code_unit:benchmark/scrutator/live/granted_context_app.py",
    "code_unit:src/scrutator/auth/dependency.py",
    "code_unit:src/scrutator/auth/models.py",
    "code_unit:src/scrutator/auth/verifier.py",
@@ -14274,6 +14179,7 @@
    "route:DELETE /v1/edges",
    "route:DELETE /v1/index",
    "route:DELETE /v1/memories",
+   "route:GET /__benchmark/fingerprint",
    "route:GET /entities",
    "route:GET /events",
    "route:GET /graph",
@@ -14311,7 +14217,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-09-25T05:37:44Z",
+  "checked_at_utc": "2026-09-25T06:08:21Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -14320,7 +14226,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:418e2404c0204a57a63886f3918053a9c2cf4462a9ba624176fa2126cf301e56"
+    "head": "sha256:956ad52521174a7b34697cb49300f0951e41fa7c71d1bb1c3cc698e10fe40900"
    },
    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "node_type": "receipt",
@@ -14334,10 +14240,21 @@
   }
  ],
  "tree": {
-  "commit": "2d206bf15b3542de7c72e30250887020cce23f24",
+  "commit": "81aeb8a1cd3d3fb3cc3968e15be666bc5de28f17",
   "dirty": false
  },
  "verdicts": [
+  {
+   "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "reason": "v-contract-diff: contract_diff refused: NO_CONTRACTS; v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-config-schema",
+    "v-contract-diff",
+    "v-fitness"
+   ]
+  },
   {
    "entity": "code_unit:src/scrutator/auth/dependency.py",
    "reason": "v-fitness: no new fitness violation",
@@ -14584,6 +14501,16 @@
   },
   {
    "entity": "route:DELETE /v1/memories",
+   "reason": "v-contract-diff: contract_diff refused: NO_CONTRACTS; v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-canary",
+    "v-contract-diff",
+    "v-route-config"
+   ]
+  },
+  {
+   "entity": "route:GET /__benchmark/fingerprint",
    "reason": "v-contract-diff: contract_diff refused: NO_CONTRACTS; v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
    "verdict": "not_measured",
    "verifier_ids": [
@@ -14905,15 +14832,17 @@
  ],
  "verifiers": [
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=413ab7eaff3c, head=2d206bf15b35, graph=head graph)",
+   "command": "tools/graph/contract_diff.py.run_diff(base=413ab7eaff3c, head=81aeb8a1cd3d, graph=head graph)",
    "duration_s": 0.0,
    "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/ltm/router.py",
     "route:DELETE /source",
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
     "route:GET /entities",
     "route:GET /events",
     "route:GET /graph",
@@ -14947,12 +14876,14 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
     "code_unit:src/scrutator/health.py": "not_measured",
     "code_unit:src/scrutator/ltm/router.py": "not_measured",
     "route:DELETE /source": "not_measured",
     "route:DELETE /v1/edges": "not_measured",
     "route:DELETE /v1/index": "not_measured",
     "route:DELETE /v1/memories": "not_measured",
+    "route:GET /__benchmark/fingerprint": "not_measured",
     "route:GET /entities": "not_measured",
     "route:GET /events": "not_measured",
     "route:GET /graph": "not_measured",
@@ -14988,8 +14919,8 @@
    "exit_code": 2,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/v-contract-diff.txt",
-   "started_at_utc": "2026-09-25T05:37:45Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/v-contract-diff.txt",
+   "started_at_utc": "2026-09-25T06:08:23Z",
    "summary": "refusal NO_CONTRACTS"
   },
   {
@@ -15000,6 +14931,7 @@
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
     "route:GET /entities",
     "route:GET /events",
     "route:GET /graph",
@@ -15037,6 +14969,7 @@
     "route:DELETE /v1/edges": "verified",
     "route:DELETE /v1/index": "verified",
     "route:DELETE /v1/memories": "verified",
+    "route:GET /__benchmark/fingerprint": "verified",
     "route:GET /entities": "verified",
     "route:GET /events": "verified",
     "route:GET /graph": "verified",
@@ -15072,30 +15005,33 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-09-25T05:37:45Z",
-   "summary": "35 route(s), 0 failed"
+   "output_ref": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-09-25T06:08:23Z",
+   "summary": "36 route(s), 0 failed"
   },
   {
    "command": "verify.py config_schema: keys read at head ⊆ declared keys",
-   "duration_s": 0.56,
+   "duration_s": 0.69,
    "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:tests/test_graph_edges_integration.py"
    ],
    "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
     "code_unit:tests/test_graph_edges_integration.py": "verified"
    },
    "exit_code": 0,
    "id": "v-config-schema",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/v-config-schema.json",
-   "started_at_utc": "2026-09-25T05:37:45Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-09-25T06:08:23Z",
    "summary": "2 source(s), 0 new / 26 frozen undeclared reads, 0 failed; 4 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
    "duration_s": 0.0,
    "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/auth/dependency.py",
     "code_unit:src/scrutator/auth/models.py",
     "code_unit:src/scrutator/auth/verifier.py",
@@ -15124,6 +15060,7 @@
     "code_unit:tests/test_skill_maturity_contract.py"
    ],
    "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
     "code_unit:src/scrutator/auth/dependency.py": "verified",
     "code_unit:src/scrutator/auth/models.py": "verified",
     "code_unit:src/scrutator/auth/verifier.py": "verified",
@@ -15154,14 +15091,15 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-09-25T05:37:46Z",
+   "output_ref": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-09-25T06:08:23Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
    "duration_s": 0.0,
    "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/ltm/router.py",
     "code_unit:tests/test_graph_edges_integration.py",
@@ -15169,6 +15107,7 @@
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
+    "route:GET /__benchmark/fingerprint",
     "route:GET /entities",
     "route:GET /events",
     "route:GET /graph",
@@ -15202,6 +15141,7 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
     "code_unit:src/scrutator/health.py": "not_measured",
     "code_unit:src/scrutator/ltm/router.py": "not_measured",
     "code_unit:tests/test_graph_edges_integration.py": "not_measured",
@@ -15209,6 +15149,7 @@
     "route:DELETE /v1/edges": "not_measured",
     "route:DELETE /v1/index": "not_measured",
     "route:DELETE /v1/memories": "not_measured",
+    "route:GET /__benchmark/fingerprint": "not_measured",
     "route:GET /entities": "not_measured",
     "route:GET /events": "not_measured",
     "route:GET /graph": "not_measured",
@@ -15244,9 +15185,9 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/arc2/runs/A2-308/verifywork/verifier-out/v-canary.json",
-   "started_at_utc": "2026-09-25T05:37:46Z",
-   "summary": "0 canary result(s); 0 verified / 0 failed / 38 not_measured of 38 entities"
+   "output_ref": "/home/dev/aup/arc2/runs/A2-308/reissuework/verifier-out/v-canary.json",
+   "started_at_utc": "2026-09-25T06:08:23Z",
+   "summary": "0 canary result(s); 0 verified / 0 failed / 40 not_measured of 40 entities"
   }
  ],
  "verify": {
@@ -15254,7 +15195,7 @@
    {
     "code": "INAPPLICABLE_FRAMEWORK",
     "reason": "the tree carries no NestJS dependency: an absent framework is a fact about the repository, not a measurement of the route",
-    "routes": 35,
+    "routes": 36,
     "rules": [
      "rc01",
      "rc02"
@@ -15274,6 +15215,12 @@
    }
   ],
   "required_by_entity": {
+   "code_unit:benchmark/scrutator/live/granted_context_app.py": [
+    "canary",
+    "config_schema",
+    "contract_diff",
+    "fitness_rules"
+   ],
    "code_unit:src/scrutator/auth/dependency.py": [
     "fitness_rules"
    ],
@@ -15375,6 +15322,11 @@
     "route_config_consistency"
    ],
    "route:DELETE /v1/memories": [
+    "canary",
+    "contract_diff",
+    "route_config_consistency"
+   ],
+   "route:GET /__benchmark/fingerprint": [
     "canary",
     "contract_diff",
     "route_config_consistency"
@@ -15536,9 +15488,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.69,
-   "total": 3.16,
-   "verifiers": 0.56
+   "prepare": 0.99,
+   "total": 4.18,
+   "verifiers": 0.69
   }
  },
  "work_item": "A2-308"
