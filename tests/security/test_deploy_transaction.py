@@ -776,7 +776,10 @@ def test_deploy_workflow_uses_trusted_semantic_gate_and_restricted_runner_group(
     uses = re.findall(r"^\s*uses:\s*\S+@([^\s#]+)", workflow, flags=re.MULTILINE)
     assert uses
     assert all(re.fullmatch(r"[0-9a-f]{40}", revision) for revision in uses)
-    assert "runs-on: [self-hosted, linux, ci-general, docker]" in workflow
+    # A2-315: the exact-target gate runs on the dedicated `deploy-gate` lane (runners carry ONLY that
+    # label and have docker), not on ci-general where KC2 batteries held every slot for hours.
+    assert "runs-on: [deploy-gate]" in workflow
+    assert not re.search(r"runs-on:.*ci-general", workflow)
     assert "uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@" in workflow
     assert 'runner_labels: \'["self-hosted","linux","arcana-prod"]\'' in workflow
     assert "ubuntu-24.04" not in workflow
