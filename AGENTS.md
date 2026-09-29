@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with this codebase.
 
@@ -220,7 +220,7 @@ break out of the consumer's data block. Do not weaken a gate to raise recall.
 - **Deploy:** `.github/workflows/deploy.yml` runs the reviewed main SHA on the Arcana-KB runner through `deploy/scrutator-deploy-transaction.sh`.
 - **Template:** the ecosystem Python/FastAPI CI convention.
 - **Post-deploy:** health check (`curl -fsS http://localhost:8310/health`), Ops Bot notification on failure
-- **Convention:** см. root `CLAUDE.md` § CI/CD Convention
+- **Convention:** см. root `AGENTS.md` § CI/CD Convention
 
 ## Recall@k Regression Gate
 
