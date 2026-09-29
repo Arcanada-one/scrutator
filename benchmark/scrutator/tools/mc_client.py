@@ -19,7 +19,7 @@ class ModelConnectorClient:
     """Thin wrapper around `POST {mc_url}/connectors/{connector}/execute`.
 
     `connector` MUST be passed explicitly by the caller — no silent provider-default
-    fallback (CLAUDE.md risk row: unset/default `coworker`/Model-Connector provider
+    fallback (AGENTS.md risk row: unset/default `coworker`/Model-Connector provider
     resolution has previously failed closed with `unknown provider 'none'`).
     """
 

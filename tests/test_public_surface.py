@@ -17,7 +17,7 @@ ACTION_REF = re.compile(r"^\s*uses:\s+([^@\s]+)@([^\s#]+)", re.MULTILINE)
 def public_text_files() -> list[Path]:
     files = [
         ROOT / "README.md",
-        ROOT / "CLAUDE.md",
+        ROOT / "AGENTS.md",
         ROOT / "CONTRIBUTING.md",
         ROOT / "SECURITY.md",
         ROOT / "auth.dependencies.yaml",
