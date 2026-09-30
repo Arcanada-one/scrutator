@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -26,6 +27,17 @@ def index_at(repo: impact.Repo, revision: str) -> impact.GraphIndex:
     return impact.GraphIndex(doc)
 
 
+def fallback_units(q: dict) -> set[str]:
+    """The entity a triggered global fallback collapses onto, for a live impact query.
+
+    The rule itself lives in `schema_check.fallback_units` — the module that imports nothing of
+    ours — so that verify.py, this module and the receipt conformance check cannot hold three
+    versions of it. Here it is only fed the query's rows.
+    """
+    return schema_check.fallback_units([e for section in ("deterministic_core", "inferred_tail")
+                                        for e in q["impact_set"][section]])
+
+
 def selected(q: dict) -> set[str]:
     # A global fallback (lockfile / global config) makes the impact the WHOLE REPOSITORY as ONE
     # entity - the Bazel/Nx rule of DEC-AUP-0008 - and its verifier is the repository's own test
@@ -37,10 +49,45 @@ def selected(q: dict) -> set[str]:
     # repository entity and the missing author - and then paused that same receipt with
     # HEAD_IMPACT_NOT_COVERED over 464 nodes it had itself collapsed into one. Two halves of one
     # gate disagreeing about how many entities a fallback carries.
+    #
+    # The seeds alone were NOT that one entity, and a manifest carries no seed: a change to
+    # package.json / pnpm-lock.yaml alone selected nothing at all, so the receipt printed
+    # `paused_safe` over an empty verdict list (A2-232, talomnia-backend: core=14, verdicts=0,
+    # verifiers=0, against core=4 / verdicts=6 for a .ts change in the same repository). The
+    # collapse was right; the entity it collapsed onto was missing. `fallback_units` supplies it.
     if q["impact_set"].get("global_fallback", {}).get("triggered"):
-        return set(q["seeds"])
+        return set(q["seeds"]) | fallback_units(q)
     return set(q["seeds"]) | {e["entity"] for section in ("deterministic_core", "inferred_tail")
                              for e in q["impact_set"][section]}
+
+
+def merge_revisions(versions: list[tuple[str, dict]]) -> dict:
+    """Union base/head impact rows per entity (extracted from query() unchanged, plus the lean form).
+
+    Keep an actual path as the display path and all revision paths as obligations. A boundary inferred in either
+    revision must retain its canary requirement, so revision paths that DIFFER are always kept in full; only when
+    every revision reached the entity by the same path in the same section is the record the list of revisions.
+    """
+    entries: dict[str, list] = {}
+    for role, q in versions:
+        for section in ("deterministic_core", "inferred_tail"):
+            for entry in q["impact_set"][section]:
+                entries.setdefault(entry["entity"], []).append((role, section, entry))
+    out = {"deterministic_core": [], "inferred_tail": [], "_entities": entries}
+    for entity, paths in sorted(entries.items()):
+        role, section, chosen = max(paths, key=lambda p: (p[1] == "inferred_tail", p[2].get("boundary") in {"repo", "service"}))
+        entry = copy.deepcopy(chosen)
+        if all(s == section and e == chosen for _, s, e in paths):
+            # Every revision reached this entity by the SAME path in the SAME section: each revision path would be a
+            # verbatim copy of the row. Record which revisions, not N copies — every reader already falls back to the
+            # row itself (`e.get("revision_paths", [e])`: verify.collect_entities, mandatory_by_entity, the canary
+            # hold), and the gate rebuilds these rows with this same function, so equality is unchanged. Measured:
+            # a root .env.example (global fallback, 11 519 rows) gave an 18.85 MB receipt, 10.04 MB of it these copies.
+            entry["revisions"] = [r for r, _, _ in paths]
+        else:
+            entry["revision_paths"] = [{"revision": r, "section": s, **copy.deepcopy(e)} for r, s, e in paths]
+        out[section].append(entry)
+    return out
 
 
 def query(base_idx: impact.GraphIndex, head_idx: impact.GraphIndex, files: list[dict], *,
@@ -57,20 +104,10 @@ def query(base_idx: impact.GraphIndex, head_idx: impact.GraphIndex, files: list[
                          graph_path=head_graph_path, **common) if head_files else None
     out = copy.deepcopy(before)
     versions = [("base", before)] + ([("head", after)] if after else [])
-    entries = {}
-    for role, q in versions:
-        for section in ("deterministic_core", "inferred_tail"):
-            for entry in q["impact_set"][section]:
-                entries.setdefault(entry["entity"], []).append((role, section, entry))
+    merged = merge_revisions(versions)
     for section in ("deterministic_core", "inferred_tail"):
-        out["impact_set"][section] = []
-    for entity, paths in sorted(entries.items()):
-        # Keep an actual path as the display path and all revision paths as obligations.
-        # A boundary inferred in either revision must retain its canary requirement.
-        role, section, chosen = max(paths, key=lambda p: (p[1] == "inferred_tail", p[2].get("boundary") in {"repo", "service"}))
-        entry = copy.deepcopy(chosen)
-        entry["revision_paths"] = [{"revision": r, "section": s, **copy.deepcopy(e)} for r, s, e in paths]
-        out["impact_set"][section].append(entry)
+        out["impact_set"][section] = merged[section]
+    entries = merged["_entities"]
     base_files = {f["path"]: f for f in out["change_set"]["files"]}
     for f in (after or {}).get("change_set", {}).get("files", []):
         dest = base_files[f["path"]]
@@ -366,6 +403,37 @@ def _sha_bytes(b: bytes) -> str:
     return "sha256:" + hashlib.sha256(b).hexdigest()
 
 
+def is_test_path(path: str) -> bool:
+    """The TypeScript/JavaScript test-file rule build_graph applies (TsFile.is_test), for a repo path."""
+    return bool(re.search(r"\.(spec|test)\.[cm]?[jt]sx?$", path) or "/test/" in path or "/__tests__/" in path
+                or path.startswith(("test/", "__tests__/")))
+
+
+def canary_unreachable_test(ntype: str, path: str, inferred_boundary: bool | None) -> bool:
+    """A2-353: is this a test code_unit no canary can ever list (and no inferred boundary holds)?
+
+    ONE definition, used by BOTH the producer (verify.py, which discharges `canary` and records it) and the gate
+    (mandatory_by_entity below). While verify.py alone knew it, the gate recomputed the matrix minimum without it and
+    refused the receipt verify.py issued correctly: HEAD_IMPACT_NOT_COVERED, «required_by_entity omits mandatory
+    base/head verifier obligations» (talomnia-site #211, 2026-09-29) — the same split polyglot2 closed for type_check.
+    """
+    return ntype == "code_unit" and not inferred_boundary and is_test_path(path or "")
+
+
+def inferred_boundary_by_entity(q: dict) -> dict[str, bool]:
+    """The inferred-boundary fact per impacted entity, derived exactly as verify.py derives it: any hop on the chosen
+    revision paths with inferred/observed provenance AND a service/repo boundary; the first section that lists the
+    entity wins (verify.py uses setdefault in deterministic_core, inferred_tail order); a changed seed has none."""
+    out: dict[str, bool] = {}
+    for section in ("deterministic_core", "inferred_tail"):
+        for e in q["impact_set"][section]:
+            if e["entity"] in out:
+                continue
+            hops = [h for p in e.get("revision_paths", [e]) for h in (p.get("path") or [])]
+            out[e["entity"]] = any(h.get("provenance") in ("inferred", "observed") for h in hops) and e.get("boundary") in ("service", "repo")
+    return out
+
+
 def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: dict) -> dict[str, list[str]]:
     """The matrix minimum, independent of a producer's supplied requirement arrays."""
     matrix = json.loads((Path(__file__).resolve().parents[2] / "contracts/graph-verified-change/verifier-matrix.v1.json").read_text())
@@ -374,15 +442,16 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
     hops = {e: set() for e in affected}
     for section in ("deterministic_core", "inferred_tail"):
         for e in q["impact_set"][section]:
-            # A global fallback makes selected() return the seeds alone, while impact.py still
-            # lists the whole graph in deterministic_core as the readable blast radius. Rows
-            # outside the selection have no hops entry and are not entities to be verified -
-            # they ARE the radius. Skipping them keeps this function agreeing with selected()
-            # instead of raising KeyError on the first one (measured: muneral #108).
+            # A global fallback narrows selected() to the seeds plus the repository's own unit(s),
+            # while impact.py still lists the whole graph in deterministic_core as the readable
+            # blast radius. Rows outside the selection have no hops entry and are not entities to
+            # be verified - they ARE the radius. Skipping them keeps this function agreeing with
+            # selected() instead of raising KeyError on the first one (measured: muneral #108).
             if e["entity"] not in hops:
                 continue
             for path in e.get("revision_paths", [e]):
                 hops[e["entity"]].update(h["edge_type"] for h in path.get("path", []))
+    boundary = inferred_boundary_by_entity(q)
     result = {}
     for eid in affected:
         node = after.nodes.get(eid) or before.nodes[eid]
@@ -405,6 +474,9 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
             required.discard("type_check")
         if node["type"] == "deployable_unit" and not _deployable_has_ts(node.get("path", ""), before, after):
             required.discard("type_check")
+        # The A2-353 discharge, the SAME function verify.py calls (see canary_unreachable_test).
+        if "canary" in required and canary_unreachable_test(node["type"], node.get("path", ""), boundary.get(eid, False)):
+            required.discard("canary")
         result[eid] = sorted(required)
     return result
 
