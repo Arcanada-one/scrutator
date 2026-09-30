@@ -6,8 +6,8 @@ Subcommands
                  ChangeAdmissionReceipt/v1 documents that are bound to it (contract
                  contracts/graph-verified-change/admission-gate.v1.json).
   attach         build a WorkItemEvidenceAttachment/v1 for a receipt and append it to the program-side
-                 evidence ledger; with --post, deliver it to Muneral when a work-item evidence route
-                 exists (probe recorded, never a status write).
+                 evidence ledger; with --post, POST it to Muneral's work-item evidence route and record
+                 the outcome as the delivery (never a status write).
   charter-scan   scan the live charter surfaces of a host for TDD / test-first and classify every hit
                  (mandate_default | opt_in_reference | neutral_mention | historical).
   pr-coverage    measure which merges of a pilot repository carry a receipt (AM1 baseline / window).
@@ -429,6 +429,10 @@ DEFAULT_BUNDLE_DIR = ".github/graph-admission"
 BUNDLE_MANIFEST_NAME = "BUNDLE.json"
 BUNDLE_SIG_NAME = "BUNDLE.json.sig"
 BUNDLE_PUBKEY_NAME = "SIGNING-KEY.pub"
+# A2-455 — must equal ci_gate.EXTRA_SIGNATURE_FMT / EXTRA_PUBKEY_FMT / MAX_BUNDLE_SIGNERS.
+BUNDLE_EXTRA_SIG_FMT = "BUNDLE.json.{n}.sig"
+BUNDLE_EXTRA_PUBKEY_FMT = "SIGNING-KEY.{n}.pub"
+BUNDLE_MAX_SIGNERS = 4
 BUNDLE_SIGNING_NAMESPACE = "graph-admission-bundle"
 STRUCTURAL_EXEMPTION_TTL_HOURS = 24
 STRUCTURAL_EXEMPTION_OWNER = "AUP-E29/AUP-GRAPH-006 — issued by tools/graph/admit_change.py exempt, re-measured by the gate (C16)"
@@ -469,6 +473,10 @@ def bundle_paths_at(repo: Path, ref: str, bundle_rel: str) -> tuple[set[str], di
     except json.JSONDecodeError:
         return set(), None
     paths = {f"{rel}/{BUNDLE_MANIFEST_NAME}", f"{rel}/{BUNDLE_SIG_NAME}", f"{rel}/{BUNDLE_PUBKEY_NAME}"}
+    # A2-455 — the extra signature pairs of a dual-signed bundle (key rotation) are bundle-managed too.
+    signers = man.get("signing_keys") if isinstance(man, dict) else None
+    for n in range(2, (len(signers) if isinstance(signers, list) else 1) + 1):
+        paths |= {f"{rel}/{BUNDLE_EXTRA_SIG_FMT.format(n=n)}", f"{rel}/{BUNDLE_EXTRA_PUBKEY_FMT.format(n=n)}"}
     for f in man.get("files") or []:
         p = f.get("path") if isinstance(f, dict) else None
         if isinstance(p, str) and p:
@@ -1751,6 +1759,56 @@ print(json.dumps({"ok": bool(ok), "reason": reason, "detail": det}))
 """
 
 
+def _bundle_pairs(bundle: Path) -> list[tuple[Path, Path]]:
+    pairs = [(bundle / BUNDLE_SIG_NAME, bundle / BUNDLE_PUBKEY_NAME)]
+    for n in range(2, BUNDLE_MAX_SIGNERS + 1):
+        sp, kp = bundle / BUNDLE_EXTRA_SIG_FMT.format(n=n), bundle / BUNDLE_EXTRA_PUBKEY_FMT.format(n=n)
+        if sp.exists() or kp.exists():
+            pairs.append((sp, kp))
+    return pairs
+
+
+def key_continuity(base_bundle: Path, head_bundle: Path | None, wd: Path) -> tuple[bool | None, str, dict]:
+    """B2's measurement → (verdict, reason, record). A2-455 (DEC-AUP-0036 C4): the head manifest must
+    verify, with the BASE tree's sshsig.py, against AT LEAST ONE public key the BASE bundle carries
+    (primary or an extra pair of a dual-signed bundle). That is what lets a rotation proceed without a
+    moment of no trust: base {K1} → head {K1,K2} passes on K1, base {K1,K2} → head {K2} passes on K2, and
+    base {K1} → head {K2} (skipping the dual-signed step) is still refused, as is any key base never held."""
+    base_pubs = [kp for _, kp in _bundle_pairs(base_bundle) if kp.exists()]
+    man_p = head_bundle / BUNDLE_MANIFEST_NAME if head_bundle else None
+    head_sigs = [sp for sp, _ in _bundle_pairs(head_bundle) if sp.exists()] if head_bundle else []
+    missing = [n for n, e in (("a public key in the base bundle", bool(base_pubs)),
+                              (f"head {BUNDLE_MANIFEST_NAME}", bool(man_p) and man_p.exists()),
+                              ("a signature in the head bundle", bool(head_sigs))) if not e]
+    if missing:
+        return None, "missing " + ", ".join(missing), {}
+    drv = wd / "verify_with_base_sshsig.py"
+    wd.mkdir(parents=True, exist_ok=True)
+    drv.write_text(_SIG_DRIVER)
+    tried = []
+    for sp in head_sigs:
+        for kp in base_pubs:
+            r = subprocess.run([sys.executable, str(drv), str(base_bundle / "tools/graph"), str(man_p),
+                                str(sp), str(kp), BUNDLE_SIGNING_NAMESPACE],
+                               capture_output=True, text=True,
+                               env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+            try:
+                res = json.loads(r.stdout)
+            except json.JSONDecodeError:
+                res = {"ok": False, "reason": f"the base tree's sshsig.py could not be run: "
+                                              f"{(r.stderr or r.stdout).strip()[:200]}", "detail": {}}
+            fp = (res.get("detail") or {}).get("public_key_fingerprint")
+            tried.append({"head_signature": sp.name, "base_key": kp.name, "base_key_fingerprint": fp,
+                          "ok": bool(res.get("ok")), "reason": res.get("reason")})
+            if res.get("ok"):
+                return True, f"{sp.name} verifies against base {kp.name} ({fp})", {
+                    "verified": True, "reason": res.get("reason"), "key_from": kp.name,
+                    "key_fingerprint": fp, "tried": tried}
+    return False, "; ".join(f"{t['head_signature']} vs base {t['base_key']}: {t['reason']}" for t in tried), {
+        "verified": False, "reason": tried[-1]["reason"] if tried else None, "tried": tried,
+        "key_fingerprint": None}
+
+
 def _bundle_selftest(bundle_root: Path) -> tuple[int | None, int | None, str]:
     """→ (exit code, arm count, tail). `ci_gate.py --selftest` is the battery that runs from inside a
     vendored bundle; `admit_change.py --selftest` does NOT (its fixture set is not bundled — measured,
@@ -2187,36 +2245,16 @@ def evaluate_self_update(repo: Path, base: str, head: str, files: list[dict], wo
                   f"has no signature code, so the only non-circular anchor cannot be evaluated. not_measured is "
                   f"not a pass: no exemption, the change pauses")
     else:
-        base_pub = base_bundle / BUNDLE_PUBKEY_NAME
-        man_p, sig_p = head_bundle and (head_bundle / BUNDLE_MANIFEST_NAME), head_bundle and (head_bundle / BUNDLE_SIG_NAME)
-        if not base_pub.exists() or not head_bundle or not man_p.exists() or not sig_p.exists():
-            b2 = _chk(ev, "B2", "SELF_UPDATE_KEY_CONTINUITY", None,
-                      f"missing " + ", ".join(n for n, e in ((f"{base}:{rel}/{BUNDLE_PUBKEY_NAME}", base_pub.exists()),
-                                                             (f"{head}:{rel}/{BUNDLE_MANIFEST_NAME}", bool(head_bundle) and man_p.exists()),
-                                                             (f"{head}:{rel}/{BUNDLE_SIG_NAME}", bool(head_bundle) and sig_p.exists())) if not e))
-        else:
-            drv = wd / "verify_with_base_sshsig.py"
-            drv.write_text(_SIG_DRIVER)
-            r = subprocess.run([sys.executable, str(drv), str(base_bundle / "tools/graph"), str(man_p),
-                                str(sig_p), str(base_pub), BUNDLE_SIGNING_NAMESPACE],
-                               capture_output=True, text=True,
-                               env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
-            try:
-                res = json.loads(r.stdout)
-            except json.JSONDecodeError:
-                res = {"ok": False, "reason": f"the base tree's sshsig.py could not be run: "
-                                              f"{(r.stderr or r.stdout).strip()[:200]}", "detail": {}}
-            ev["signature"] = {"verified": bool(res.get("ok")), "reason": res.get("reason"),
-                               "verifier_from": f"{base[:12]}:{rel}/tools/graph/sshsig.py",
-                               "key_from": f"{base[:12]}:{rel}/{BUNDLE_PUBKEY_NAME}",
-                               "key_fingerprint": (res.get("detail") or {}).get("public_key_fingerprint")}
-            b2 = _chk(ev, "B2", "SELF_UPDATE_KEY_CONTINUITY", bool(res.get("ok")),
-                      (f"the head bundle's {BUNDLE_MANIFEST_NAME} verifies with the sshsig.py of base {base[:12]} "
-                       f"against the {BUNDLE_PUBKEY_NAME} of base {base[:12]} "
-                       f"({(res.get('detail') or {}).get('public_key_fingerprint')}) — the key the repository "
-                       f"already trusted, in a tree this pull request did not write"
-                       if res.get("ok") else
-                       f"the head bundle does NOT verify against the key of base {base[:12]}: {res.get('reason')}"))
+        ok2, why2, rec2 = key_continuity(base_bundle, head_bundle, wd)
+        if rec2:
+            ev["signature"] = {**rec2, "verifier_from": f"{base[:12]}:{rel}/tools/graph/sshsig.py",
+                               "key_from": f"{base[:12]}:{rel}/{rec2.get('key_from') or BUNDLE_PUBKEY_NAME}"}
+        b2 = _chk(ev, "B2", "SELF_UPDATE_KEY_CONTINUITY", ok2,
+                  (f"the head bundle's {BUNDLE_MANIFEST_NAME} verifies with the sshsig.py of base {base[:12]}: "
+                   f"{why2} — a key the repository already trusted, in a tree this pull request did not write"
+                   if ok2 else
+                   f"missing at {base[:12]}/{head[:12]}: {why2}" if ok2 is None else
+                   f"the head bundle does NOT verify against any key of base {base[:12]}: {why2}"))
 
     if not head_bundle:
         b3 = _chk(ev, "B3", "SELF_UPDATE_SELFTEST", None, f"no bundle directory at head {head[:12]}")
@@ -3413,40 +3451,91 @@ def build_attachment(receipt_path: Path, doc: dict, work_item: str, label: str, 
         "producer": {"tool": TOOL, "version": VERSION},
         "model": MODEL,
         "provisional_until_fable_review": True,
+        # A2-336. Nothing has been attempted yet, so the reason says exactly that. This line used to
+        # read MUNERAL_NO_WORK_ITEM_EVIDENCE_ROUTE — a finding about Muneral written without asking
+        # Muneral, which stayed in every ledger entry after the route shipped (A2-274; A2-332 got 201).
+        # `cmd_attach` replaces it with the outcome of a real POST when one is made.
         "delivery": {"target": "muneral", "status": "not_measured",
-                     "reason_code": "MUNERAL_NO_WORK_ITEM_EVIDENCE_ROUTE",
+                     "reason_code": "MUNERAL_POST_NOT_REQUESTED",
                      "checked_at_utc": now_iso(), "probe": []},
     }
 
 
-MUNERAL_CANDIDATE_ROUTES = [
-    ("POST", "/tasks/{id}/evidence"),
-    ("POST", "/tasks/{id}/attachments"),
-    ("POST", "/tasks/{id}/receipts"),
-    ("POST", "/work-items/{id}/evidence"),
-]
+UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
 
 
-def muneral_probe(task_id: str, key: str, base_url: str, ua: str) -> list[dict]:
-    """Read-only discovery: does a work-item evidence route exist for an agent key?
+def _muneral_error_body(raw: bytes) -> tuple[dict | None, str]:
+    text = raw.decode("utf-8", "replace")
+    try:
+        body = json.loads(text)
+        return (body if isinstance(body, dict) else None), text
+    except json.JSONDecodeError:
+        return None, text
 
-    A 404 says the route does not exist; 401/403 says it exists but rejects an agent key.
-    Probes are GETs — this function never writes to Muneral and never touches a status route.
+
+def muneral_deliver(att: dict, task_id: str, key: str, base_url: str, ua: str, route: str,
+                    timeout: float = 20.0) -> dict:
+    """POST one ledger attachment to Muneral's work-item evidence route and say what happened.
+
+    A2-336. The delivery record is the OUTCOME of this call, never a default:
+      posted        201 (new) or 200 with `idempotent: true` (the same claim was already stored), and
+                    the answer names the digest that was sent;
+      failed        the server refused (its `code` when it gives one — EVIDENCE_DIGEST_CONFLICT,
+                    EVIDENCE_URI_MALFORMED … — else MUNERAL_HTTP_<n>), or nothing listened
+                    (MUNERAL_UNREACHABLE), or the answer did not describe what was sent;
+      not_measured  the route itself is missing (404 with the framework's «Cannot POST» page — the one
+                    case that earns MUNERAL_NO_WORK_ITEM_EVIDENCE_ROUTE), or the request was sent and no
+                    answer came back (MUNERAL_NO_ANSWER: it may have landed; a retry is idempotent).
+    The key goes only into the Authorization header of this one request; it is never recorded.
+    The route is the one the policy declares; it writes evidence, never a status or a transition.
     """
-    out = []
-    for _method, tmpl in MUNERAL_CANDIDATE_ROUTES:
-        path = tmpl.format(id=task_id)
-        req = urllib.request.Request(base_url + path, method="GET",
-                                     headers={"Authorization": f"Bearer {key}", "User-Agent": ua})
-        try:
-            with urllib.request.urlopen(req, timeout=20) as r:
-                code = r.status
-        except urllib.error.HTTPError as e:
-            code = e.code
-        except OSError as e:
-            code = f"error:{type(e).__name__}"
-        out.append({"probe": f"GET {path}", "status": code})
-    return out
+    method, tmpl = route.split(" ", 1)
+    path = tmpl.format(id=task_id)
+    ref = att["evidence_ref"]
+    sha_hex = ref["digest"].split(":", 1)[1] if ref["digest"].startswith("sha256:") else ref["digest"]
+    payload = {"uri": ref["uri"], "sha256": sha_hex, "contentType": ref["contentType"]}
+    req = urllib.request.Request(base_url.rstrip("/") + path, method=method,
+                                 data=json.dumps(payload).encode("utf-8"),
+                                 headers={"Authorization": f"Bearer {key}", "User-Agent": ua,
+                                          "Content-Type": "application/json"})
+    probe = {"probe": f"{method} {tmpl.format(id='<task>')}", "task_id": task_id}
+    d = {"target": "muneral", "route": route, "muneral_task_id": task_id}
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            code, raw = r.status, r.read()
+    except urllib.error.HTTPError as e:
+        code, raw = e.code, e.read()
+    except urllib.error.URLError as e:
+        reason = e.reason
+        probe["status"] = f"error:{type(reason).__name__}"
+        if isinstance(reason, TimeoutError):
+            return d | {"status": "not_measured", "reason_code": "MUNERAL_NO_ANSWER", "probe": [probe]}
+        return d | {"status": "failed", "reason_code": "MUNERAL_UNREACHABLE", "probe": [probe]}
+    except (TimeoutError, ConnectionError, OSError) as e:
+        probe["status"] = f"error:{type(e).__name__}"
+        if isinstance(e, TimeoutError):
+            return d | {"status": "not_measured", "reason_code": "MUNERAL_NO_ANSWER", "probe": [probe]}
+        return d | {"status": "failed", "reason_code": "MUNERAL_UNREACHABLE", "probe": [probe]}
+    probe["status"] = code
+    body, text = _muneral_error_body(raw)
+    d["http"] = code
+    if code in (200, 201):
+        ok = (body is not None and body.get("sha256") == sha_hex and body.get("evidence_id")
+              and (code == 201 or body.get("idempotent") is True))
+        if not ok:
+            return d | {"status": "failed", "reason_code": "MUNERAL_ANSWER_MISMATCH",
+                        "answer": text[:300], "probe": [probe]}
+        return d | {"status": "posted", "reason_code": "MUNERAL_EVIDENCE_CREATED" if code == 201
+                    else "MUNERAL_EVIDENCE_IDEMPOTENT",
+                    "evidence_id": body["evidence_id"], "idempotent": bool(body.get("idempotent")),
+                    "created_at": body.get("created_at"), "probe": [probe]}
+    server_code = (body or {}).get("code")
+    message = (body or {}).get("message") if body else text
+    if code == 404 and body is None and f"Cannot {method}" in text:
+        return d | {"status": "not_measured", "reason_code": "MUNERAL_NO_WORK_ITEM_EVIDENCE_ROUTE",
+                    "probe": [probe]}
+    return d | {"status": "failed", "reason_code": server_code or f"MUNERAL_HTTP_{code}",
+                "server_code": server_code, "message": str(message)[:300], "probe": [probe]}
 
 
 def _repo_root_of(d: Path) -> Path | None:
@@ -3480,20 +3569,26 @@ def cmd_attach(a) -> int:
         return 2
 
     if a.post:
-        key = os.environ.get("MUNERAL_API_KEY")
+        # A2-336: the reason is what was tried. Missing inputs are named as missing inputs — not as
+        # a fact about Muneral that nobody measured.
         m = policy["work_item_evidence"]["muneral"]
-        if not key:
+        key = os.environ.get("MUNERAL_API_KEY")
+        task_id = a.muneral_task_id or (wi if UUID_RE.match(wi) else None)
+        route = m.get("evidence_route")
+        att["delivery"]["checked_at_utc"] = now_iso()
+        if not route:
+            att["delivery"]["reason_code"] = "NO_EVIDENCE_ROUTE_DECLARED"
+        elif not task_id:
+            att["delivery"]["reason_code"] = "NO_MUNERAL_TASK_ID"
+        elif not UUID_RE.match(task_id):
+            att["delivery"]["reason_code"] = "MUNERAL_TASK_ID_NOT_UUID"
+        elif not key:
             att["delivery"]["reason_code"] = "NO_MUNERAL_API_KEY"
         else:
-            att["delivery"]["probe"] = muneral_probe(a.muneral_task_id or wi, key, m["base_url"], m["user_agent"])
-            live = [p for p in att["delivery"]["probe"] if p["status"] not in (404,)]
-            att["delivery"]["checked_at_utc"] = now_iso()
-            if not live:
-                att["delivery"]["reason_code"] = "MUNERAL_NO_WORK_ITEM_EVIDENCE_ROUTE"
-            else:
-                att["delivery"]["reason_code"] = "MUNERAL_EVIDENCE_ROUTE_PRESENT_NOT_POSTED"
-                att["delivery"]["note"] = ("a candidate route answered; posting is enabled only after the route "
-                                           "is declared in admission-gate.v1.json work_item_evidence.muneral.evidence_route")
+            base_url = os.environ.get("MUNERAL_BASE_URL") or m["base_url"]
+            att["delivery"] = muneral_deliver(att, task_id, key, base_url, m["user_agent"], route) | {
+                "checked_at_utc": now_iso()}
+            att["work_item"]["muneral_task_id"] = task_id
 
     ledger = {"schema": "WorkItemEvidenceLedger/v1", "work_item": wi, "system": "muneral", "attachments": []}
     if p.exists():
@@ -4338,10 +4433,15 @@ def selftest(receipt_out: Path | None, keep: bool = False) -> int:
         results.append({"case": "attachment-shape", "ok": ok})
         passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
 
-        # 7. no status/transition route is reachable from this tool
+        # 7. no status/transition route is reachable from this tool. A2-336: the tool now makes ONE
+        # write — the evidence POST of `attach --post` — so the invariant is stated as what it always
+        # meant: the only network call site is `muneral_deliver`, and the only route it can be given is
+        # the policy's evidence route, which is neither a status nor a transition.
         src = Path(__file__).read_text(encoding="utf-8")
         needles = ["/trans" + "itions", "/sta" + "tus", "method=" + "\"POST\""]
-        ok = not any(n in src for n in needles)
+        route = policy["work_item_evidence"]["muneral"].get("evidence_route")
+        ok = (not any(n in src for n in needles) and src.count("urlopen" + "(") == 1
+              and route == "POST /tasks/{id}/evidence")
         results.append({"case": "no-status-write-path", "ok": ok})
         passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
 
@@ -4444,7 +4544,18 @@ def cmd_gate(a) -> int:
                 event = {"_unparsable": str(e)}
     doc = gate(repo, base, head, paths, policy, description=desc, bypass_flag=a.skip_receipt,
                work_item_enforcement=a.enforcement, explicit_receipts=bool(a.receipt),
-               ledger_dir=Path(a.ledger_dir) if a.ledger_dir else LEDGER_DIR,
+               # A2-309b. NOT `LEDGER_DIR` (= PROGRAM_ROOT / LEDGER_REL). C13 asks whether the
+               # ledger of THE REPOSITORY UNDER TEST records the receipt this run binds, and that
+               # repository is `--repo`. `PROGRAM_ROOT` is where the TOOL lives, and in the program
+               # repository's own CI the tool lives in a bundle built into the runner temp — so the
+               # default pointed at a directory outside the checkout, `ledger_lookup` found nothing,
+               # and C13 answered WORK_ITEM_EVIDENCE_MISSING for every receipt no matter what the
+               # ledger said. Invisible until this card turned `enforcement: ledger` on, because
+               # until then the program repository called its own gate with `off`. This is the same
+               # defect #141 fixed for C06 clause (c) (see LEDGER_REL above); C13 was left on the
+               # old footing because nothing ran it. An explicit --ledger-dir still wins, which is
+               # what test_caller_enforcement_default.py exercises.
+               ledger_dir=Path(a.ledger_dir) if a.ledger_dir else (repo / LEDGER_REL),
                repo_name=a.repo_name, event=event, verifier_job=a.verifier_job,
                verifier_conclusion=a.verifier_conclusion, verifier_output_ref=a.verifier_output_ref,
                automated_workdir=Path(a.workdir) if a.workdir else None,
@@ -5129,7 +5240,10 @@ def main(argv=None) -> int:
     at.add_argument("--uri")
     at.add_argument("--ledger-dir")
     at.add_argument("--policy", type=Path)
-    at.add_argument("--post", action="store_true", help="probe Muneral for a work-item evidence route and record it")
+    at.add_argument("--post", action="store_true",
+                    help="POST the attachment to Muneral's evidence route (policy work_item_evidence.muneral."
+                         "evidence_route) for --muneral-task-id with $MUNERAL_API_KEY, and record the outcome "
+                         "(posted / failed / not_measured with its reason); $MUNERAL_BASE_URL overrides the base URL")
     at.add_argument("--base", help="the PR's base ref; decides whether an older entry for the same receipt_path is "
                                    "history (kept) or dead (superseded). Default: merge-base of HEAD and origin/main")
     at.set_defaults(fn=cmd_attach)
