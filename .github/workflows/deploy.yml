@@ -81,6 +81,10 @@ jobs:
             docker-pressure
           ops-bot-emit: "false"
 
+      - name: Runner broker preflight (A2-457)
+        env: { BROKER_PREFLIGHT_BIN: /usr/local/sbin/scrutator-deploy-broker }
+        run: scripts/ci/runner-broker-preflight.sh
+
       - name: Deploy
         id: deploy
         if: steps.preflight.outputs.status != 'fail'

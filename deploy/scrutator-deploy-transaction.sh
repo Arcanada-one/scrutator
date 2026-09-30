@@ -23,6 +23,9 @@ readonly DEPLOY_SURFACE=(
     compose.yaml
     deploy
     scripts/deploy.sh
+    # A2-457: the deploy job runs this preflight out of the TARGET checkout on the production host
+    # before its sudo step; its verdict decides whether the broker is called at all.
+    scripts/ci/runner-broker-preflight.sh
     # A2-329 (measured 2026-09-25): the deploy job runs this file on the production host out of
     # the TARGET checkout (post-deploy canary, rule C5), and its verdict decides the run. Outside
     # the surface it changed by push with no reviewed SHA. ONE file, not tools/: the job runs it
