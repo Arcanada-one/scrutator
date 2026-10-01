@@ -9,6 +9,15 @@ on:
   pull_request:
     branches: [main]
 
+# A newer push to a pull-request branch supersedes that branch's older run, which
+# otherwise keeps queueing on the shared self-hosted runners. Only pull_request
+# runs are ever cancelled: push (main), tag, schedule and workflow_dispatch runs get
+# a group unique to the run, so they are never cancelled or replaced while pending.
+# Job-level deploy locks are separate groups and are not touched.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   network-exposure:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
