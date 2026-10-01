@@ -791,8 +791,11 @@ def test_deploy_workflow_uses_trusted_semantic_gate_and_restricted_runner_group(
     assert "workflow_dispatch:" in workflow
     deploy_job = workflow[workflow.index("  deploy:") :]
     assert "needs: [network-exposure, verify-exact-target]" in deploy_job
-    assert "group: scrutator-prod" in deploy_job
-    assert "labels: [self-hosted, linux, arcana-db, docker]" in deploy_job
+    # The brokered deploy runs on the arcana-prd-host lane (ci-runner-deploy, no docker group); the
+    # docker-group runner is refused by runner-broker-preflight once the host retires the group.
+    assert "group: arcana-prd-host" in deploy_job
+    assert "labels: [self-hosted, linux, arcana-prod, arcana-prd-host]" in deploy_job
+    assert "group: scrutator-prod" not in deploy_job
     assert "environment: kb-production" in deploy_job
     assert "github.ref == 'refs/heads/main'" in deploy_job
     assert "github.event_name == 'push' || github.event_name == 'workflow_dispatch'" in deploy_job

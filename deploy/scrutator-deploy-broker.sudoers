@@ -28,4 +28,6 @@ Cmnd_Alias SCRUTATOR_DEPLOY = /usr/local/sbin/scrutator-deploy-broker deploy *, 
 # broker validates each: two against a 40-hex pattern, one against a closed
 # set of values.
 Defaults!SCRUTATOR_DEPLOY env_keep += "SCRUTATOR_REVIEWED_DEPLOY_SURFACE_SHA SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED GITHUB_EVENT_NAME"
-ci-runner ALL=(root) NOPASSWD:NOSETENV: SCRUTATOR_DEPLOY
+# 2026-10-01: granted to the deploy account ci-runner-deploy (no docker group), not to ci-runner, which
+# keeps docker for the `docker`-labelled CI runners and is refused by runner-broker-preflight.sh.
+ci-runner-deploy ALL=(root) NOPASSWD:NOSETENV: SCRUTATOR_DEPLOY
