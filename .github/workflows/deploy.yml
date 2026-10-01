@@ -56,7 +56,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    # INFRA-0417 / SEC-0028: the deploy escalates through a root broker, so it runs on the deploy lane
+    # The deploy escalates through a root broker, so it runs on the deploy lane
     # (`arcana-prd-host`, account ci-runner-deploy, NOT in the docker group) like the other brokered
     # services. It used to run on arcana-prd-db (ci-runner, docker group), which the host marker
     # /etc/arcanada/docker-group-retired makes the runner-broker preflight reject. The sudoers grant
