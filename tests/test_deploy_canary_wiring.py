@@ -166,3 +166,26 @@ def test_the_verdict_script_hands_its_verdict_to_the_outcome_step(tmp_path, monk
         monkeypatch.setenv("GITHUB_OUTPUT", str(output))
         _run_check(rows, case)
         assert output.read_text() == f"verdict={expected}\n"
+
+
+def test_the_canary_mints_a_short_lived_reader_token_without_leaking_it():
+    # Rule C3's credential: no dedicated canary secret exists, so the step mints a short-lived
+    # kb-observer reader token (the benchmark workflow's existing pattern) — and must never log it.
+    canary = next(s for s in _deploy_steps() if s.get("id") == "canary")
+    env, run = canary.get("env", {}), canary["run"]
+    assert env.get("KB_OBSERVER_CLIENT_SECRET") == "${{ secrets.KB_OBSERVER_CLIENT_SECRET }}"
+    assert '"grant_type": "client_credentials"' in run
+    assert '"scope": "kb:ltm.read"' in run and '"resource": "urn:arcanada:scrutator:ltm"' in run
+    assert "https://auth.arcanada.ai/oidc/token" in run
+    # an explicitly configured canary token still wins over the mint
+    assert '[ -z "${SCRUTATOR_CANARY_TOKEN:-}" ]' in run
+    # 0600, exclusive create, always removed, masked, and the client secret is gone before the probes run
+    assert "os.O_EXCL, 0o600" in run
+    assert "trap 'rm -f \"${token_file}\"' EXIT" in run
+    assert 'echo "::add-mask::${SCRUTATOR_CANARY_TOKEN}"' in run
+    assert run.index("unset KB_OBSERVER_CLIENT_SECRET") < run.index("python3 -I tools/canary_probe.py")
+    # the token is never printed any other way
+    printed = [
+        ln.strip() for ln in run.splitlines() if "SCRUTATOR_CANARY_TOKEN" in ln and ("echo" in ln or "printf" in ln)
+    ]
+    assert printed == ['echo "::add-mask::${SCRUTATOR_CANARY_TOKEN}"'], printed
