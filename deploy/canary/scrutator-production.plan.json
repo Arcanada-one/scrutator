@@ -32,10 +32,11 @@
       "method": "GET",
       "path": "/v1/namespaces",
       "auth": "bearer",
-      "_why": "The read half of the contour: a route that answers from the database with a real read-scoped token. Without the token this is not_measured (rule C3), never green.",
+      "_why": "The read half of the contour: a route that answers from the database with a real read-scoped token. Without the token this is not_measured (rule C3), never green. The response must also be a NON-EMPTY list of namespaces (json_has name): while SCRUTATOR_AUTH_ENFORCE is off, an unverified caller still gets 200 with an empty list, so status alone would pass a broken token.",
       "expect": {
         "status_in": [200],
-        "route_present": true
+        "route_present": true,
+        "json_has": ["name"]
       },
       "entities": [
         "route:GET /v1/namespaces"

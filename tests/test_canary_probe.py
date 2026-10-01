@@ -24,6 +24,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDORED = ROOT / ".github" / "graph-admission" / "tools" / "graph"
+VALID_READER_TOKEN = "verified-reader-token"
 PLAN = ROOT / "deploy" / "canary" / "scrutator-production.plan.json"
 
 
@@ -60,7 +61,12 @@ class _Stub(BaseHTTPRequestHandler):
         if self.path == "/health":
             self._send(200, {"status": "ok", "service": "scrutator", "version": "9.9.9"})
         elif self.path == "/v1/namespaces":
-            self._send(200 if self.headers.get("Authorization") else 401, [])
+            # Mirrors the production grace window (SCRUTATOR_AUTH_ENFORCE off): every caller gets
+            # 200, but only a VERIFIED principal with a namespace grant gets a non-empty list.
+            if self.headers.get("Authorization") == f"Bearer {VALID_READER_TOKEN}":
+                self._send(200, [{"id": 1, "name": "arcanada", "description": None, "chunk_count": 1}])
+            else:
+                self._send(200, [])
         else:
             self._send(404, {"detail": "not found"})
 
@@ -110,7 +116,7 @@ def _run(module, plan, base_url, repo, out, **kwargs):
 
 def test_the_gates_own_reader_accepts_the_result_and_lists_the_routes(contour, repo, monkeypatch):
     module, evidence = _canary_probe(), _canary_evidence()
-    monkeypatch.setenv("SCRUTATOR_CANARY_TOKEN", "not-a-real-token")
+    monkeypatch.setenv("SCRUTATOR_CANARY_TOKEN", VALID_READER_TOKEN)
     out = repo / "receipts" / "canary" / "post.json"
     document = _run(module, _plan(), contour, repo, out)
 
@@ -190,6 +196,18 @@ def test_a_missing_credential_is_not_measured_never_failed(contour, repo, monkey
     assert row["verdict"] == "not_measured"
     probe = next(p for p in document["probes"] if p["id"] == "namespaces-read")
     assert probe["executed"] is False
+
+
+def test_an_unverified_token_answered_with_an_empty_list_is_failed_not_verified(contour, repo, monkeypatch):
+    # The grace window answers 200 to ANY bearer, with an empty list. Status alone would score a
+    # broken or foreign token as a verified read; the plan's json_has makes it red.
+    module = _canary_probe()
+    monkeypatch.setenv("SCRUTATOR_CANARY_TOKEN", "not-a-real-token")
+    document = _run(module, _plan(), contour, repo, repo / "receipts" / "canary" / "wrongtoken.json")
+    row = next(r for r in document["entity_verdicts"] if r["entity"] == "route:GET /v1/namespaces")
+    assert row["verdict"] == "failed"
+    probe = next(p for p in document["probes"] if p["id"] == "namespaces-read")
+    assert probe["status"] == 200 and probe["outcome"] == "failed"
 
 
 def test_an_undeclared_mutating_probe_refuses(contour, repo):

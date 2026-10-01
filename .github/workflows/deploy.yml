@@ -138,6 +138,13 @@ jobs:
           # rule C3 — never green and never red. The value is never printed and never written
           # into the result document.
           SCRUTATOR_CANARY_TOKEN: ${{ secrets.SCRUTATOR_CANARY_TOKEN }}
+          # The authenticated probe's credential (rule C3). No dedicated canary secret exists, so the
+          # step mints a SHORT-LIVED reader token for the existing `kb-observer` client exactly as
+          # benchmark-scrutator.yml does (client_credentials, scope kb:ltm.read, resource
+          # urn:arcanada:scrutator:ltm): no new long-lived credential. The token lives only in a 0600
+          # file under RUNNER_TEMP that is always removed, is masked, and reaches only the probes.
+          # An explicitly set SCRUTATOR_CANARY_TOKEN still wins.
+          KB_OBSERVER_CLIENT_SECRET: ${{ secrets.KB_OBSERVER_CLIENT_SECRET }}
         run: |
           set -uo pipefail
           # The producer is stdlib-only, so the host's interpreter is enough and no toolchain is
@@ -156,6 +163,51 @@ jobs:
           # `-I` (A2-329): a plain `python3 tools/canary_probe.py` puts tools/ first on sys.path, so
           # a new tools/json.py would run inside the probe without the probe changing. Isolated mode
           # drops the script directory; that is why the deploy surface lists this ONE file, not tools/.
+          mkdir -p "${RUNNER_TEMP}/canary"
+          token_file="${RUNNER_TEMP}/canary/.reader.jwt"
+          trap 'rm -f "${token_file}"' EXIT
+          if [ -z "${SCRUTATOR_CANARY_TOKEN:-}" ] && [ -n "${KB_OBSERVER_CLIENT_SECRET:-}" ]; then
+            if TOKEN_FILE="${token_file}" python3 -I - <<'PY'
+          import base64
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          secret = os.environ["KB_OBSERVER_CLIENT_SECRET"]
+          credentials = base64.b64encode(f"kb-observer:{secret}".encode()).decode()
+          body = urllib.parse.urlencode({
+              "grant_type": "client_credentials",
+              "scope": "kb:ltm.read",
+              "resource": "urn:arcanada:scrutator:ltm",
+          }).encode()
+          request = urllib.request.Request(
+              "https://auth.arcanada.ai/oidc/token",
+              data=body,
+              headers={
+                  "Authorization": f"Basic {credentials}",
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "User-Agent": "Arcanada-Scrutator-Deploy-Canary/1.0",
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              token = json.load(response).get("access_token", "")
+          if not token:
+              raise SystemExit("token endpoint returned no access_token")
+          fd = os.open(os.environ["TOKEN_FILE"], os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+          with os.fdopen(fd, "w", encoding="utf-8") as handle:
+              handle.write(token)
+          PY
+            then
+              SCRUTATOR_CANARY_TOKEN="$(cat "${token_file}")"
+              echo "::add-mask::${SCRUTATOR_CANARY_TOKEN}"
+              export SCRUTATOR_CANARY_TOKEN
+            else
+              # Reported, never swallowed: without a token the authenticated probe is not_measured.
+              echo "::warning title=canary::could not mint the kb-observer reader token; the authenticated probe stays not_measured (rule C3)"
+            fi
+          fi
+          unset KB_OBSERVER_CLIENT_SECRET
           for plan in scrutator-route-presence scrutator-production; do
             python3 -I tools/canary_probe.py \
               --plan "deploy/canary/${plan}.plan.json" \
