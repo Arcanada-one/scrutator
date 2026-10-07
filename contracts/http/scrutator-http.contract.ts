@@ -41,6 +41,7 @@ export type ScrutatorRouteRequest =
   | "POST /v1/index"
   | "POST /v1/index/batch"
   | "POST /v1/index/capability-projection"
+  | "POST /v1/index/evidence-exact"
   | "POST /v1/ltm/ingest"
   | "POST /v1/ltm/recall"
   | "POST /v1/ltm/reflect"

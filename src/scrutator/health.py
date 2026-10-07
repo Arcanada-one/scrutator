@@ -98,7 +98,7 @@ from scrutator.memory.service import (
 from scrutator.request_limits import BoundedRequestBodyMiddleware
 from scrutator.search.embedder import close_client as close_embedding_client
 from scrutator.search.fetcher import fetch as fetch_document
-from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents
+from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents, populate_exact_evidence
 from scrutator.search.navigator import build_outline, build_section_context
 from scrutator.search.searcher import search
 
@@ -175,6 +175,25 @@ async def chunk_endpoint(request: ChunkRequest, ctx: TenantContext = Depends(req
         total_tokens=result.total_tokens,
         strategy_used=result.strategy_used,
     )
+
+
+@app.post("/v1/index/evidence-exact", response_model=IndexResponse)
+async def exact_evidence_endpoint(
+    request: IndexRequest,
+    capability: NamespaceCapability = Depends(require_feeder_capability),
+) -> IndexResponse:
+    # Select namespace exclusively from explicit server scope and dedicated writer authority;
+    # payload namespace cannot redirect the effect or confer reader-to-writer authority.
+    scope = settings.evidence_exact_namespaces
+    if not settings.evidence_exact_bytes or scope is None or len(scope) != 1:
+        raise HTTPException(status_code=409, detail="explicit singleton exact evidence scope required")
+    namespace = scope[0]
+    if namespace not in capability.namespaces or not settings.evidence_exact_enabled_for(namespace):
+        raise HTTPException(status_code=403, detail="exact evidence namespace outside feeder scope")
+    try:
+        return await populate_exact_evidence(request.content, request.source_path, namespace)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @app.post("/v1/index", response_model=IndexResponse)
