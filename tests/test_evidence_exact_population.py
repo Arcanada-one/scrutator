@@ -79,3 +79,62 @@ async def test_oversize_population_refuses_before_database(population_config, mo
     ):
         await indexer.populate_exact_evidence("λ" * 5, "x.md", "kc2-store")
     store.assert_not_awaited()
+
+
+@pytest.mark.parametrize("value", ["8192", "262144", "1048576"])
+def test_actual_environment_byte_bound_loading(monkeypatch, value):
+    import os
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-c", "from scrutator.config import settings; print(settings.evidence_population_max_bytes)"],
+        env={**os.environ, "SCRUTATOR_EVIDENCE_POPULATION_MAX_BYTES": value},
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == value
+
+
+@pytest.mark.parametrize("value", ["true", "8.0", "-1", "0", "1048577", " 8192", "not-a-number"])
+def test_invalid_environment_byte_bound_never_defaults(monkeypatch, value):
+    import os
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-c", "from scrutator.config import settings; print(settings.evidence_population_max_bytes)"],
+        env={**os.environ, "SCRUTATOR_EVIDENCE_POPULATION_MAX_BYTES": value},
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode != 0
+    assert "ValidationError" in result.stderr
+    assert result.stdout == ""
+
+
+@pytest.mark.parametrize("value", [True, False, 1.5, None])
+def test_population_bound_retains_strict_integer_rejection(value):
+    from pydantic import ValidationError
+
+    from scrutator.config import Settings
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, evidence_population_max_bytes=value)
+
+
+def test_database_error_does_not_log_private_body(population_config, caplog):
+    sensitive = "synthetic-private-body-in-driver-error"
+    with patch.object(indexer, "populate_exact_evidence_atomic", AsyncMock(side_effect=RuntimeError(sensitive))):
+        response = TestClient(app).post(
+            "/v1/index/evidence-exact",
+            json={"content": "# Original", "source_path": "x.md"},
+            headers={"X-KB-Feeder-Token": "synthetic-fixture-writer"},
+        )
+    assert response.status_code == 503
+    assert sensitive not in response.text
+    assert sensitive not in caplog.text
+    assert "error_type=RuntimeError" in caplog.text

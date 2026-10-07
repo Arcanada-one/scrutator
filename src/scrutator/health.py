@@ -194,6 +194,11 @@ async def exact_evidence_endpoint(
         return await populate_exact_evidence(request.content, request.source_path, namespace)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        # Driver errors can include query argument text. Record only the class and
+        # return a fixed response so private raw content never enters error output.
+        logger.error("Exact evidence population failed: error_type=%s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="exact evidence population failed") from None
 
 
 @app.post("/v1/index", response_model=IndexResponse)

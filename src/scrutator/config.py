@@ -41,6 +41,15 @@ class Settings(BaseSettings):
     # Dedicated raw-only operation bound; legacy ordinary ingest behavior stays separate.
     evidence_population_max_bytes: int = Field(default=262144, gt=0, le=1048576, strict=True)
 
+    @field_validator("evidence_population_max_bytes", mode="before")
+    @classmethod
+    def parse_population_byte_bound(cls, value):
+        # Settings env values are strings. Accept decimal text before strict integer
+        # validation; booleans, floats, whitespace and malformed values still refuse.
+        if isinstance(value, str) and re.fullmatch(r"[0-9]+", value):
+            return int(value)
+        return value
+
     @field_validator("evidence_exact_namespaces", mode="before")
     @classmethod
     def validate_evidence_namespaces(cls, value):
