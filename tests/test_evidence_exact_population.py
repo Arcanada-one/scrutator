@@ -138,3 +138,39 @@ def test_database_error_does_not_log_private_body(population_config, caplog):
     assert sensitive not in response.text
     assert sensitive not in caplog.text
     assert "error_type=RuntimeError" in caplog.text
+
+
+@pytest.mark.parametrize("declared", ["oversize", "malformed"])
+def test_wire_body_rejected_before_json_and_store(population_config, declared):
+    wire_limit = next(
+        middleware.kwargs["max_bytes"]
+        for middleware in app.user_middleware
+        if middleware.cls.__name__ == "BoundedRequestBodyMiddleware"
+        and middleware.kwargs["path"] == "/v1/index/evidence-exact"
+    )
+    length = str(wire_limit + 1) if declared == "oversize" else "invalid"
+    with patch.object(indexer, "populate_exact_evidence_atomic", AsyncMock()) as store:
+        response = TestClient(app).post(
+            "/v1/index/evidence-exact",
+            content=b"malformed JSON never decoded",
+            headers={"Content-Length": length, "X-KB-Feeder-Token": "synthetic-fixture-writer"},
+        )
+    assert response.status_code == (413 if declared == "oversize" else 400)
+    store.assert_not_awaited()
+
+
+def test_streamed_oversize_body_refuses_before_store(population_config):
+    wire_limit = next(
+        middleware.kwargs["max_bytes"]
+        for middleware in app.user_middleware
+        if middleware.cls.__name__ == "BoundedRequestBodyMiddleware"
+        and middleware.kwargs["path"] == "/v1/index/evidence-exact"
+    )
+    with patch.object(indexer, "populate_exact_evidence_atomic", AsyncMock()) as store:
+        response = TestClient(app).post(
+            "/v1/index/evidence-exact",
+            content=(chunk for chunk in [b"x" * wire_limit, b"x"]),
+            headers={"X-KB-Feeder-Token": "synthetic-fixture-writer"},
+        )
+    assert response.status_code == 413
+    store.assert_not_awaited()

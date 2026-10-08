@@ -119,6 +119,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+# Bound the wire body before JSON decoding; escaped content can take up to six
+# wire bytes per UTF-8 content byte, with a bounded envelope allowance.
+app.add_middleware(
+    BoundedRequestBodyMiddleware,
+    path="/v1/index/evidence-exact",
+    max_bytes=6 * settings.evidence_population_max_bytes + 65536,
+)
 app.add_middleware(
     BoundedRequestBodyMiddleware,
     path="/v1/index/batch",
