@@ -5,9 +5,9 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-10-08T02:27:08Z",
+ "captured_at_utc": "2026-10-08T12:09:17Z",
  "change_set": {
-  "base": "5acdceda286d7ce3eb5664735e1e34f54bb29a9f",
+  "base": "5b4377d07c0ad8cbc223e6e80bb5cc95058d9d33",
   "files": [
    {
     "kind": "contract",
@@ -159,7 +159,10 @@
    },
    {
     "kind": "receipt",
-    "new": true,
+    "node_id": "receipt:receipts/graph/exact-evidence-receiving.json",
+    "node_ids": [
+     "receipt:receipts/graph/exact-evidence-receiving.json"
+    ],
     "path": "receipts/graph/exact-evidence-receiving.json",
     "status": "A"
    },
@@ -290,7 +293,7 @@
     "status": "A"
    }
   ],
-  "head": "9c7a9068e1023c71baee3a7f280ea4d6873256ed",
+  "head": "b787583efb4d689fd9296ad1de37b67c9dc23b3b",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -298,27 +301,27 @@
  "graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:deeaa76851abd9e1236315b80c0470a751a9ba70f23963628ed71c61e460de27",
-  "path": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/graph-5acdceda286d.json",
-  "source_commit": "5acdceda286d7ce3eb5664735e1e34f54bb29a9f"
+  "graph_digest": "sha256:f506959819436be4db5e3520ed739c881b2ad1bcc85a4a8fd667e81ba46002f2",
+  "path": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/graph-5b4377d07c0a.json",
+  "source_commit": "5b4377d07c0ad8cbc223e6e80bb5cc95058d9d33"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:34ecc7e34be50eac9e60820342656dae405ea9294f148491ee5defcdf63f7644",
-  "path": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/graph-head-9c7a9068e102.json",
-  "source_commit": "9c7a9068e1023c71baee3a7f280ea4d6873256ed",
+  "graph_digest": "sha256:badfbd462f843807e7ec3f3a74b2630a910af4ad6b43c69d5be1883644f26a35",
+  "path": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/graph-head-b787583efb4d.json",
+  "source_commit": "b787583efb4d689fd9296ad1de37b67c9dc23b3b",
   "staleness": {
-   "checked_at_utc": "2026-10-08T02:27:33Z",
-   "checked_nodes": 292,
+   "checked_at_utc": "2026-10-08T12:09:49Z",
+   "checked_nodes": 302,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "task-owned-source-verifier",
+ "host": "scrutator-graph-executor",
  "host_redacted": true,
- "host_sha256": "bb25570c9c5cbf4dc5afb0ab048ea88b1c5c5e54b9afb10ace99c700200ea856",
+ "host_sha256": "4e8905f13ccda988ac13349205dc4de48795c5393d48e23a995c7ba47c0c7434",
  "impact_set": {
   "deterministic_core": [
    {
@@ -1621,26 +1624,6 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "code_unit:tests/test_index_batch_atomic.py",
-    "node_type": "code_unit",
-    "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/test_index_batch_atomic.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/search/indexer.py",
-      "via": "python-absolute-import"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "type-check / compile of the importer"
-   },
-   {
-    "boundary": "intra_unit",
     "depth": 2,
     "entity": "code_unit:tests/test_index_freshness.py",
     "node_type": "code_unit",
@@ -2252,26 +2235,6 @@
       "from": "code_unit:tools/backfill_sections.py",
       "provenance": "deterministic",
       "to": "code_unit:src/scrutator/db/connection.py",
-      "via": "python-absolute-import"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "type-check / compile of the importer"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "code_unit:tools/gen_canary_plan.py",
-    "node_type": "code_unit",
-    "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tools/gen_canary_plan.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/health.py",
       "via": "python-absolute-import"
      }
     ],
@@ -3725,11 +3688,47 @@
      "head"
     ],
     "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:scripts/a2-308-scope-mutation.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:tests/security/test_route_auth_manifest.py",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:scripts/a2-308-scope-mutation.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
    }
   ],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 139
+  "total": 138
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
@@ -3739,7 +3738,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261008T022708Z-9c7a9068",
+ "receipt_id": "car-verify-20261008T120917Z-b787583e",
  "receipt_path": "receipts/graph/exact-evidence-receiving.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -3823,7 +3822,6 @@
    "code_unit:tests/test_fetch_range.py",
    "code_unit:tests/test_health.py",
    "code_unit:tests/test_index_batch.py",
-   "code_unit:tests/test_index_batch_atomic.py",
    "code_unit:tests/test_index_freshness.py",
    "code_unit:tests/test_index_writer_auth.py",
    "code_unit:tests/test_ingest_injection_scan.py",
@@ -3853,7 +3851,6 @@
    "code_unit:tests/test_source_documents_integration.py",
    "code_unit:tools/backfill_ltm_temper.py",
    "code_unit:tools/backfill_sections.py",
-   "code_unit:tools/gen_canary_plan.py",
    "code_unit:tools/gen_http_contract.py",
    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
@@ -3963,6 +3960,7 @@
    "receipt:receipts/graph/change-admission-deploy-through-broker.json",
    "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
    "receipt:receipts/graph/pin-repair-scrutator-20261007.json",
+   "receipt:receipts/graph/qualified-refresh-089a771c.json",
    "route:DELETE /source",
    "route:DELETE /v1/edges",
    "route:DELETE /v1/index",
@@ -4082,7 +4080,6 @@
    "code_unit:tests/test_fetch_range.py",
    "code_unit:tests/test_health.py",
    "code_unit:tests/test_index_batch.py",
-   "code_unit:tests/test_index_batch_atomic.py",
    "code_unit:tests/test_index_freshness.py",
    "code_unit:tests/test_index_writer_auth.py",
    "code_unit:tests/test_ingest_injection_scan.py",
@@ -4112,7 +4109,6 @@
    "code_unit:tests/test_source_documents_integration.py",
    "code_unit:tools/backfill_ltm_temper.py",
    "code_unit:tools/backfill_sections.py",
-   "code_unit:tools/gen_canary_plan.py",
    "code_unit:tools/gen_http_contract.py",
    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
@@ -4222,7 +4218,9 @@
    "receipt:receipts/graph/change-admission-ci-pr-concurrency.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json",
    "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
+   "receipt:receipts/graph/exact-evidence-receiving.json",
    "receipt:receipts/graph/pin-repair-scrutator-20261007.json",
+   "receipt:receipts/graph/qualified-refresh-089a771c.json",
    "route:DELETE /source",
    "route:DELETE /v1/edges",
    "route:DELETE /v1/index",
@@ -4266,7 +4264,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-08T02:27:33Z",
+  "checked_at_utc": "2026-10-08T12:09:49Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -4494,6 +4492,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:6f76898d1a28bbe9c0eff100f062e135426507f17a1bc11960add89b5cf4103f"
+   },
+   "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/exact-evidence-receiving.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/exact-evidence-receiving.json for work item EVIDENCE-EXACT-RECEIVING",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/exact-evidence-receiving.json",
+    "work_item": "EVIDENCE-EXACT-RECEIVING"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:c0a0d9fdbd0b6732b5901d79e49378e0bb2ebb77b0b17cf458f2138ffd9e0933",
     "head": "sha256:c0a0d9fdbd0b6732b5901d79e49378e0bb2ebb77b0b17cf458f2138ffd9e0933"
    },
@@ -4502,10 +4515,21 @@
    "path": "receipts/graph/pin-repair-scrutator-20261007.json",
    "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
    "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:d609c56e697e6551a8a0ddeffc0ec04de86211da65c2706fd80fc0e4169829f8",
+    "head": "sha256:d609c56e697e6551a8a0ddeffc0ec04de86211da65c2706fd80fc0e4169829f8"
+   },
+   "entity": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/qualified-refresh-089a771c.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
   }
  ],
  "tree": {
-  "commit": "9c7a9068e1023c71baee3a7f280ea4d6873256ed",
+  "commit": "b787583efb4d689fd9296ad1de37b67c9dc23b3b",
   "dirty": false
  },
  "verdicts": [
@@ -4556,7 +4580,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/graph-admission.yml",
-   "reason": "v-workflow-config-dc49cc771602c92b: workflow shell caller closure not measured: job graph-admission step 2: line 19: dynamic load/substitution; job graph-admission step 7: line 11: multiline/opaque shell statement; job graph-admission step 7: line 12: wrapper options/child command unresolved; job graph-admission step 7: line 3: multiline/opaque shell statement; job graph-admission step 7: line 4: wrapper options/child command unresolved; job graph-admission step 8: line 14: multiline/opaque shell statement; job graph-admission step 8: line 15: multiline/opaque shell statement; job graph-admiss",
+   "reason": "v-workflow-config-dc49cc771602c92b: workflow shell caller closure not measured: job graph-admission step 10: line 11: multiline/opaque shell statement; job graph-admission step 10: line 12: wrapper options/child command unresolved; job graph-admission step 10: line 3: multiline/opaque shell statement; job graph-admission step 10: line 4: wrapper options/child command unresolved; job graph-admission step 11: line 15: multiline/opaque shell statement; job graph-admission step 11: line 16: multiline/opaque shell statement; job graph-admission step 11: line 17: multiline/opaque shell statement; jo",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -4710,7 +4734,7 @@
   },
   {
    "entity": "code_unit:src/scrutator/health.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -4744,7 +4768,7 @@
   },
   {
    "entity": "code_unit:src/scrutator/ltm/router.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-ltm-source: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-ltm-source: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -5177,14 +5201,6 @@
    ]
   },
   {
-   "entity": "code_unit:tests/test_index_batch_atomic.py",
-   "reason": "v-fitness: no new fitness violation",
-   "verdict": "verified",
-   "verifier_ids": [
-    "v-fitness"
-   ]
-  },
-  {
    "entity": "code_unit:tests/test_index_freshness.py",
    "reason": "v-fitness: no new fitness violation",
    "verdict": "verified",
@@ -5410,14 +5426,6 @@
   },
   {
    "entity": "code_unit:tools/backfill_sections.py",
-   "reason": "v-fitness: no new fitness violation",
-   "verdict": "verified",
-   "verifier_ids": [
-    "v-fitness"
-   ]
-  },
-  {
-   "entity": "code_unit:tools/gen_canary_plan.py",
    "reason": "v-fitness: no new fitness violation",
    "verdict": "verified",
    "verifier_ids": [
@@ -6139,7 +6147,7 @@
   },
   {
    "entity": "route:DELETE /source",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-ltm-source: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-ltm-source: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6149,7 +6157,7 @@
   },
   {
    "entity": "route:DELETE /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6159,7 +6167,7 @@
   },
   {
    "entity": "route:DELETE /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-index: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-index: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6169,7 +6177,7 @@
   },
   {
    "entity": "route:DELETE /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: delete-v1-memories: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: delete-v1-memories: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6189,7 +6197,7 @@
   },
   {
    "entity": "route:GET /entities",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-ltm-entities: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-ltm-entities: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6199,7 +6207,7 @@
   },
   {
    "entity": "route:GET /events",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-ltm-events: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-ltm-events: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6209,7 +6217,7 @@
   },
   {
    "entity": "route:GET /graph",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-ltm-graph: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-ltm-graph: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6219,7 +6227,7 @@
   },
   {
    "entity": "route:GET /health",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-health: status 200 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-health: status 200 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6229,7 +6237,7 @@
   },
   {
    "entity": "route:GET /jobs/{job_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-ltm-jobs-job-id: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-ltm-jobs-job-id: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6239,7 +6247,7 @@
   },
   {
    "entity": "route:GET /meta_facts",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-ltm-meta-facts: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-ltm-meta-facts: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6249,7 +6257,7 @@
   },
   {
    "entity": "route:GET /v1/chunks",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-chunks: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-chunks: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6259,7 +6267,7 @@
   },
   {
    "entity": "route:GET /v1/edges/{chunk_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-edges-chunk-id: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-edges-chunk-id: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6269,7 +6277,7 @@
   },
   {
    "entity": "route:GET /v1/index/capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-index-capability: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-index-capability: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6279,7 +6287,7 @@
   },
   {
    "entity": "route:GET /v1/index/rollback-capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-index-rollback-capability: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-index-rollback-capability: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6289,7 +6297,7 @@
   },
   {
    "entity": "route:GET /v1/memories/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-memories-stats: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-memories-stats: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6299,7 +6307,7 @@
   },
   {
    "entity": "route:GET /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-namespaces: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-namespaces: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6309,7 +6317,7 @@
   },
   {
    "entity": "route:GET /v1/navigate/outline",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-navigate-outline: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-navigate-outline: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6319,7 +6327,7 @@
   },
   {
    "entity": "route:GET /v1/navigate/section",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-navigate-section: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-navigate-section: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6329,7 +6337,7 @@
   },
   {
    "entity": "route:GET /v1/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: get-v1-stats: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: get-v1-stats: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6339,7 +6347,7 @@
   },
   {
    "entity": "route:POST /ingest",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-ltm-ingest: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-ltm-ingest: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6349,7 +6357,7 @@
   },
   {
    "entity": "route:POST /recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-ltm-recall: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-ltm-recall: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6359,7 +6367,7 @@
   },
   {
    "entity": "route:POST /reflect",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-ltm-reflect: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-ltm-reflect: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6369,7 +6377,7 @@
   },
   {
    "entity": "route:POST /v1/chunk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-chunk: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-chunk: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6379,7 +6387,7 @@
   },
   {
    "entity": "route:POST /v1/dream/analyze",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-dream-analyze: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-dream-analyze: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6389,7 +6397,7 @@
   },
   {
    "entity": "route:POST /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-edges: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6399,7 +6407,7 @@
   },
   {
    "entity": "route:POST /v1/edges/by-path",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-edges-by-path: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-edges-by-path: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6409,7 +6417,7 @@
   },
   {
    "entity": "route:POST /v1/fetch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-fetch: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-fetch: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6419,7 +6427,7 @@
   },
   {
    "entity": "route:POST /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-index: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-index: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6429,7 +6437,7 @@
   },
   {
    "entity": "route:POST /v1/index/batch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-index-batch: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-index-batch: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6439,7 +6447,7 @@
   },
   {
    "entity": "route:POST /v1/index/capability-projection",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-index-capability-projection: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-index-capability-projection: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6449,7 +6457,7 @@
   },
   {
    "entity": "route:POST /v1/index/evidence-exact",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-index-evidence-exact: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-index-evidence-exact: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6459,7 +6467,7 @@
   },
   {
    "entity": "route:POST /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-memories: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-memories: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6469,7 +6477,7 @@
   },
   {
    "entity": "route:POST /v1/memories/bulk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-memories-bulk: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-memories-bulk: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6479,7 +6487,7 @@
   },
   {
    "entity": "route:POST /v1/memories/recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-memories-recall: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-memories-recall: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6489,7 +6497,7 @@
   },
   {
    "entity": "route:POST /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-namespaces: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-namespaces: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6499,7 +6507,7 @@
   },
   {
    "entity": "route:POST /v1/search",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-9562b6ad (post) on task-owned-disposable-local-application: post-v1-search: status 401 is neither 404 nor 405: the route is served by the resident version",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary exact-evidence-owned-presence-637041d9 (post) on task-owned-disposable-local-application: post-v1-search: status 401 is neither 404 nor 405: the route is served by the resident version",
    "verdict": "verified",
    "verifier_ids": [
     "v-canary-1",
@@ -6516,8 +6524,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/orca/workspaces/scrutator/kc-successor-mechanism-c-261/contracts/http/node_modules/.bin/tsc -p /home/dev/orca/workspaces/scrutator/kc-successor-mechanism-c-261/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/preamble-source-current-main-native-clean/verifier-out/type-check-0f9j49rn/check.tsbuildinfo --listFiles",
-   "duration_s": 1.32,
+   "command": "/home/dev/orca/workspaces/scrutator/kc-successor-mechanism-c-261/contracts/http/node_modules/.bin/tsc -p /home/dev/orca/workspaces/scrutator/kc-successor-mechanism-c-261/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/type-check-v44j9qvj/check.tsbuildinfo --listFiles",
+   "duration_s": 1.01,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
     "deployable_unit:."
@@ -6529,13 +6537,13 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-08T02:27:35Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-08T12:09:50Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=5acdceda286d, head=9c7a9068e102, graph=head graph)",
-   "duration_s": 0.1,
+   "command": "tools/graph/contract_diff.py.run_diff(base=5b4377d07c0a, head=b787583efb4d, graph=head graph)",
+   "duration_s": 0.06,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -6783,8 +6791,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -6871,8 +6879,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "37 route(s), 0 failed"
   },
   {
@@ -6887,8 +6895,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: line 2: heredoc data/generation closure not measured; job benchmark step 3: line 10: multiline/opaque shell statement; job benchmark step 3: line 11: multiline/opaque shell statement; job benchmark step 3: line 12: multiline/opaque shell statement; job benchmark step 3: line 13: wrapper options/child command unresolved; job benchmark step 3: line 7: multiline/opaque shell statement; job benchmark step 3: line 8: multiline/opaque shell statement; job benchmark step 3: line 9: multiline/opaque shell statement; job benchmark step 5: local action/checkout path scope unresolved"
   },
   {
@@ -6903,8 +6911,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context"
   },
   {
@@ -6919,8 +6927,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: line 10: dynamic load/substitution; job auto-merge step 0: line 11: dynamic load/substitution; job auto-merge step 0: line 12: dynamic load/substitution; job auto-merge step 0: line 13: dynamic load/substitution; job auto-merge step 0: line 3: multiline/opaque shell statement; job auto-merge step 0: line 4: wrapper options/child command unresolved; job auto-merge step 0: line 57: dynamic load/substitution; job auto-merge step 0: line 58: multiline/opaque shell statement; job auto-merge step 0: line 65: multiline/opaque shell statement; job auto-merge step 0: line 66: wrapper options/child command unresolved; job auto-merge step 0: line 67: dynamic load/substitution; job auto-merge step 0: line 68: dynamic load/substitution; job auto-merge step 0: line 69: dynamic load/substitution; job auto-merge step 0: line 82: dynamic command/alias/eval; job auto-merge step 0: line 82: dynamic load/substitution; job auto-merge step 0: line 9: dynamic load/substitution"
   },
   {
@@ -6935,8 +6943,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: line 22: heredoc data/generation closure not measured; job deploy step 4: line 54: dynamic load/substitution; job deploy step 4: line 64: multiline/opaque shell statement; job deploy step 4: line 65: multiline/opaque shell statement; job deploy step 4: line 66: multiline/opaque shell statement; job deploy step 4: line 67: multiline/opaque shell statement; job deploy step 4: line 68: multiline/opaque shell statement; job deploy step 4: line 69: wrapper options/child command unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: line 3: heredoc data/generation closure not measured; job network-exposure: reusable/opaque shell context"
   },
   {
@@ -6951,8 +6959,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context"
   },
   {
@@ -6967,9 +6975,9 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
-   "summary": "workflow shell caller closure not measured: job graph-admission step 2: line 19: dynamic load/substitution; job graph-admission step 7: line 11: multiline/opaque shell statement; job graph-admission step 7: line 12: wrapper options/child command unresolved; job graph-admission step 7: line 3: multiline/opaque shell statement; job graph-admission step 7: line 4: wrapper options/child command unresolved; job graph-admission step 8: line 14: multiline/opaque shell statement; job graph-admission step 8: line 15: multiline/opaque shell statement; job graph-admission step 8: line 16: multiline/opaque shell statement; job graph-admission step 8: line 17: multiline/opaque shell statement; job graph-admission step 8: line 18: multiline/opaque shell statement; job graph-admission step 8: line 19: multiline/opaque shell statement; job graph-admission step 8: line 20: multiline/opaque shell statement; job graph-admission step 8: line 21: multiline/opaque shell statement; job graph-admission step 8: line 22: multiline/opaque shell statement; job graph-admission step 8: line 23: multiline/opaque shell statement; job graph-admission step 8: line 24: multiline/opaque shell statement; job graph-admission step 8: line 25: multiline/opaque shell statement; job graph-admission step 8: line 26: dynamic command/alias/eval; job graph-admission step 9: local action/checkout path scope unresolved"
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
+   "summary": "workflow shell caller closure not measured: job graph-admission step 10: line 11: multiline/opaque shell statement; job graph-admission step 10: line 12: wrapper options/child command unresolved; job graph-admission step 10: line 3: multiline/opaque shell statement; job graph-admission step 10: line 4: wrapper options/child command unresolved; job graph-admission step 11: line 15: multiline/opaque shell statement; job graph-admission step 11: line 16: multiline/opaque shell statement; job graph-admission step 11: line 17: multiline/opaque shell statement; job graph-admission step 11: line 18: multiline/opaque shell statement; job graph-admission step 11: line 19: multiline/opaque shell statement; job graph-admission step 11: line 20: multiline/opaque shell statement; job graph-admission step 11: line 21: multiline/opaque shell statement; job graph-admission step 11: line 22: multiline/opaque shell statement; job graph-admission step 11: line 23: multiline/opaque shell statement; job graph-admission step 11: line 24: multiline/opaque shell statement; job graph-admission step 11: line 25: multiline/opaque shell statement; job graph-admission step 11: line 26: multiline/opaque shell statement; job graph-admission step 11: line 27: dynamic command/alias/eval; job graph-admission step 12: local action/checkout path scope unresolved; job graph-admission step 3: line 19: dynamic load/substitution; job graph-admission step 7: line 13: heredoc data/generation closure not measured; job graph-admission step 7: line 2: dynamic load/substitution; job graph-admission step 7: line 3: heredoc data/generation closure not measured; job graph-admission step 7: line 43: heredoc data/generation closure not measured"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -6983,8 +6991,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: line 1: heredoc data/generation closure not measured; job recall-gate step 3: line 6: multiline/opaque shell statement; job recall-gate step 3: line 7: multiline/opaque shell statement; job recall-gate step 3: line 8: multiline/opaque shell statement; job recall-gate step 3: line 9: wrapper options/child command unresolved"
   },
   {
@@ -7072,7 +7080,6 @@
     "code_unit:tests/test_fetch_range.py",
     "code_unit:tests/test_health.py",
     "code_unit:tests/test_index_batch.py",
-    "code_unit:tests/test_index_batch_atomic.py",
     "code_unit:tests/test_index_freshness.py",
     "code_unit:tests/test_index_writer_auth.py",
     "code_unit:tests/test_ingest_injection_scan.py",
@@ -7102,7 +7109,6 @@
     "code_unit:tests/test_source_documents_integration.py",
     "code_unit:tools/backfill_ltm_temper.py",
     "code_unit:tools/backfill_sections.py",
-    "code_unit:tools/gen_canary_plan.py",
     "code_unit:tools/gen_http_contract.py",
     "deployable_unit:."
    ],
@@ -7188,7 +7194,6 @@
     "code_unit:tests/test_fetch_range.py": "verified",
     "code_unit:tests/test_health.py": "verified",
     "code_unit:tests/test_index_batch.py": "verified",
-    "code_unit:tests/test_index_batch_atomic.py": "verified",
     "code_unit:tests/test_index_freshness.py": "verified",
     "code_unit:tests/test_index_writer_auth.py": "verified",
     "code_unit:tests/test_ingest_injection_scan.py": "verified",
@@ -7218,20 +7223,19 @@
     "code_unit:tests/test_source_documents_integration.py": "verified",
     "code_unit:tools/backfill_ltm_temper.py": "verified",
     "code_unit:tools/backfill_sections.py": "verified",
-    "code_unit:tools/gen_canary_plan.py": "verified",
     "code_unit:tools/gen_http_contract.py": "verified",
     "deployable_unit:.": "verified"
    },
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
    "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
-   "duration_s": 0.01,
+   "duration_s": 0.0,
    "entities": [
     "document:AGENTS.md",
     "document:README.md",
@@ -7255,13 +7259,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "8 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.12,
+   "duration_s": 0.1,
    "entities": [
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/ltm/router.py",
@@ -7346,12 +7350,12 @@
    "id": "v-canary-1",
    "kind": "canary",
    "output_ref": "receipts/canary/exact-evidence-owned-presence/result.json",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "receipts/canary/exact-evidence-owned-presence/result.json: 38 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.12,
+   "duration_s": 0.1,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "route:GET /__benchmark/fingerprint"
@@ -7364,18 +7368,18 @@
    "id": "v-canary-2",
    "kind": "canary",
    "output_ref": "receipts/canary/exact-evidence-benchmark-readonly/result.json",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "receipts/canary/exact-evidence-benchmark-readonly/result.json: 2 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.12,
+   "duration_s": 0.1,
    "entities": [],
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-canary.json",
+   "started_at_utc": "2026-10-08T12:09:51Z",
    "summary": "2 canary result(s), 2 committed at head; 40 verified / 0 failed / 0 not_measured of 40 entities"
   },
   {
@@ -7390,9 +7394,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "started_at_utc": "2026-10-08T12:09:52Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -7407,9 +7411,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "started_at_utc": "2026-10-08T12:09:52Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -7424,9 +7428,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-08T02:27:36Z",
+   "started_at_utc": "2026-10-08T12:09:52Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 19: relative execution cwd is not declared; line 206: dynamic load/substitution; line 20: relative execution cwd is not declared; line 210: missing/ambiguous literal helper ../*; line 213: dynamic load/substitution; line 238: dynamic command/alias/eval; line 240: dynamic command/alias/eval; line 245: dynamic command/alias/eval; line 246: dynamic command/alias/eval; line 249: multiline/opaque shell statement; line 253: multiline/opaque shell statement; line 254: multiline/opaque shell statement; line 255: dynamic command/alias/eval; line 25: relative execution cwd is not declared; line 260: wrapper execution scope/options unresolved; line 262: wrapper execution scope/options unresolved; line 286: wrapper execution scope/options unresolved; line 28: relative execution cwd is not declared; line 300: dynamic command/alias/eval; line 321: dynamic load/substitution; line 322: dynamic load/substitution; line 323: dynamic load/substitution; line 332: wrapper options/child command unresolved; line 333: dynamic load/substitution; line 334: dynamic load/substitution; line 335: multiline/opaque shell statement; line 336: dynamic command/alias/eval; line 33: relative execution cwd is not declared; line 354: relative execution cwd is not declared; line 372: dynamic load/substitution; line 385: multiline/opaque shell statement; line 386: multiline/opaque shell statement; line 387: multiline/opaque shell statement; line 388: multiline/opaque shell statement; line 404: wrapper options/child command unresolved; line 405: multiline/opaque shell statement; line 406: multiline/opaque shell statement; line 407: dynamic command/alias/eval; line 417: dynamic command/alias/eval; line 422: dynamic command/alias/eval; line 423: dynamic command/alias/eval; line 437: dynamic load/substitution; line 438: dynamic load/substitution; line 439: dynamic load/substitution; line 441: dynamic command/alias/eval; line 442: dynamic load/substitution; line 450: dynamic command/alias/eval; line 451: dynamic load/substitution; line 467: dynamic command/alias/eval; line 472: dynamic load/substitution; line 486: dynamic load/substitution; line 520: wrapper options/child command unresolved; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
@@ -7441,9 +7445,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/preamble-source-current-main-native-clean/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/kc-20261008/pr128-refreshed-canary-verify/workdir/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-08T02:27:37Z",
+   "started_at_utc": "2026-10-08T12:09:52Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -7460,9 +7464,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/exact-evidence-receiving.json is the previous version of the one this run is writing, for the same work item EVIDENCE-EXACT-RECEIVING — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "21 affected entity(ies) owe no verdict (receipt: 21): unchanged at both revisions and given no verifier by the matrix"
+    "text": "23 affected entity(ies) owe no verdict (receipt: 23): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -7728,9 +7738,6 @@
    "code_unit:tests/test_index_batch.py": [
     "fitness_rules"
    ],
-   "code_unit:tests/test_index_batch_atomic.py": [
-    "fitness_rules"
-   ],
    "code_unit:tests/test_index_freshness.py": [
     "fitness_rules"
    ],
@@ -7816,9 +7823,6 @@
     "fitness_rules"
    ],
    "code_unit:tools/backfill_sections.py": [
-    "fitness_rules"
-   ],
-   "code_unit:tools/gen_canary_plan.py": [
     "fitness_rules"
    ],
    "code_unit:tools/gen_http_contract.py": [
@@ -8109,7 +8113,9 @@
    "receipt:receipts/graph/change-admission-ci-pr-concurrency.json": [],
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": [],
    "receipt:receipts/graph/ctl-bundle-refresh-20260925.json": [],
+   "receipt:receipts/graph/exact-evidence-receiving.json": [],
    "receipt:receipts/graph/pin-repair-scrutator-20261007.json": [],
+   "receipt:receipts/graph/qualified-refresh-089a771c.json": [],
    "route:DELETE /source": [
     "canary",
     "contract_diff",
@@ -8297,9 +8303,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.55,
-   "total": 28.21,
-   "verifiers": 1.79
+   "prepare": 0.48,
+   "total": 34.76,
+   "verifiers": 1.37
   }
  },
  "work_item": "EVIDENCE-EXACT-RECEIVING"
