@@ -114,10 +114,21 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Python 3.12 (the gate tools are stdlib-only)
+      - name: Python 3.12
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
         with:
           python-version: '3.12'
+
+      # tools/graph/workflow_config.py imports yaml. The gate tools are NOT stdlib-only: without PyYAML
+      # every workflow file in the checked-out repository is recorded as 'workflow shell context not
+      # measured: No module named yaml', so a caller's workflow entities stay not_measured and the graph
+      # this job rebuilds differs from the one a receipt was built against on a host that has PyYAML
+      # (measured on scrutator PR128 / PR129, 2026-10-08). Same pin as ci.yml.
+      - name: PyYAML for the workflow-configuration verifier
+        # -I: isolated mode puts neither the working directory nor user site on sys.path. The checkout is
+        # the pull request's own tree, so a planted ./pip package would otherwise run inside this required
+        # gate before it measures anything (FRONTEND review of PR399).
+        run: python3 -I -m pip install --disable-pip-version-check --no-input 'pyyaml==6.0.2'
 
       # AUP-GRAPH-006:gate5b (B6). A DECLARED DERIVED ARTEFACT is admitted only if the gate can RUN the
       # caller's own verifier — accept the honest tree, then REFUSE it with one byte corrupted. That needs

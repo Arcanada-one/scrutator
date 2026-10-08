@@ -6,6 +6,17 @@ No YAML constructors run: inspect the representation tree using BaseLoader.
 import re
 
 
+def pr_job_guard(value):
+    """Closed PR-event condition; never evaluate expressions or event payloads."""
+    if not isinstance(value, str):
+        return False
+    value = value.strip()
+    if value.startswith('${{') and value.endswith('}}'):
+        value = value[3:-2].strip()
+    return bool(re.fullmatch(
+        r"(?:always\(\)\s*&&\s*)?github\.event_name\s*==\s*'pull_request'", value))
+
+
 class OutOfScope(Exception):
     """Valid GitHub syntax this bounded checker deliberately does not cover.
 
@@ -368,6 +379,12 @@ def validate(raw):
                             needs = [needs] if isinstance(needs, str) else needs
                             if result_ref[1] not in jobs or result_ref[1] not in needs:
                                 raise ValueError('reusable input result reference must name a declared needed job')
+                        elif (re.fullmatch(r'\$\{\{\s*github\.event\.pull_request\.head\.sha\s*\}\}', v)
+                              and pr_job_guard(job.get('if'))):
+                            # The guarded PR payload declares head.sha as a string. This
+                            # measures only that input type, not the SHA value/authenticity,
+                            # callee interface, expression execution or hosted job outcome.
+                            pass
                         elif not expression(v, 'reusable workflow input') and literal_type(v) == 'null':
                             raise ValueError('reusable workflow input must be string, boolean or number')
                 if 'secrets' in job:

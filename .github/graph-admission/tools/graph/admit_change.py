@@ -2411,7 +2411,8 @@ def matrix_declared_unverifiable(repo: Path, ref: str, bundle_rel: str) -> froze
 
 
 def structural_covered_entities(case: str, synthesized: str, verdict_entities, managed: set[str],
-                                declared_unverifiable: frozenset[str] = frozenset()) -> set[str]:
+                                declared_unverifiable: frozenset[str] = frozenset(),
+                                pin_updates: frozenset[str] = frozenset()) -> set[str]:
     """Which entities an exemption of this code may name — never more.
 
     `NO_IMPACT_BY_CONSTRUCTION`: exactly the synthesized entity (there are no others; the receipt has
@@ -2428,12 +2429,23 @@ def structural_covered_entities(case: str, synthesized: str, verdict_entities, m
     edge points from each past receipt to the code it verified, pulling all of them into the impact
     set. The narrowing is deliberately two-sided: the type must carry NO mandatory verifier at base
     (a change cannot widen its own licence by shipping a matrix), and the case must be a self-update,
-    so an ordinary change still owes an exemption for every not_measured entity it produces."""
+    so an ordinary change still owes an exemption for every not_measured entity it produces.
+
+    `pin_updates` is B1's own `program_ref_pin_updates`: caller workflow files outside the bundle whose
+    ONLY change `pin_only_edit` proved to be the program_ref pin, set to the head bundle's own ref. B1
+    already admits that shape by design (the pin lives outside the bundle so the bundle cannot vouch for
+    it), yet the coverage set never named it, so the workflow-config verifier's not_measured on the
+    caller (reusable/opaque shell context) paused EVERY bundle refresh. Measured on scrutator 0ac9
+    (e4dc5743, program f5c66cf5) and scrutator#129 (19de4daa, program 0141fe42): the caller workflow was
+    the sole uncovered entity once contract dependencies were installed. Only a path B1 proved
+    pin-only is admitted — any other edit to the same file makes it `outside_real` and B1 fails."""
     allowed = {synthesized}
     if case == "gate_self_update":
         for eid in verdict_entities:
             node_type, _, path = str(eid).partition(":")
             if path and path in managed:
+                allowed.add(eid)
+            elif path and path in pin_updates:
                 allowed.add(eid)
             elif node_type in declared_unverifiable:
                 allowed.add(eid)
@@ -2485,7 +2497,8 @@ def structural_exemption(repo: Path, base: str, head: str, files: list[dict], po
     managed, _ = bundle_paths_at(repo, head, bundle_rel)
     managed |= bundle_paths_at(repo, base, bundle_rel)[0]
     covered = structural_covered_entities(case, synth, verdict_entities, managed,
-                                          matrix_declared_unverifiable(repo, base, bundle_rel))
+                                          matrix_declared_unverifiable(repo, base, bundle_rel),
+                                          frozenset(cev.get("program_ref_pin_updates") or ()))
     binding = {"base": base, "head": head, "digest": diff_digest(repo, base, head)}
     ev["change_binding"] = binding
     ev["synthesized_entity"] = synth
@@ -2636,13 +2649,15 @@ def recheck_structural(repo: Path, base: str, head: str, files: list[dict], poli
     managed, _ = bundle_paths_at(repo, head, bundle_rel)
     managed |= bundle_paths_at(repo, base, bundle_rel)[0]
     allowed = structural_covered_entities(case, synth, verdict_entities, managed,
-                                          matrix_declared_unverifiable(repo, base, bundle_rel)) | synths
+                                          matrix_declared_unverifiable(repo, base, bundle_rel),
+                                          frozenset(cev.get("program_ref_pin_updates") or ())) | synths
     named = {x.get("entity") for x in exemptions}
     extra = sorted(named - allowed)
     if extra:
         problems.append(f"{code}: exempts {len(extra)} entity(ies) outside what this code may cover "
                         f"({', '.join(map(str, extra[:4]))}); it may name {sorted(allowed)[:1]}"
-                        + (" plus the bundle-managed nodes" if case == "gate_self_update" else " and nothing else"))
+                        + (" plus the bundle-managed nodes and B1's pin-only caller workflows" if case == "gate_self_update"
+                           else " and nothing else"))
     if not (named & synths):
         problems.append(f"{code}: the synthesized entity {synth} carries no exemption — the code exists to cover "
                         f"exactly that entity" + record_note)
