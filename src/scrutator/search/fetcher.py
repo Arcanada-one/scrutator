@@ -79,6 +79,9 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
 
     first = rows[0]  # canonically chunk_index = 0 after ordering
     section = first["metadata"].get("section") or {}
+    if not section and settings.evidence_exact_enabled_for(first["namespace"]):
+        # The preamble carries no stamp. Read an existing sibling witness, never mint one.
+        section = next((row["metadata"].get("section") for row in rows if row["metadata"].get("section")), {})
     source_id = section.get("doc_id", "")
     # ARAS-0055: READ the ingest-stamped injection signal (server-computed at index time; the doc
     # body can never forge it — it only lands in `content`). Absent/legacy stamp ⇒ zero signal.
@@ -119,15 +122,23 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         # policy divergence). The by-construction invariant still holds: whenever
         # `content_exact=True`, `sha256(content) == content_hash`.
         evidence_raw = None
-        if settings.evidence_exact_bytes:
-            evidence_row = await fetch_evidence_raw_content(source_id, allowed_namespace_ids)
+        if settings.evidence_exact_enabled_for(namespace):
+            evidence_row = await fetch_evidence_raw_content(source_id, allowed_namespace_ids, expected_rows=rows)
             # Read-side belt-and-braces (SRCH-0039 pre-merge review): trust the exact-bytes row ONLY
             # when its bound-at-write `content_hash` still equals the current chunk stamp
             # (`content_hash` above). A stale row — one whose bytes predate a content change that
             # re-stamped the chunks — is REJECTED here and degrades to reassembly, so fetch can never
-            # return stale bytes as `content_exact=True`. This compares two stored hashes (both bound
-            # at write time), NOT a re-hash of the body, so it does not recompute integrity at read.
-            if evidence_row is not None and evidence_row[1] == content_hash:
+            # return stale bytes as `content_exact=True`. Actual raw bytes are additionally
+            # checked below without replacing either stored stamp.
+            # Verify actual whole bytes without replacing the original ingest stamp. This
+            # protects against changed raw bodies with unchanged stored hashes; slices below
+            # still carry the whole-document stamp. A malformed/corrupt row stays non-exact.
+            if (
+                evidence_row is not None
+                and evidence_row[1] == content_hash
+                and isinstance(evidence_row[0], str)
+                and content_hash == "sha256:" + hashlib.sha256(evidence_row[0].encode("utf-8")).hexdigest()
+            ):
                 evidence_raw = evidence_row[0]
         if evidence_raw is not None:
             full_content = evidence_raw

@@ -1,0 +1,42 @@
+{
+  "schema": "CanaryPlan/v1",
+  "id": "exact-evidence-existing-benchmark-readonly",
+  "environment": "task-owned-source-application-existing-grant-readonly-database",
+  "base_url": "http://127.0.0.1:48033",
+  "owner": "KC-SUCCESSOR bounded source receiving verification",
+  "read_only": true,
+  "subject": {
+    "schema": "GitCanarySubject/v1",
+    "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
+    "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2",
+    "evidence": {
+      "path": "source-evidence.json",
+      "sha256": "7c3e42f09141b44f8dcdb5674e0d49dde5a0ac54fa8974c2e3cb6702fffa8b6c",
+      "source_field": "commit"
+    }
+  },
+  "probes": [
+    {
+      "id": "original-granted-fingerprint",
+      "method": "GET",
+      "path": "/__benchmark/fingerprint",
+      "auth": "none",
+      "expect": {
+        "status_in": [
+          200
+        ],
+        "json_has": [
+          "namespace",
+          "namespace_id",
+          "chunk_count",
+          "sha256"
+        ]
+      },
+      "entities": [
+        "route:GET /__benchmark/fingerprint",
+        "code_unit:benchmark/scrutator/live/granted_context_app.py"
+      ]
+    }
+  ],
+  "_claim": "Original existing kb-observer FK grant and real fingerprint via unmodified source wrapper; all database connections default read-only. Original intentional benchmark transport override retained. Not reader JWT delegation, corpus ingest, original feeder byte acceptance or a benchmark result."
+}

@@ -23,6 +23,7 @@ from scrutator.db.models import (
     IndexResponse,
 )
 from scrutator.db.repository import (
+    populate_exact_evidence_atomic,
     replace_source_chunks_atomic,
     upsert_namespace,
     upsert_project,
@@ -994,9 +995,7 @@ def _build_evidence_document(namespace: str, source_path: str, full_content: str
     un-indexed ``evidence_documents`` table (never ``chunks.metadata``), so no GIN entry-size
     ceiling applies. Unlike ``_build_source_document``, there is deliberately NO 256 KB per-document
     cap — the evidence corpus holds large documents."""
-    if not settings.evidence_exact_bytes:
-        return None
-    if namespace == settings.skills_namespace:
+    if not settings.evidence_exact_enabled_for(namespace):
         return None
     return {
         "doc_id": compute_doc_id(namespace, source_path),
@@ -1127,6 +1126,8 @@ def _prepare_documents(
             logger.error("Batch chunking failed for one source")
             results[position] = BatchIndexFailed(source_path=document.source_path, error_code="chunking_failed")
             continue
+        if not chunk_result.chunks and settings.evidence_exact_enabled_for(document.namespace):
+            raise BatchIndexLimitError("exact evidence replacement requires at least one indexable chunk")
         skill_metadata = skill_plan.metadata if skill_plan is not None else None
         chunk_dicts = _chunk_dicts(
             chunk_result,
@@ -1308,6 +1309,8 @@ async def index_document(
     )
 
     if not chunk_result.chunks:
+        if settings.evidence_exact_enabled_for(namespace):
+            raise BatchIndexLimitError("exact evidence replacement requires at least one indexable chunk")
         return IndexResponse(chunks_indexed=0, source_path=source_path, namespace=namespace, strategy_used="empty")
 
     # 2. Embed all chunks
@@ -1344,4 +1347,20 @@ async def index_document(
         source_path=source_path,
         namespace=namespace,
         strategy_used=chunk_result.strategy_used,
+    )
+
+
+async def populate_exact_evidence(content: str, source_path: str, namespace: str) -> IndexResponse:
+    """Populate verified raw bytes without embeddings, chunk replacement or graph cascades."""
+    if len(content.encode("utf-8")) > settings.evidence_population_max_bytes:
+        raise ValueError("exact evidence population exceeds document byte bound")
+    document = _build_evidence_document(namespace, source_path, content)
+    if document is None:
+        raise ValueError("exact evidence namespace disabled")
+    created = await populate_exact_evidence_atomic(namespace, document)
+    return IndexResponse(
+        chunks_indexed=0,
+        source_path=source_path,
+        namespace=namespace,
+        strategy_used="evidence_exact_created" if created else "evidence_exact_present",
     )

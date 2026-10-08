@@ -1,12 +1,12 @@
 {
   "schema": "CanaryPlan/v1",
-  "id": "scrutator-route-presence",
-  "environment": "kb-production",
-  "base_url": "http://127.0.0.1:8310",
+  "id": "exact-evidence-owned-presence-637041d9",
+  "environment": "task-owned-disposable-local-application",
+  "base_url": "http://127.0.0.1:40323",
   "openapi_path": "/openapi.json",
-  "owner": "Arcanada (control session) — scrutator deploy transaction",
+  "owner": "KC-SUCCESSOR task-owned no-credential presence probes",
   "read_only": false,
-  "_generated_by": "tools/gen_canary_plan.py — DO NOT EDIT BY HAND",
+  "_generated_by": "tools/gen_canary_plan.py \u2014 DO NOT EDIT BY HAND",
   "_claim": "Presence only: the resident version still serves this path with this verb. Every probe is unauthenticated and carries no body. A route is present when the resident OpenAPI declares it AND the answer is not the router's own no-match (405, or a 404 byte-identical to the fingerprint of an unrouted sibling path); a handler's 404 for an absent resource is a served route (A2-324).",
   "probes": [
     {
@@ -534,5 +534,15 @@
       ],
       "mutating": true
     }
-  ]
+  ],
+  "subject": {
+    "schema": "GitCanarySubject/v1",
+    "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
+    "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2",
+    "evidence": {
+      "path": "source-evidence.json",
+      "sha256": "0bf3f9c7f1c2a7e7246ef9c5089e700ba696caef3eb0cbcc5b7c3bd71e088ae2",
+      "source_field": "commit"
+    }
+  }
 }

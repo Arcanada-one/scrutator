@@ -1,7 +1,9 @@
 """Application configuration via environment variables."""
 
+import re
 from typing import Literal
 
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -33,6 +35,50 @@ class Settings(BaseSettings):
     # (content_exact=True); an absent row gracefully degrades to reassembly (content_exact=False),
     # NOT the skills fail-closed 409 — evidence row-absence is an expected pre-backfill state.
     evidence_exact_bytes: bool = False
+    # None preserves legacy global-on compatibility; [] selects no evidence namespaces.
+    # A target deployment must explicitly pin ["kc2-store"], independently of authorization.
+    evidence_exact_namespaces: list[str] | None = None
+    # Dedicated raw-only operation bound; legacy ordinary ingest behavior stays separate.
+    evidence_population_max_bytes: int = Field(default=262144, gt=0, le=1048576, strict=True)
+
+    # Producer contract for narrow legacy-preamble verification; never search for a match.
+    evidence_producer_max_tokens: int = Field(default=512, gt=0, le=1024, strict=True)
+    evidence_producer_overlap_tokens: int = Field(default=50, ge=0, le=1024, strict=True)
+
+    @field_validator(
+        "evidence_population_max_bytes",
+        "evidence_producer_max_tokens",
+        "evidence_producer_overlap_tokens",
+        mode="before",
+    )
+    @classmethod
+    def parse_population_byte_bound(cls, value):
+        # Settings env values are strings. Accept decimal text before strict integer
+        # validation; booleans, floats, whitespace and malformed values still refuse.
+        if isinstance(value, str) and re.fullmatch(r"[0-9]+", value):
+            return int(value)
+        return value
+
+    @field_validator("evidence_exact_namespaces", mode="before")
+    @classmethod
+    def validate_evidence_namespaces(cls, value):
+        if value is None:
+            return None
+        if not isinstance(value, list) or any(
+            type(item) is not str or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", item) for item in value
+        ):
+            raise ValueError("exact evidence namespaces must be a list of explicit namespace names")
+        if len(set(value)) != len(value):
+            raise ValueError("exact evidence namespaces must be unique")
+        return value
+
+    def evidence_exact_enabled_for(self, namespace: str) -> bool:
+        return (
+            self.evidence_exact_bytes
+            and namespace != self.skills_namespace
+            and (self.evidence_exact_namespaces is None or namespace in self.evidence_exact_namespaces)
+        )
+
     embedding_dense_sparse_enabled: bool = False
 
     database_url: str = "postgresql://scrutator:scrutator@localhost:5432/scrutator"

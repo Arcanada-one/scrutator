@@ -1,0 +1,8 @@
+{
+  "schema": "MeasuredGitSource/v1",
+  "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
+  "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2",
+  "dirty": false,
+  "producer": "KC-SUCCESSOR actual committed source and unmodified application startup",
+  "captured_at_utc": "2026-10-08T12:07:53.319387+00:00"
+}
