@@ -1,6 +1,6 @@
 {
- "base_url": "http://127.0.0.1:39251",
- "captured_at_utc": "2026-10-08T00:29:17Z",
+ "base_url": "http://127.0.0.1:33269",
+ "captured_at_utc": "2026-10-08T02:18:10Z",
  "card": "AUP-GRAPH-008",
  "contract_ref": "contracts/graph-verified-change/observed-edges-and-deploy-gate.v1.json",
  "counters": {
@@ -30,7 +30,7 @@
  "model": "claude-opus-5",
  "phase": "post",
  "plan": {
-  "digest": "sha256:73395d2d647d536c935169b08c5f51e55bd9fa1c435d4456c159d459caa5a8ad",
+  "digest": "sha256:b02bd6a02c5d39c0b8a788f66519f61f8d45c47aee18a825bc3f1f3bad301a91",
   "id": "exact-evidence-existing-benchmark-readonly",
   "path": "plan.json"
  },
@@ -38,13 +38,13 @@
   {
    "body_bytes": 136,
    "body_sha256": "sha256:558177d47868be3edf4ad36b6d0a441ddd767872b1d0874aec9acbcf34db823c",
-   "elapsed_ms": 692,
+   "elapsed_ms": 649,
    "id": "original-granted-fingerprint",
    "method": "GET",
    "outcome": "verified",
    "reason": "key `namespace` present; key `namespace_id` present; key `chunk_count` present; key `sha256` present",
    "status": 200,
-   "url": "http://127.0.0.1:39251/__benchmark/fingerprint"
+   "url": "http://127.0.0.1:33269/__benchmark/fingerprint"
   }
  ],
  "producer": {
@@ -60,13 +60,13 @@
  ],
  "schema": "CanaryResult/v1",
  "subject": {
-  "commit": "92bc6193b1cd6b71ce5af786830dd0cbd47e3dcc",
+  "commit": "1b3cd2048d72dce2a5a34d0d7294c040f0342ad5",
   "evidence": {
    "path": "source-evidence.json",
-   "sha256": "d97ae84ded530a26745ae1342720076f037567eb687bbdeca67c14d00b352474",
+   "sha256": "b1b1673054a98f11bbc9ff8301d0e9475138732b1e2fe2f20d3b3b2c2d7cb9c4",
    "source_field": "commit"
   },
   "schema": "GitCanarySubject/v1",
-  "tree": "5a57919fb0713bf933ffd00708c34ffaae9c2d2d"
+  "tree": "0c160ace036eb47823e258efc038b2598a1eb82f"
  }
 }
