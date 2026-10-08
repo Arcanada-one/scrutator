@@ -48,9 +48,13 @@ VERSION = "1.0.0"
 MODEL = "claude-opus-5"
 PROGRAM_ROOT = Path(__file__).resolve().parents[2]
 BUNDLE_FILES = [
+    "tools/graph/full_suite_ci.py",
+    "tools/graph/shell_source.py",
     "tools/graph/admit_change.py",
     "tools/graph/schema_check.py",
     "tools/graph/build_graph.py",
+    "tools/graph/python_search_path.py",
+    "tools/graph/native_projection.py",
     "tools/graph/nest_bootstrap.py",
     # build_graph.py imports this at module scope to classify .github/workflows/* paths, so a bundle
     # without it is not merely reduced — the vendored builder raises ModuleNotFoundError on import
@@ -67,8 +71,15 @@ BUNDLE_FILES = [
     # verification path: absent, they do not fail at import time, they fail when the gate reaches
     # the work they do, which is worse — a bundle that starts and then cannot finish.
     "tools/graph/impact_pair.py",
+    # The executable CI handoff consumes the same paired graph and mandatory
+    # matrix. Ship it in the canonical bundle rather than asking private-repo
+    # callers to copy a second producer or fetch with a new credential.
+    "tools/graph/ci_selection.py",
+    "tools/graph/origin_association.py",
     "tools/graph/verify.py",
     "tools/graph/contract_diff.py",
+    "tools/graph/metadata_contract_proof.py",
+    "tools/graph/metadata_contract_observer.cjs",
     # verify.py's own chain: canary_evidence at module scope, process_observation from there.
     # Found by importing every bundled module from a directory that contains nothing else — a
     # static import scan missed it, and so did testing one entry point by hand.
@@ -88,6 +99,9 @@ BUNDLE_FILES = [
     "contracts/graph-verified-change/relationship-graph.v1.json",
     "contracts/graph-verified-change/change-admission-receipt.v1.json",
     "contracts/graph-verified-change/verifier-matrix.v1.json",
+    # Caller graph compatibility trusts the current producer's committed public
+    # key, never a key supplied by an author receipt or the legacy bundle itself.
+    "contracts/graph-verified-change/bundle-signing-key.pub",
     "contracts/readiness-receipt-v1.schema.json",
 ]
 DEFAULT_RECEIPT_GLOBS = ["receipts/graph/**/*.json", "receipts/**/change-admission-*.json"]
@@ -470,6 +484,27 @@ def verify_bundle(tools: Path, program_ref: str | None,
     return man, problems, sigrec
 
 
+def rebuild_compatible_receipt_graph(repo: Path, receipt: dict) -> dict:
+    """Rebuild the receipt's measured range, including a record-only descendant.
+
+    The ordinary gate binds the receipt to the requested PR range first (C06).
+    The PR record head can differ from the measured source head; rebuilding at
+    the record head would contradict the genuine source graph in its receipt.
+    This check reproduces the measured proof, never edits either graph digest.
+    """
+    import impact
+    import impact_pair
+    cs = receipt.get("change_set") or {}
+    compatibility = receipt.get("caller_graph_compatibility")
+    if cs.get("mode") != "diff" or not isinstance(compatibility, dict):
+        raise impact.Refusal("CALLER_GRAPH_BINDING", "compatibility requires a paired diff receipt")
+    before, _, proof = impact_pair.caller_graph_pair(impact.Repo(repo), cs.get("base"), cs.get("head"),
+                                                   compatibility.get("bundle_path"))
+    if proof != compatibility or (receipt.get("graph") or {}).get("source_commit") != before.manifest["source_commit"]:
+        raise impact.Refusal("CALLER_GRAPH_BINDING", "independently rebuilt measured proof differs")
+    return before.doc
+
+
 # --------------------------------------------------------------------------------------- run
 def changed_files(repo: Path, base: str, head: str) -> list[str]:
     out = git(repo, "diff", "--name-only", f"{base}..{head}")
@@ -749,7 +784,8 @@ def cmd_run(a) -> int:
             # carrying a GATE_SELF_UPDATE exemption whose B1-B5 battery the gate itself re-measures.
             import admit_change as admit_mod  # sibling tool, reused as a library (bundled)
             files_status = [{"path": f, "status": status.get(f, "M")} for f in files]
-            su_case, su_ev = admit_mod.structural_case(repo, base, head, files_status, bundle_rel)
+            su_case, su_ev = admit_mod.structural_case(
+                repo, base, head, files_status, bundle_rel, getattr(a, "base_branch", None))
             if su_case != "gate_self_update":
                 return fail("BUNDLE_MODIFIED_BY_PR",
                             f"this pull request edits or removes {len(edited)} file(s) under the vendored gate bundle "
@@ -806,6 +842,10 @@ def cmd_run(a) -> int:
            "--repo-name", result["repo"]]
     if bundle_rel:
         cmd += ["--bundle-dir", bundle_rel]
+    # A hosted PR checkout can have named remote refs without origin/HEAD.
+    # Preserve the supplied PR target; the maintained gate validates/resolves it.
+    if getattr(a, "base_branch", None):
+        cmd += ["--base-branch", a.base_branch]
     # AUP-GRAPH-006:gate2a — the automated-author path. The event payload is the ONLY source of author
     # identity; the head branch name is attacker-controllable and is never consulted.
     if getattr(a, "event_file", None) and Path(a.event_file).exists():
@@ -873,13 +913,24 @@ def cmd_run(a) -> int:
                                                    "source_commit/digest to rebuild against"})
                 continue
             gp = work / f"graph-{g['source_commit'][:12]}.json"
-            b = subprocess.run([sys.executable, str(tools / "tools/graph/build_graph.py"), str(repo),
-                                "--rev", g["source_commit"], "--out", str(gp)], capture_output=True, text=True,
-                               env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
-            if b.returncode != 0:
-                result["checks"].append({"code": "GRAPH_BUILD_FAILED", "verdict": "not_measured",
-                                         "detail": (b.stderr or b.stdout).strip()[:300]})
-                continue
+            compatibility = (src or {}).get("caller_graph_compatibility")
+            if compatibility is not None:
+                import impact
+                try:
+                    gp.write_bytes(impact.dump(rebuild_compatible_receipt_graph(repo, src)))
+                except (impact.Refusal, ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError) as exc:
+                    result["checks"].append({"code": "CALLER_GRAPH_COMPATIBILITY_REFUSED", "verdict": "refuse",
+                                             "detail": str(exc)})
+                    result["reason_codes"] = sorted(set(result["reason_codes"] + ["CALLER_GRAPH_COMPATIBILITY_REFUSED"]))
+                    continue
+            else:
+                b = subprocess.run([sys.executable, str(tools / "tools/graph/build_graph.py"), str(repo),
+                                    "--rev", g["source_commit"], "--out", str(gp)], capture_output=True, text=True,
+                                   env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+                if b.returncode != 0:
+                    result["checks"].append({"code": "GRAPH_BUILD_FAILED", "verdict": "not_measured",
+                                             "detail": (b.stderr or b.stdout).strip()[:300]})
+                    continue
             built = json.loads(gp.read_text())["manifest"]["graph_digest"]
             same = built == g["graph_digest"]
             result["checks"].append({"code": "GRAPH_REBUILT_MATCHES" if same else "GRAPH_DIGEST_MISMATCH",
@@ -915,6 +966,14 @@ def cmd_run(a) -> int:
 
 
 # --------------------------------------------------------------------------------------- selftest
+def _selftest_arm_record(checks: list[dict]) -> str:
+    """Lossless diagnostic identity/outcome projection of collected root checks."""
+    return "SELFTEST_ARMS_JSON: " + json.dumps({
+        "schema": "GraphGateSelftestArms/v1",
+        "checks": [{"name": c.get("name"), "ok": c.get("ok")} for c in checks],
+    }, sort_keys=True)
+
+
 def selftest() -> int:
     """The mutation battery of the CI job: every mutant must FLIP the verdict of the conformant control.
 
@@ -1132,6 +1191,11 @@ def selftest() -> int:
     red += rot_red
     checks += rot_checks
     measured = [c for c in checks if c.get("ok") is not None]
+    # Preserve the actual root check identities before the final aggregate.
+    # A historical count/tail cannot reconstruct which eight checks failed;
+    # this machine record comes from the real collected checks, never that
+    # arithmetic difference. None remains unmeasured rather than false/pass.
+    print(_selftest_arm_record(checks))
     print(f"\nTOTAL {'PASS' if not red else 'FAIL'}: {len(measured) - red}/{len(measured)} checks across "
           f"eight batteries ({len(checks) - len(measured)} not_measured)")
     return 0 if not red else 1
@@ -1511,6 +1575,19 @@ def selftest_key_rotation() -> tuple[list[dict], int]:
                                 "-f", str(kd / name)], capture_output=True, text=True)
             keys.append(str(kd / name))
         prog_root, ref = fixture_program_repo(root / "fixture-program-real")
+
+        def commit_primary_key(key: str) -> str:
+            # This public key is itself bundled. Prepare genuine fixture source
+            # before capturing the ref, just as the production drift guard requires.
+            shutil.copyfile(Path(key + ".pub"), prog_root / PROGRAM_PUBKEY_PATH)
+            env = {**os.environ, **FIXTURE_GIT_ENV}
+            for args in (["add", "--", PROGRAM_PUBKEY_PATH],
+                         ["commit", "-q", "-m", "fixture primary public key"]):
+                subprocess.run(["git", "-C", str(prog_root), *args], env=env,
+                               capture_output=True, text=True, check=True)
+            return git(prog_root, "rev-parse", "HEAD").strip()
+
+        ref = commit_primary_key(keys[0])
         out = root / "real-dual"
         rc = cmd_bundle(argparse.Namespace(out=str(out), program_ref=ref, program_root=str(prog_root),
                                            workflow_out=None, sign_key=keys))
@@ -1521,6 +1598,7 @@ def selftest_key_rotation() -> tuple[list[dict], int]:
               rc == 0 and not problems and rec.get("key_fingerprints") == fps
               and json.loads((out / "BUNDLE.json").read_text()).get("signing_keys") == fps,
               rc=rc, problems=problems)
+        ref = commit_primary_key(keys[1])
         rc2 = cmd_bundle(argparse.Namespace(out=str(out), program_ref=ref, program_root=str(prog_root),
                                             workflow_out=None, sign_key=keys[1:]))
         _, problems2, rec2 = verify_bundle(out, ref, fps[1])
@@ -1731,7 +1809,7 @@ def selftest_gate4b() -> tuple[list[dict], int]:
         return rc, (json.loads(out.read_text()) if out.exists() else receipt)
 
     def run_ci(repo: Path, base: str, head: str, receipt: dict | None, *, pin: str | None = BASE_FP,
-               program_ref: str = "0" * 40, tag: str = "run") -> dict:
+               program_ref: str = "0" * 40, tag: str = "run", base_branch: str | None = None) -> dict:
         d = root / f"ci-{tag}-{head[:8]}"
         d.mkdir(parents=True, exist_ok=True)
         body = "" if receipt is None else "```json\n" + json.dumps(receipt, indent=1, sort_keys=True) + "\n```\n"
@@ -1741,7 +1819,8 @@ def selftest_gate4b() -> tuple[list[dict], int]:
             repo=str(repo), repo_name="Arcanada-one/fixture", tools=str(repo / ".github/graph-admission"),
             program_ref=program_ref, base=base, head=head, pr_body_file=str(d / "body.txt"),
             receipt_glob=["receipts/graph/*.json"], enforcement="off", build_graph=False,
-            workdir=str(d / "work"), out=str(out), summary=None, signing_key_fingerprint=pin))
+            workdir=str(d / "work"), out=str(out), summary=None, signing_key_fingerprint=pin,
+            base_branch=base_branch))
         doc = json.loads(out.read_text())
         doc["_rc"] = rc
         return doc
@@ -1858,6 +1937,43 @@ def selftest_gate4b() -> tuple[list[dict], int]:
           and "BUNDLE_MODIFIED_BY_PR" not in ci_c["reason_codes"]
           and any(c["code"] == "SELF_UPDATE_CANDIDATE" for c in ci_c["checks"]),
           rc=ci_c["_rc"], verdict=ci_c["verdict"], codes=ci_c["reason_codes"])
+
+    # A hosted checkout fetches named remote refs but need not create origin/HEAD.
+    # Build the real Update-branch shape, issue through the maintained producer,
+    # then remove only the metadata the old wrapper mistakenly depended on.
+    gc("checkout", "-q", "-b", "refresh-hosted")
+    gc("checkout", "-q", "main")
+    (repo_c / "main-only.md").write_text("ordinary change brought in from the PR target\n")
+    gc("add", "-A"); gc("commit", "-q", "-m", "target moves")
+    gc("update-ref", "refs/remotes/origin/release", gc("rev-parse", "HEAD").strip())
+    gc("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/release")
+    gc("checkout", "-q", "refresh-hosted")
+    gc("merge", "--no-edit", "--no-ff", "-q", "main")
+    hosted_head = gc("rev-parse", "HEAD").strip()
+    hosted_rc, hosted_receipt = issue(repo_c, base_c, hosted_head,
+                                     self_update_receipt(repo_c, base_c, hosted_head))
+    gc("symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+    old_hosted = run_ci(repo_c, base_c, hosted_head, hosted_receipt,
+                        program_ref="1" * 40, tag="hosted-missing")
+    check("(hosted) CONTROL: without origin/HEAD or an explicit PR target, B1M remains refused",
+          hosted_rc == 0 and old_hosted["_rc"] != 0
+          and {"BUNDLE_MODIFIED_BY_PR", "STRUCTURAL_EXEMPTION_UNSOUND"}
+          & set(old_hosted["reason_codes"]),
+          rc=old_hosted["_rc"], codes=old_hosted["reason_codes"])
+    named_hosted = run_ci(repo_c, base_c, hosted_head, hosted_receipt,
+                          program_ref="1" * 40, tag="hosted-named",
+                          base_branch="refs/remotes/origin/release")
+    check("(hosted) CONTROL: forwarding the fetched named PR target admits the genuine refresh",
+          named_hosted["_rc"] == 0 and named_hosted["verdict"] == "admitted_with_exemptions",
+          rc=named_hosted["_rc"], codes=named_hosted["reason_codes"])
+    missing_hosted = run_ci(repo_c, base_c, hosted_head, hosted_receipt,
+                            program_ref="1" * 40, tag="hosted-unknown",
+                            base_branch="refs/remotes/origin/unknown")
+    check("(hosted) MUTANT: an unknown explicit PR target stays refused; no guessed branch fallback",
+          missing_hosted["_rc"] != 0
+          and {"BUNDLE_MODIFIED_BY_PR", "STRUCTURAL_EXEMPTION_UNSOUND"}
+          & set(missing_hosted["reason_codes"]),
+          rc=missing_hosted["_rc"], codes=missing_hosted["reason_codes"])
 
     # ---- mutant (c): the refreshed bundle's own selftest FAILS
     def break_selftest(b: Path):
@@ -3285,6 +3401,8 @@ def main(argv=None) -> int:
     r.add_argument("--program-ref")
     r.add_argument("--base", required=True)
     r.add_argument("--head", required=True)
+    r.add_argument("--base-branch", help="named PR target ref for the maintained B1M merge-base check; "
+                                        "missing or unknown refs remain not_measured")
     r.add_argument("--pr-body-file")
     r.add_argument("--receipt-glob", action="append")
     r.add_argument("--enforcement", default="off", choices=["off", "ledger", "muneral"])
