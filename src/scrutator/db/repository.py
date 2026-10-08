@@ -11,6 +11,7 @@ from uuid import UUID
 import numpy as np
 
 from scrutator.db.connection import acquire_search_connection, get_pool
+from scrutator.db.exact_generation import matches_generation
 from scrutator.db.models import (
     ChunkLookupResult,
     NamespaceInfo,
@@ -1412,7 +1413,7 @@ async def get_section_siblings_children(chunk_id: str, allowed_namespace_ids: fr
 # ── SRCH-0038: exact whole-document fetch-by-id (namespace-scoped, S2/S3) ─────────────
 
 _FETCH_CHUNK_COLUMNS = """
-    c.id::text AS chunk_id, c.chunk_index, c.content, c.content_hash,
+    c.id::text AS chunk_id, c.parent_id::text AS parent_id, c.chunk_index, c.content, c.content_hash,
     c.source_path, c.source_type, c.token_count,
     c.metadata, c.indexed_at::text AS indexed_at, n.name AS namespace
 """
@@ -1423,6 +1424,7 @@ def _fetch_row_to_dict(row: Any) -> dict[str, Any]:
     return {
         "chunk_id": row["chunk_id"],
         "chunk_index": row["chunk_index"],
+        "parent_id": row.get("parent_id"),
         "content": row["content"],
         "content_hash": row["content_hash"],
         "source_path": row["source_path"],
@@ -1484,9 +1486,9 @@ async def fetch_evidence_raw_content(
             current = await conn.fetch(
                 f"""SELECT {_FETCH_CHUNK_COLUMNS}
                 FROM chunks c JOIN namespaces n ON n.id = c.namespace_id
-                WHERE c.metadata->'section'->>'doc_id' = $1
-                  AND c.namespace_id = ANY($2::int[])
-                  AND n.name = $3 AND c.source_path = $4 ORDER BY c.chunk_index""",
+                WHERE c.namespace_id = ANY($2::int[])
+                  AND n.name = $3 AND c.source_path = $4
+                  AND $1::text IS NOT NULL ORDER BY c.chunk_index""",
                 doc_id,
                 list(allowed_namespace_ids),
                 namespace,
@@ -1494,14 +1496,18 @@ async def fetch_evidence_raw_content(
             )
 
             def identity(item):
-                section = item["metadata"].get("section") or {}
                 return (
                     item["chunk_id"],
+                    item.get("parent_id"),
+                    item["chunk_index"],
                     item["indexed_at"],
                     item["namespace"],
                     item["source_path"],
-                    section.get("doc_id"),
-                    section.get("doc_content_hash"),
+                    item["content"],
+                    item["content_hash"],
+                    item["source_type"],
+                    item["token_count"],
+                    item["metadata"],
                 )
 
             if [identity(_fetch_row_to_dict(item)) for item in current] != [identity(item) for item in expected_rows]:
@@ -1518,6 +1524,15 @@ async def fetch_evidence_raw_content(
                 namespace,
                 path,
             )
+            if row is not None and not matches_generation(
+                [_fetch_row_to_dict(item) for item in current],
+                namespace,
+                path,
+                doc_id,
+                row["content_hash"],
+                row["raw_content"],
+            ):
+                return None
         else:
             # Preserve the legacy repository helper interface; exact receiving always
             # supplies expected_rows and takes the generation-bound branch above.
@@ -1530,6 +1545,25 @@ async def fetch_evidence_raw_content(
     if row is None:
         return None
     return row["raw_content"], row["content_hash"]
+
+
+async def _complete_evidence_rows(conn: Any, rows: list, allowed_namespace_ids: frozenset[int]) -> list:
+    """Preserve legacy/skills lookups; enabled evidence includes all authorized path rows."""
+    from scrutator.config import settings
+
+    if not rows or not settings.evidence_exact_enabled_for(rows[0]["namespace"]):
+        return rows
+    paths = {(row["namespace"], row["source_path"]) for row in rows}
+    if len(paths) != 1:
+        return []
+    namespace, path = next(iter(paths))
+    return await conn.fetch(
+        f"SELECT {_FETCH_CHUNK_COLUMNS} FROM chunks c JOIN namespaces n ON n.id=c.namespace_id "
+        "WHERE c.namespace_id=ANY($1::int[]) AND n.name=$2 AND c.source_path=$3 ORDER BY c.chunk_index",
+        list(allowed_namespace_ids),
+        namespace,
+        path,
+    )
 
 
 async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
@@ -1555,6 +1589,7 @@ async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[i
             doc_id,
             list(allowed_namespace_ids),
         )
+        rows = await _complete_evidence_rows(conn, rows, allowed_namespace_ids)
     return [_fetch_row_to_dict(row) for row in rows]
 
 
@@ -1610,6 +1645,7 @@ async def fetch_chunks_by_chunk_id(chunk_id: str, allowed_namespace_ids: frozens
                 namespace_id,
                 self_row["source_path"],
             )
+        rows = await _complete_evidence_rows(conn, rows, allowed_namespace_ids)
     return [_fetch_row_to_dict(row) for row in rows]
 
 
@@ -2778,20 +2814,16 @@ async def populate_exact_evidence_atomic(namespace: str, document: dict[str, Any
             "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))", namespace_id, path
         )
         chunks = await conn.fetch(
-            "SELECT metadata FROM chunks WHERE namespace_id = $1 AND source_path = $2 ORDER BY chunk_index FOR UPDATE",
+            "SELECT id::text AS chunk_id, parent_id::text AS parent_id, chunk_index, source_type, "
+            "content, content_hash, token_count, metadata FROM chunks "
+            "WHERE namespace_id = $1 AND source_path = $2 ORDER BY chunk_index FOR UPDATE",
             namespace_id,
             path,
         )
         if not chunks:
             raise ValueError("existing exact evidence source unavailable")
-        for chunk in chunks:
-            metadata = json.loads(chunk["metadata"]) if isinstance(chunk["metadata"], str) else dict(chunk["metadata"])
-            section = metadata.get("section") or {}
-            if (
-                section.get("doc_id") != document["doc_id"]
-                or section.get("doc_content_hash") != document["content_hash"]
-            ):
-                raise ValueError("exact evidence source generation mismatch")
+        if not matches_generation(chunks, namespace, path, document["doc_id"], document["content_hash"], raw):
+            raise ValueError("exact evidence source generation mismatch")
         status = await conn.execute(
             "INSERT INTO evidence_documents (namespace_id, source_path, doc_id, content_hash, raw_content) "
             "VALUES ($1, $2, $3, $4, $5) ON CONFLICT (namespace_id, source_path) DO NOTHING",
