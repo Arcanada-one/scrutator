@@ -1,6 +1,6 @@
 {
- "base_url": "http://127.0.0.1:42741",
- "captured_at_utc": "2026-10-08T02:20:25Z",
+ "base_url": "http://127.0.0.1:40323",
+ "captured_at_utc": "2026-10-08T12:07:54Z",
  "card": "AUP-GRAPH-008",
  "contract_ref": "contracts/graph-verified-change/observed-edges-and-deploy-gate.v1.json",
  "counters": {
@@ -353,21 +353,21 @@
  "mutating_owner": "KC-SUCCESSOR task-owned no-credential presence probes",
  "phase": "post",
  "plan": {
-  "digest": "sha256:7fcf821836f1fbf27f060c22543afa55a35bbbe2a40f38a34fdbee60f3937a60",
-  "id": "exact-evidence-owned-presence-9562b6ad",
+  "digest": "sha256:25cd34c5fc922927991f74dc352330df6c6d70fff9246965b786129a41f06909",
+  "id": "exact-evidence-owned-presence-637041d9",
   "path": "plan.json"
  },
  "probes": [
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 31,
+   "elapsed_ms": 24,
    "id": "delete-v1-edges",
    "method": "DELETE",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/edges"
+   "url": "http://127.0.0.1:40323/v1/edges"
   },
   {
    "body_bytes": 41,
@@ -378,7 +378,7 @@
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index"
+   "url": "http://127.0.0.1:40323/v1/index"
   },
   {
    "body_bytes": 43,
@@ -389,172 +389,172 @@
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/source"
+   "url": "http://127.0.0.1:40323/v1/ltm/source"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "delete-v1-memories",
    "method": "DELETE",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/memories"
+   "url": "http://127.0.0.1:40323/v1/memories"
   },
   {
    "body_bytes": 55,
    "body_sha256": "sha256:b62a141314dbab95de485e7fd83b81baf7f35987c03c39d2ecfb592c0462c71a",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-health",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 200 is neither 404 nor 405: the route is served by the resident version",
    "status": 200,
-   "url": "http://127.0.0.1:42741/health"
+   "url": "http://127.0.0.1:40323/health"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-chunks",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/chunks"
+   "url": "http://127.0.0.1:40323/v1/chunks"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-edges-chunk-id",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/edges/00000000-0000-0000-0000-000000000000"
+   "url": "http://127.0.0.1:40323/v1/edges/00000000-0000-0000-0000-000000000000"
   },
   {
    "body_bytes": 39,
    "body_sha256": "sha256:d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-index-capability",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index/capability"
+   "url": "http://127.0.0.1:40323/v1/index/capability"
   },
   {
    "body_bytes": 41,
    "body_sha256": "sha256:203ef3361aea968471f84718a3a9684f6ab96a2699a8a4520803fdca3d607de1",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-index-rollback-capability",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index/rollback-capability"
+   "url": "http://127.0.0.1:40323/v1/index/rollback-capability"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-ltm-entities",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/entities"
+   "url": "http://127.0.0.1:40323/v1/ltm/entities"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-ltm-events",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/events"
+   "url": "http://127.0.0.1:40323/v1/ltm/events"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-ltm-graph",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/graph"
+   "url": "http://127.0.0.1:40323/v1/ltm/graph"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-ltm-jobs-job-id",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/jobs/00000000-0000-0000-0000-000000000000"
+   "url": "http://127.0.0.1:40323/v1/ltm/jobs/00000000-0000-0000-0000-000000000000"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-ltm-meta-facts",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/meta_facts"
+   "url": "http://127.0.0.1:40323/v1/ltm/meta_facts"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-memories-stats",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/memories/stats"
+   "url": "http://127.0.0.1:40323/v1/memories/stats"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-namespaces",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/namespaces"
+   "url": "http://127.0.0.1:40323/v1/namespaces"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-navigate-outline",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/navigate/outline"
+   "url": "http://127.0.0.1:40323/v1/navigate/outline"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "get-v1-navigate-section",
    "method": "GET",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/navigate/section"
+   "url": "http://127.0.0.1:40323/v1/navigate/section"
   },
   {
    "body_bytes": 28,
@@ -565,117 +565,117 @@
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/stats"
+   "url": "http://127.0.0.1:40323/v1/stats"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-chunk",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/chunk"
+   "url": "http://127.0.0.1:40323/v1/chunk"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-dream-analyze",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/dream/analyze"
+   "url": "http://127.0.0.1:40323/v1/dream/analyze"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-edges",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/edges"
+   "url": "http://127.0.0.1:40323/v1/edges"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-edges-by-path",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/edges/by-path"
+   "url": "http://127.0.0.1:40323/v1/edges/by-path"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-fetch",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/fetch"
+   "url": "http://127.0.0.1:40323/v1/fetch"
   },
   {
    "body_bytes": 39,
    "body_sha256": "sha256:d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-index",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index"
+   "url": "http://127.0.0.1:40323/v1/index"
   },
   {
    "body_bytes": 39,
    "body_sha256": "sha256:d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-index-batch",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index/batch"
+   "url": "http://127.0.0.1:40323/v1/index/batch"
   },
   {
    "body_bytes": 54,
    "body_sha256": "sha256:6e911f4e990c361c321d21968fcf6f3fe0e9daba5dff6ee7f719d221921d11a4",
-   "elapsed_ms": 2,
+   "elapsed_ms": 1,
    "id": "post-v1-index-capability-projection",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index/capability-projection"
+   "url": "http://127.0.0.1:40323/v1/index/capability-projection"
   },
   {
    "body_bytes": 39,
    "body_sha256": "sha256:d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-index-evidence-exact",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/index/evidence-exact"
+   "url": "http://127.0.0.1:40323/v1/index/evidence-exact"
   },
   {
    "body_bytes": 43,
    "body_sha256": "sha256:d3870e0b3f984e4612aaa8f1aa18d6f05a3c75a3741a40a8236ef3bc8e056d72",
-   "elapsed_ms": 2,
+   "elapsed_ms": 1,
    "id": "post-v1-ltm-ingest",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/ingest"
+   "url": "http://127.0.0.1:40323/v1/ltm/ingest"
   },
   {
    "body_bytes": 28,
@@ -686,62 +686,62 @@
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/recall"
+   "url": "http://127.0.0.1:40323/v1/ltm/recall"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-ltm-reflect",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/ltm/reflect"
+   "url": "http://127.0.0.1:40323/v1/ltm/reflect"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-memories",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/memories"
+   "url": "http://127.0.0.1:40323/v1/memories"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-memories-bulk",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/memories/bulk"
+   "url": "http://127.0.0.1:40323/v1/memories/bulk"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-memories-recall",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/memories/recall"
+   "url": "http://127.0.0.1:40323/v1/memories/recall"
   },
   {
    "body_bytes": 28,
    "body_sha256": "sha256:bbbf5fd89071ef39ed172e0713c9d13d3828b522cb8f9cc5a6f77c1e97cfffba",
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "id": "post-v1-namespaces",
    "method": "POST",
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/namespaces"
+   "url": "http://127.0.0.1:40323/v1/namespaces"
   },
   {
    "body_bytes": 28,
@@ -752,7 +752,7 @@
    "outcome": "verified",
    "reason": "status 401 is neither 404 nor 405: the route is served by the resident version",
    "status": 401,
-   "url": "http://127.0.0.1:42741/v1/search"
+   "url": "http://127.0.0.1:40323/v1/search"
   }
  ],
  "producer": {
@@ -768,13 +768,13 @@
  ],
  "schema": "CanaryResult/v1",
  "subject": {
-  "commit": "9562b6adab6d4717e026d8927811cef46d9b2be8",
+  "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
   "evidence": {
    "path": "source-evidence.json",
-   "sha256": "695b8710f2e17bd1fe20def9d97781a233804268ddc80b693d847aa19600dd1a",
+   "sha256": "0bf3f9c7f1c2a7e7246ef9c5089e700ba696caef3eb0cbcc5b7c3bd71e088ae2",
    "source_field": "commit"
   },
   "schema": "GitCanarySubject/v1",
-  "tree": "f3b532c22460d6cc30d24e720d6b31ac8d43fbe6"
+  "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2"
  }
 }

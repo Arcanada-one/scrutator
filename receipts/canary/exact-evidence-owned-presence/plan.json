@@ -1,8 +1,8 @@
 {
   "schema": "CanaryPlan/v1",
-  "id": "exact-evidence-owned-presence-9562b6ad",
+  "id": "exact-evidence-owned-presence-637041d9",
   "environment": "task-owned-disposable-local-application",
-  "base_url": "http://127.0.0.1:42741",
+  "base_url": "http://127.0.0.1:40323",
   "openapi_path": "/openapi.json",
   "owner": "KC-SUCCESSOR task-owned no-credential presence probes",
   "read_only": false,
@@ -537,11 +537,11 @@
   ],
   "subject": {
     "schema": "GitCanarySubject/v1",
-    "commit": "9562b6adab6d4717e026d8927811cef46d9b2be8",
-    "tree": "f3b532c22460d6cc30d24e720d6b31ac8d43fbe6",
+    "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
+    "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2",
     "evidence": {
       "path": "source-evidence.json",
-      "sha256": "695b8710f2e17bd1fe20def9d97781a233804268ddc80b693d847aa19600dd1a",
+      "sha256": "0bf3f9c7f1c2a7e7246ef9c5089e700ba696caef3eb0cbcc5b7c3bd71e088ae2",
       "source_field": "commit"
     }
   }

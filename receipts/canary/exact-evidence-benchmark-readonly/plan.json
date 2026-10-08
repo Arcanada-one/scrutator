@@ -2,16 +2,16 @@
   "schema": "CanaryPlan/v1",
   "id": "exact-evidence-existing-benchmark-readonly",
   "environment": "task-owned-source-application-existing-grant-readonly-database",
-  "base_url": "http://127.0.0.1:57609",
+  "base_url": "http://127.0.0.1:48033",
   "owner": "KC-SUCCESSOR bounded source receiving verification",
   "read_only": true,
   "subject": {
     "schema": "GitCanarySubject/v1",
-    "commit": "9562b6adab6d4717e026d8927811cef46d9b2be8",
-    "tree": "f3b532c22460d6cc30d24e720d6b31ac8d43fbe6",
+    "commit": "637041d94497ab71cab625bb5da1ab19a58193a0",
+    "tree": "1c7a5f534ac35df19c721d2be1e83a3a2ab056e2",
     "evidence": {
       "path": "source-evidence.json",
-      "sha256": "46c14d445773827d7183ea1e4a3b345e3de24ef85b2cb687ec03de6a07e05b37",
+      "sha256": "7c3e42f09141b44f8dcdb5674e0d49dde5a0ac54fa8974c2e3cb6702fffa8b6c",
       "source_field": "commit"
     }
   },
