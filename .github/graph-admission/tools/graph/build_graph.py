@@ -61,9 +61,12 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import workflow_config
 import nest_bootstrap
+import python_search_path
 import schema_check  # noqa: E402  (tools/graph/schema_check.py — the validator of GRAPH-001)
+import shell_source
+import native_projection  # noqa: E402
 
-VERSION = "1.0.2"  # 1.0.2: .mts/.cts code units, .d.ts/.d.mts/.d.cts kind=type_declaration, NodeNext .mjs/.cjs/.js → TS resolution
+VERSION = "1.0.6"  # Bounded Python caller contexts remain explicitly inferred.
 BUILDER = "tools/graph/build_graph.py"
 EXTRACTORS = ["imports", "routes", "contracts", "prisma", "config", "reuse", "di", "queue", "tests",
               "http_client", "deployables", "docs", "work_items", "receipts", "rust", "python"]
@@ -97,8 +100,8 @@ RUST_USE_RE = re.compile(r"\buse\s+((?:crate|self|super)(?:::[A-Za-z_][A-Za-z0-9
                           r"|[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)*)")
 RUST_ENV_RE = re.compile(r"\b(?:std::)?env::var(?:_os)?\(\s*\"([A-Za-z_][A-Za-z0-9_]*)\"")
 RUST_SERVICE_DEPS = {"axum", "actix-web", "warp", "tonic", "hyper"}
-PY_FROM_RE = re.compile(r"(?m)^from[ \t]+(\.*)([\w.]*)[ \t]+import\b")
-PY_IMPORT_RE = re.compile(r"(?m)^import[ \t]+([\w.]+)")
+PY_FROM_RE = re.compile(r"(?m)^[ \t]*from[ \t]+(\.*)([\w.]*)[ \t]+import\b")
+PY_IMPORT_RE = re.compile(r"(?m)^[ \t]*import[ \t]+([\w.]+)")
 PY_ENV_RE = re.compile(r"""os\.environ\[\s*['"]([A-Z_][A-Z0-9_]*)['"]\s*\]"""
                         r"""|os\.environ\.get\(\s*['"]([A-Z_][A-Z0-9_]*)['"]"""
                         r"""|os\.getenv\(\s*['"]([A-Z_][A-Z0-9_]*)['"]""")
@@ -430,6 +433,9 @@ def load_tree_git(repo: Path, rev: str, subdir: str) -> Tree:
         pos += size + 1
     meta = {"source_repo": source_repo_name(repo), "source_commit": commit, "source_tree": "git-objects", "dirty": False,
             "subdir": prefix.rstrip("/") or None, "rev": rev}
+    modes = git(["ls-tree", "-r", "-z", commit], repo)
+    meta["file_modes"] = {p[len(prefix):]: info.split()[0] for entry in modes.split("\0") if "\t" in entry
+                          for info, p in [entry.split("\t", 1)] if p.startswith(prefix)}
     return Tree(files, meta)
 
 
@@ -449,6 +455,8 @@ def load_tree_worktree(root: Path) -> Tree:
     dirty = bool(git(["status", "--porcelain", "--", "."], root).strip())
     meta = {"source_repo": source_repo_name(top), "source_commit": commit, "source_tree": "worktree", "dirty": dirty,
             "subdir": rel or None, "rev": "HEAD"}
+    meta["file_modes"] = {p: "100755" if (root / p).stat().st_mode & 0o111 else "100644"
+                          for p in files if not (root / p).is_symlink()}
     return Tree(files, meta)
 
 
@@ -601,7 +609,19 @@ class Builder:
     # ---- always: file nodes, tsconfig/package maps ----------------------------------------------------------
     def base(self):
         t = self.tree
+        for path, kind in native_projection.graph_inputs(t):
+            self.g.node(f"code_unit:{path}", "code_unit", sha_bytes(t.files[path]), path=path, kind=kind)
+            if kind == "native_patch_manifest":
+                payload = str(Path(path).parent / Path(native_projection.INPUTS[2]).name)
+                if payload in t.files:
+                    self.g.edge(f"code_unit:{path}", "imports", f"code_unit:{payload}",
+                                "deterministic", via="BenchNativePatchset/v1-physical-sibling")
         for p in t.paths:
+            shell_kind = shell_source.kind(p, t.files[p], t.meta.get("file_modes", {}).get(p))
+            if shell_kind:
+                analysis = shell_source.analyse(p, t.files[p], t.paths)
+                self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p, kind=shell_kind,
+                            attrs={"shell_unknown": analysis["unknown"], "shell_test_inventory": analysis["tests"]})
             if workflow_config.is_workflow(p):
                 self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]),
                             path=p, kind="workflow_configuration")
@@ -611,6 +631,43 @@ class Builder:
                 self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p)
             if p.endswith(CODE_EXT):
                 self.ts[p] = TsFile(p, t.text(p))
+        # Literal source/load/call edges exist in each revision, including reverse CI callers.
+        # Dynamic references are named at the source node, never guessed into deterministic edges.
+        for p in t.paths:
+            is_shell = shell_source.kind(p, t.files[p], t.meta.get("file_modes", {}).get(p))
+            if not is_shell and not workflow_config.is_workflow(p):
+                continue
+            if workflow_config.is_workflow(p):
+                analysis = shell_source.workflow(p, t.files[p], t.paths)
+                self.g.nodes[f"code_unit:{p}"]["attrs"] = {"shell_unknown": analysis["unknown"]}
+                if analysis["unknown"]:
+                    # An unresolved cwd/dynamic command may target any Bash/Bats
+                    # file. Retain callers as inferred, never silently omit them.
+                    for target in t.paths:
+                        if shell_source.kind(target, t.files[target], t.meta.get("file_modes", {}).get(target)):
+                            self.g.edge(f"code_unit:{p}", "calls", f"code_unit:{target}",
+                                        "inferred", via="unresolved-workflow-shell-closure",
+                                        inferred_by="bounded-workflow-unknown-shell-candidate")
+            else:
+                analysis = shell_source.analyse(p, t.files[p], t.paths)
+            for ref in analysis["references"]:
+                target = ref["path"]
+                if f"code_unit:{target}" not in self.g.nodes and ref["type"] == "imports":
+                    loaded = shell_source.analyse(target, t.files[target], t.paths)
+                    self.g.node(f"code_unit:{target}", "code_unit", sha_bytes(t.files[target]), path=target,
+                                kind="bash_source", attrs={"shell_unknown": loaded["unknown"] +
+                                    ["loaded helper dialect/recursive closure requires explicit source attribution"],
+                                    "shell_test_inventory": loaded["tests"]})
+                self.g.edge(f"code_unit:{p}", ref["type"], f"code_unit:{ref['path']}", ref["provenance"],
+                            via="literal-shell-reference", symbol=str(ref["line"]),
+                            **({"inferred_by": "bounded-shell-unknown-cwd-candidate"}
+                               if ref["provenance"] == "inferred" else {}))
+            if workflow_config.is_workflow(p):
+                for line in t.text(p).splitlines():
+                    m = re.fullmatch(r"\s*(?:-\s*)?uses:\s*['\"]?(\./\.github/workflows/[^'\" #]+)['\"]?\s*(?:#.*)?", line)
+                    if m and m[1][2:] in t.files:
+                        self.g.edge(f"code_unit:{p}", "calls", f"code_unit:{m[1][2:]}",
+                                    "deterministic", via="literal-local-workflow")
         for p in t.paths:
             if p.endswith("tsconfig.json") or re.search(r"(^|/)tsconfig\.[\w.-]+\.json$", p):
                 try:
@@ -1079,7 +1136,7 @@ class Builder:
 
     def x_python(self):
         """AUP-GRAPH-009: pyproject.toml/setup.py (tomllib for pyproject) → deployable_unit; absolute imports matched
-        against every discovered src root, relative imports resolved from the importing file's directory;
+        against bounded explicit per-file search roots followed by discovered src roots, relative imports resolved from the importing file's directory;
         os.environ/os.getenv → config_key; `@app.get(...)`-style decorators → route (same node forms as the TS
         stack). Star imports, importlib-dynamic imports and bare `from . import x` (no module name to anchor a
         file) are not resolved — recorded in limitations."""
@@ -1118,12 +1175,17 @@ class Builder:
             py_roots.add(norm_path((d + "/" if d else "") + "src"))
         py_roots_sorted = sorted(py_roots, key=len, reverse=True)
 
-        def resolve_absolute(module: str) -> str | None:
+        def resolve_absolute(module: str, local_roots: list[str] | None = ()) -> str | None:
+            if local_roots is None:
+                return None
             rel = module.replace(".", "/")
-            for root in py_roots_sorted:
+            for root in list(local_roots) + py_roots_sorted:
                 target = norm_path((root + "/" if root else "") + rel)
-                for cand in (target + ".py", target + "/__init__.py"):
+                for cand in (target + "/__init__.py", target + ".py"):
                     if t.exists(cand):
+                        # Explicit Path.resolve claims cannot treat a Git symlink as regular source.
+                        if local_roots and t.meta.get("file_modes", {}).get(cand) == "120000":
+                            return None
                         return cand
             return None
 
@@ -1134,7 +1196,7 @@ class Builder:
             for _ in range(dots - 1):
                 d = os.path.dirname(d)
             target = norm_path((d + "/" if d else "") + module.replace(".", "/"))
-            for cand in (target + ".py", target + "/__init__.py"):
+            for cand in (target + "/__init__.py", target + ".py"):
                 if t.exists(cand):
                     return cand
             return None
@@ -1155,6 +1217,9 @@ class Builder:
         resolved_of: dict[str, list[str]] = {}
         for p in py_files:
             code, literals = scan_python(t.text(p))
+            local_by_line, path_limitations = python_search_path.import_roots(t.text(p), p)
+            self.limitations.extend(path_limitations)
+            roots_for = lambda m: local_by_line.get(code.count("\n", 0, m.start()) + 1, [])
             # A construct QUOTED inside a string is an example, not a declaration. The guard is on the
             # match start, so the decorator's own path argument and the key of an `os.environ[...]`
             # read — both of which are literals themselves — stay readable. See scan_python.
@@ -1164,7 +1229,7 @@ class Builder:
                 if not source(m):
                     continue
                 dots, module = m.group(1), m.group(2)
-                r = resolve_relative(p, len(dots), module) if dots else (resolve_absolute(module) if module else None)
+                r = resolve_relative(p, len(dots), module) if dots else (resolve_absolute(module, roots_for(m)) if module else None)
                 if r and r != p and f"code_unit:{r}" in self.g.nodes:
                     self.g.edge(f"code_unit:{p}", "imports", f"code_unit:{r}", "deterministic",
                                 via="python-relative-import" if dots else "python-absolute-import")
@@ -1172,7 +1237,7 @@ class Builder:
             for m in PY_IMPORT_RE.finditer(code):
                 if not source(m):
                     continue
-                r = resolve_absolute(m.group(1))
+                r = resolve_absolute(m.group(1), roots_for(m))
                 if r and r != p and f"code_unit:{r}" in self.g.nodes:
                     self.g.edge(f"code_unit:{p}", "imports", f"code_unit:{r}", "deterministic", via="python-import")
                     targets.append(r)
@@ -1189,6 +1254,17 @@ class Builder:
                 rid = f"route:{m.group(1).upper()} {m.group(2)}"
                 self.g.node(rid, "route", sha_bytes(t.files[p]), path=p, kind="fastapi")
                 self.g.edge(f"code_unit:{p}", "provides_route", rid, "deterministic", via="fastapi-decorator")
+        contextual, context_limitations = python_search_path.contextual_imports(
+            {p: t.text(p) for p in py_files}, t.meta.get("file_modes", {}), py_roots_sorted)
+        self.limitations.extend(context_limitations)
+        for row in contextual:
+            frm, to = f"code_unit:{row['from']}", f"code_unit:{row['to']}"
+            if frm in self.g.nodes and to in self.g.nodes:
+                self.g.edge(frm, "imports", to, "inferred", via="python-caller-context",
+                            inferred_by="bounded-python-caller-context", site=row["contexts"])
+                if is_test(row["from"]) and not is_test(row["to"]):
+                    self.g.edge(frm, "verifies", to, "inferred", via="python-caller-context-test-import",
+                                inferred_by="bounded-python-caller-context", site=row["contexts"])
         for p in py_files:
             if not is_test(p):
                 continue
@@ -1196,8 +1272,9 @@ class Builder:
                 if not is_test(r):
                     self.g.edge(f"code_unit:{p}", "verifies", f"code_unit:{r}", "deterministic", via="python-test-import")
         if pkgs or py_files:
-            self.limitations.append("python: absolute imports are matched against every discovered src root (no per-file "
-                                     "sys.path modelling); star imports, importlib-dynamic imports and bare `from . import x` "
+            self.limitations.append("python: absolute imports use bounded explicit per-file insertions and discovered src roots (no "
+                                     "dynamic sys.path modelling; explicit bounded per-file Path(__file__) insertions are supported); "
+                                     "star imports, importlib-dynamic imports and bare `from . import x` "
                                      "are not resolved")
 
     def x_config(self):
@@ -1501,6 +1578,7 @@ class Builder:
         for p in self.tree.paths:
             ext = os.path.splitext(p)[1] or "(none)"
             if not (p.endswith(CODE_EXT) or p.endswith(RUST_EXT) or p.endswith(PY_EXT)
+                    or shell_source.kind(p, self.tree.files[p], self.tree.meta.get("file_modes", {}).get(p))
                     or p.endswith((".prisma", ".md", ".markdown", ".json", ".yaml", ".yml", ".toml"))):
                 uncovered[ext] = uncovered.get(ext, 0) + 1
         limitations = sorted(set(self.limitations))
@@ -1534,7 +1612,7 @@ class Builder:
                            "work_item_pattern": self.work_item_pattern, "parser": "regex-ast-lite", "typescript_compiler": False},
             "node_count": len(nodes),
             "edge_count": len(edges),
-            "language_coverage": ["typescript", "javascript", "prisma", "markdown", "json-receipts", "rust", "python"],
+            "language_coverage": ["typescript", "javascript", "prisma", "markdown", "json-receipts", "rust", "python", "bash", "bats"],
             "limitations": limitations,
             "stats": {"files": len(self.tree.paths), "ts_files": len(self.ts), "nodes_by_type": by_node, "edges_by_type_provenance": by_edge,
                       "dropped_dangling_edges": len(self.g.dropped_dangling), "unresolved_relative_imports": self.unresolved_imports,

@@ -212,7 +212,20 @@ class Repo:
         return p.read_bytes() if p.is_file() else None
 
     def read_at(self, rev: str, rels: list[str]) -> dict[str, bytes | None]:
-        spec = "".join(f"{rev}:{self.prefix}{r}\n" for r in rels).encode()
+        # Graph paths may spell the scoped manifest as ./package.json. Git's
+        # object-path lookup does not normalize that spelling; preserve caller
+        # keys while resolving each name inside the requested repository scope.
+        normalized = []
+        for rel in rels:
+            if (not isinstance(rel, str) or not rel or rel.startswith("/")
+                    or "\\" in rel or ":" in rel or any(ord(c) < 32 or ord(c) == 127 for c in rel)
+                    or ".." in rel.split("/")):
+                raise Refusal("SOURCE_PATH_INVALID", "source path must remain relative to the requested scope")
+            path = "/".join(part for part in rel.split("/") if part not in ("", "."))
+            if not path:
+                raise Refusal("SOURCE_PATH_INVALID", "source path must name a file inside the requested scope")
+            normalized.append(path)
+        spec = "".join(f"{rev}:{self.prefix}{r}\n" for r in normalized).encode()
         out = subprocess.run(["git", "cat-file", "--batch"], cwd=str(self.top), input=spec, check=True,
                              capture_output=True).stdout
         res, pos = {}, 0
@@ -292,7 +305,7 @@ def classify_file(path: str, idx: GraphIndex | None) -> str:
         return "receipt"
     if ext == ".prisma" or re.search(r"(^|/)prisma/migrations/.*\.sql$", path):
         return "data_model"
-    if TEST_RE.search(path) and (ext in CODE_EXTS or ext == ".json"):
+    if ext == ".bats" or TEST_RE.search(path) and (ext in CODE_EXTS or ext in (".json", ".py", ".sh", ".bash")):
         return "test"
     if idx is not None:
         types = {idx.nodes[i]["type"] for i in idx.by_path.get(path, [])}
@@ -302,7 +315,8 @@ def classify_file(path: str, idx: GraphIndex | None) -> str:
             return "route"
     if ext in DOC_EXTS or path.startswith("docs/") or "/docs/" in path:
         return "doc"
-    if ext in CODE_EXTS:
+    if ext in CODE_EXTS or ext in (".sh", ".bash") or (idx is not None and any(
+            idx.nodes[i].get("kind") == "bash_source" for i in idx.by_path.get(path, []))):
         return "code"
     if ext in CONFIG_EXTS or base.startswith(".env") or base == "Dockerfile" or path.startswith(".github/"):
         return "config"
