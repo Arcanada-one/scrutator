@@ -41,7 +41,16 @@ class Settings(BaseSettings):
     # Dedicated raw-only operation bound; legacy ordinary ingest behavior stays separate.
     evidence_population_max_bytes: int = Field(default=262144, gt=0, le=1048576, strict=True)
 
-    @field_validator("evidence_population_max_bytes", mode="before")
+    # Producer contract for narrow legacy-preamble verification; never search for a match.
+    evidence_producer_max_tokens: int = Field(default=512, gt=0, le=1024, strict=True)
+    evidence_producer_overlap_tokens: int = Field(default=50, ge=0, le=1024, strict=True)
+
+    @field_validator(
+        "evidence_population_max_bytes",
+        "evidence_producer_max_tokens",
+        "evidence_producer_overlap_tokens",
+        mode="before",
+    )
     @classmethod
     def parse_population_byte_bound(cls, value):
         # Settings env values are strings. Accept decimal text before strict integer

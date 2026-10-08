@@ -79,6 +79,9 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
 
     first = rows[0]  # canonically chunk_index = 0 after ordering
     section = first["metadata"].get("section") or {}
+    if not section and settings.evidence_exact_enabled_for(first["namespace"]):
+        # The preamble carries no stamp. Read an existing sibling witness, never mint one.
+        section = next((row["metadata"].get("section") for row in rows if row["metadata"].get("section")), {})
     source_id = section.get("doc_id", "")
     # ARAS-0055: READ the ingest-stamped injection signal (server-computed at index time; the doc
     # body can never forge it — it only lands in `content`). Absent/legacy stamp ⇒ zero signal.
@@ -133,7 +136,6 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
             if (
                 evidence_row is not None
                 and evidence_row[1] == content_hash
-                and all((row["metadata"].get("section") or {}).get("doc_content_hash") == content_hash for row in rows)
                 and isinstance(evidence_row[0], str)
                 and content_hash == "sha256:" + hashlib.sha256(evidence_row[0].encode("utf-8")).hexdigest()
             ):
