@@ -1,0 +1,4187 @@
+{
+  "schema": "ExactSpanClassificationPolicy/v1",
+  "status": "candidate_not_admitted_not_enabled",
+  "owner": "existing MUNERAL author; existing VERIFIER negative controls; SECURITY source re-review; Root native admission",
+  "historical_scan_sha256": "4f2292d88270171765a6dd445f406ecb32a4d33cdc047c7445c6e1cf01107819",
+  "rules_unchanged": true,
+  "entries": [
+    {
+      "task_id": "024d9929-4419-4be6-bea6-7dd40b4b77a1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d5810a68242e2f07cea631fb998a2daa380a5238ff31a8d2bb3ed3047fd37673",
+      "current_field_sha256": "cd1c8e4235b49caea9ba6a52457cb7cfdd63a2dd856394638a9b0448f48f3443",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[61].expected_output",
+        "$.nodes[61].verification.evidence_required[0]",
+        "$.edges[233].required_artifact"
+      ],
+      "registration_object_index": 71,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[61].expected_output",
+          "$.nodes[61].verification.evidence_required[0]",
+          "$.edges[233].required_artifact"
+        ],
+        "span_sha256": "d5810a68242e2f07cea631fb998a2daa380a5238ff31a8d2bb3ed3047fd37673"
+      }
+    },
+    {
+      "task_id": "024d9929-4419-4be6-bea6-7dd40b4b77a1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ef0c9f814be31674bd7aa34830b86aa53b5316906ccd62eb080fd6e783248639",
+      "current_field_sha256": "cd1c8e4235b49caea9ba6a52457cb7cfdd63a2dd856394638a9b0448f48f3443",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[61].id",
+        "$.edges[93].to",
+        "$.edges[189].to",
+        "$.edges[190].to",
+        "$.edges[191].to",
+        "$.edges[192].to",
+        "$.edges[193].to",
+        "$.edges[194].to",
+        "$.edges[195].to",
+        "$.edges[196].to",
+        "$.edges[197].to",
+        "$.edges[198].to",
+        "$.edges[199].to",
+        "$.edges[200].to",
+        "$.edges[201].to",
+        "$.edges[202].to",
+        "$.edges[203].to",
+        "$.edges[204].to",
+        "$.edges[205].to",
+        "$.edges[206].to",
+        "$.edges[207].to",
+        "$.edges[208].to",
+        "$.edges[209].to",
+        "$.edges[210].to",
+        "$.edges[211].to",
+        "$.edges[212].to",
+        "$.edges[213].to",
+        "$.edges[214].to",
+        "$.edges[215].to",
+        "$.edges[216].to",
+        "$.edges[217].to",
+        "$.edges[218].to",
+        "$.edges[219].to",
+        "$.edges[233].from",
+        "$.containment[61].to",
+        "$.topological_waves[3][4]",
+        "$.source_dispositions[56].derived_nodes[0]"
+      ],
+      "registration_object_index": 71,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[61].id",
+          "$.edges[93].to",
+          "$.edges[189].to",
+          "$.edges[190].to",
+          "$.edges[191].to",
+          "$.edges[192].to",
+          "$.edges[193].to",
+          "$.edges[194].to",
+          "$.edges[195].to",
+          "$.edges[196].to",
+          "$.edges[197].to",
+          "$.edges[198].to",
+          "$.edges[199].to",
+          "$.edges[200].to",
+          "$.edges[201].to",
+          "$.edges[202].to",
+          "$.edges[203].to",
+          "$.edges[204].to",
+          "$.edges[205].to",
+          "$.edges[206].to",
+          "$.edges[207].to",
+          "$.edges[208].to",
+          "$.edges[209].to",
+          "$.edges[210].to",
+          "$.edges[211].to",
+          "$.edges[212].to",
+          "$.edges[213].to",
+          "$.edges[214].to",
+          "$.edges[215].to",
+          "$.edges[216].to",
+          "$.edges[217].to",
+          "$.edges[218].to",
+          "$.edges[219].to",
+          "$.edges[233].from",
+          "$.containment[61].to",
+          "$.topological_waves[3][4]",
+          "$.source_dispositions[56].derived_nodes[0]"
+        ],
+        "span_sha256": "ef0c9f814be31674bd7aa34830b86aa53b5316906ccd62eb080fd6e783248639"
+      }
+    },
+    {
+      "task_id": "059cbb90-60eb-4a87-ba17-51a61d9b57a2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "76280df49d4fcdee593936b11884772138b8876a4774686d237c75b58f782f0e",
+      "current_field_sha256": "edd5c6a866a3e41339ee8ccbc4a631df35161ccfd50ccd7f8d3a81ca58f7d726",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[113].expected_output",
+        "$.nodes[113].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 123,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[113].expected_output",
+          "$.nodes[113].verification.evidence_required[0]"
+        ],
+        "span_sha256": "76280df49d4fcdee593936b11884772138b8876a4774686d237c75b58f782f0e"
+      }
+    },
+    {
+      "task_id": "074c8254-ad6d-4285-ad8e-f37debeca571",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ab0e21ebc2a123bc35feba693fc488faff185de4a938cd08e909631f6e0d1a61",
+      "current_field_sha256": "9a677b67a8ab2521e5a7f38c2ffc331aecd3b7f3050ecbc81206c900953a3af9",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[87].expected_output",
+        "$.nodes[87].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 97,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[87].expected_output",
+          "$.nodes[87].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ab0e21ebc2a123bc35feba693fc488faff185de4a938cd08e909631f6e0d1a61"
+      }
+    },
+    {
+      "task_id": "099c6693-d423-497d-9b89-7d2225cdc49d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "6228c304af11d0ff191954f9225b292b9be150ab5ab0d952cf6bde245f15d737",
+      "current_field_sha256": "986c1bf90758c56c169065277d80b18e29883fc7ff0644cbd4701e9c1635d921",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[64].expected_output",
+        "$.nodes[64].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 74,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[64].expected_output",
+          "$.nodes[64].verification.evidence_required[0]"
+        ],
+        "span_sha256": "6228c304af11d0ff191954f9225b292b9be150ab5ab0d952cf6bde245f15d737"
+      }
+    },
+    {
+      "task_id": "099c6693-d423-497d-9b89-7d2225cdc49d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "91d0376850e33f0206494e9cc21c9bee47775a8133068e0c398dd73e74f45832",
+      "current_field_sha256": "986c1bf90758c56c169065277d80b18e29883fc7ff0644cbd4701e9c1635d921",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[64].id",
+        "$.edges[96].to",
+        "$.containment[64].to",
+        "$.topological_waves[2][90]",
+        "$.source_dispositions[59].derived_nodes[0]"
+      ],
+      "registration_object_index": 74,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[64].id",
+          "$.edges[96].to",
+          "$.containment[64].to",
+          "$.topological_waves[2][90]",
+          "$.source_dispositions[59].derived_nodes[0]"
+        ],
+        "span_sha256": "91d0376850e33f0206494e9cc21c9bee47775a8133068e0c398dd73e74f45832"
+      }
+    },
+    {
+      "task_id": "0b05f348-c724-4ea7-b8f6-35e2a84872d2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d4734b48f07b2b82051eee0f2532191405defa576675eb4ce0664a968e03e3ec",
+      "current_field_sha256": "ddcc9001e5e076293eeffa1fbe222790bf97ec95623ac8a28fcc5f048a5e3f9a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[36].expected_output",
+        "$.nodes[36].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 46,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[36].expected_output",
+          "$.nodes[36].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d4734b48f07b2b82051eee0f2532191405defa576675eb4ce0664a968e03e3ec"
+      }
+    },
+    {
+      "task_id": "0b9338a1-c625-41fe-94b4-da6de94b7c25",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a576ace5e969d561473b0473f8dec90c2d7b9ea2e526c9a03b0937d9c4a2ca5f",
+      "current_field_sha256": "7b3c15d6f899ccdf167fc077e2fe09a44c73cecabd735f5fa5ec5e12bfa57740",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[116].expected_output",
+        "$.nodes[116].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 126,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[116].expected_output",
+          "$.nodes[116].verification.evidence_required[0]"
+        ],
+        "span_sha256": "a576ace5e969d561473b0473f8dec90c2d7b9ea2e526c9a03b0937d9c4a2ca5f"
+      }
+    },
+    {
+      "task_id": "0c571729-0ec7-40ec-88fe-9e8e3fc07c85",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "bf6183bf90c8103f3771b34631e85a599d563472679dd23e4ffd0b53f8076b68",
+      "current_field_sha256": "5bfff47f32c2568d111d9888da5b44a724f735d88558299d949c6a0437d27cbe",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[153].expected_output",
+        "$.nodes[153].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 163,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[153].expected_output",
+          "$.nodes[153].verification.evidence_required[0]"
+        ],
+        "span_sha256": "bf6183bf90c8103f3771b34631e85a599d563472679dd23e4ffd0b53f8076b68"
+      }
+    },
+    {
+      "task_id": "0c571729-0ec7-40ec-88fe-9e8e3fc07c85",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ea8c23d079aa86ebd45b0db85cc12c1709acc489fc6a8ad5e59618e75771b272",
+      "current_field_sha256": "5bfff47f32c2568d111d9888da5b44a724f735d88558299d949c6a0437d27cbe",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[153].id",
+        "$.edges[185].to",
+        "$.edges[222].from",
+        "$.containment[153].to",
+        "$.topological_waves[2][37]",
+        "$.source_dispositions[148].derived_nodes[0]"
+      ],
+      "registration_object_index": 163,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[153].id",
+          "$.edges[185].to",
+          "$.edges[222].from",
+          "$.containment[153].to",
+          "$.topological_waves[2][37]",
+          "$.source_dispositions[148].derived_nodes[0]"
+        ],
+        "span_sha256": "ea8c23d079aa86ebd45b0db85cc12c1709acc489fc6a8ad5e59618e75771b272"
+      }
+    },
+    {
+      "task_id": "0ecd04aa-b41e-421b-a75a-935807431639",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "1c5cc7fef22303a6a615ef1cc591aef15709929b6744d51246b3953f11acfa46",
+      "current_field_sha256": "b0c9c744215dfaf373b1efd92ef59d1553f5b7b23eb39c7786e7c25a1b32f2e4",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[80].expected_output",
+        "$.nodes[80].verification.evidence_required[0]",
+        "$.edges[230].required_artifact"
+      ],
+      "registration_object_index": 90,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[80].expected_output",
+          "$.nodes[80].verification.evidence_required[0]",
+          "$.edges[230].required_artifact"
+        ],
+        "span_sha256": "1c5cc7fef22303a6a615ef1cc591aef15709929b6744d51246b3953f11acfa46"
+      }
+    },
+    {
+      "task_id": "0ecd04aa-b41e-421b-a75a-935807431639",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "5e3930af9d8529cff32dfa57df054f12b752130f3ae7723a878bf95d8bc173f1",
+      "current_field_sha256": "b0c9c744215dfaf373b1efd92ef59d1553f5b7b23eb39c7786e7c25a1b32f2e4",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[80].id",
+        "$.edges[112].to",
+        "$.edges[230].from",
+        "$.containment[80].to",
+        "$.topological_waves[2][101]",
+        "$.source_dispositions[75].derived_nodes[0]"
+      ],
+      "registration_object_index": 90,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[80].id",
+          "$.edges[112].to",
+          "$.edges[230].from",
+          "$.containment[80].to",
+          "$.topological_waves[2][101]",
+          "$.source_dispositions[75].derived_nodes[0]"
+        ],
+        "span_sha256": "5e3930af9d8529cff32dfa57df054f12b752130f3ae7723a878bf95d8bc173f1"
+      }
+    },
+    {
+      "task_id": "11d8820b-b475-4242-857c-59d4e8090f60",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "0f80cd5c83388f61ddd6b346692d251873b01fb38c780045123c8f44d9195b45",
+      "current_field_sha256": "2e4ea923c9dfd9e3732297497ae94d6646a9abd511739b14306d370fcd989757",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[39].expected_output",
+        "$.nodes[39].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 49,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[39].expected_output",
+          "$.nodes[39].verification.evidence_required[0]"
+        ],
+        "span_sha256": "0f80cd5c83388f61ddd6b346692d251873b01fb38c780045123c8f44d9195b45"
+      }
+    },
+    {
+      "task_id": "13b2d5fd-bee2-4704-bc3e-2ba84d0267db",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "5beb5c8a320fec5572bda563319d71345bad503531e9c568e005066a3ca29568",
+      "current_field_sha256": "93d0cc5083887c7272e31862d30f805a17ddc4483459e039e54debbc836e4edd",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[49].expected_output",
+        "$.nodes[49].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 59,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[49].expected_output",
+          "$.nodes[49].verification.evidence_required[0]"
+        ],
+        "span_sha256": "5beb5c8a320fec5572bda563319d71345bad503531e9c568e005066a3ca29568"
+      }
+    },
+    {
+      "task_id": "15062117-27a3-4e07-a0f5-344de6cdeca1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "3e153cd6adc85d6949e837f9a277919aa9384053666b9ee7173b0846384699a5",
+      "current_field_sha256": "0ab8c1badad3e14e709f3ab6bd84e51cb941041225add17de9aedd446a0c2138",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[109].expected_output",
+        "$.nodes[109].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 119,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[109].expected_output",
+          "$.nodes[109].verification.evidence_required[0]"
+        ],
+        "span_sha256": "3e153cd6adc85d6949e837f9a277919aa9384053666b9ee7173b0846384699a5"
+      }
+    },
+    {
+      "task_id": "15062117-27a3-4e07-a0f5-344de6cdeca1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a84e39cb5b2a91d0de581724a98f4e3ad4598532f86015769a0837dbda6890ca",
+      "current_field_sha256": "0ab8c1badad3e14e709f3ab6bd84e51cb941041225add17de9aedd446a0c2138",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[109].id",
+        "$.edges[141].to",
+        "$.containment[109].to",
+        "$.topological_waves[2][77]",
+        "$.source_dispositions[104].derived_nodes[0]"
+      ],
+      "registration_object_index": 119,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[109].id",
+          "$.edges[141].to",
+          "$.containment[109].to",
+          "$.topological_waves[2][77]",
+          "$.source_dispositions[104].derived_nodes[0]"
+        ],
+        "span_sha256": "a84e39cb5b2a91d0de581724a98f4e3ad4598532f86015769a0837dbda6890ca"
+      }
+    },
+    {
+      "task_id": "186ad106-ad21-437a-8ef5-ae56f1aeefbc",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "2205a1e8fce673e9438846b5c3072cbe02cb6a6be7596ecb7d7021449e0c5041",
+      "current_field_sha256": "743d5d6e03d4b1cbe790b51affbf574bc4ed406fdcb09c3a645fe5b5d041a41e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[33].expected_output",
+        "$.nodes[33].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 43,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[33].expected_output",
+          "$.nodes[33].verification.evidence_required[0]"
+        ],
+        "span_sha256": "2205a1e8fce673e9438846b5c3072cbe02cb6a6be7596ecb7d7021449e0c5041"
+      }
+    },
+    {
+      "task_id": "19c2f2cc-c8ce-40af-9036-ae7caeaacc55",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "6d7cc35593b8e1e755058bc4b2871d7a0baddeadaa80e538cbfaf037a139adbe",
+      "current_field_sha256": "62db581c4ac56939dd0032052eef1683bb08c9497efa64af23c8320b3d5fed68",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[152].expected_output",
+        "$.nodes[152].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 162,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[152].expected_output",
+          "$.nodes[152].verification.evidence_required[0]"
+        ],
+        "span_sha256": "6d7cc35593b8e1e755058bc4b2871d7a0baddeadaa80e538cbfaf037a139adbe"
+      }
+    },
+    {
+      "task_id": "19c2f2cc-c8ce-40af-9036-ae7caeaacc55",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "1053af923f407d44c2b471d666a8395ea562e38568fe406d4e4a7eded53eddaf",
+      "current_field_sha256": "62db581c4ac56939dd0032052eef1683bb08c9497efa64af23c8320b3d5fed68",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[152].id",
+        "$.edges[184].to",
+        "$.edges[221].from",
+        "$.containment[152].to",
+        "$.topological_waves[2][4]",
+        "$.source_dispositions[147].derived_nodes[0]"
+      ],
+      "registration_object_index": 162,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[152].id",
+          "$.edges[184].to",
+          "$.edges[221].from",
+          "$.containment[152].to",
+          "$.topological_waves[2][4]",
+          "$.source_dispositions[147].derived_nodes[0]"
+        ],
+        "span_sha256": "1053af923f407d44c2b471d666a8395ea562e38568fe406d4e4a7eded53eddaf"
+      }
+    },
+    {
+      "task_id": "1f8bdf44-3085-4422-abb1-0e090dc00b57",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "024a3fdac2ad6345802029a050c0c285886d402d24f95b885570f2d9db6eea77",
+      "current_field_sha256": "6603b69091317b2bcba0a83a214389fad1aa02e624a12724a3edf202d346742e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[78].expected_output",
+        "$.nodes[78].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 88,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[78].expected_output",
+          "$.nodes[78].verification.evidence_required[0]"
+        ],
+        "span_sha256": "024a3fdac2ad6345802029a050c0c285886d402d24f95b885570f2d9db6eea77"
+      }
+    },
+    {
+      "task_id": "1f9e56af-f9b9-4320-95b7-b18346f8b93f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "53073ba0d36fd546a184a3519b4afdf7c796d70131704fe979578df6fafc2772",
+      "current_field_sha256": "17cb64c195e75a3f7feee0d8eb90c4b499b00a80f57d4e2059f1e547dcea9aee",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[103].expected_output",
+        "$.nodes[103].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 113,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[103].expected_output",
+          "$.nodes[103].verification.evidence_required[0]"
+        ],
+        "span_sha256": "53073ba0d36fd546a184a3519b4afdf7c796d70131704fe979578df6fafc2772"
+      }
+    },
+    {
+      "task_id": "1f9e56af-f9b9-4320-95b7-b18346f8b93f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "98487165ede47e557add033a10f72ec6532d869ea48df019f9caaac18f439722",
+      "current_field_sha256": "17cb64c195e75a3f7feee0d8eb90c4b499b00a80f57d4e2059f1e547dcea9aee",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[103].id",
+        "$.edges[135].to",
+        "$.containment[103].to",
+        "$.topological_waves[2][50]",
+        "$.source_dispositions[98].derived_nodes[0]"
+      ],
+      "registration_object_index": 113,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[103].id",
+          "$.edges[135].to",
+          "$.containment[103].to",
+          "$.topological_waves[2][50]",
+          "$.source_dispositions[98].derived_nodes[0]"
+        ],
+        "span_sha256": "98487165ede47e557add033a10f72ec6532d869ea48df019f9caaac18f439722"
+      }
+    },
+    {
+      "task_id": "29cfe386-6e11-49c0-836d-f50e101517bc",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "03bd96f28fdd0bd8247d6790c8f4898bbfc512306573a276fa7e65e19140392f",
+      "current_field_sha256": "852308be403843ee9374001fd54c470895a2c0df44737952e2c29f5e0c769bae",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[154].expected_output",
+        "$.nodes[154].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 164,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[154].expected_output",
+          "$.nodes[154].verification.evidence_required[0]"
+        ],
+        "span_sha256": "03bd96f28fdd0bd8247d6790c8f4898bbfc512306573a276fa7e65e19140392f"
+      }
+    },
+    {
+      "task_id": "29cfe386-6e11-49c0-836d-f50e101517bc",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "1e2bd3f77f52f060eebb651d566e851cfd590cadcf1dce9f6dffa253b856ba96",
+      "current_field_sha256": "852308be403843ee9374001fd54c470895a2c0df44737952e2c29f5e0c769bae",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[154].id",
+        "$.edges[186].to",
+        "$.edges[223].from",
+        "$.containment[154].to",
+        "$.topological_waves[2][38]",
+        "$.source_dispositions[149].derived_nodes[0]"
+      ],
+      "registration_object_index": 164,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[154].id",
+          "$.edges[186].to",
+          "$.edges[223].from",
+          "$.containment[154].to",
+          "$.topological_waves[2][38]",
+          "$.source_dispositions[149].derived_nodes[0]"
+        ],
+        "span_sha256": "1e2bd3f77f52f060eebb651d566e851cfd590cadcf1dce9f6dffa253b856ba96"
+      }
+    },
+    {
+      "task_id": "2b6e4835-28d0-4d16-ae6d-0c20b66f497c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "6e5a2434e3fa1c30ff479de8d22aa4a8f045926039969cb02fb3718703394a2c",
+      "current_field_sha256": "2b0475c2f60d89d669506c9677ef4c667b53c90a77d3266622b293d3eb57135f",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[92].expected_output",
+        "$.nodes[92].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 102,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[92].expected_output",
+          "$.nodes[92].verification.evidence_required[0]"
+        ],
+        "span_sha256": "6e5a2434e3fa1c30ff479de8d22aa4a8f045926039969cb02fb3718703394a2c"
+      }
+    },
+    {
+      "task_id": "2b6e4835-28d0-4d16-ae6d-0c20b66f497c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a95eef2e111f26b047fb0e49180ef3d511a2805ac53e0ac0b64e95403076b03b",
+      "current_field_sha256": "2b0475c2f60d89d669506c9677ef4c667b53c90a77d3266622b293d3eb57135f",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[92].id",
+        "$.edges[124].to",
+        "$.containment[92].to",
+        "$.topological_waves[2][84]",
+        "$.source_dispositions[87].derived_nodes[0]"
+      ],
+      "registration_object_index": 102,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[92].id",
+          "$.edges[124].to",
+          "$.containment[92].to",
+          "$.topological_waves[2][84]",
+          "$.source_dispositions[87].derived_nodes[0]"
+        ],
+        "span_sha256": "a95eef2e111f26b047fb0e49180ef3d511a2805ac53e0ac0b64e95403076b03b"
+      }
+    },
+    {
+      "task_id": "2ddc6db1-80d0-410d-8fa9-a75d0993f7b5",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "73baa6a41283af0f399b0510904d200ab2dd310173d9be4425b7ba1a2f9f1dbb",
+      "current_field_sha256": "1b50cd72039ccc2a9230d9bb2ae257d58ed1ec600b27b0f1720745431ccbd8b6",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[114].expected_output",
+        "$.nodes[114].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 124,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[114].expected_output",
+          "$.nodes[114].verification.evidence_required[0]"
+        ],
+        "span_sha256": "73baa6a41283af0f399b0510904d200ab2dd310173d9be4425b7ba1a2f9f1dbb"
+      }
+    },
+    {
+      "task_id": "2df97329-8402-4576-943e-692f570bf26c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "7cff7a7d232fc646e4355d1248f765d2251cc34ddb7e4aba785833a85d7b1c73",
+      "current_field_sha256": "9092a2fa673db1af302925caae6bbd2e567e8ebdc25f2b81740d5dd455c4e650",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[83].expected_output",
+        "$.nodes[83].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 93,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[83].expected_output",
+          "$.nodes[83].verification.evidence_required[0]"
+        ],
+        "span_sha256": "7cff7a7d232fc646e4355d1248f765d2251cc34ddb7e4aba785833a85d7b1c73"
+      }
+    },
+    {
+      "task_id": "30093ee3-a562-4b76-8718-deb3c038665d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "f981648d7f5e6ed4dc3638802f3705f79472ef1099fc8799d1ad05e17f1b55be",
+      "current_field_sha256": "3bf0e3c54e6a146e7d7b9b83fbe9eba57ad0605a465c4f65ed26b7d4c651cd3f",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[85].expected_output",
+        "$.nodes[85].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 95,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[85].expected_output",
+          "$.nodes[85].verification.evidence_required[0]"
+        ],
+        "span_sha256": "f981648d7f5e6ed4dc3638802f3705f79472ef1099fc8799d1ad05e17f1b55be"
+      }
+    },
+    {
+      "task_id": "307a6632-3afd-457d-aa0c-ba86b73744cf",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d6ef6e295345f6e4274120b2a8abdd7d3b496046229fdb90ad1561bf626e0165",
+      "current_field_sha256": "777a9df97f60f581f34b3fe30b0348a308b244108b09de9fdca1d870a22a0657",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[58].expected_output",
+        "$.nodes[58].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 68,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[58].expected_output",
+          "$.nodes[58].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d6ef6e295345f6e4274120b2a8abdd7d3b496046229fdb90ad1561bf626e0165"
+      }
+    },
+    {
+      "task_id": "3172e3bd-421a-4d0f-8b36-2a042a914cf0",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "81a8e1b58aa60ba981930ac79bd972d25acbd2344528416fbf0a23a0e35a57a4",
+      "current_field_sha256": "13ac35e1b4b722c12a50270126d3801107a1a387ae67c0567a627312d983bb3d",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[59].expected_output",
+        "$.nodes[59].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 69,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[59].expected_output",
+          "$.nodes[59].verification.evidence_required[0]"
+        ],
+        "span_sha256": "81a8e1b58aa60ba981930ac79bd972d25acbd2344528416fbf0a23a0e35a57a4"
+      }
+    },
+    {
+      "task_id": "340277b5-b4fe-479a-a429-e879a2bebe60",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "da1f88de42a9fcc2cf86e5195eed5fc9254d0f7dc319e22b868fa18333d93b89",
+      "current_field_sha256": "b4e3524b7a8ad7523a847c0c44c0016f289652e8c80211f25a309637c19ca97a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[38].expected_output",
+        "$.nodes[38].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 48,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[38].expected_output",
+          "$.nodes[38].verification.evidence_required[0]"
+        ],
+        "span_sha256": "da1f88de42a9fcc2cf86e5195eed5fc9254d0f7dc319e22b868fa18333d93b89"
+      }
+    },
+    {
+      "task_id": "3771e2e1-79bb-4119-8e03-512d2ec84e0c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "1aade7ee3b2447c6c1c2ccbbc57ae693b3aafaba970342982e968521eed21e32",
+      "current_field_sha256": "410258f768d017ab2461bec39d6e122c06eec4932e8bd07e319627b8f352241c",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[106].expected_output",
+        "$.nodes[106].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 116,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[106].expected_output",
+          "$.nodes[106].verification.evidence_required[0]"
+        ],
+        "span_sha256": "1aade7ee3b2447c6c1c2ccbbc57ae693b3aafaba970342982e968521eed21e32"
+      }
+    },
+    {
+      "task_id": "3a3c196b-f3eb-4ef4-a1f1-e152b9c16ab4",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "2b98f2f82b144e3d7fb91ee8731572a4b5b9976817751f8caf812bdaa52fb1b6",
+      "current_field_sha256": "e53d47c0d63f1cee9207e35cb6a58ca26306a9463681555e3aaf8ad8b25a18f6",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[117].expected_output",
+        "$.nodes[117].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 127,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[117].expected_output",
+          "$.nodes[117].verification.evidence_required[0]"
+        ],
+        "span_sha256": "2b98f2f82b144e3d7fb91ee8731572a4b5b9976817751f8caf812bdaa52fb1b6"
+      }
+    },
+    {
+      "task_id": "3c9f366d-1b5d-46b8-a2a6-eb2da945feb3",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "28a61860ff0731b755d8a8b7ad91dd8f41f0f8fa64eac21d52f803b2a20a7fc0",
+      "current_field_sha256": "fc296234053d0581ebd682b4a9888246b3c3e7be6c2efe565a055fea6acc47cc",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[81].expected_output",
+        "$.nodes[81].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 91,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[81].expected_output",
+          "$.nodes[81].verification.evidence_required[0]"
+        ],
+        "span_sha256": "28a61860ff0731b755d8a8b7ad91dd8f41f0f8fa64eac21d52f803b2a20a7fc0"
+      }
+    },
+    {
+      "task_id": "3c9f366d-1b5d-46b8-a2a6-eb2da945feb3",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "61cbca485492c5b2a66dce97cabfecc5dfbda9499b04163ec6427e49d4d04697",
+      "current_field_sha256": "fc296234053d0581ebd682b4a9888246b3c3e7be6c2efe565a055fea6acc47cc",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[81].id",
+        "$.edges[113].to",
+        "$.containment[81].to",
+        "$.topological_waves[2][98]",
+        "$.source_dispositions[76].derived_nodes[0]"
+      ],
+      "registration_object_index": 91,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[81].id",
+          "$.edges[113].to",
+          "$.containment[81].to",
+          "$.topological_waves[2][98]",
+          "$.source_dispositions[76].derived_nodes[0]"
+        ],
+        "span_sha256": "61cbca485492c5b2a66dce97cabfecc5dfbda9499b04163ec6427e49d4d04697"
+      }
+    },
+    {
+      "task_id": "3cb6a603-e9b0-4a62-9313-de197da422ca",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e38c3b35d350cb4c1c59b6475143d94164d689f520407d8e9d5d1d6ea7664279",
+      "current_field_sha256": "f856693c1ef1c0089b4114e5733f0db15fb68a41c0c873f48921f4d257c0c057",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[77].expected_output",
+        "$.nodes[77].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 87,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[77].expected_output",
+          "$.nodes[77].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e38c3b35d350cb4c1c59b6475143d94164d689f520407d8e9d5d1d6ea7664279"
+      }
+    },
+    {
+      "task_id": "4391ef40-cae7-44f8-855f-4500cc24630d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "fe7af9dee59cdc7369c2a0a4d83501d14c6ae9e37652fe205243803c838c9ae0",
+      "current_field_sha256": "1497b3015f9a4024603eff25963314c5ba8ce1222b918d2ee7ef4c2ab84b51ef",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[105].expected_output",
+        "$.nodes[105].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 115,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[105].expected_output",
+          "$.nodes[105].verification.evidence_required[0]"
+        ],
+        "span_sha256": "fe7af9dee59cdc7369c2a0a4d83501d14c6ae9e37652fe205243803c838c9ae0"
+      }
+    },
+    {
+      "task_id": "4a07aa75-9749-44d2-89bd-0f43f1889d9b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "82c0fc7d2f9789bf84ee53ff616ebf817229004ed418198bea75b072c65cee95",
+      "current_field_sha256": "347dc9e9f23393522d085c71a0eaf88b74824b671383176d34bd11a6d71bc9ca",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[43].expected_output",
+        "$.nodes[43].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 53,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[43].expected_output",
+          "$.nodes[43].verification.evidence_required[0]"
+        ],
+        "span_sha256": "82c0fc7d2f9789bf84ee53ff616ebf817229004ed418198bea75b072c65cee95"
+      }
+    },
+    {
+      "task_id": "4e7f2c21-f9fb-4d0f-8f50-3ab0de77048e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "f8a509f3dad9955b692c1e11e312ac4bfcd9262393eba0d703c80018f41267db",
+      "current_field_sha256": "3a700886dc29c59459de3aea33454c45b3fbabfa16eb679a4d4c5df87a8098ae",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[93].expected_output",
+        "$.nodes[93].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 103,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[93].expected_output",
+          "$.nodes[93].verification.evidence_required[0]"
+        ],
+        "span_sha256": "f8a509f3dad9955b692c1e11e312ac4bfcd9262393eba0d703c80018f41267db"
+      }
+    },
+    {
+      "task_id": "4e7f2c21-f9fb-4d0f-8f50-3ab0de77048e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "db9dfcd9334ebce3faa46a94124000f9d9eaa145405fdb05bbbe9709f9a1900b",
+      "current_field_sha256": "3a700886dc29c59459de3aea33454c45b3fbabfa16eb679a4d4c5df87a8098ae",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[93].id",
+        "$.edges[125].to",
+        "$.containment[93].to",
+        "$.topological_waves[2][54]",
+        "$.source_dispositions[88].derived_nodes[0]"
+      ],
+      "registration_object_index": 103,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[93].id",
+          "$.edges[125].to",
+          "$.containment[93].to",
+          "$.topological_waves[2][54]",
+          "$.source_dispositions[88].derived_nodes[0]"
+        ],
+        "span_sha256": "db9dfcd9334ebce3faa46a94124000f9d9eaa145405fdb05bbbe9709f9a1900b"
+      }
+    },
+    {
+      "task_id": "4eccb566-b372-423d-97ce-d698a85a6550",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "9589aea1ec127db43c484b0950f2726557fb518e9084b132ba03c95e1f84803e",
+      "current_field_sha256": "28fed3c781b293215636abb3544a2a13dc444b3431a2b7a1b5ea1ef5df28f675",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[70].expected_output",
+        "$.nodes[70].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 80,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[70].expected_output",
+          "$.nodes[70].verification.evidence_required[0]"
+        ],
+        "span_sha256": "9589aea1ec127db43c484b0950f2726557fb518e9084b132ba03c95e1f84803e"
+      }
+    },
+    {
+      "task_id": "4eccb566-b372-423d-97ce-d698a85a6550",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "35c58aa193bef342cf22b98935de8f6ebeeb2e9156e72488c70d1b2cd6be586a",
+      "current_field_sha256": "28fed3c781b293215636abb3544a2a13dc444b3431a2b7a1b5ea1ef5df28f675",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[70].id",
+        "$.edges[102].to",
+        "$.containment[70].to",
+        "$.topological_waves[2][115]",
+        "$.source_dispositions[65].derived_nodes[0]"
+      ],
+      "registration_object_index": 80,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[70].id",
+          "$.edges[102].to",
+          "$.containment[70].to",
+          "$.topological_waves[2][115]",
+          "$.source_dispositions[65].derived_nodes[0]"
+        ],
+        "span_sha256": "35c58aa193bef342cf22b98935de8f6ebeeb2e9156e72488c70d1b2cd6be586a"
+      }
+    },
+    {
+      "task_id": "5018e5fe-a5ee-4c89-83bc-e7da313ba8f2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "da22009cf3ba8898b530e9b09af9777a62da6b901bcf42f30faee791573ae453",
+      "current_field_sha256": "a2cf2b4092dad1abac65aecf21a0c28ec97b673dc29ff13ae3a41f651ec8fe04",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[86].expected_output",
+        "$.nodes[86].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 96,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[86].expected_output",
+          "$.nodes[86].verification.evidence_required[0]"
+        ],
+        "span_sha256": "da22009cf3ba8898b530e9b09af9777a62da6b901bcf42f30faee791573ae453"
+      }
+    },
+    {
+      "task_id": "5018e5fe-a5ee-4c89-83bc-e7da313ba8f2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ee4aedbdd2233913f7fcd1041857f72bc76d2fae5ed52bd312c6c6df042c437e",
+      "current_field_sha256": "a2cf2b4092dad1abac65aecf21a0c28ec97b673dc29ff13ae3a41f651ec8fe04",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[86].id",
+        "$.edges[118].to",
+        "$.containment[86].to",
+        "$.topological_waves[2][103]",
+        "$.source_dispositions[81].derived_nodes[0]"
+      ],
+      "registration_object_index": 96,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[86].id",
+          "$.edges[118].to",
+          "$.containment[86].to",
+          "$.topological_waves[2][103]",
+          "$.source_dispositions[81].derived_nodes[0]"
+        ],
+        "span_sha256": "ee4aedbdd2233913f7fcd1041857f72bc76d2fae5ed52bd312c6c6df042c437e"
+      }
+    },
+    {
+      "task_id": "51fc81c3-db35-4dbb-9ef7-73c84912161b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e4596b01de9a9f26f84c95fd09b5e5f4cd762b08b1094f71d2d6f1d9d28bdd22",
+      "current_field_sha256": "9450c6fd408a73fb2aa5edc7fe3f878708ba7a36d4d377fde20e1f3d200c3702",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[54].expected_output",
+        "$.nodes[54].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 64,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[54].expected_output",
+          "$.nodes[54].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e4596b01de9a9f26f84c95fd09b5e5f4cd762b08b1094f71d2d6f1d9d28bdd22"
+      }
+    },
+    {
+      "task_id": "53b2d735-e634-4e16-aacc-878def4482c1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "130ccf99b98df5c4789e849be162f90229ef85305d0f6aa6da1335b7eddfe7ac",
+      "current_field_sha256": "601918a237b659536e21f11118df012342e9b44b641870513249cf9927f20ef1",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[69].expected_output",
+        "$.nodes[69].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 79,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[69].expected_output",
+          "$.nodes[69].verification.evidence_required[0]"
+        ],
+        "span_sha256": "130ccf99b98df5c4789e849be162f90229ef85305d0f6aa6da1335b7eddfe7ac"
+      }
+    },
+    {
+      "task_id": "53b2d735-e634-4e16-aacc-878def4482c1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a87d5f66b904af009fe1f302d649ae3e9e8afc951cfe6398e725d935d206443b",
+      "current_field_sha256": "601918a237b659536e21f11118df012342e9b44b641870513249cf9927f20ef1",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[69].id",
+        "$.edges[101].to",
+        "$.containment[69].to",
+        "$.topological_waves[2][40]",
+        "$.source_dispositions[64].derived_nodes[0]"
+      ],
+      "registration_object_index": 79,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[69].id",
+          "$.edges[101].to",
+          "$.containment[69].to",
+          "$.topological_waves[2][40]",
+          "$.source_dispositions[64].derived_nodes[0]"
+        ],
+        "span_sha256": "a87d5f66b904af009fe1f302d649ae3e9e8afc951cfe6398e725d935d206443b"
+      }
+    },
+    {
+      "task_id": "5b20aad6-f008-455b-88a8-3bf3580c1a5a",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ff07b5d162d239d0e4dc400ae086b226cbb532a3fbde99d2e3b6ea3cd712eabe",
+      "current_field_sha256": "a96e5c28995da889e2f974dd699bcc92af28d319f77f1839af1f8e8e642afe63",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[53].expected_output",
+        "$.nodes[53].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 63,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[53].expected_output",
+          "$.nodes[53].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ff07b5d162d239d0e4dc400ae086b226cbb532a3fbde99d2e3b6ea3cd712eabe"
+      }
+    },
+    {
+      "task_id": "5cb21f84-7c79-47f8-8d19-ce68c7394c2d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ce55282c4c8e89d89f326cf27266ba18a0d9822a851562a3b6a83d4bea3f4a10",
+      "current_field_sha256": "27262710f54a86b1d55ce92d16886d3e8a37376b8ea40a3da93e3138447b7cd3",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[35].expected_output",
+        "$.nodes[35].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 45,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[35].expected_output",
+          "$.nodes[35].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ce55282c4c8e89d89f326cf27266ba18a0d9822a851562a3b6a83d4bea3f4a10"
+      }
+    },
+    {
+      "task_id": "62e61055-082b-4a40-9b5b-a44f3d1be429",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "18542da8f74418dc6cffcf1f0a32dcde46a4ea30c0be151665e7c98328a300b1",
+      "current_field_sha256": "bf771551a5ee972f6c330240f6f00a5cf33a1631159594a40c30e08348b7afed",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[100].expected_output",
+        "$.nodes[100].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 110,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[100].expected_output",
+          "$.nodes[100].verification.evidence_required[0]"
+        ],
+        "span_sha256": "18542da8f74418dc6cffcf1f0a32dcde46a4ea30c0be151665e7c98328a300b1"
+      }
+    },
+    {
+      "task_id": "703d71f5-cca8-4717-a63c-c24866e74154",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "4b21830f90617026526af2f614c84c3140a4ae06e1ecabe4f11498da1dd05ad5",
+      "current_field_sha256": "13dbcf6d76a8a8d0295c775484a6a9addc760852522e9ca2a45ce60a8f370e79",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[108].expected_output",
+        "$.nodes[108].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 118,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[108].expected_output",
+          "$.nodes[108].verification.evidence_required[0]"
+        ],
+        "span_sha256": "4b21830f90617026526af2f614c84c3140a4ae06e1ecabe4f11498da1dd05ad5"
+      }
+    },
+    {
+      "task_id": "71655bb8-00bd-434a-98f7-9ed0aebe530f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e410d44c44e29503d93fc9ca809fda2f5587286ebefd1701b332ccc0e1a51c60",
+      "current_field_sha256": "b6407c30ae4a17527c692a82b423719ff29f28a9faeacfa2083fa2d753f19d67",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[47].expected_output",
+        "$.nodes[47].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 57,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[47].expected_output",
+          "$.nodes[47].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e410d44c44e29503d93fc9ca809fda2f5587286ebefd1701b332ccc0e1a51c60"
+      }
+    },
+    {
+      "task_id": "7179bef3-a4e7-42c5-8e50-6fc8de4bda69",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "46307c89430e17b21a5fbf190ca2df87fa83102200f269772a56faf5467522c5",
+      "current_field_sha256": "ef3d9111efb96bddea5025789694ae0cfb43ab177b3115fffda772ab2408d03e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[46].expected_output",
+        "$.nodes[46].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 56,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[46].expected_output",
+          "$.nodes[46].verification.evidence_required[0]"
+        ],
+        "span_sha256": "46307c89430e17b21a5fbf190ca2df87fa83102200f269772a56faf5467522c5"
+      }
+    },
+    {
+      "task_id": "72ee690f-fce7-4d72-abd9-f9af2d806f7a",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "76050ba9874c8df77934f1d140c0dc0a44c557ca381b4ba39ec76330e0e44074",
+      "current_field_sha256": "2b8a57ef2b5e8d8ea941939ace670c9a5dc1dbeae3a5c07cf497702b781ac613",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[32].expected_output",
+        "$.nodes[32].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 42,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[32].expected_output",
+          "$.nodes[32].verification.evidence_required[0]"
+        ],
+        "span_sha256": "76050ba9874c8df77934f1d140c0dc0a44c557ca381b4ba39ec76330e0e44074"
+      }
+    },
+    {
+      "task_id": "734b24d7-6a78-4814-8599-d7b7e3a9fed1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "3e35b57de69e92f4f82e4d99c93f86303a5c4d26e552d5da91bf0b5f65413ba2",
+      "current_field_sha256": "5e9c3e7b635df411f6e7b6cf8907281c52d9383e409613803d6d6af28b6af845",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[107].expected_output",
+        "$.nodes[107].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 117,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[107].expected_output",
+          "$.nodes[107].verification.evidence_required[0]"
+        ],
+        "span_sha256": "3e35b57de69e92f4f82e4d99c93f86303a5c4d26e552d5da91bf0b5f65413ba2"
+      }
+    },
+    {
+      "task_id": "755965ab-5134-4ccc-b63d-11d805f5c51d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ee00c2270c027d82236bd07d90fd9f8554b82f81a24634b0ec33da1f8788a245",
+      "current_field_sha256": "370959fd8b9fccec0b47d4c669a17cb089da07ae9c6e21373b2c1dbefc2208d7",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[75].expected_output",
+        "$.nodes[75].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 85,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[75].expected_output",
+          "$.nodes[75].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ee00c2270c027d82236bd07d90fd9f8554b82f81a24634b0ec33da1f8788a245"
+      }
+    },
+    {
+      "task_id": "755965ab-5134-4ccc-b63d-11d805f5c51d",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "044f2f919579e9e3d000325087e8677fdd0555ccb2efc50e15f5418b335de3d9",
+      "current_field_sha256": "370959fd8b9fccec0b47d4c669a17cb089da07ae9c6e21373b2c1dbefc2208d7",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[75].id",
+        "$.edges[107].to",
+        "$.containment[75].to",
+        "$.topological_waves[2][76]",
+        "$.source_dispositions[70].derived_nodes[0]"
+      ],
+      "registration_object_index": 85,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[75].id",
+          "$.edges[107].to",
+          "$.containment[75].to",
+          "$.topological_waves[2][76]",
+          "$.source_dispositions[70].derived_nodes[0]"
+        ],
+        "span_sha256": "044f2f919579e9e3d000325087e8677fdd0555ccb2efc50e15f5418b335de3d9"
+      }
+    },
+    {
+      "task_id": "7a0227c2-8833-4c8b-ac43-2d52aac72a72",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "b5d5e6f1a2a1d4c703f3910cfb7fa440521a4694d668d79334dac82bb3a52f4d",
+      "current_field_sha256": "96a12856d547885cacfdb1962d85149fe5e1cb40e02b0b1d7b4ee0fa82cfe3ee",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[118].expected_output",
+        "$.nodes[118].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 128,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[118].expected_output",
+          "$.nodes[118].verification.evidence_required[0]"
+        ],
+        "span_sha256": "b5d5e6f1a2a1d4c703f3910cfb7fa440521a4694d668d79334dac82bb3a52f4d"
+      }
+    },
+    {
+      "task_id": "7b432ae9-90a6-438c-b502-1b4f416d10fa",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "22d063eb60612e4dbfe324e6ac7b5776f9d989950b9a193967940d011bec7482",
+      "current_field_sha256": "4fb307cb6fe499f06b848bb2ce55e5593b19eeaf13abecbdda4a703df72edc8b",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[55].expected_output",
+        "$.nodes[55].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 65,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[55].expected_output",
+          "$.nodes[55].verification.evidence_required[0]"
+        ],
+        "span_sha256": "22d063eb60612e4dbfe324e6ac7b5776f9d989950b9a193967940d011bec7482"
+      }
+    },
+    {
+      "task_id": "7cb52248-74a6-41d2-8403-e530e3cc8d5b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "c89912e42c4f276667bf35688475959ac7198a401aca1e896374ef4529fec2d0",
+      "current_field_sha256": "ada37bb3b2734a258fc7decf1bde9ea03fc2451ee0496fdbab748ac4067fca06",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[67].expected_output",
+        "$.nodes[67].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 77,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[67].expected_output",
+          "$.nodes[67].verification.evidence_required[0]"
+        ],
+        "span_sha256": "c89912e42c4f276667bf35688475959ac7198a401aca1e896374ef4529fec2d0"
+      }
+    },
+    {
+      "task_id": "7cb52248-74a6-41d2-8403-e530e3cc8d5b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "57add52fd8491886cf9135fe61360f96ccbfe49abd910b81b356afac6fae3052",
+      "current_field_sha256": "ada37bb3b2734a258fc7decf1bde9ea03fc2451ee0496fdbab748ac4067fca06",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[67].id",
+        "$.edges[99].to",
+        "$.containment[67].to",
+        "$.topological_waves[2][42]",
+        "$.source_dispositions[62].derived_nodes[0]"
+      ],
+      "registration_object_index": 77,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[67].id",
+          "$.edges[99].to",
+          "$.containment[67].to",
+          "$.topological_waves[2][42]",
+          "$.source_dispositions[62].derived_nodes[0]"
+        ],
+        "span_sha256": "57add52fd8491886cf9135fe61360f96ccbfe49abd910b81b356afac6fae3052"
+      }
+    },
+    {
+      "task_id": "7d934506-3add-414c-a7a2-70e2f66214da",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "11a199a7a707fde46d1e012a932855d94bcc428ec842764dc38efe5151eca6f0",
+      "current_field_sha256": "436273b5a5da4480e5cdb065031b58fb5543bd3d17d5e5deb78a3c4dddca255e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[89].expected_output",
+        "$.nodes[89].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 99,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[89].expected_output",
+          "$.nodes[89].verification.evidence_required[0]"
+        ],
+        "span_sha256": "11a199a7a707fde46d1e012a932855d94bcc428ec842764dc38efe5151eca6f0"
+      }
+    },
+    {
+      "task_id": "7e36ec53-3d65-4e51-932a-3240c101730c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "3b5f1c165e063c1f6930ee0b8996461b45b2c3189ace10a80e1c0ddb8bde3a9d",
+      "current_field_sha256": "20dbed19354828b02530628f9a46321f06e54c2f1c3afc8d9fce4a0c8e837d4d",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[48].expected_output",
+        "$.nodes[48].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 58,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[48].expected_output",
+          "$.nodes[48].verification.evidence_required[0]"
+        ],
+        "span_sha256": "3b5f1c165e063c1f6930ee0b8996461b45b2c3189ace10a80e1c0ddb8bde3a9d"
+      }
+    },
+    {
+      "task_id": "7e36ec53-3d65-4e51-932a-3240c101730c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "27c1a2b58644a738de2817b54432b65ff1608576124ddbd7b841c341e77f6716",
+      "current_field_sha256": "20dbed19354828b02530628f9a46321f06e54c2f1c3afc8d9fce4a0c8e837d4d",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[48].id",
+        "$.edges[80].to",
+        "$.containment[48].to",
+        "$.topological_waves[2][108]",
+        "$.source_dispositions[42].derived_nodes[0]"
+      ],
+      "registration_object_index": 58,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[48].id",
+          "$.edges[80].to",
+          "$.containment[48].to",
+          "$.topological_waves[2][108]",
+          "$.source_dispositions[42].derived_nodes[0]"
+        ],
+        "span_sha256": "27c1a2b58644a738de2817b54432b65ff1608576124ddbd7b841c341e77f6716"
+      }
+    },
+    {
+      "task_id": "7e89ea1e-f117-46b0-92b9-3e27d6ef8563",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "911550cc0eada2ea288f71405e2733344aa8370b0bd1c2cfdbd81cf4f1dcd8b7",
+      "current_field_sha256": "5a9d4c33ef5627b55c5cb73832a11655defcd1a8888e418fee648b98b5be4f31",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[73].expected_output",
+        "$.nodes[73].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 83,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[73].expected_output",
+          "$.nodes[73].verification.evidence_required[0]"
+        ],
+        "span_sha256": "911550cc0eada2ea288f71405e2733344aa8370b0bd1c2cfdbd81cf4f1dcd8b7"
+      }
+    },
+    {
+      "task_id": "7e89ea1e-f117-46b0-92b9-3e27d6ef8563",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e2af4f3cf6382e36f32a142ceaa6f141cfbe4b28d238f6d0793b0e50ec4e16c0",
+      "current_field_sha256": "5a9d4c33ef5627b55c5cb73832a11655defcd1a8888e418fee648b98b5be4f31",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[73].id",
+        "$.edges[105].to",
+        "$.containment[73].to",
+        "$.topological_waves[2][53]",
+        "$.source_dispositions[68].derived_nodes[0]"
+      ],
+      "registration_object_index": 83,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[73].id",
+          "$.edges[105].to",
+          "$.containment[73].to",
+          "$.topological_waves[2][53]",
+          "$.source_dispositions[68].derived_nodes[0]"
+        ],
+        "span_sha256": "e2af4f3cf6382e36f32a142ceaa6f141cfbe4b28d238f6d0793b0e50ec4e16c0"
+      }
+    },
+    {
+      "task_id": "7eeee7b9-6e9f-4979-8ac6-254935c3109a",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "6619fcd01542ff977de896db1f415262c909d53ccc063dcf971e8904cda10cd4",
+      "current_field_sha256": "ffa6db5c7215a59b9665feda076ed814c5e713bf10ae845f7ae3d597d727c56a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[34].expected_output",
+        "$.nodes[34].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 44,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[34].expected_output",
+          "$.nodes[34].verification.evidence_required[0]"
+        ],
+        "span_sha256": "6619fcd01542ff977de896db1f415262c909d53ccc063dcf971e8904cda10cd4"
+      }
+    },
+    {
+      "task_id": "80b559ef-c2e5-4e2b-9ce5-944210492ac7",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d5fa5c43684f25d0c09bde856321d8d7d95a0e33112314048d5a41af653573f8",
+      "current_field_sha256": "5a7ad738a5e07417aff6ef6e53d969ce1ec6349ebbcb6d1967b52b631cea64cd",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[95].expected_output",
+        "$.nodes[95].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 105,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[95].expected_output",
+          "$.nodes[95].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d5fa5c43684f25d0c09bde856321d8d7d95a0e33112314048d5a41af653573f8"
+      }
+    },
+    {
+      "task_id": "868c772a-8747-4bb2-8801-30e5dd8f9256",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "62fe7972502b338253095a808abd5a6b9a1a723ee85e706c19d0c1e1fb344a57",
+      "current_field_sha256": "dd32743cd4b30af9997f06ebe4db4dda3c8d1af1bc9c3167c9f820ec806eaf0e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[84].expected_output",
+        "$.nodes[84].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 94,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[84].expected_output",
+          "$.nodes[84].verification.evidence_required[0]"
+        ],
+        "span_sha256": "62fe7972502b338253095a808abd5a6b9a1a723ee85e706c19d0c1e1fb344a57"
+      }
+    },
+    {
+      "task_id": "868c772a-8747-4bb2-8801-30e5dd8f9256",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "8774d338043eb0fe80c380e0533b34add4938eb7a99bfa2a54f3fd2684759e51",
+      "current_field_sha256": "dd32743cd4b30af9997f06ebe4db4dda3c8d1af1bc9c3167c9f820ec806eaf0e",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[84].id",
+        "$.edges[116].to",
+        "$.containment[84].to",
+        "$.topological_waves[2][99]",
+        "$.source_dispositions[79].derived_nodes[0]"
+      ],
+      "registration_object_index": 94,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[84].id",
+          "$.edges[116].to",
+          "$.containment[84].to",
+          "$.topological_waves[2][99]",
+          "$.source_dispositions[79].derived_nodes[0]"
+        ],
+        "span_sha256": "8774d338043eb0fe80c380e0533b34add4938eb7a99bfa2a54f3fd2684759e51"
+      }
+    },
+    {
+      "task_id": "88b1fe4b-d161-4aac-8ac3-f31ff724ac64",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "8b173314a8134c880cb4d57c88c5f1429f587fb6b96856f81e0bcfdd2ab820bb",
+      "current_field_sha256": "f60635cfe2ea0de0b30d472f56b2a47cf4b9c6239e310d980a401efc5938d464",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[111].expected_output",
+        "$.nodes[111].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 121,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[111].expected_output",
+          "$.nodes[111].verification.evidence_required[0]"
+        ],
+        "span_sha256": "8b173314a8134c880cb4d57c88c5f1429f587fb6b96856f81e0bcfdd2ab820bb"
+      }
+    },
+    {
+      "task_id": "8b3c8d5f-5092-4ba4-9ea3-9cce082c53c2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "4b58ea861d31ad68f9cd803e57b8f479c07cb15eadc78b07891f3bbab632792c",
+      "current_field_sha256": "0fa75feff78b5c771a393b989b5cc27cd47f8ac773c1e826bd5f784afe365fd0",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[97].expected_output",
+        "$.nodes[97].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 107,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[97].expected_output",
+          "$.nodes[97].verification.evidence_required[0]"
+        ],
+        "span_sha256": "4b58ea861d31ad68f9cd803e57b8f479c07cb15eadc78b07891f3bbab632792c"
+      }
+    },
+    {
+      "task_id": "8b3c8d5f-5092-4ba4-9ea3-9cce082c53c2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "106de558f1c43397bb3a647e95956ffc6bd5f7d173bf1fdb60af8a980425093b",
+      "current_field_sha256": "0fa75feff78b5c771a393b989b5cc27cd47f8ac773c1e826bd5f784afe365fd0",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[97].id",
+        "$.edges[129].to",
+        "$.containment[97].to",
+        "$.topological_waves[2][51]",
+        "$.source_dispositions[92].derived_nodes[0]"
+      ],
+      "registration_object_index": 107,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[97].id",
+          "$.edges[129].to",
+          "$.containment[97].to",
+          "$.topological_waves[2][51]",
+          "$.source_dispositions[92].derived_nodes[0]"
+        ],
+        "span_sha256": "106de558f1c43397bb3a647e95956ffc6bd5f7d173bf1fdb60af8a980425093b"
+      }
+    },
+    {
+      "task_id": "8e238200-16b2-421c-ae59-dca0cb57ab40",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "b66073619319c50e3fa404828fcda7d3626062acf7275c777fa5096e24c8683c",
+      "current_field_sha256": "6bd39701b2032b4e8bba93761c52704ca2887816f95f05d57ef96414b50909b1",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[94].expected_output",
+        "$.nodes[94].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 104,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[94].expected_output",
+          "$.nodes[94].verification.evidence_required[0]"
+        ],
+        "span_sha256": "b66073619319c50e3fa404828fcda7d3626062acf7275c777fa5096e24c8683c"
+      }
+    },
+    {
+      "task_id": "91cfb1c5-f6df-419d-bac5-d8cc3be23661",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "83fc614b9cd93f672581f0b8d030055bf850e5d7cc64ed50ac1b3de813c2e65e",
+      "current_field_sha256": "863b9094f623972a922222955d09885afef7bdce276c7c66499c512e7d848ce0",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[74].expected_output",
+        "$.nodes[74].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 84,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[74].expected_output",
+          "$.nodes[74].verification.evidence_required[0]"
+        ],
+        "span_sha256": "83fc614b9cd93f672581f0b8d030055bf850e5d7cc64ed50ac1b3de813c2e65e"
+      }
+    },
+    {
+      "task_id": "91cfb1c5-f6df-419d-bac5-d8cc3be23661",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "fcc313303578cae7a75582d808bb02ef0a3f84291262015cf382b0d2b660a028",
+      "current_field_sha256": "863b9094f623972a922222955d09885afef7bdce276c7c66499c512e7d848ce0",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[74].id",
+        "$.edges[106].to",
+        "$.containment[74].to",
+        "$.topological_waves[2][56]",
+        "$.source_dispositions[69].derived_nodes[0]"
+      ],
+      "registration_object_index": 84,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[74].id",
+          "$.edges[106].to",
+          "$.containment[74].to",
+          "$.topological_waves[2][56]",
+          "$.source_dispositions[69].derived_nodes[0]"
+        ],
+        "span_sha256": "fcc313303578cae7a75582d808bb02ef0a3f84291262015cf382b0d2b660a028"
+      }
+    },
+    {
+      "task_id": "94dc7259-3bed-464f-81f4-5b307c9c3a4c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "37b32967330c990b69cd914217b68e438628719e96b972b61eaa0bda3f6e322f",
+      "current_field_sha256": "fd77ab6fff2c47ed9433c8ff9a5877450799650f495dfecd81b6f0403226e269",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[52].expected_output",
+        "$.nodes[52].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 62,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[52].expected_output",
+          "$.nodes[52].verification.evidence_required[0]"
+        ],
+        "span_sha256": "37b32967330c990b69cd914217b68e438628719e96b972b61eaa0bda3f6e322f"
+      }
+    },
+    {
+      "task_id": "99f97e49-c918-45d0-98e0-a474a470fb3b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "f22e9f5796c5d9ed98d59784bc08bde7382e4af5f7291088407dff3430d63877",
+      "current_field_sha256": "1c0a2e97d29d478364a5b8563b35215de92beadd5ceb479c376b9bc6b6402eca",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[60].expected_output",
+        "$.nodes[60].verification.evidence_required[0]",
+        "$.edges[227].required_artifact"
+      ],
+      "registration_object_index": 70,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[60].expected_output",
+          "$.nodes[60].verification.evidence_required[0]",
+          "$.edges[227].required_artifact"
+        ],
+        "span_sha256": "f22e9f5796c5d9ed98d59784bc08bde7382e4af5f7291088407dff3430d63877"
+      }
+    },
+    {
+      "task_id": "9b0079f6-554c-46f0-a5c0-cfaf15b24733",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "78f2950b1dfae434862ad5acca0819de7f8074c0c4194886af3cbf71fd05edd7",
+      "current_field_sha256": "008d68b52aa7144f169f73502b0b5fd4ff45e1ade005ff419049265517f27657",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[96].expected_output",
+        "$.nodes[96].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 106,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[96].expected_output",
+          "$.nodes[96].verification.evidence_required[0]"
+        ],
+        "span_sha256": "78f2950b1dfae434862ad5acca0819de7f8074c0c4194886af3cbf71fd05edd7"
+      }
+    },
+    {
+      "task_id": "9f28b94a-893e-442f-8fd0-03d1549cb518",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a651289a3e8502edf42f6dd8625e2eb03f8575a0fbecacff0f44995d297e8592",
+      "current_field_sha256": "9b9902d329f274147d73b40fa91ba64ee3e4adbd535f0f437774e432d6d52829",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[155].expected_output",
+        "$.nodes[155].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 165,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[155].expected_output",
+          "$.nodes[155].verification.evidence_required[0]"
+        ],
+        "span_sha256": "a651289a3e8502edf42f6dd8625e2eb03f8575a0fbecacff0f44995d297e8592"
+      }
+    },
+    {
+      "task_id": "a18bb803-0f13-42ed-952f-d25ee2873832",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a1a190bbd1decedde7f9c61734bac541fac9adc27d312145fc5346817188c0fd",
+      "current_field_sha256": "0d6717fc5d184f0e1fdc2521b5afba37e2a23c7d6081bae1536fd220d46960ba",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[51].expected_output",
+        "$.nodes[51].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 61,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[51].expected_output",
+          "$.nodes[51].verification.evidence_required[0]"
+        ],
+        "span_sha256": "a1a190bbd1decedde7f9c61734bac541fac9adc27d312145fc5346817188c0fd"
+      }
+    },
+    {
+      "task_id": "a579ee35-9712-400d-8577-dff16c5bb5d6",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "8b7c422d2aa53e42606faa2c52546b0775edcc1f63d53b60e6c4365c39a28823",
+      "current_field_sha256": "cb712cdb45f5b3f3e6dc7d8653af83ade2b3ca746f68e2965c37ff5683502bd8",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[30].expected_output",
+        "$.nodes[30].verification.evidence_required[0]",
+        "$.edges[226].required_artifact"
+      ],
+      "registration_object_index": 40,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[30].expected_output",
+          "$.nodes[30].verification.evidence_required[0]",
+          "$.edges[226].required_artifact"
+        ],
+        "span_sha256": "8b7c422d2aa53e42606faa2c52546b0775edcc1f63d53b60e6c4365c39a28823"
+      }
+    },
+    {
+      "task_id": "a721230b-8428-469f-a30f-3674fed504aa",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "abe08261e13da084bc39d5392411cd4279ab58dc8f9c5003aad7fe55e1d7150a",
+      "current_field_sha256": "c8c2bf04934cb1f01953f887a1388b43c885b54ed13e3026cf46ed99e0d25856",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[115].expected_output",
+        "$.nodes[115].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 125,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[115].expected_output",
+          "$.nodes[115].verification.evidence_required[0]"
+        ],
+        "span_sha256": "abe08261e13da084bc39d5392411cd4279ab58dc8f9c5003aad7fe55e1d7150a"
+      }
+    },
+    {
+      "task_id": "a721230b-8428-469f-a30f-3674fed504aa",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "c501bd9c5372cac1c42eada115c769739d0860930d795b58e4b81ee12ed6985b",
+      "current_field_sha256": "c8c2bf04934cb1f01953f887a1388b43c885b54ed13e3026cf46ed99e0d25856",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[115].id",
+        "$.edges[147].to",
+        "$.containment[115].to",
+        "$.topological_waves[2][120]",
+        "$.source_dispositions[110].derived_nodes[0]"
+      ],
+      "registration_object_index": 125,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[115].id",
+          "$.edges[147].to",
+          "$.containment[115].to",
+          "$.topological_waves[2][120]",
+          "$.source_dispositions[110].derived_nodes[0]"
+        ],
+        "span_sha256": "c501bd9c5372cac1c42eada115c769739d0860930d795b58e4b81ee12ed6985b"
+      }
+    },
+    {
+      "task_id": "a9676f7a-d42a-4051-8091-081d3bb662f2",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "21eddf9ee1ac3562b576e9a74b3361d1962919b68633454b8416ac64428b527e",
+      "current_field_sha256": "b9465aeff108fcfb0b661ea279e0b34ab882f6c70606568917386c22facefd8f",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[102].expected_output",
+        "$.nodes[102].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 112,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[102].expected_output",
+          "$.nodes[102].verification.evidence_required[0]"
+        ],
+        "span_sha256": "21eddf9ee1ac3562b576e9a74b3361d1962919b68633454b8416ac64428b527e"
+      }
+    },
+    {
+      "task_id": "ae910c8e-1ce0-4c67-8a80-6fcff63980f1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "2e37e9f351c6516a4481109920ce9610c1286616f2201b68849e6520653a9105",
+      "current_field_sha256": "86bd4c467c23c3b243be040413a115c36a75e38b4df7fb2623497cf427109435",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[56].expected_output",
+        "$.nodes[56].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 66,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[56].expected_output",
+          "$.nodes[56].verification.evidence_required[0]"
+        ],
+        "span_sha256": "2e37e9f351c6516a4481109920ce9610c1286616f2201b68849e6520653a9105"
+      }
+    },
+    {
+      "task_id": "ae910c8e-1ce0-4c67-8a80-6fcff63980f1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "bc435d0e3533d6571f46733268f384a7d0456dade502605df4b05e7aa8d60601",
+      "current_field_sha256": "86bd4c467c23c3b243be040413a115c36a75e38b4df7fb2623497cf427109435",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[56].id",
+        "$.edges[88].to",
+        "$.containment[56].to",
+        "$.topological_waves[2][41]",
+        "$.source_dispositions[50].derived_nodes[0]"
+      ],
+      "registration_object_index": 66,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[56].id",
+          "$.edges[88].to",
+          "$.containment[56].to",
+          "$.topological_waves[2][41]",
+          "$.source_dispositions[50].derived_nodes[0]"
+        ],
+        "span_sha256": "bc435d0e3533d6571f46733268f384a7d0456dade502605df4b05e7aa8d60601"
+      }
+    },
+    {
+      "task_id": "af5b69af-bc3f-4838-898d-aed09e9f0550",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ee428617471acf9d5b3622e9a145e84cb0aa6692cebe834f5f99c4388442b08a",
+      "current_field_sha256": "770020ce3aea6f7821eaae79c8b48f9d23b82ebce584b1153654f3199a947f76",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[101].expected_output",
+        "$.nodes[101].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 111,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[101].expected_output",
+          "$.nodes[101].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ee428617471acf9d5b3622e9a145e84cb0aa6692cebe834f5f99c4388442b08a"
+      }
+    },
+    {
+      "task_id": "af5b69af-bc3f-4838-898d-aed09e9f0550",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "b3242a4b059ff7f1ce8c5f977392864aa2240daee8eff1be3f9ff85f116ca70c",
+      "current_field_sha256": "770020ce3aea6f7821eaae79c8b48f9d23b82ebce584b1153654f3199a947f76",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[101].id",
+        "$.edges[133].to",
+        "$.containment[101].to",
+        "$.topological_waves[2][58]",
+        "$.source_dispositions[96].derived_nodes[0]"
+      ],
+      "registration_object_index": 111,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[101].id",
+          "$.edges[133].to",
+          "$.containment[101].to",
+          "$.topological_waves[2][58]",
+          "$.source_dispositions[96].derived_nodes[0]"
+        ],
+        "span_sha256": "b3242a4b059ff7f1ce8c5f977392864aa2240daee8eff1be3f9ff85f116ca70c"
+      }
+    },
+    {
+      "task_id": "b1a4319f-8890-463c-9a32-31d6113adb8a",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "7b17d89025f97cc6bf94e2d63f685b3c00d34dae27b23e5c49c000eba479e680",
+      "current_field_sha256": "02e35e5885147cf0badd3d204730e9b4f81cd1e92553c4c0083e72681c2fb986",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[91].expected_output",
+        "$.nodes[91].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 101,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[91].expected_output",
+          "$.nodes[91].verification.evidence_required[0]"
+        ],
+        "span_sha256": "7b17d89025f97cc6bf94e2d63f685b3c00d34dae27b23e5c49c000eba479e680"
+      }
+    },
+    {
+      "task_id": "b1a4319f-8890-463c-9a32-31d6113adb8a",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e3bab3fffb11e279f1e2965f4e131cb3c7dc7bb4d15b478ceae9bff728ae03ad",
+      "current_field_sha256": "02e35e5885147cf0badd3d204730e9b4f81cd1e92553c4c0083e72681c2fb986",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[91].id",
+        "$.edges[123].to",
+        "$.containment[91].to",
+        "$.topological_waves[2][61]",
+        "$.source_dispositions[86].derived_nodes[0]"
+      ],
+      "registration_object_index": 101,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[91].id",
+          "$.edges[123].to",
+          "$.containment[91].to",
+          "$.topological_waves[2][61]",
+          "$.source_dispositions[86].derived_nodes[0]"
+        ],
+        "span_sha256": "e3bab3fffb11e279f1e2965f4e131cb3c7dc7bb4d15b478ceae9bff728ae03ad"
+      }
+    },
+    {
+      "task_id": "b1bc2fa5-3abc-46a1-906d-4949d7b16d04",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "07929ac24d4cb26a3de9251bfed9613d262a9c5317641c57fa8cc1d71bcea703",
+      "current_field_sha256": "d352bb44ee6f36f5acd765bcb1ae2db7f5d011fac469de9f6a747e891df7cee6",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[99].expected_output",
+        "$.nodes[99].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 109,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[99].expected_output",
+          "$.nodes[99].verification.evidence_required[0]"
+        ],
+        "span_sha256": "07929ac24d4cb26a3de9251bfed9613d262a9c5317641c57fa8cc1d71bcea703"
+      }
+    },
+    {
+      "task_id": "b28ca366-7197-413a-8826-1915e4ebd686",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e7cfe0d122666730a1e56bc2ec524a1178e5b29fc7a89f9bcdc35e0fba7c1170",
+      "current_field_sha256": "942149f704f2facc45ab3ffc880cb75510c7e00ed59253e30c1a502e7fd7ab00",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[37].expected_output",
+        "$.nodes[37].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 47,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[37].expected_output",
+          "$.nodes[37].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e7cfe0d122666730a1e56bc2ec524a1178e5b29fc7a89f9bcdc35e0fba7c1170"
+      }
+    },
+    {
+      "task_id": "b3f9944c-7082-42c6-b5cc-23bf79c72623",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d01c21c23cc131d084fd7b40cc877b2efa41018bbb3baaea8c84e26d59b729ae",
+      "current_field_sha256": "2af3ea3a09c3ca3014ef70346d86975be7b63ec9cfbd0f7eb3cecc2fd3ffbc2a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[72].expected_output",
+        "$.nodes[72].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 82,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[72].expected_output",
+          "$.nodes[72].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d01c21c23cc131d084fd7b40cc877b2efa41018bbb3baaea8c84e26d59b729ae"
+      }
+    },
+    {
+      "task_id": "b3f9944c-7082-42c6-b5cc-23bf79c72623",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "2940a24ede53c341c32d3767fd68af15d2e0c0a736deebfab3b8410ed661a43a",
+      "current_field_sha256": "2af3ea3a09c3ca3014ef70346d86975be7b63ec9cfbd0f7eb3cecc2fd3ffbc2a",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[72].id",
+        "$.edges[104].to",
+        "$.containment[72].to",
+        "$.topological_waves[2][52]",
+        "$.source_dispositions[67].derived_nodes[0]"
+      ],
+      "registration_object_index": 82,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[72].id",
+          "$.edges[104].to",
+          "$.containment[72].to",
+          "$.topological_waves[2][52]",
+          "$.source_dispositions[67].derived_nodes[0]"
+        ],
+        "span_sha256": "2940a24ede53c341c32d3767fd68af15d2e0c0a736deebfab3b8410ed661a43a"
+      }
+    },
+    {
+      "task_id": "b4f024d7-ef6f-4e58-a9b3-0be779c81648",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "4bd3e8382191a8efe95d6986afa76b1b3875de3a50b6f6623ca1fc6b90a8f74f",
+      "current_field_sha256": "a3b37cde8046af8f96b7d1ab19691bfa91c48c69eacfd05d207a1019627c4193",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[98].expected_output",
+        "$.nodes[98].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 108,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[98].expected_output",
+          "$.nodes[98].verification.evidence_required[0]"
+        ],
+        "span_sha256": "4bd3e8382191a8efe95d6986afa76b1b3875de3a50b6f6623ca1fc6b90a8f74f"
+      }
+    },
+    {
+      "task_id": "b5b4ccc0-a3d9-484e-b044-943297a3257f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "ba8bfbf0042725bc677aa6d6d1d99d28726c308a53b097ee96d94f0782930fcc",
+      "current_field_sha256": "bc5046356a90a59c45698c3370fa369d22c9326668e06d4f4df98a72c8a5381d",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[68].expected_output",
+        "$.nodes[68].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 78,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[68].expected_output",
+          "$.nodes[68].verification.evidence_required[0]"
+        ],
+        "span_sha256": "ba8bfbf0042725bc677aa6d6d1d99d28726c308a53b097ee96d94f0782930fcc"
+      }
+    },
+    {
+      "task_id": "b5b4ccc0-a3d9-484e-b044-943297a3257f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "1550acf98ef2cfa4aa940bf39f2a1b1fbcd42b4eb7711da2e849c93628b52aab",
+      "current_field_sha256": "bc5046356a90a59c45698c3370fa369d22c9326668e06d4f4df98a72c8a5381d",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[68].id",
+        "$.edges[100].to",
+        "$.containment[68].to",
+        "$.topological_waves[2][109]",
+        "$.source_dispositions[63].derived_nodes[0]"
+      ],
+      "registration_object_index": 78,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[68].id",
+          "$.edges[100].to",
+          "$.containment[68].to",
+          "$.topological_waves[2][109]",
+          "$.source_dispositions[63].derived_nodes[0]"
+        ],
+        "span_sha256": "1550acf98ef2cfa4aa940bf39f2a1b1fbcd42b4eb7711da2e849c93628b52aab"
+      }
+    },
+    {
+      "task_id": "b71ca9d5-4263-4888-9d04-8e5e131ba5d6",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "7d8743ef176503faba4706b75bb76c9914306d03ce3d3b27e4ede5f8bebd4cf7",
+      "current_field_sha256": "c0294153f21b66910abaca9cfd4139dee772f9f75a430a3908402dc9367ab82a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[62].expected_output",
+        "$.nodes[62].verification.evidence_required[0]",
+        "$.edges[231].required_artifact"
+      ],
+      "registration_object_index": 72,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[62].expected_output",
+          "$.nodes[62].verification.evidence_required[0]",
+          "$.edges[231].required_artifact"
+        ],
+        "span_sha256": "7d8743ef176503faba4706b75bb76c9914306d03ce3d3b27e4ede5f8bebd4cf7"
+      }
+    },
+    {
+      "task_id": "b71ca9d5-4263-4888-9d04-8e5e131ba5d6",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "25ce56ff61c274f7f14f58deaee6b8f83824a87d947b7abfb228903471ba7a6d",
+      "current_field_sha256": "c0294153f21b66910abaca9cfd4139dee772f9f75a430a3908402dc9367ab82a",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[62].id",
+        "$.edges[94].to",
+        "$.edges[220].to",
+        "$.edges[231].from",
+        "$.containment[62].to",
+        "$.topological_waves[3][3]",
+        "$.source_dispositions[57].derived_nodes[0]"
+      ],
+      "registration_object_index": 72,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[62].id",
+          "$.edges[94].to",
+          "$.edges[220].to",
+          "$.edges[231].from",
+          "$.containment[62].to",
+          "$.topological_waves[3][3]",
+          "$.source_dispositions[57].derived_nodes[0]"
+        ],
+        "span_sha256": "25ce56ff61c274f7f14f58deaee6b8f83824a87d947b7abfb228903471ba7a6d"
+      }
+    },
+    {
+      "task_id": "ba47fed6-44fc-460c-b071-3bc059d08518",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "45a0ad5224b6915196df3d6aa0266b22fa8acc2887077956a33ffa0c6464c92b",
+      "current_field_sha256": "eb27aeda1d0aef99adbc53dec181402784c15619509ca766038f904b45c5b078",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[40].expected_output",
+        "$.nodes[40].verification.evidence_required[0]",
+        "$.edges[228].required_artifact"
+      ],
+      "registration_object_index": 50,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[40].expected_output",
+          "$.nodes[40].verification.evidence_required[0]",
+          "$.edges[228].required_artifact"
+        ],
+        "span_sha256": "45a0ad5224b6915196df3d6aa0266b22fa8acc2887077956a33ffa0c6464c92b"
+      }
+    },
+    {
+      "task_id": "bc49301d-5c04-435d-8d15-05c4dce82336",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "764092394e02bf986074e9edd1c2b87f072e311ff036c45e14193fe710628d46",
+      "current_field_sha256": "35f039329b3c3cf7e33c693a1959444b56a27fbcccab24938f4d36280ccfb5f7",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[76].expected_output",
+        "$.nodes[76].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 86,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[76].expected_output",
+          "$.nodes[76].verification.evidence_required[0]"
+        ],
+        "span_sha256": "764092394e02bf986074e9edd1c2b87f072e311ff036c45e14193fe710628d46"
+      }
+    },
+    {
+      "task_id": "bc49301d-5c04-435d-8d15-05c4dce82336",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a011dda8669330861058e2a0390480512246b5960535a9328b3a642ed9a5f7fe",
+      "current_field_sha256": "35f039329b3c3cf7e33c693a1959444b56a27fbcccab24938f4d36280ccfb5f7",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[76].id",
+        "$.edges[108].to",
+        "$.containment[76].to",
+        "$.topological_waves[2][64]",
+        "$.source_dispositions[71].derived_nodes[0]"
+      ],
+      "registration_object_index": 86,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[76].id",
+          "$.edges[108].to",
+          "$.containment[76].to",
+          "$.topological_waves[2][64]",
+          "$.source_dispositions[71].derived_nodes[0]"
+        ],
+        "span_sha256": "a011dda8669330861058e2a0390480512246b5960535a9328b3a642ed9a5f7fe"
+      }
+    },
+    {
+      "task_id": "c172d5d5-2861-4a06-8cd3-4bde08ae366c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d01948c421ebb8d1a17067779a63ec6079d12e31c852eddf164e82cca6cc7400",
+      "current_field_sha256": "f8cdb4737255905bb08aeec9cffa8d575b8ee646ad792fb4ca44aa7b13446bde",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[151].expected_output",
+        "$.nodes[151].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 161,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[151].expected_output",
+          "$.nodes[151].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d01948c421ebb8d1a17067779a63ec6079d12e31c852eddf164e82cca6cc7400"
+      }
+    },
+    {
+      "task_id": "c172d5d5-2861-4a06-8cd3-4bde08ae366c",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "08e6ae58276f096d64528ced704aef8ff6f85567637997b3df4fe04286c03a28",
+      "current_field_sha256": "f8cdb4737255905bb08aeec9cffa8d575b8ee646ad792fb4ca44aa7b13446bde",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[151].id",
+        "$.edges[183].to",
+        "$.edges[220].from",
+        "$.containment[151].to",
+        "$.topological_waves[2][5]",
+        "$.source_dispositions[146].derived_nodes[0]"
+      ],
+      "registration_object_index": 161,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[151].id",
+          "$.edges[183].to",
+          "$.edges[220].from",
+          "$.containment[151].to",
+          "$.topological_waves[2][5]",
+          "$.source_dispositions[146].derived_nodes[0]"
+        ],
+        "span_sha256": "08e6ae58276f096d64528ced704aef8ff6f85567637997b3df4fe04286c03a28"
+      }
+    },
+    {
+      "task_id": "c4a67b88-f228-4981-a2e7-d71ad5be4a96",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e01df280b1c45a3ca0448ccc4aee2d3efebce033924fed8ed6033f339e9f0418",
+      "current_field_sha256": "fbdb34bc91cad563e31a83828066ad35ea37033763a1d9dd921c918381210b5a",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[45].expected_output",
+        "$.nodes[45].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 55,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[45].expected_output",
+          "$.nodes[45].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e01df280b1c45a3ca0448ccc4aee2d3efebce033924fed8ed6033f339e9f0418"
+      }
+    },
+    {
+      "task_id": "c6334adb-2a0d-4148-9fbf-a401ff672746",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "2467a4b273cffa0d8b49d101bfe2ac72c0fb24fe2833782cb7ab94e444841fd1",
+      "current_field_sha256": "e392c754c589e8a7f249c9e9dd1a4a08482a54216dbe62fe2075a2c240fec016",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[79].expected_output",
+        "$.nodes[79].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 89,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[79].expected_output",
+          "$.nodes[79].verification.evidence_required[0]"
+        ],
+        "span_sha256": "2467a4b273cffa0d8b49d101bfe2ac72c0fb24fe2833782cb7ab94e444841fd1"
+      }
+    },
+    {
+      "task_id": "c6dc4ccf-1e85-4828-8c3b-40109faf5061",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "f47d8118be2f8b6459c6eab5a6816b25c312cc1379889953ed5e6e0ee152a262",
+      "current_field_sha256": "32c481e3d4e332960f8328bd5d53754d7126dd2c4184f7fc1a76f6925bec00db",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[110].expected_output",
+        "$.nodes[110].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 120,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[110].expected_output",
+          "$.nodes[110].verification.evidence_required[0]"
+        ],
+        "span_sha256": "f47d8118be2f8b6459c6eab5a6816b25c312cc1379889953ed5e6e0ee152a262"
+      }
+    },
+    {
+      "task_id": "cc720d79-3b36-4046-8799-0e2480ea2d75",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "cdc3afc7f9daea10a37c24d3195cdd5a49a4b540c6935704fc6a3fabbfdfbd1b",
+      "current_field_sha256": "45da29f21b4c1263df53f195544524cd739d14d26ebec7698590622e710317e5",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[88].expected_output",
+        "$.nodes[88].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 98,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[88].expected_output",
+          "$.nodes[88].verification.evidence_required[0]"
+        ],
+        "span_sha256": "cdc3afc7f9daea10a37c24d3195cdd5a49a4b540c6935704fc6a3fabbfdfbd1b"
+      }
+    },
+    {
+      "task_id": "cc720d79-3b36-4046-8799-0e2480ea2d75",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "a1b56a757e83408cc0b004dc0bf8ee725f9a7afa6323ac20c121886345366a81",
+      "current_field_sha256": "45da29f21b4c1263df53f195544524cd739d14d26ebec7698590622e710317e5",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[88].id",
+        "$.edges[120].to",
+        "$.edges[223].to",
+        "$.containment[88].to",
+        "$.topological_waves[3][7]",
+        "$.source_dispositions[83].derived_nodes[0]"
+      ],
+      "registration_object_index": 98,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[88].id",
+          "$.edges[120].to",
+          "$.edges[223].to",
+          "$.containment[88].to",
+          "$.topological_waves[3][7]",
+          "$.source_dispositions[83].derived_nodes[0]"
+        ],
+        "span_sha256": "a1b56a757e83408cc0b004dc0bf8ee725f9a7afa6323ac20c121886345366a81"
+      }
+    },
+    {
+      "task_id": "ccf1643d-e88e-4023-b2c0-7e696efd9c4f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "30681de76b8bebb626d120720c3dcc630c2ab4b8a95f9822ed479ad4c0980649",
+      "current_field_sha256": "352989d4f72abf01cc108c84735ced1af792a455d143169846f7a5eafe4e3ae6",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[65].expected_output",
+        "$.nodes[65].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 75,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[65].expected_output",
+          "$.nodes[65].verification.evidence_required[0]"
+        ],
+        "span_sha256": "30681de76b8bebb626d120720c3dcc630c2ab4b8a95f9822ed479ad4c0980649"
+      }
+    },
+    {
+      "task_id": "cd42b62b-0a5f-45ed-b363-e22cb04ba39e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "af96b8e3dff2bc7cf191c2abb3606d6223d0d6c4f906125540d70f6b8bf0c460",
+      "current_field_sha256": "19532878985bfddd1921ae783c0d835fd356d480d0657fdd00a034d48c6d2c0e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[42].expected_output",
+        "$.nodes[42].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 52,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[42].expected_output",
+          "$.nodes[42].verification.evidence_required[0]"
+        ],
+        "span_sha256": "af96b8e3dff2bc7cf191c2abb3606d6223d0d6c4f906125540d70f6b8bf0c460"
+      }
+    },
+    {
+      "task_id": "cd42b62b-0a5f-45ed-b363-e22cb04ba39e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "145442791a9281cf47dea6eb8aba468b6c4b3ac67d2e6059825943f8892dbaf3",
+      "current_field_sha256": "19532878985bfddd1921ae783c0d835fd356d480d0657fdd00a034d48c6d2c0e",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[42].id",
+        "$.edges[74].to",
+        "$.containment[42].to",
+        "$.topological_waves[2][94]",
+        "$.source_dispositions[36].derived_nodes[0]"
+      ],
+      "registration_object_index": 52,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[42].id",
+          "$.edges[74].to",
+          "$.containment[42].to",
+          "$.topological_waves[2][94]",
+          "$.source_dispositions[36].derived_nodes[0]"
+        ],
+        "span_sha256": "145442791a9281cf47dea6eb8aba468b6c4b3ac67d2e6059825943f8892dbaf3"
+      }
+    },
+    {
+      "task_id": "cffdcaa0-7129-41ea-a26f-f76e7018dd37",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "7a99e3ed41d5385f34c441a94bed97dee07b62b90f70dfc91ea0c150c268a41b",
+      "current_field_sha256": "64e384b7d30ee706caefa1ee8f86b5027d80c80132074690a820e0be947d83b6",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[66].expected_output",
+        "$.nodes[66].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 76,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[66].expected_output",
+          "$.nodes[66].verification.evidence_required[0]"
+        ],
+        "span_sha256": "7a99e3ed41d5385f34c441a94bed97dee07b62b90f70dfc91ea0c150c268a41b"
+      }
+    },
+    {
+      "task_id": "d0dfb49e-f431-488d-b8a7-27a6799ad6d1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "3974f48d8f6185ed28b649b716387c63e98057c1c45aecb4c5858f4c6c33a728",
+      "current_field_sha256": "aa65f7c24bc427cb2e4c13bab83c0731faea30a9edd0ff034f05e613aece44f7",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[57].expected_output",
+        "$.nodes[57].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 67,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[57].expected_output",
+          "$.nodes[57].verification.evidence_required[0]"
+        ],
+        "span_sha256": "3974f48d8f6185ed28b649b716387c63e98057c1c45aecb4c5858f4c6c33a728"
+      }
+    },
+    {
+      "task_id": "d0dfb49e-f431-488d-b8a7-27a6799ad6d1",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "c84747ad365ea442fdaa8ea506271a94f361ed5cf8de873cd748b931aa0c973b",
+      "current_field_sha256": "aa65f7c24bc427cb2e4c13bab83c0731faea30a9edd0ff034f05e613aece44f7",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[57].id",
+        "$.edges[89].to",
+        "$.containment[57].to",
+        "$.topological_waves[2][110]",
+        "$.source_dispositions[51].derived_nodes[0]"
+      ],
+      "registration_object_index": 67,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[57].id",
+          "$.edges[89].to",
+          "$.containment[57].to",
+          "$.topological_waves[2][110]",
+          "$.source_dispositions[51].derived_nodes[0]"
+        ],
+        "span_sha256": "c84747ad365ea442fdaa8ea506271a94f361ed5cf8de873cd748b931aa0c973b"
+      }
+    },
+    {
+      "task_id": "d3661e18-f1f5-4ac8-ab8b-4e6dbee1bb73",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "d392643f46b0cf0a7aca4bd5625817603668658364243b7e431c6c8232085993",
+      "current_field_sha256": "0fa65b3894175730ef39933dcfdf3f5965785454af4dd60b167e33df5eb3272b",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[50].expected_output",
+        "$.nodes[50].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 60,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[50].expected_output",
+          "$.nodes[50].verification.evidence_required[0]"
+        ],
+        "span_sha256": "d392643f46b0cf0a7aca4bd5625817603668658364243b7e431c6c8232085993"
+      }
+    },
+    {
+      "task_id": "d875641e-5b10-4c53-bb1d-a4011509848e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "07f4cb145ae161017fc55a8bc0605c2d957fde9801785c353d602fb337c7d754",
+      "current_field_sha256": "2b7927cc75e833f0356c7985c3dd87397b60cf0ec9978b84f55296f09ed87c9f",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[63].expected_output",
+        "$.nodes[63].verification.evidence_required[0]",
+        "$.edges[232].required_artifact"
+      ],
+      "registration_object_index": 73,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[63].expected_output",
+          "$.nodes[63].verification.evidence_required[0]",
+          "$.edges[232].required_artifact"
+        ],
+        "span_sha256": "07f4cb145ae161017fc55a8bc0605c2d957fde9801785c353d602fb337c7d754"
+      }
+    },
+    {
+      "task_id": "d875641e-5b10-4c53-bb1d-a4011509848e",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "fadb2a82812c3b5e1df7f667ad77d9b2039441740f8c4c7cadae69933e188c20",
+      "current_field_sha256": "2b7927cc75e833f0356c7985c3dd87397b60cf0ec9978b84f55296f09ed87c9f",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[63].id",
+        "$.edges[95].to",
+        "$.edges[221].to",
+        "$.edges[232].from",
+        "$.containment[63].to",
+        "$.topological_waves[3][2]",
+        "$.source_dispositions[58].derived_nodes[0]"
+      ],
+      "registration_object_index": 73,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[63].id",
+          "$.edges[95].to",
+          "$.edges[221].to",
+          "$.edges[232].from",
+          "$.containment[63].to",
+          "$.topological_waves[3][2]",
+          "$.source_dispositions[58].derived_nodes[0]"
+        ],
+        "span_sha256": "fadb2a82812c3b5e1df7f667ad77d9b2039441740f8c4c7cadae69933e188c20"
+      }
+    },
+    {
+      "task_id": "d9229488-9920-4a70-be20-631bf2099a1b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "048df6c066a54f072360ed0704ff7e8c7434b945b752b5e882dfc68d2932472b",
+      "current_field_sha256": "fc10395286695b59086e4d7ce2e8ba492a8ca61f994cf3e54cfdd8da127fce67",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[41].expected_output",
+        "$.nodes[41].verification.evidence_required[0]",
+        "$.edges[229].required_artifact"
+      ],
+      "registration_object_index": 51,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[41].expected_output",
+          "$.nodes[41].verification.evidence_required[0]",
+          "$.edges[229].required_artifact"
+        ],
+        "span_sha256": "048df6c066a54f072360ed0704ff7e8c7434b945b752b5e882dfc68d2932472b"
+      }
+    },
+    {
+      "task_id": "d9229488-9920-4a70-be20-631bf2099a1b",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "c2a27012dbc3dbd5c59226aaf76ddb639a5a20c193342dce4b3e3cf999dacd49",
+      "current_field_sha256": "fc10395286695b59086e4d7ce2e8ba492a8ca61f994cf3e54cfdd8da127fce67",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[41].id",
+        "$.edges[73].to",
+        "$.edges[222].to",
+        "$.edges[229].from",
+        "$.containment[41].to",
+        "$.topological_waves[3][6]",
+        "$.source_dispositions[35].derived_nodes[0]"
+      ],
+      "registration_object_index": 51,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[41].id",
+          "$.edges[73].to",
+          "$.edges[222].to",
+          "$.edges[229].from",
+          "$.containment[41].to",
+          "$.topological_waves[3][6]",
+          "$.source_dispositions[35].derived_nodes[0]"
+        ],
+        "span_sha256": "c2a27012dbc3dbd5c59226aaf76ddb639a5a20c193342dce4b3e3cf999dacd49"
+      }
+    },
+    {
+      "task_id": "dd641eac-8bf1-490e-aece-336ab18b8d43",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "e14f818804dd5ae23689cd7fc342d44acdcfb6840931310b3d7ac53fa7fbce10",
+      "current_field_sha256": "1f67dbc5080aef96f9cccfb6faa66d9e60581680e682a6572ef4dabebeb54ca1",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[119].expected_output",
+        "$.nodes[119].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 129,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[119].expected_output",
+          "$.nodes[119].verification.evidence_required[0]"
+        ],
+        "span_sha256": "e14f818804dd5ae23689cd7fc342d44acdcfb6840931310b3d7ac53fa7fbce10"
+      }
+    },
+    {
+      "task_id": "dee0ccb1-a243-48b3-8cc1-84e8a8745fdc",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "17bbc551bfa3ec7dedc3491362fc78c8e15a89fa87d4f30540066b89ab6382b0",
+      "current_field_sha256": "81d7d8094ac754d61f96174fd281c8ab3c01d0438acb734340213bb459efd9c0",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[82].expected_output",
+        "$.nodes[82].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 92,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[82].expected_output",
+          "$.nodes[82].verification.evidence_required[0]"
+        ],
+        "span_sha256": "17bbc551bfa3ec7dedc3491362fc78c8e15a89fa87d4f30540066b89ab6382b0"
+      }
+    },
+    {
+      "task_id": "e133b876-a358-4695-9983-79c3c666abe3",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "650517e57014bf6a232dfc371fed7420ee62efe6dcc4ef8f959221af61b74b47",
+      "current_field_sha256": "f543801e42ad101be745903aa44b43fdda125a80a8383f9266ed0e828cd0854d",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[90].expected_output",
+        "$.nodes[90].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 100,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[90].expected_output",
+          "$.nodes[90].verification.evidence_required[0]"
+        ],
+        "span_sha256": "650517e57014bf6a232dfc371fed7420ee62efe6dcc4ef8f959221af61b74b47"
+      }
+    },
+    {
+      "task_id": "e133b876-a358-4695-9983-79c3c666abe3",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "6fc31b89a3132013145a32b3138bd83571eb49d112490edfd0b615aadb2b58a0",
+      "current_field_sha256": "f543801e42ad101be745903aa44b43fdda125a80a8383f9266ed0e828cd0854d",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[90].id",
+        "$.edges[122].to",
+        "$.containment[90].to",
+        "$.topological_waves[2][105]",
+        "$.source_dispositions[85].derived_nodes[0]"
+      ],
+      "registration_object_index": 100,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[90].id",
+          "$.edges[122].to",
+          "$.containment[90].to",
+          "$.topological_waves[2][105]",
+          "$.source_dispositions[85].derived_nodes[0]"
+        ],
+        "span_sha256": "6fc31b89a3132013145a32b3138bd83571eb49d112490edfd0b615aadb2b58a0"
+      }
+    },
+    {
+      "task_id": "e1eb41ff-b4d5-4981-a31c-735a66858997",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "37a4c5347d55c27fa851aaa952882d1d04be094999582910a9ba57d17bbf0880",
+      "current_field_sha256": "a3b554ecce0f49dca6ee1d346b2fc176e8c5f028cbf07d1385508998ec32097e",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[104].expected_output",
+        "$.nodes[104].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 114,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[104].expected_output",
+          "$.nodes[104].verification.evidence_required[0]"
+        ],
+        "span_sha256": "37a4c5347d55c27fa851aaa952882d1d04be094999582910a9ba57d17bbf0880"
+      }
+    },
+    {
+      "task_id": "e1eb41ff-b4d5-4981-a31c-735a66858997",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "63d12a4394bb00d490991b9f4381865f1d7da59feb0471184cce6ce86e5e9f46",
+      "current_field_sha256": "a3b554ecce0f49dca6ee1d346b2fc176e8c5f028cbf07d1385508998ec32097e",
+      "metadata_key": "local_id",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[104].id",
+        "$.edges[136].to",
+        "$.containment[104].to",
+        "$.topological_waves[2][93]",
+        "$.source_dispositions[99].derived_nodes[0]"
+      ],
+      "registration_object_index": 114,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[104].id",
+          "$.edges[136].to",
+          "$.containment[104].to",
+          "$.topological_waves[2][93]",
+          "$.source_dispositions[99].derived_nodes[0]"
+        ],
+        "span_sha256": "63d12a4394bb00d490991b9f4381865f1d7da59feb0471184cce6ce86e5e9f46"
+      }
+    },
+    {
+      "task_id": "e3d13188-2318-4aa1-b47a-df3da1c74eb7",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "97e6b0bd423de61e71ac4b5f79be4afe6edfde224d0134f6f93a804cb41bbd5d",
+      "current_field_sha256": "af79deadd6687c25f5a557ae4df8e6846458b26b9c7fa925d5c4abf3ec332930",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[44].expected_output",
+        "$.nodes[44].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 54,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[44].expected_output",
+          "$.nodes[44].verification.evidence_required[0]"
+        ],
+        "span_sha256": "97e6b0bd423de61e71ac4b5f79be4afe6edfde224d0134f6f93a804cb41bbd5d"
+      }
+    },
+    {
+      "task_id": "e45fe695-aafc-4ed1-88f5-d7ad0163629f",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "622f9e09facb0aa315e31ea69b1413cb188690bf4205a02f51086de44cf83ead",
+      "current_field_sha256": "7c6a312716a65b2a41f9f373583fd94e4f1fe7c2381631be2185507744c94c45",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[31].expected_output",
+        "$.nodes[31].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 41,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[31].expected_output",
+          "$.nodes[31].verification.evidence_required[0]"
+        ],
+        "span_sha256": "622f9e09facb0aa315e31ea69b1413cb188690bf4205a02f51086de44cf83ead"
+      }
+    },
+    {
+      "task_id": "ea9505b8-f6b8-4177-a5fa-d5721025dbdd",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "3bf273d9b51dc2c0e39aaa84a67c3551697ab02fb062d9c8496e38100c57f679",
+      "current_field_sha256": "2fc6ae04ff3946fa45924515f9dd1cf4616cf8ab1b1571c48358bf76f1763d18",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[112].expected_output",
+        "$.nodes[112].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 122,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[112].expected_output",
+          "$.nodes[112].verification.evidence_required[0]"
+        ],
+        "span_sha256": "3bf273d9b51dc2c0e39aaa84a67c3551697ab02fb062d9c8496e38100c57f679"
+      }
+    },
+    {
+      "task_id": "f367e2bc-7831-41a5-90de-23cd62c7ea43",
+      "field": "description",
+      "line": 3,
+      "span_sha256": "196ca5e71f5bd8d25a5bbf9d382d449902d3f5d2b96da65f5c8142907fa85a45",
+      "current_field_sha256": "219278c84b70c3e173131c5664a4a80e2aa83045af5f8617dd9123f4457b219c",
+      "metadata_key": "expected_output",
+      "classification": "proven_private_source_task_identifier",
+      "source_pointers": [
+        "$.nodes[71].expected_output",
+        "$.nodes[71].verification.evidence_required[0]"
+      ],
+      "registration_object_index": 81,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "repo": "Arcanada-one/arcanada-workspace",
+        "commit": "51762668e8e5b0b06b1cd7dcb7ccba85e3c11510",
+        "blob": "4205ee9877f266546deaedf9760fa633d20b74d9",
+        "path": "documentation/research/talomnia-atlas/integration-v0.1/TASK-DAG.json",
+        "file_sha256": "10ad6bfd442ecfc2b8a823fb1b2b035cc810f5de39ba197174cb29709d8679d3",
+        "pointers": [
+          "$.nodes[71].expected_output",
+          "$.nodes[71].verification.evidence_required[0]"
+        ],
+        "span_sha256": "196ca5e71f5bd8d25a5bbf9d382d449902d3f5d2b96da65f5c8142907fa85a45"
+      }
+    },
+    {
+      "task_id": "2402c54d-74b9-49b8-9160-d689f2eb4ee5",
+      "field": "description",
+      "line": 1,
+      "span_sha256": "b6e040ac2d8776f00979c69ffdd29d2cfb18b695263fe01acd6a77bfec65ab2b",
+      "current_field_sha256": "ebb97707e4bac85c921b08d3d62101713b607faf8dff72a3e3ffbfd748e12c43",
+      "metadata_key": "agentTerminalHandle",
+      "classification": "proven_historical_orca_terminal_identifier",
+      "source_pointers": [],
+      "registration_object_index": null,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "kind": "historical_orca_accounting",
+        "artifact_sha256": "9f672a1285110ae9783f71d958138314135b788d9f4f0ea8b39b9f45b3495fb8",
+        "report_sha256": "597a72a729c95fea0648779b8474dbbefc934bc4a0798e3ad8ccb724b6a626c0",
+        "span_sha256": "b6e040ac2d8776f00979c69ffdd29d2cfb18b695263fe01acd6a77bfec65ab2b",
+        "source_field": "agentTerminalHandle",
+        "records": [
+          {
+            "runId": "run_2fa4e1b7b6fc",
+            "taskId": "task_14ea7ca947f3",
+            "dispatchId": "ctx_1f2c8ede82c1",
+            "workerState": "unsupervised",
+            "dispatchStatus": "failed",
+            "terminalState": "retained",
+            "span_sha256": "b6e040ac2d8776f00979c69ffdd29d2cfb18b695263fe01acd6a77bfec65ab2b",
+            "source_field": "agentTerminalHandle"
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "2402c54d-74b9-49b8-9160-d689f2eb4ee5",
+      "field": "description",
+      "line": 1,
+      "span_sha256": "af4cbb5022fab8b11ab37ef027c09f3fdf62baa69129a79fdab8ae52e5fad857",
+      "current_field_sha256": "ebb97707e4bac85c921b08d3d62101713b607faf8dff72a3e3ffbfd748e12c43",
+      "metadata_key": "agentTerminalHandle",
+      "classification": "proven_historical_orca_terminal_identifier",
+      "source_pointers": [],
+      "registration_object_index": null,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "kind": "historical_orca_accounting",
+        "artifact_sha256": "9f672a1285110ae9783f71d958138314135b788d9f4f0ea8b39b9f45b3495fb8",
+        "report_sha256": "597a72a729c95fea0648779b8474dbbefc934bc4a0798e3ad8ccb724b6a626c0",
+        "span_sha256": "af4cbb5022fab8b11ab37ef027c09f3fdf62baa69129a79fdab8ae52e5fad857",
+        "source_field": "agentTerminalHandle",
+        "records": [
+          {
+            "runId": "run_2fa4e1b7b6fc",
+            "taskId": "task_d106954dd787",
+            "dispatchId": "ctx_baf9d1b84eaa",
+            "workerState": "unsupervised",
+            "dispatchStatus": "failed",
+            "terminalState": "retained",
+            "span_sha256": "af4cbb5022fab8b11ab37ef027c09f3fdf62baa69129a79fdab8ae52e5fad857",
+            "source_field": "agentTerminalHandle"
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "2402c54d-74b9-49b8-9160-d689f2eb4ee5",
+      "field": "description",
+      "line": 1,
+      "span_sha256": "e4a66caee6de79d7cdc9c434f8d53cdff99a0bf99e3c7292fe9f93530170bd76",
+      "current_field_sha256": "ebb97707e4bac85c921b08d3d62101713b607faf8dff72a3e3ffbfd748e12c43",
+      "metadata_key": "agentTerminalHandle",
+      "classification": "proven_historical_orca_terminal_identifier",
+      "source_pointers": [],
+      "registration_object_index": null,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "kind": "historical_orca_accounting",
+        "artifact_sha256": "9f672a1285110ae9783f71d958138314135b788d9f4f0ea8b39b9f45b3495fb8",
+        "report_sha256": "597a72a729c95fea0648779b8474dbbefc934bc4a0798e3ad8ccb724b6a626c0",
+        "span_sha256": "e4a66caee6de79d7cdc9c434f8d53cdff99a0bf99e3c7292fe9f93530170bd76",
+        "source_field": "agentTerminalHandle",
+        "records": [
+          {
+            "runId": "run_2fa4e1b7b6fc",
+            "taskId": "task_b4d90222a647",
+            "dispatchId": "ctx_b03465954b64",
+            "workerState": "unsupervised",
+            "dispatchStatus": "completed",
+            "terminalState": "retained",
+            "span_sha256": "e4a66caee6de79d7cdc9c434f8d53cdff99a0bf99e3c7292fe9f93530170bd76",
+            "source_field": "agentTerminalHandle"
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "2402c54d-74b9-49b8-9160-d689f2eb4ee5",
+      "field": "description",
+      "line": 1,
+      "span_sha256": "36c28788f85279ac5fe4ec729146d938c99dd1609e4cf59b9229290afa6764b0",
+      "current_field_sha256": "ebb97707e4bac85c921b08d3d62101713b607faf8dff72a3e3ffbfd748e12c43",
+      "metadata_key": "agentTerminalHandle",
+      "classification": "proven_historical_orca_terminal_identifier",
+      "source_pointers": [],
+      "registration_object_index": null,
+      "credential_validity": "not_probed",
+      "policy_admission": "not_measured",
+      "provenance": {
+        "kind": "historical_orca_accounting",
+        "artifact_sha256": "9f672a1285110ae9783f71d958138314135b788d9f4f0ea8b39b9f45b3495fb8",
+        "report_sha256": "597a72a729c95fea0648779b8474dbbefc934bc4a0798e3ad8ccb724b6a626c0",
+        "span_sha256": "36c28788f85279ac5fe4ec729146d938c99dd1609e4cf59b9229290afa6764b0",
+        "source_field": "agentTerminalHandle",
+        "records": [
+          {
+            "runId": "run_2fa4e1b7b6fc",
+            "taskId": "task_1c9c13cd93cc",
+            "dispatchId": "ctx_cd680f04815a",
+            "workerState": "unsupervised",
+            "dispatchStatus": "completed",
+            "terminalState": "retained",
+            "span_sha256": "36c28788f85279ac5fe4ec729146d938c99dd1609e4cf59b9229290afa6764b0",
+            "source_field": "agentTerminalHandle"
+          },
+          {
+            "runId": "run_2fa4e1b7b6fc",
+            "taskId": "task_f2bc6cd016e5",
+            "dispatchId": "ctx_8354ada9176e",
+            "workerState": "unsupervised",
+            "dispatchStatus": "failed",
+            "terminalState": "retained",
+            "span_sha256": "36c28788f85279ac5fe4ec729146d938c99dd1609e4cf59b9229290afa6764b0",
+            "source_field": "agentTerminalHandle"
+          }
+        ]
+      }
+    }
+  ],
+  "scope_rule": "Accept no key-level/shape-level/global string allowance. Each entry requires exact task+field+whole-field digest+line+span digest and immutable source pointer; changed field, different task, adjacent secret, source mismatch or absent owner admission must remain blocked. Never bypass named critical or actual gitleaks rules. Candidate classification does not itself change scanner verdict.",
+  "required_controls": [
+    "Exact 132 entries match independently pinned source; four unknown remain blocked",
+    "Known credential assigned to expected_output/local_id still blocked",
+    "Same proven identifier in another task/changed field not covered without exact proof",
+    "Adjacent provider credential and generic entropy unknown both blocked",
+    "Altered source pointer/hash, near miss, missing policy admission refuse",
+    "Retain original FAIL; new full scan only after admitted material repair"
+  ],
+  "reverse_if": "Any unknown/provider credential allowed, task/source binding changes, corpus text deleted, or current grant renewed before F2/A4 gates: refuse/revert policy through source PR; preserve corpus/history",
+  "enabled": false,
+  "predecessor_sha256": "0dedd687088a1c64c06632b8da00e380c3a0b8bf67654190d547adac23550245",
+  "historical_proof_artifact_sha256": "9f672a1285110ae9783f71d958138314135b788d9f4f0ea8b39b9f45b3495fb8",
+  "source_proof_review_sha256": "597a72a729c95fea0648779b8474dbbefc934bc4a0798e3ad8ccb724b6a626c0",
+  "classification_counts": {
+    "private_task_identifiers": 132,
+    "historical_orca_terminal_identifiers": 4
+  }
+}
