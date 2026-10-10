@@ -138,3 +138,11 @@ def test_shipped_catalog_is_disabled_and_all_136_entries_have_typed_proof():
     assert policy["status"] == "candidate_not_admitted_not_enabled"
     assert len(policy["entries"]) == 136
     assert all(_proven(e) for e in policy["entries"])
+
+
+def test_missing_gitleaks_instrument_cannot_clear_entropy():
+    policy = candidate()
+    with patch("tools.muneral_sync.span_policy.shutil.which", return_value=None), pytest.raises(ScanError):
+        scan_task_field(
+            TEXT, task_id=TASK, field="description", policy=policy, admitted_policy_sha256=policy_digest(policy)
+        )

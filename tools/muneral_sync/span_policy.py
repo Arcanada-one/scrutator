@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from collections.abc import Mapping
 
 from .secretscan import SEV_INFO, Finding, ScanError, ScanResult, _set_verdict, scan_serialized
@@ -96,6 +97,8 @@ def scan_task_field(
         or policy_digest(policy) != admitted_policy_sha256
     ):
         raise ScanError("exact-span policy lacks caller-verified native admission binding")
+    if shutil.which("gitleaks") is None:
+        raise ScanError("exact-span classification requires the gitleaks instrument")
     entries = policy.get("entries")
     if not isinstance(entries, list) or not entries or any(not isinstance(e, dict) or not _proven(e) for e in entries):
         raise ScanError("exact-span policy provenance invalid")
