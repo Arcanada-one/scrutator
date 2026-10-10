@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted"
  },
- "captured_at_utc": "2026-10-10T17:51:21Z",
+ "captured_at_utc": "2026-10-10T17:54:19Z",
  "change_set": {
   "base": "5b4377d07c0ad8cbc223e6e80bb5cc95058d9d33",
   "files": [
@@ -16,6 +16,15 @@
      "document:documentation/reference/muneral-exact-span-policy.md"
     ],
     "path": "documentation/reference/muneral-exact-span-policy.md",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json"
+    ],
+    "path": "receipts/graph/change-admission-F2-exact-span-20261010.json",
     "status": "A"
    },
    {
@@ -43,7 +52,7 @@
     "status": "A"
    }
   ],
-  "head": "faf13f0fdb47ee18cf7d4c94e308ab776aec56f0",
+  "head": "b9634e1bdde0fe6c79f261f8c82055017ed62384",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -58,12 +67,12 @@
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:4080d8b079a4aa0ed1122ea41042872ac37b7e0d28e64959406e1450355c644b",
-  "path": "/tmp/arcana-verify/verifier-out/graph-head-faf13f0fdb47.json",
-  "source_commit": "faf13f0fdb47ee18cf7d4c94e308ab776aec56f0",
+  "graph_digest": "sha256:1986334040c93e9a9b0a23154cd2b32e548e54c287c4cdc5fb45a69184916a18",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-b9634e1bdde0.json",
+  "source_commit": "b9634e1bdde0fe6c79f261f8c82055017ed62384",
   "staleness": {
-   "checked_at_utc": "2026-10-10T17:51:47Z",
-   "checked_nodes": 298,
+   "checked_at_utc": "2026-10-10T17:54:49Z",
+   "checked_nodes": 299,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -109,7 +118,8 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261010T175121Z-faf13f0f",
+ "receipt_id": "car-verify-20261010T175419Z-b9634e1b",
+ "receipt_path": "receipts/graph/change-admission-F2-exact-span-20261010.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
   "path": "/home/dev/aup/import-audit-work/scrutator-F2-exact-span-policy"
@@ -120,21 +130,38 @@
    "code_unit:tests/test_muneral_span_policy.py",
    "code_unit:tools/muneral_sync/span_policy.py",
    "deployable_unit:.",
-   "document:documentation/reference/muneral-exact-span-policy.md"
+   "document:documentation/reference/muneral-exact-span-policy.md",
+   "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json"
   ],
   "schema": "RevisionImpactSelection/v1",
   "unmeasured_head_files": []
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-10T17:51:47Z",
+  "checked_at_utc": "2026-10-10T17:54:49Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
  },
- "structural_exclusions": [],
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:ff64174d68ff9ac494a81f72a974cddf17ae0668118b767ca3e56b070c73325f"
+   },
+   "entity": "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-F2-exact-span-20261010.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-F2-exact-span-20261010.json for work item 7b3b4703-23d9-4a50-a4bd-f43b1efda0ab",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-F2-exact-span-20261010.json",
+    "work_item": "7b3b4703-23d9-4a50-a4bd-f43b1efda0ab"
+   }
+  }
+ ],
  "tree": {
-  "commit": "faf13f0fdb47ee18cf7d4c94e308ab776aec56f0",
+  "commit": "b9634e1bdde0fe6c79f261f8c82055017ed62384",
   "dirty": false
  },
  "verdicts": [
@@ -180,8 +207,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/import-audit-work/scrutator-F2-exact-span-policy/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/import-audit-work/scrutator-F2-exact-span-policy/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify/verifier-out/type-check-b7pbixt_/check.tsbuildinfo --listFiles",
-   "duration_s": 0.89,
+   "command": "/home/dev/aup/import-audit-work/scrutator-F2-exact-span-policy/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/import-audit-work/scrutator-F2-exact-span-policy/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify/verifier-out/type-check-i4yt_4dq/check.tsbuildinfo --listFiles",
+   "duration_s": 1.05,
    "entities": [
     "deployable_unit:."
    ],
@@ -192,7 +219,7 @@
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-10T17:51:48Z",
+   "started_at_utc": "2026-10-10T17:54:51Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
@@ -212,7 +239,7 @@
    "id": "v-fitness",
    "kind": "fitness_rules",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-10T17:51:49Z",
+   "started_at_utc": "2026-10-10T17:54:52Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -228,12 +255,24 @@
    "id": "v-doc-reference",
    "kind": "doc_reference",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-10-10T17:51:49Z",
+   "started_at_utc": "2026-10-10T17:54:52Z",
    "summary": "1 document(s), 0 failed"
   }
  ],
  "verify": {
-  "events": [],
+  "events": [
+   {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-F2-exact-span-20261010.json is the previous version of the one this run is writing, for the same work item 7b3b4703-23d9-4a50-a4bd-f43b1efda0ab — superseded by construction, so it owes this change no verdict"
+   },
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "1 affected entity(ies) owe no verdict (receipt: 1): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
   "required_by_entity": {
    "code_unit:tests/test_muneral_span_policy.py": [
     "fitness_rules"
@@ -247,12 +286,13 @@
    ],
    "document:documentation/reference/muneral-exact-span-policy.md": [
     "doc_reference"
-   ]
+   ],
+   "receipt:receipts/graph/change-admission-F2-exact-span-20261010.json": []
   },
   "seconds": {
-   "prepare": 0.46,
-   "total": 28.52,
-   "verifiers": 0.89
+   "prepare": 0.52,
+   "total": 32.63,
+   "verifiers": 1.05
   }
  },
  "work_item": "7b3b4703-23d9-4a50-a4bd-f43b1efda0ab"
