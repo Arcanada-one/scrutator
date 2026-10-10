@@ -26,6 +26,7 @@ def candidate():
                 "line": 1,
                 "current_field_sha256": hashlib.sha256(TEXT.encode()).hexdigest(),
                 "span_sha256": SPAN,
+                "metadata_key": "local_id",
                 "provenance": {
                     "repo": "Arcanada-one/synthetic",
                     "commit": "a" * 40,
@@ -146,3 +147,35 @@ def test_missing_gitleaks_instrument_cannot_clear_entropy():
         scan_task_field(
             TEXT, task_id=TASK, field="description", policy=policy, admitted_policy_sha256=policy_digest(policy)
         )
+
+
+@pytest.mark.parametrize("second_key", ["secret", "local_id"])
+def test_same_line_identical_value_collision_stays_critical(second_key):
+    text = TEXT + " " + second_key + "=" + TEXT.split("=", 1)[1]
+    policy = candidate()
+    policy["entries"][0]["current_field_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+    result = scan(policy, text=text)
+    assert len(result.findings) == 2
+    assert all(f.severity == SEV_CRITICAL for f in result.findings)
+
+
+def test_actual_assignment_key_must_match_provenance():
+    text = TEXT.replace("local_id=", "secret=")
+    policy = candidate()
+    policy["entries"][0]["current_field_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+    assert scan(policy, text=text).is_critical
+
+
+def test_missing_git_metadata_key_refuses():
+    policy = candidate()
+    del policy["entries"][0]["metadata_key"]
+    with pytest.raises(ScanError):
+        scan(policy)
+
+
+def test_identical_value_on_other_line_remains_critical():
+    text = TEXT + "\nsecret=" + TEXT.split("=", 1)[1]
+    policy = candidate()
+    policy["entries"][0]["current_field_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+    result = scan(policy, text=text)
+    assert [f.severity for f in result.findings] == ["INFO", SEV_CRITICAL]

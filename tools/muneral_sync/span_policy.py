@@ -12,7 +12,17 @@ import re
 import shutil
 from collections.abc import Mapping
 
-from .secretscan import SEV_INFO, Finding, ScanError, ScanResult, _set_verdict, scan_serialized
+from .secretscan import (
+    _ENTROPY_ASSIGN,
+    _ENTROPY_THRESHOLD,
+    SEV_INFO,
+    Finding,
+    ScanError,
+    ScanResult,
+    _set_verdict,
+    scan_serialized,
+    shannon_entropy,
+)
 
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _OID = re.compile(r"[0-9a-f]{40}\Z")
@@ -58,6 +68,7 @@ def _proven(entry: Mapping) -> bool:
         )
     return (
         proof.get("kind") in {None, "immutable_git"}
+        and entry.get("metadata_key") in {"local_id", "expected_output"}
         and bool(re.fullmatch(r"Arcanada-one/[A-Za-z0-9_.-]+", str(proof.get("repo", ""))))
         and bool(_OID.fullmatch(str(proof.get("commit", ""))))
         and bool(_OID.fullmatch(str(proof.get("blob", ""))))
@@ -109,7 +120,25 @@ def scan_task_field(
     if len(set(identities)) != len(identities):
         raise ScanError("exact-span policy contains duplicate identities")
     whole_hash = hashlib.sha256(text.encode()).hexdigest()
-    allowed = {(e[2], e[4]) for e in identities if e[0] == task_id and e[1] == field and e[3] == whole_hash}
+    # Finding carries line/hash, not occurrence offsets. Refuse every ambiguous
+    # group rather than attributing a sibling secret to a permitted metadata key.
+    occurrences = {}
+    for line_number, line_text in enumerate(text.splitlines(), 1):
+        for match in _ENTROPY_ASSIGN.finditer(line_text):
+            value = match.group("val")
+            if shannon_entropy(value) > _ENTROPY_THRESHOLD:
+                identity = (line_number, hashlib.sha256(value.encode()).hexdigest())
+                occurrences.setdefault(identity, []).append(match.group("key"))
+    allowed = set()
+    for entry in entries:
+        identity = (entry["line"], entry["span_sha256"])
+        if (
+            entry["task_id"] == task_id
+            and entry["field"] == field
+            and entry["current_field_sha256"] == whole_hash
+            and occurrences.get(identity) == [entry["metadata_key"]]
+        ):
+            allowed.add(identity)
     result.findings = [
         Finding(f.rule, SEV_INFO, f.line, f.span_hash)
         if f.rule == "generic-entropy" and (f.line, f.span_hash) in allowed

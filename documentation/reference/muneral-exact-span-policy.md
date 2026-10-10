@@ -11,3 +11,13 @@ This PR adds a field-scanner entry point and disabled catalog. It does not insta
 Required controls cover changed task/field/line/whole-field/span/source, a missing admission digest, near misses, synthetic credential assignments to metadata keys, adjacent provider and entropy secrets, named critical and gitleaks findings. Original critical findings remain in the output; a permitted entropy classification changes severity to INFO, never erases the finding.
 
 Reverse/refuse if policy scope broadens, a named/gitleaks finding is reduced, raw protected values escape, corpus history is edited, a candidate is treated as admitted, or grant renewal precedes exact independent F1/F2/A4 acceptance.
+
+### Assignment identity and ambiguity refusal
+
+Classification requires the actual scanner assignment key to match the proven
+metadata key. If a line contains repeated qualifying values with the same hash,
+all findings in that line/hash group remain critical, even for identical keys.
+The classifier reuses the scanner regex and entropy threshold. Named rules and
+gitleaks remain blocking. This disabled seam is not integrated into the digest
+consumer: final serialized-wire scanning remains required. Provenance reference
+shape does not authenticate an issuer; native caller admission is separate.
