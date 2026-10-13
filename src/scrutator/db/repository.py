@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -10,6 +11,7 @@ from uuid import UUID
 import numpy as np
 
 from scrutator.db.connection import acquire_search_connection, get_pool
+from scrutator.db.exact_generation import matches_generation
 from scrutator.db.models import (
     ChunkLookupResult,
     NamespaceInfo,
@@ -1411,7 +1413,7 @@ async def get_section_siblings_children(chunk_id: str, allowed_namespace_ids: fr
 # ── SRCH-0038: exact whole-document fetch-by-id (namespace-scoped, S2/S3) ─────────────
 
 _FETCH_CHUNK_COLUMNS = """
-    c.id::text AS chunk_id, c.chunk_index, c.content, c.content_hash,
+    c.id::text AS chunk_id, c.parent_id::text AS parent_id, c.chunk_index, c.content, c.content_hash,
     c.source_path, c.source_type, c.token_count,
     c.metadata, c.indexed_at::text AS indexed_at, n.name AS namespace
 """
@@ -1422,6 +1424,7 @@ def _fetch_row_to_dict(row: Any) -> dict[str, Any]:
     return {
         "chunk_id": row["chunk_id"],
         "chunk_index": row["chunk_index"],
+        "parent_id": row.get("parent_id"),
         "content": row["content"],
         "content_hash": row["content_hash"],
         "source_path": row["source_path"],
@@ -1451,7 +1454,9 @@ async def fetch_source_raw_content(doc_id: str, allowed_namespace_ids: frozenset
         )
 
 
-async def fetch_evidence_raw_content(doc_id: str, allowed_namespace_ids: frozenset[int]) -> tuple[str, str] | None:
+async def fetch_evidence_raw_content(
+    doc_id: str, allowed_namespace_ids: frozenset[int], *, expected_rows: list[dict] | None = None
+) -> tuple[str, str] | None:
     """Return ``(raw_content, content_hash)`` for an evidence doc (SRCH-0039), namespace-scoped, or
     ``None`` when absent.
 
@@ -1462,8 +1467,8 @@ async def fetch_evidence_raw_content(doc_id: str, allowed_namespace_ids: frozens
     ``chunks.metadata``).
 
     The row's ``content_hash`` is returned ALONGSIDE the bytes so the fetcher can compare it to the
-    current chunk stamp and reject a STALE row (a hash-to-hash comparison of two bound-at-write
-    values, NOT a body re-hash) — defense-in-depth against a stale exact-bytes row (SRCH-0039
+    current chunk stamp and reject a STALE row (the orchestrator independently checks the whole raw body
+    without replacing the original ingest stamp) — defense-in-depth against a stale exact-bytes row (SRCH-0039
     pre-merge review). An empty allowed-set, an unknown / cross-namespace ``doc_id``, or a not-yet-
     backfilled doc returns ``None`` → the fetcher GRACEFULLY DEGRADES to reassembly
     (``content_exact=False``), deliberately NOT the skills fail-closed 409 (evidence row-absence is
@@ -1471,16 +1476,94 @@ async def fetch_evidence_raw_content(doc_id: str, allowed_namespace_ids: frozens
     if not allowed_namespace_ids or not doc_id:
         return None
     pool = await get_pool()
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT raw_content, content_hash FROM evidence_documents "
-            "WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
-            doc_id,
-            list(allowed_namespace_ids),
-        )
+    # Bind the raw row and current chunk generation in one read-only snapshot.
+    async with pool.acquire() as conn, conn.transaction(isolation="repeatable_read", readonly=True):
+        if expected_rows is not None:
+            if not expected_rows:
+                return None
+            first = expected_rows[0]
+            namespace, path = first["namespace"], first["source_path"]
+            current = await conn.fetch(
+                f"""SELECT {_FETCH_CHUNK_COLUMNS}
+                FROM chunks c JOIN namespaces n ON n.id = c.namespace_id
+                WHERE c.namespace_id = ANY($2::int[])
+                  AND n.name = $3 AND c.source_path = $4
+                  AND $1::text IS NOT NULL ORDER BY c.chunk_index""",
+                doc_id,
+                list(allowed_namespace_ids),
+                namespace,
+                path,
+            )
+
+            def identity(item):
+                return (
+                    item["chunk_id"],
+                    item.get("parent_id"),
+                    item["chunk_index"],
+                    item["indexed_at"],
+                    item["namespace"],
+                    item["source_path"],
+                    item["content"],
+                    item["content_hash"],
+                    item["source_type"],
+                    item["token_count"],
+                    item["metadata"],
+                )
+
+            if [identity(_fetch_row_to_dict(item)) for item in current] != [identity(item) for item in expected_rows]:
+                return None
+            if any(item["namespace"] != namespace or item["source_path"] != path for item in expected_rows):
+                return None
+            row = await conn.fetchrow(
+                "SELECT e.raw_content, e.content_hash FROM evidence_documents e "
+                "JOIN namespaces n ON n.id = e.namespace_id "
+                "WHERE e.doc_id = $1 AND e.namespace_id = ANY($2::int[]) "
+                "AND n.name = $3 AND e.source_path = $4",
+                doc_id,
+                list(allowed_namespace_ids),
+                namespace,
+                path,
+            )
+            if row is not None and not matches_generation(
+                [_fetch_row_to_dict(item) for item in current],
+                namespace,
+                path,
+                doc_id,
+                row["content_hash"],
+                row["raw_content"],
+            ):
+                return None
+        else:
+            # Preserve the legacy repository helper interface; exact receiving always
+            # supplies expected_rows and takes the generation-bound branch above.
+            row = await conn.fetchrow(
+                "SELECT raw_content, content_hash FROM evidence_documents "
+                "WHERE doc_id = $1 AND namespace_id = ANY($2::int[])",
+                doc_id,
+                list(allowed_namespace_ids),
+            )
     if row is None:
         return None
     return row["raw_content"], row["content_hash"]
+
+
+async def _complete_evidence_rows(conn: Any, rows: list, allowed_namespace_ids: frozenset[int]) -> list:
+    """Preserve legacy/skills lookups; enabled evidence includes all authorized path rows."""
+    from scrutator.config import settings
+
+    if not rows or not settings.evidence_exact_enabled_for(rows[0]["namespace"]):
+        return rows
+    paths = {(row["namespace"], row["source_path"]) for row in rows}
+    if len(paths) != 1:
+        return []
+    namespace, path = next(iter(paths))
+    return await conn.fetch(
+        f"SELECT {_FETCH_CHUNK_COLUMNS} FROM chunks c JOIN namespaces n ON n.id=c.namespace_id "
+        "WHERE c.namespace_id=ANY($1::int[]) AND n.name=$2 AND c.source_path=$3 ORDER BY c.chunk_index",
+        list(allowed_namespace_ids),
+        namespace,
+        path,
+    )
 
 
 async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[int]) -> list[dict[str, Any]]:
@@ -1506,6 +1589,7 @@ async def fetch_chunks_by_doc_id(doc_id: str, allowed_namespace_ids: frozenset[i
             doc_id,
             list(allowed_namespace_ids),
         )
+        rows = await _complete_evidence_rows(conn, rows, allowed_namespace_ids)
     return [_fetch_row_to_dict(row) for row in rows]
 
 
@@ -1561,6 +1645,7 @@ async def fetch_chunks_by_chunk_id(chunk_id: str, allowed_namespace_ids: frozens
                 namespace_id,
                 self_row["source_path"],
             )
+        rows = await _complete_evidence_rows(conn, rows, allowed_namespace_ids)
     return [_fetch_row_to_dict(row) for row in rows]
 
 
@@ -2704,3 +2789,56 @@ async def memory_stats(namespace_ids: frozenset[int] | None = None) -> MemorySta
         by_actor={r["actor"]: r["cnt"] for r in actor_rows},
         by_type={r["mtype"]: r["cnt"] for r in type_rows},
     )
+
+
+async def populate_exact_evidence_atomic(namespace: str, document: dict[str, Any]) -> bool:
+    """Add only verified raw bytes to an existing source generation; never replace chunks.
+
+    The caller derives namespace from the dedicated feeder capability and explicit server
+    scope. Source advisory locking and chunk row locks protect concurrent replacement and
+    deletion. Conflicting existing raw rows are refused, not overwritten or restamped.
+    """
+    raw = document.get("raw_content")
+    if (
+        not isinstance(raw, str)
+        or document.get("content_hash") != "sha256:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    ):
+        raise ValueError("exact evidence raw body digest mismatch")
+    pool = await get_pool()
+    async with pool.acquire() as conn, conn.transaction():
+        namespace_id = await conn.fetchval("SELECT id FROM namespaces WHERE name = $1", namespace)
+        if namespace_id is None:
+            raise ValueError("existing exact evidence source unavailable")
+        path = document["source_path"]
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))", namespace_id, path
+        )
+        chunks = await conn.fetch(
+            "SELECT id::text AS chunk_id, parent_id::text AS parent_id, chunk_index, source_type, "
+            "content, content_hash, token_count, metadata FROM chunks "
+            "WHERE namespace_id = $1 AND source_path = $2 ORDER BY chunk_index FOR UPDATE",
+            namespace_id,
+            path,
+        )
+        if not chunks:
+            raise ValueError("existing exact evidence source unavailable")
+        if not matches_generation(chunks, namespace, path, document["doc_id"], document["content_hash"], raw):
+            raise ValueError("exact evidence source generation mismatch")
+        status = await conn.execute(
+            "INSERT INTO evidence_documents (namespace_id, source_path, doc_id, content_hash, raw_content) "
+            "VALUES ($1, $2, $3, $4, $5) ON CONFLICT (namespace_id, source_path) DO NOTHING",
+            namespace_id,
+            path,
+            document["doc_id"],
+            document["content_hash"],
+            document["raw_content"],
+        )
+        row = await conn.fetchrow(
+            "SELECT doc_id, content_hash, raw_content FROM evidence_documents "
+            "WHERE namespace_id = $1 AND source_path = $2 FOR UPDATE",
+            namespace_id,
+            path,
+        )
+        if row is None or any(row[key] != document[key] for key in ("doc_id", "content_hash", "raw_content")):
+            raise ValueError("conflicting exact evidence source retained")
+    return status == "INSERT 0 1"

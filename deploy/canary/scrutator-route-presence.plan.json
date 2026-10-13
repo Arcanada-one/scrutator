@@ -400,6 +400,21 @@
       "mutating": true
     },
     {
+      "id": "post-v1-index-evidence-exact",
+      "method": "POST",
+      "path": "/v1/index/evidence-exact",
+      "route": "/v1/index/evidence-exact",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/index/evidence-exact",
+        "code_unit:src/scrutator/health.py"
+      ],
+      "mutating": true
+    },
+    {
       "id": "post-v1-ltm-ingest",
       "method": "POST",
       "path": "/v1/ltm/ingest",
