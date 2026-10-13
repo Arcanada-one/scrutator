@@ -1,0 +1,242 @@
+{
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
+  "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-10-13T23:15:12Z",
+ "change_set": {
+  "base": "77d7c67dd8696c346af78072389d3ce66ae63ab6",
+  "files": [
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json"
+    ],
+    "path": "receipts/graph/change-admission-evidence-exact-auth-controls.json",
+    "status": "A"
+   },
+   {
+    "kind": "test",
+    "node_id": "code_unit:tests/test_exact_evidence_route_auth.py",
+    "node_ids": [
+     "code_unit:tests/test_exact_evidence_route_auth.py"
+    ],
+    "path": "tests/test_exact_evidence_route_auth.py",
+    "status": "A"
+   }
+  ],
+  "head": "8a7398ac05a07082d68ca6b3fc2ff6c00941ec3c",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "code": "BOUNDED_CHECKER_OUT_OF_SCOPE",
+   "entity": "deployable_unit:.",
+   "expires_at_utc": "2026-10-14T11:15:00Z",
+   "owner": "KC (Scrutator, Muneral 261743bb)",
+   "reason": "This change adds only Python authorization tests. The selected deployable-unit type_check command is tsc -p contracts/http/tsconfig.json, which is unavailable on the runner and is not an applicable verifier for this Python-only change; the Python test suite and Ruff checks passed. Scope is only deployable_unit type_check, not route authorization, runtime or deploy. reverse_if: expire at 2026-10-14T11:15:00Z or sooner when an applicable verifier is available; reissue against the then-current range."
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.6",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:7ca9c08aba1f0b213bfc4098f544a6ed0c2a7f3f634b5ee144d75856d9b13b94",
+  "path": "/tmp/arcana-verify/verifier-out/graph-77d7c67dd869.json",
+  "source_commit": "77d7c67dd8696c346af78072389d3ce66ae63ab6"
+ },
+ "head_graph": {
+  "builder_version": "1.0.6",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:ce78372044d4cb63d81e4bba2b043494a6c064f1031adc8bb2b92002806b839f",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-8a7398ac05a0.json",
+  "source_commit": "8a7398ac05a07082d68ca6b3fc2ff6c00941ec3c",
+  "staleness": {
+   "checked_at_utc": "2026-10-13T23:15:45Z",
+   "checked_nodes": 304,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "arcana-devs",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:tests/test_exact_evidence_route_auth.py",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
+    ],
+    "revisions": [
+     "head"
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
+  },
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 1
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 1 attached from /dev/shm/scrutator-evidence-exact-exemptions.json"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.4.1"
+ },
+ "receipt_id": "car-verify-20261013T231512Z-8a7398ac",
+ "receipt_path": "receipts/graph/change-admission-evidence-exact-auth-controls.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-evidence-auth-controls-20261013"
+ },
+ "revision_selection": {
+  "base": [],
+  "head": [
+   "code_unit:tests/test_exact_evidence_route_auth.py",
+   "deployable_unit:.",
+   "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-10-13T23:15:45Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:1996e76b28327f96d17ca9faf0b2fb1bd5a780bc77c7c52a78bb746b3915bc73"
+   },
+   "entity": "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-evidence-exact-auth-controls.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-evidence-exact-auth-controls.json for work item 261743bb-8db9-4aba-9bb1-d8163091653d",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-evidence-exact-auth-controls.json",
+    "work_item": "261743bb-8db9-4aba-9bb1-d8163091653d"
+   }
+  }
+ ],
+ "tree": {
+  "commit": "8a7398ac05a07082d68ca6b3fc2ff6c00941ec3c",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:tests/test_exact_evidence_route_auth.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: tsc unavailable on this host",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  }
+ ],
+ "verifier_selection": {
+  "applied": {},
+  "not_applied": [],
+  "requested": [],
+  "schema": "VerifierSelection/v1"
+ },
+ "verifiers": [
+  {
+   "command": "tsc -p /home/dev/aup/kc-finish-work/scrutator-evidence-auth-controls-20261013/contracts/http/tsconfig.json (tsc not found)",
+   "duration_s": 0.0,
+   "entities": [
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "deployable_unit:.": "not_measured"
+   },
+   "exit_code": 127,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-13T23:15:46Z",
+   "summary": "not_measured: tsc unavailable"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:tests/test_exact_evidence_route_auth.py",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:tests/test_exact_evidence_route_auth.py": "verified",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-10-13T23:15:46Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-evidence-exact-auth-controls.json is the previous version of the one this run is writing, for the same work item 261743bb-8db9-4aba-9bb1-d8163091653d — superseded by construction, so it owes this change no verdict"
+   },
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "1 affected entity(ies) owe no verdict (receipt: 1): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:tests/test_exact_evidence_route_auth.py": [
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json": []
+  },
+  "seconds": {
+   "prepare": 0.44,
+   "total": 33.85,
+   "verifiers": 0.0
+  }
+ },
+ "work_item": "261743bb-8db9-4aba-9bb1-d8163091653d"
+}
