@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T01:45:24Z",
+ "captured_at_utc": "2026-10-14T01:46:40Z",
  "change_set": {
   "base": "203a45d292dd17f8f402e8d83ea09988d5e5c1a0",
   "files": [
@@ -82,7 +82,7 @@
     "status": "A"
    }
   ],
-  "head": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
+  "head": "bbfb497a4d1544fa0e2e04f6b1e8e223c93acba0",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -365,17 +365,17 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:4d66c7255f6cc347824e0d822a94eba07ffb2862873b9413c2a10b1f64f8b56b",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/graph-203a45d292dd.json",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/graph-203a45d292dd.json",
   "source_commit": "203a45d292dd17f8f402e8d83ea09988d5e5c1a0"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:f76e31f2a33f8cdbd047c0637694aa406e7a9ab1fb364c57fafb299e12b1c4c2",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/graph-head-9d373b2efb3d.json",
-  "source_commit": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
+  "graph_digest": "sha256:33c4cd815fe7f1d14d59516fa3156f69b7e5382d009afdebeb1c81030dabecaf",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/graph-head-bbfb497a4d15.json",
+  "source_commit": "bbfb497a4d1544fa0e2e04f6b1e8e223c93acba0",
   "staleness": {
-   "checked_at_utc": "2026-10-14T01:46:15Z",
+   "checked_at_utc": "2026-10-14T01:47:26Z",
    "checked_nodes": 307,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -1546,7 +1546,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T014524Z-9d373b2e",
+ "receipt_id": "car-verify-20261014T014640Z-bbfb497a",
  "receipt_path": "receipts/graph/change-admission-rate-limit-9060.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -1723,7 +1723,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T01:46:14Z",
+  "checked_at_utc": "2026-10-14T01:47:26Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -1787,7 +1787,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:212289e36b6330ee38009d394c696e4d12308ec719124b686dbe95ba9672e01b"
+    "head": "sha256:07a33d51aa4ccaf47b7e5b9ae24bc72998a4d097ebfc9cf17927beaaed71fd66"
    },
    "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
    "node_type": "receipt",
@@ -1812,7 +1812,7 @@
   }
  ],
  "tree": {
-  "commit": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
+  "commit": "bbfb497a4d1544fa0e2e04f6b1e8e223c93acba0",
   "dirty": false
  },
  "verdicts": [
@@ -2506,13 +2506,13 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=203a45d292dd, head=9d373b2efb3d, graph=head graph)",
-   "duration_s": 0.07,
+   "command": "tools/graph/contract_diff.py.run_diff(base=203a45d292dd, head=bbfb497a4d15, graph=head graph)",
+   "duration_s": 0.08,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -2580,8 +2580,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-contract-diff.json",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -2650,8 +2650,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-route-config.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -2666,8 +2666,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: line 2: heredoc data/generation closure not measured; job benchmark step 3: line 10: multiline/opaque shell statement; job benchmark step 3: line 11: multiline/opaque shell statement; job benchmark step 3: line 12: multiline/opaque shell statement; job benchmark step 3: line 13: wrapper options/child command unresolved; job benchmark step 3: line 7: multiline/opaque shell statement; job benchmark step 3: line 8: multiline/opaque shell statement; job benchmark step 3: line 9: multiline/opaque shell statement; job benchmark step 5: local action/checkout path scope unresolved"
   },
   {
@@ -2682,8 +2682,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context"
   },
   {
@@ -2698,8 +2698,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: line 10: dynamic load/substitution; job auto-merge step 0: line 11: dynamic load/substitution; job auto-merge step 0: line 12: dynamic load/substitution; job auto-merge step 0: line 13: dynamic load/substitution; job auto-merge step 0: line 3: multiline/opaque shell statement; job auto-merge step 0: line 4: wrapper options/child command unresolved; job auto-merge step 0: line 57: dynamic load/substitution; job auto-merge step 0: line 58: multiline/opaque shell statement; job auto-merge step 0: line 65: multiline/opaque shell statement; job auto-merge step 0: line 66: wrapper options/child command unresolved; job auto-merge step 0: line 67: dynamic load/substitution; job auto-merge step 0: line 68: dynamic load/substitution; job auto-merge step 0: line 69: dynamic load/substitution; job auto-merge step 0: line 82: dynamic command/alias/eval; job auto-merge step 0: line 82: dynamic load/substitution; job auto-merge step 0: line 9: dynamic load/substitution"
   },
   {
@@ -2714,8 +2714,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: line 22: heredoc data/generation closure not measured; job deploy step 4: line 54: dynamic load/substitution; job deploy step 4: line 64: multiline/opaque shell statement; job deploy step 4: line 65: multiline/opaque shell statement; job deploy step 4: line 66: multiline/opaque shell statement; job deploy step 4: line 67: multiline/opaque shell statement; job deploy step 4: line 68: multiline/opaque shell statement; job deploy step 4: line 69: wrapper options/child command unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: line 3: heredoc data/generation closure not measured; job network-exposure: reusable/opaque shell context"
   },
   {
@@ -2730,8 +2730,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context"
   },
   {
@@ -2746,8 +2746,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: line 11: multiline/opaque shell statement; job graph-admission step 10: line 12: wrapper options/child command unresolved; job graph-admission step 10: line 3: multiline/opaque shell statement; job graph-admission step 10: line 4: wrapper options/child command unresolved; job graph-admission step 11: line 15: multiline/opaque shell statement; job graph-admission step 11: line 16: multiline/opaque shell statement; job graph-admission step 11: line 17: multiline/opaque shell statement; job graph-admission step 11: line 18: multiline/opaque shell statement; job graph-admission step 11: line 19: multiline/opaque shell statement; job graph-admission step 11: line 20: multiline/opaque shell statement; job graph-admission step 11: line 21: multiline/opaque shell statement; job graph-admission step 11: line 22: multiline/opaque shell statement; job graph-admission step 11: line 23: multiline/opaque shell statement; job graph-admission step 11: line 24: multiline/opaque shell statement; job graph-admission step 11: line 25: multiline/opaque shell statement; job graph-admission step 11: line 26: multiline/opaque shell statement; job graph-admission step 11: line 27: dynamic command/alias/eval; job graph-admission step 12: local action/checkout path scope unresolved; job graph-admission step 3: line 19: dynamic load/substitution; job graph-admission step 7: line 13: heredoc data/generation closure not measured; job graph-admission step 7: line 2: dynamic load/substitution; job graph-admission step 7: line 3: heredoc data/generation closure not measured; job graph-admission step 7: line 43: heredoc data/generation closure not measured"
   },
   {
@@ -2762,8 +2762,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: line 1: heredoc data/generation closure not measured; job recall-gate step 3: line 6: multiline/opaque shell statement; job recall-gate step 3: line 7: multiline/opaque shell statement; job recall-gate step 3: line 8: multiline/opaque shell statement; job recall-gate step 3: line 9: wrapper options/child command unresolved"
   },
   {
@@ -2870,8 +2870,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-fitness.json",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -2944,8 +2944,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-canary.json",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 30 not_measured of 30 entities"
   },
   {
@@ -2960,9 +2960,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -2977,9 +2977,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out-final/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T01:46:17Z",
+   "started_at_utc": "2026-10-14T01:47:29Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3312,9 +3312,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.89,
-   "total": 53.13,
-   "verifiers": 0.07
+   "prepare": 0.87,
+   "total": 48.69,
+   "verifiers": 0.08
   }
  },
  "work_item": "9060b58a-013d-4178-97e7-c335029a206e"
