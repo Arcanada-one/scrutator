@@ -91,6 +91,16 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
     content_hash = section.get("doc_content_hash", "")
     namespace = first["namespace"]
     source_path = first["source_path"]
+    # KC2 integrity contract: this namespace's downstream consumer verifies `content_hash` against
+    # the exact document body. Never return lossy chunk reassembly under that whole-document hash.
+    # Exact-body storage is separately flag-gated/populated, so until its row is available the
+    # safe result is an explicit refusal rather than a 200 carrying bytes that cannot verify.
+    requires_exact_evidence = namespace == "kc2-store"
+    if requires_exact_evidence and not settings.evidence_exact_enabled_for(namespace):
+        raise HTTPException(
+            status_code=409,
+            detail="kc2-store exact source bytes are unavailable until exact evidence is enabled",
+        )
 
     # SRCH-0038 1b: skills-namespace documents return the EXACT stored source bytes from the
     # isolated `source_documents` table (upserted at ingest inside the same transaction as the
@@ -113,13 +123,11 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         # SRCH-0039 (Mechanism C): the LARGE evidence corpus gets exact whole-document bytes from
         # the isolated `evidence_documents` table, flag-gated and gracefully-degrading. When
         # `evidence_exact_bytes` is ON and a row is present, return its exact `raw_content`
-        # (`content_exact=True`, `sha256(content) == content_hash` by construction). When the flag
-        # is OFF (default — no behaviour change on merge) or the row is ABSENT (an expected
-        # pre-backfill state on the huge existing corpus that is filled gradually), fall back to the
-        # lossy chunk reassembly (`content_exact=False`). This absence path GRACEFULLY DEGRADES —
-        # deliberately NOT the skills fail-closed 409 above — because evidence row-absence is a
-        # transient migration state, not an integrity failure (the ratified skills-vs-evidence
-        # policy divergence). The by-construction invariant still holds: whenever
+        # (`content_exact=True`, `sha256(content) == content_hash` by construction). Other evidence
+        # namespaces retain the existing graceful fallback to lossy chunk reassembly when the flag
+        # is OFF or a row is ABSENT. `kc2-store` is the exception: its consumer verifies the
+        # ingest-stamped whole-document hash, so disabled, missing or stale exact bytes fail closed
+        # below instead of returning a body that cannot verify. The invariant remains that whenever
         # `content_exact=True`, `sha256(content) == content_hash`.
         evidence_raw = None
         if settings.evidence_exact_enabled_for(namespace):
@@ -143,6 +151,11 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         if evidence_raw is not None:
             full_content = evidence_raw
             content_exact = True
+        elif requires_exact_evidence:
+            raise HTTPException(
+                status_code=409,
+                detail="kc2-store exact source bytes are unavailable; re-index required",
+            )
         else:
             # rows are ordered by chunk_index — reassembly is the inverse of the header-split.
             full_content = "".join(row["content"] for row in rows)
