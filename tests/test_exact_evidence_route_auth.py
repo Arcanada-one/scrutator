@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from scrutator.config import settings
 from scrutator.db.models import IndexResponse
 from scrutator.health import app
+from scrutator.request_rate_limit import SlidingWindowRateLimiter
 
 FEEDER_TOKEN = "isolated-test-feeder-token"
 NAMESPACE = "kc2-store"
@@ -92,3 +93,101 @@ def test_exact_evidence_allows_scoped_feeder_and_uses_server_namespace(monkeypat
         "tests/fixtures/exact-evidence.md",
         NAMESPACE,
     )
+
+
+def test_exact_evidence_rate_limit_refuses_before_store_call(monkeypatch):
+    import scrutator.health as health
+
+    _configure_exact_evidence(monkeypatch)
+    monkeypatch.setattr(health, "evidence_exact_rate_limiter", SlidingWindowRateLimiter(limit=2, window_seconds=60))
+    store = AsyncMock(
+        return_value=IndexResponse(
+            chunks_indexed=0,
+            source_path="tests/fixtures/exact-evidence.md",
+            namespace=NAMESPACE,
+            strategy_used="evidence_exact_created",
+        )
+    )
+
+    with patch("scrutator.health.populate_exact_evidence", store):
+        client = TestClient(app)
+        headers = {"X-KB-Feeder-Token": FEEDER_TOKEN}
+        first = client.post("/v1/index/evidence-exact", headers=headers, json=_request_body())
+        second = client.post("/v1/index/evidence-exact", headers=headers, json=_request_body())
+        limited = client.post("/v1/index/evidence-exact", headers=headers, json=_request_body())
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert limited.status_code == 429
+    assert limited.json() == {"detail": "exact evidence request rate limit exceeded"}
+    assert 1 <= int(limited.headers["retry-after"]) <= 60
+    assert store.await_count == 2
+
+
+def test_exact_evidence_authorization_refusals_do_not_consume_rate_budget(monkeypatch):
+    import scrutator.health as health
+
+    _configure_exact_evidence(monkeypatch)
+    monkeypatch.setattr(health, "evidence_exact_rate_limiter", SlidingWindowRateLimiter(limit=1, window_seconds=60))
+    store = AsyncMock(
+        return_value=IndexResponse(
+            chunks_indexed=0,
+            source_path="tests/fixtures/exact-evidence.md",
+            namespace=NAMESPACE,
+            strategy_used="evidence_exact_created",
+        )
+    )
+    with patch("scrutator.health.populate_exact_evidence", store):
+        client = TestClient(app)
+        no_token = client.post("/v1/index/evidence-exact", json=_request_body())
+        wrong_token = client.post(
+            "/v1/index/evidence-exact",
+            headers={"X-KB-Feeder-Token": "wrong-isolated-test-token"},
+            json=_request_body(),
+        )
+        monkeypatch.setattr(settings, "feeder_namespaces", "talomnia")
+        out_of_scope = client.post(
+            "/v1/index/evidence-exact",
+            headers={"X-KB-Feeder-Token": FEEDER_TOKEN},
+            json=_request_body(),
+        )
+        monkeypatch.setattr(settings, "feeder_namespaces", NAMESPACE)
+        allowed = client.post(
+            "/v1/index/evidence-exact",
+            headers={"X-KB-Feeder-Token": FEEDER_TOKEN},
+            json=_request_body(),
+        )
+
+    assert [no_token.status_code, wrong_token.status_code, out_of_scope.status_code] == [401, 401, 403]
+    assert allowed.status_code == 200
+    store.assert_awaited_once_with(
+        "candidate-local exact evidence",
+        "tests/fixtures/exact-evidence.md",
+        NAMESPACE,
+    )
+
+
+def test_exact_evidence_limit_does_not_throttle_other_routes(monkeypatch):
+    import scrutator.health as health
+
+    _configure_exact_evidence(monkeypatch)
+    monkeypatch.setattr(health, "evidence_exact_rate_limiter", SlidingWindowRateLimiter(limit=1, window_seconds=60))
+    store = AsyncMock(
+        return_value=IndexResponse(
+            chunks_indexed=0,
+            source_path="tests/fixtures/exact-evidence.md",
+            namespace=NAMESPACE,
+            strategy_used="evidence_exact_created",
+        )
+    )
+    with patch("scrutator.health.populate_exact_evidence", store):
+        client = TestClient(app)
+        headers = {"X-KB-Feeder-Token": FEEDER_TOKEN}
+        first = client.post("/v1/index/evidence-exact", headers=headers, json=_request_body())
+        health_response = client.get("/health")
+        limited = client.post("/v1/index/evidence-exact", headers=headers, json=_request_body())
+
+    assert first.status_code == 200
+    assert health_response.status_code == 200
+    assert limited.status_code == 429
+    store.assert_awaited_once()

@@ -96,6 +96,7 @@ from scrutator.memory.service import (
     recall as memory_recall,
 )
 from scrutator.request_limits import BoundedRequestBodyMiddleware
+from scrutator.request_rate_limit import SlidingWindowRateLimiter
 from scrutator.search.embedder import close_client as close_embedding_client
 from scrutator.search.fetcher import fetch as fetch_document
 from scrutator.search.indexer import BatchIndexLimitError, index_document, index_documents, populate_exact_evidence
@@ -119,6 +120,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, version=settings.app_version, lifespan=lifespan)
+evidence_exact_rate_limiter = SlidingWindowRateLimiter()
 # Bound the wire body before JSON decoding; escaped content can take up to six
 # wire bytes per UTF-8 content byte, with a bounded envelope allowance.
 app.add_middleware(
@@ -197,6 +199,17 @@ async def exact_evidence_endpoint(
     namespace = scope[0]
     if namespace not in capability.namespaces or not settings.evidence_exact_enabled_for(namespace):
         raise HTTPException(status_code=403, detail="exact evidence namespace outside feeder scope")
+    try:
+        retry_after = evidence_exact_rate_limiter.try_acquire(namespace)
+    except ValueError as exc:
+        logger.error("Exact evidence rate limiter scope changed after initialization")
+        raise HTTPException(status_code=503, detail="exact evidence rate limiter unavailable") from exc
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="exact evidence request rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
     try:
         return await populate_exact_evidence(request.content, request.source_path, namespace)
     except ValueError as exc:
