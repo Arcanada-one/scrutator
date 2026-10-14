@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T09:21:24Z",
+ "captured_at_utc": "2026-10-14T09:27:36Z",
  "change_set": {
   "base": "ecb255a594fd17fa76ee8090eb6ce142144604a9",
   "files": [
@@ -88,6 +88,12 @@
     "status": "A"
    },
    {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/graph/work-item-evidence/1017732d-a352-4f29-89ef-51fa7c5705f8.json",
+    "status": "A"
+   },
+   {
     "kind": "other",
     "node_id": "code_unit:src/scrutator/search/fetcher.py",
     "node_ids": [
@@ -115,7 +121,7 @@
     "status": "A"
    }
   ],
-  "head": "478b154bae92f78c431c6b9c9e1181de1473f52c",
+  "head": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -153,17 +159,17 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:23b3ef448e0c286a5d10c8601668a6d4307c2d9c73ad604da63a76532d3d3e56",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/graph-ecb255a594fd.json",
+  "path": "/tmp/arcana-verify/verifier-out/graph-ecb255a594fd.json",
   "source_commit": "ecb255a594fd17fa76ee8090eb6ce142144604a9"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:925972eb830a0d94c5514c13cc1762743c874a579aa0d2252c32363bb08ea40a",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/graph-head-478b154bae92.json",
-  "source_commit": "478b154bae92f78c431c6b9c9e1181de1473f52c",
+  "graph_digest": "sha256:8df2a50397c365a9207c90f19668a236af142a1f43e67130a4027f79bca0758d",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-376dbe40a3db.json",
+  "source_commit": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
   "staleness": {
-   "checked_at_utc": "2026-10-14T09:22:55Z",
+   "checked_at_utc": "2026-10-14T09:29:21Z",
    "checked_nodes": 310,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -2166,13 +2172,13 @@
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 4 attached from /home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/exemptions-four.json"
+  "exemptions: 4 attached from /tmp/kc133-exemptions.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T092124Z-478b154b",
+ "receipt_id": "car-verify-20261014T092736Z-376dbe40",
  "receipt_path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -2341,7 +2347,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T09:22:54Z",
+  "checked_at_utc": "2026-10-14T09:29:21Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -2405,7 +2411,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:2ef289cc3342d7a2072f0d4c3647cffd6a352640ea799a5af1af5756c2c04763"
+    "head": "sha256:445dbf3a5baabb5abcb20d8a3869d0df03cf3e17cf911df98849b624385a6e15"
    },
    "entity": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "node_type": "receipt",
@@ -2441,7 +2447,7 @@
   }
  ],
  "tree": {
-  "commit": "478b154bae92f78c431c6b9c9e1181de1473f52c",
+  "commit": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
   "dirty": false
  },
  "verdicts": [
@@ -3088,13 +3094,13 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T09:23:01Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=478b154bae92, graph=head graph)",
-   "duration_s": 0.31,
+   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=376dbe40a3db, graph=head graph)",
+   "duration_s": 0.12,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -3162,8 +3168,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T09:23:01Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -3232,8 +3238,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-route-config.txt",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -3328,8 +3334,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-fitness.json",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -3344,13 +3350,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-doc-reference.txt",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "1 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.6,
+   "duration_s": 0.27,
    "entities": [
     "route:POST /v1/fetch"
    ],
@@ -3361,12 +3367,12 @@
    "id": "v-canary-1",
    "kind": "canary",
    "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json: 1 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.6,
+   "duration_s": 0.27,
    "entities": [
     "code_unit:src/scrutator/health.py",
     "route:DELETE /v1/edges",
@@ -3431,12 +3437,12 @@
    "id": "v-canary-2",
    "kind": "canary",
    "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json: 28 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.6,
+   "duration_s": 0.27,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "route:GET /__benchmark/fingerprint"
@@ -3448,8 +3454,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-canary.json",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-canary.json",
+   "started_at_utc": "2026-10-14T09:29:24Z",
    "summary": "2 canary result(s), 2 committed at head; 28 verified / 0 failed / 2 not_measured of 30 entities"
   },
   {
@@ -3464,9 +3470,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T09:23:02Z",
+   "started_at_utc": "2026-10-14T09:29:25Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -3481,9 +3487,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T09:23:03Z",
+   "started_at_utc": "2026-10-14T09:29:25Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3795,9 +3801,9 @@
    ]
   },
   "seconds": {
-   "prepare": 1.64,
-   "total": 98.84,
-   "verifiers": 2.12
+   "prepare": 0.9,
+   "total": 109.25,
+   "verifiers": 0.94
   }
  },
  "work_item": "1017732d-a352-4f29-89ef-51fa7c5705f8"
