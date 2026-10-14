@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "paused_safe"
+  "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T01:37:47Z",
+ "captured_at_utc": "2026-10-14T01:45:24Z",
  "change_set": {
   "base": "203a45d292dd17f8f402e8d83ea09988d5e5c1a0",
   "files": [
@@ -82,7 +82,7 @@
     "status": "A"
    }
   ],
-  "head": "41a0fc5db01059de463281b57c0d9440a2fb9445",
+  "head": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -137,6 +137,13 @@
    "reason": "No native workflow/shell edge verifier is available; tracked under Muneral verifier-gap task 8466b22b-b8bc-4a44-b906-0bfce0fce6d0. reverse_if: withdraw this exemption when the native workflow/shell verifier lands and reissue the receipt."
   },
   {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
    "code": "WORKFLOW_SHELL_VERIFIER_UNAVAILABLE",
    "entity": "code_unit:scripts/a2-308-scope-mutation.sh",
    "expires_at_utc": "2026-10-20T00:00:00Z",
@@ -144,11 +151,214 @@
    "reason": "No native workflow/shell edge verifier is available; tracked under Muneral verifier-gap task 8466b22b-b8bc-4a44-b906-0bfce0fce6d0. reverse_if: withdraw this exemption when the native workflow/shell verifier lands and reissue the receipt."
   },
   {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:src/scrutator/health.py",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
    "code": "BOUNDED_CHECKER_OUT_OF_SCOPE",
    "entity": "deployable_unit:.",
    "expires_at_utc": "2026-10-20T00:00:00Z",
    "owner": "KC",
    "reason": "The changed source is Python and the graph-selected TypeScript tsc command is unavailable and inapplicable to this implementation; targeted Python tests and Ruff cover the source behavior. reverse_if: replace this exemption with an applicable type-check result or reissue before expiry."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/edges",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/index",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/memories",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /__benchmark/fingerprint",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /health",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/chunks",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/edges/{chunk_id}",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/index/capability",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/index/rollback-capability",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/memories/stats",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/namespaces",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/navigate/outline",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/navigate/section",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/stats",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/chunk",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/dream/analyze",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/edges",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/edges/by-path",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/fetch",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/batch",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/capability-projection",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/evidence-exact",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories/bulk",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories/recall",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/namespaces",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/search",
+   "expires_at_utc": "2026-10-20T00:00:00Z",
+   "owner": "KC (Scrutator, Muneral 9060b58a)",
+   "reason": "The candidate rate-limit code is not deployed in an isolated runtime, and the production exact-evidence feature is disabled; no candidate live canary has been measured. Source tests cover authorization-before-budget, rolling-window behavior, 429 Retry-After and zero store calls after refusal. This is a tracked source-stage exemption only; runtime remains NOT_MEASURED. reverse_if: before deployment, obtain an exact-head pre-release canary and then installed post-release readback; if the canary is not available by expiry or shows a bypass/over-limit store call, hold release and reissue/withdraw this exemption."
   }
  ],
  "graph": {
@@ -161,11 +371,11 @@
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:06285a701f29d924dc84fc81f4f7e491f9cbe7da7987abc3ea4e3c6eacbf7e84",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/graph-head-41a0fc5db010.json",
-  "source_commit": "41a0fc5db01059de463281b57c0d9440a2fb9445",
+  "graph_digest": "sha256:f76e31f2a33f8cdbd047c0637694aa406e7a9ab1fb364c57fafb299e12b1c4c2",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/graph-head-9d373b2efb3d.json",
+  "source_commit": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
   "staleness": {
-   "checked_at_utc": "2026-10-14T01:38:28Z",
+   "checked_at_utc": "2026-10-14T01:46:15Z",
    "checked_nodes": 307,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -1330,13 +1540,13 @@
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 9 attached from /home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-exemptions.json"
+  "exemptions: 39 attached from /home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-exemptions.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T013747Z-41a0fc5d",
+ "receipt_id": "car-verify-20261014T014524Z-9d373b2e",
  "receipt_path": "receipts/graph/change-admission-rate-limit-9060.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -1513,7 +1723,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T01:38:28Z",
+  "checked_at_utc": "2026-10-14T01:46:14Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -1577,7 +1787,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:dfb848be501764f869aa769227bc5aa20d2dc6e86d30dc8c2ca5883f026ea1b5"
+    "head": "sha256:212289e36b6330ee38009d394c696e4d12308ec719124b686dbe95ba9672e01b"
    },
    "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
    "node_type": "receipt",
@@ -1602,7 +1812,7 @@
   }
  ],
  "tree": {
-  "commit": "41a0fc5db01059de463281b57c0d9440a2fb9445",
+  "commit": "9d373b2efb3da32c53ec84cb4c7ec950af4470eb",
   "dirty": false
  },
  "verdicts": [
@@ -2297,12 +2507,12 @@
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=203a45d292dd, head=41a0fc5db010, graph=head graph)",
-   "duration_s": 0.08,
+   "command": "tools/graph/contract_diff.py.run_diff(base=203a45d292dd, head=9d373b2efb3d, graph=head graph)",
+   "duration_s": 0.07,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -2371,7 +2581,7 @@
    "id": "v-contract-diff",
    "kind": "contract_diff",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -2441,7 +2651,7 @@
    "id": "v-route-config",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -2457,7 +2667,7 @@
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: line 2: heredoc data/generation closure not measured; job benchmark step 3: line 10: multiline/opaque shell statement; job benchmark step 3: line 11: multiline/opaque shell statement; job benchmark step 3: line 12: multiline/opaque shell statement; job benchmark step 3: line 13: wrapper options/child command unresolved; job benchmark step 3: line 7: multiline/opaque shell statement; job benchmark step 3: line 8: multiline/opaque shell statement; job benchmark step 3: line 9: multiline/opaque shell statement; job benchmark step 5: local action/checkout path scope unresolved"
   },
   {
@@ -2473,7 +2683,7 @@
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context"
   },
   {
@@ -2489,7 +2699,7 @@
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: line 10: dynamic load/substitution; job auto-merge step 0: line 11: dynamic load/substitution; job auto-merge step 0: line 12: dynamic load/substitution; job auto-merge step 0: line 13: dynamic load/substitution; job auto-merge step 0: line 3: multiline/opaque shell statement; job auto-merge step 0: line 4: wrapper options/child command unresolved; job auto-merge step 0: line 57: dynamic load/substitution; job auto-merge step 0: line 58: multiline/opaque shell statement; job auto-merge step 0: line 65: multiline/opaque shell statement; job auto-merge step 0: line 66: wrapper options/child command unresolved; job auto-merge step 0: line 67: dynamic load/substitution; job auto-merge step 0: line 68: dynamic load/substitution; job auto-merge step 0: line 69: dynamic load/substitution; job auto-merge step 0: line 82: dynamic command/alias/eval; job auto-merge step 0: line 82: dynamic load/substitution; job auto-merge step 0: line 9: dynamic load/substitution"
   },
   {
@@ -2505,7 +2715,7 @@
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: line 22: heredoc data/generation closure not measured; job deploy step 4: line 54: dynamic load/substitution; job deploy step 4: line 64: multiline/opaque shell statement; job deploy step 4: line 65: multiline/opaque shell statement; job deploy step 4: line 66: multiline/opaque shell statement; job deploy step 4: line 67: multiline/opaque shell statement; job deploy step 4: line 68: multiline/opaque shell statement; job deploy step 4: line 69: wrapper options/child command unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: line 3: heredoc data/generation closure not measured; job network-exposure: reusable/opaque shell context"
   },
   {
@@ -2521,7 +2731,7 @@
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context"
   },
   {
@@ -2537,7 +2747,7 @@
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: line 11: multiline/opaque shell statement; job graph-admission step 10: line 12: wrapper options/child command unresolved; job graph-admission step 10: line 3: multiline/opaque shell statement; job graph-admission step 10: line 4: wrapper options/child command unresolved; job graph-admission step 11: line 15: multiline/opaque shell statement; job graph-admission step 11: line 16: multiline/opaque shell statement; job graph-admission step 11: line 17: multiline/opaque shell statement; job graph-admission step 11: line 18: multiline/opaque shell statement; job graph-admission step 11: line 19: multiline/opaque shell statement; job graph-admission step 11: line 20: multiline/opaque shell statement; job graph-admission step 11: line 21: multiline/opaque shell statement; job graph-admission step 11: line 22: multiline/opaque shell statement; job graph-admission step 11: line 23: multiline/opaque shell statement; job graph-admission step 11: line 24: multiline/opaque shell statement; job graph-admission step 11: line 25: multiline/opaque shell statement; job graph-admission step 11: line 26: multiline/opaque shell statement; job graph-admission step 11: line 27: dynamic command/alias/eval; job graph-admission step 12: local action/checkout path scope unresolved; job graph-admission step 3: line 19: dynamic load/substitution; job graph-admission step 7: line 13: heredoc data/generation closure not measured; job graph-admission step 7: line 2: dynamic load/substitution; job graph-admission step 7: line 3: heredoc data/generation closure not measured; job graph-admission step 7: line 43: heredoc data/generation closure not measured"
   },
   {
@@ -2553,12 +2763,12 @@
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: line 1: heredoc data/generation closure not measured; job recall-gate step 3: line 6: multiline/opaque shell statement; job recall-gate step 3: line 7: multiline/opaque shell statement; job recall-gate step 3: line 8: multiline/opaque shell statement; job recall-gate step 3: line 9: wrapper options/child command unresolved"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 0.01,
+   "duration_s": 0.0,
    "entities": [
     "code_unit:.github/workflows/benchmark-scrutator.yml",
     "code_unit:.github/workflows/ci.yml",
@@ -2661,7 +2871,7 @@
    "id": "v-fitness",
    "kind": "fitness_rules",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -2735,7 +2945,7 @@
    "id": "v-canary",
    "kind": "canary",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 30 not_measured of 30 entities"
   },
   {
@@ -2752,7 +2962,7 @@
    "kind": "shell_syntax",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -2769,7 +2979,7 @@
    "kind": "shell_behavior",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-rate-limit-9060-verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T01:38:31Z",
+   "started_at_utc": "2026-10-14T01:46:17Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3102,9 +3312,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.73,
-   "total": 44.04,
-   "verifiers": 0.09
+   "prepare": 0.89,
+   "total": 53.13,
+   "verifiers": 0.07
   }
  },
  "work_item": "9060b58a-013d-4178-97e7-c335029a206e"
