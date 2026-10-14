@@ -5,10 +5,19 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T06:58:05Z",
+ "captured_at_utc": "2026-10-14T08:49:33Z",
  "change_set": {
   "base": "ecb255a594fd17fa76ee8090eb6ce142144604a9",
   "files": [
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json"
+    ],
+    "path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
+    "status": "A"
+   },
    {
     "kind": "other",
     "node_id": "code_unit:src/scrutator/search/fetcher.py",
@@ -16,6 +25,15 @@
      "code_unit:src/scrutator/search/fetcher.py"
     ],
     "path": "src/scrutator/search/fetcher.py",
+    "status": "M"
+   },
+   {
+    "kind": "test",
+    "node_id": "code_unit:tests/test_evidence_namespace_scope.py",
+    "node_ids": [
+     "code_unit:tests/test_evidence_namespace_scope.py"
+    ],
+    "path": "tests/test_evidence_namespace_scope.py",
     "status": "M"
    },
    {
@@ -28,7 +46,7 @@
     "status": "A"
    }
   ],
-  "head": "0c82ab2c961d3d0e839dd1a23ec767797fa83c33",
+  "head": "010ea343302c83819980852e55176a49cecc77eb",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -268,20 +286,20 @@
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:2caef9a0a022b51563aa6e2b2f949ad9000f5cbee6664725cad9bcd9511f619e",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/graph-head-0c82ab2c961d.json",
-  "source_commit": "0c82ab2c961d3d0e839dd1a23ec767797fa83c33",
+  "graph_digest": "sha256:4af8ce756910775e61ca2c6b1f4930c21701960999c289c4bf69dbf3b76be67a",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/graph-head-010ea343302c.json",
+  "source_commit": "010ea343302c83819980852e55176a49cecc77eb",
   "staleness": {
-   "checked_at_utc": "2026-10-14T06:59:29Z",
-   "checked_nodes": 308,
+   "checked_at_utc": "2026-10-14T08:50:20Z",
+   "checked_nodes": 309,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "kc-scrutator",
+ "host": "kc-runner",
  "host_redacted": true,
- "host_sha256": "cf431baeb709f11d89d2b9d7f4256f408ca4496dc3af7b5f635a43b237091847",
+ "host_sha256": "9fa643565b341fe84ca378dbb6bbf64b45e9940d0a44ec7635528369f641332e",
  "impact_set": {
   "deterministic_core": [
    {
@@ -2277,13 +2295,13 @@
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 32 attached from /home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/exemptions.json"
+  "exemptions: 32 attached from /home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/current-exemptions.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T065805Z-0c82ab2c",
+ "receipt_id": "car-verify-20261014T084933Z-010ea343",
  "receipt_path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -2312,6 +2330,7 @@
    "code_unit:tests/test_dream.py",
    "code_unit:tests/test_edges_by_path.py",
    "code_unit:tests/test_evidence_exact_population.py",
+   "code_unit:tests/test_evidence_namespace_scope.py",
    "code_unit:tests/test_exact_evidence_route_auth.py",
    "code_unit:tests/test_feeder_capability.py",
    "code_unit:tests/test_fetch.py",
@@ -2388,6 +2407,7 @@
    "code_unit:tests/test_dream.py",
    "code_unit:tests/test_edges_by_path.py",
    "code_unit:tests/test_evidence_exact_population.py",
+   "code_unit:tests/test_evidence_namespace_scope.py",
    "code_unit:tests/test_exact_evidence_route_auth.py",
    "code_unit:tests/test_feeder_capability.py",
    "code_unit:tests/test_fetch.py",
@@ -2412,6 +2432,7 @@
    "receipt:receipts/graph/A2-324-canary-route-presence.json",
    "receipt:receipts/graph/agents-md-migration.json",
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+   "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "receipt:receipts/graph/change-admission-rate-limit-9060.json",
    "receipt:receipts/graph/exact-evidence-receiving.json",
    "route:DELETE /v1/edges",
@@ -2448,7 +2469,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T06:59:29Z",
+  "checked_at_utc": "2026-10-14T08:50:20Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -2511,6 +2532,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:8db1be5099e259272f6aa2b0a7682ef1ac231e17d638a63a6674fe2ffaa9e315"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-kc2-fetch-1017732d.json for work item 1017732d-a352-4f29-89ef-51fa7c5705f8",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
+    "work_item": "1017732d-a352-4f29-89ef-51fa7c5705f8"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db",
     "head": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db"
    },
@@ -2533,7 +2569,7 @@
   }
  ],
  "tree": {
-  "commit": "0c82ab2c961d3d0e839dd1a23ec767797fa83c33",
+  "commit": "010ea343302c83819980852e55176a49cecc77eb",
   "dirty": false
  },
  "verdicts": [
@@ -2705,6 +2741,14 @@
   },
   {
    "entity": "code_unit:tests/test_evidence_exact_population.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
+   ]
+  },
+  {
+   "entity": "code_unit:tests/test_evidence_namespace_scope.py",
    "reason": "v-fitness: no new fitness violation",
    "verdict": "verified",
    "verifier_ids": [
@@ -3165,12 +3209,12 @@
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=0c82ab2c961d, graph=head graph)",
-   "duration_s": 0.14,
+   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=010ea343302c, graph=head graph)",
+   "duration_s": 0.11,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -3239,7 +3283,7 @@
    "id": "v-contract-diff",
    "kind": "contract_diff",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -3309,7 +3353,7 @@
    "id": "v-route-config",
    "kind": "config_schema",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -3337,6 +3381,7 @@
     "code_unit:tests/test_dream.py",
     "code_unit:tests/test_edges_by_path.py",
     "code_unit:tests/test_evidence_exact_population.py",
+    "code_unit:tests/test_evidence_namespace_scope.py",
     "code_unit:tests/test_exact_evidence_route_auth.py",
     "code_unit:tests/test_feeder_capability.py",
     "code_unit:tests/test_fetch.py",
@@ -3379,6 +3424,7 @@
     "code_unit:tests/test_dream.py": "verified",
     "code_unit:tests/test_edges_by_path.py": "verified",
     "code_unit:tests/test_evidence_exact_population.py": "verified",
+    "code_unit:tests/test_evidence_namespace_scope.py": "verified",
     "code_unit:tests/test_exact_evidence_route_auth.py": "verified",
     "code_unit:tests/test_feeder_capability.py": "verified",
     "code_unit:tests/test_fetch.py": "verified",
@@ -3403,7 +3449,7 @@
    "id": "v-fitness",
    "kind": "fitness_rules",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -3477,7 +3523,7 @@
    "id": "v-canary",
    "kind": "canary",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 30 not_measured of 30 entities"
   },
   {
@@ -3494,7 +3540,7 @@
    "kind": "shell_syntax",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -3511,7 +3557,7 @@
    "kind": "shell_behavior",
    "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T06:59:34Z",
+   "started_at_utc": "2026-10-14T08:50:22Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3528,9 +3574,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-kc2-fetch-1017732d.json is the previous version of the one this run is writing, for the same work item 1017732d-a352-4f29-89ef-51fa7c5705f8 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "7 affected entity(ies) owe no verdict (receipt: 7): unchanged at both revisions and given no verifier by the matrix"
+    "text": "8 affected entity(ies) owe no verdict (receipt: 8): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -3603,6 +3655,9 @@
    "code_unit:tests/test_evidence_exact_population.py": [
     "fitness_rules"
    ],
+   "code_unit:tests/test_evidence_namespace_scope.py": [
+    "fitness_rules"
+   ],
    "code_unit:tests/test_exact_evidence_route_auth.py": [
     "fitness_rules"
    ],
@@ -3666,6 +3721,7 @@
    "receipt:receipts/graph/A2-324-canary-route-presence.json": [],
    "receipt:receipts/graph/agents-md-migration.json": [],
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json": [],
+   "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json": [],
    "receipt:receipts/graph/change-admission-rate-limit-9060.json": [],
    "receipt:receipts/graph/exact-evidence-receiving.json": [],
    "route:DELETE /v1/edges": [
@@ -3810,9 +3866,9 @@
    ]
   },
   "seconds": {
-   "prepare": 1.3,
-   "total": 89.09,
-   "verifiers": 0.15
+   "prepare": 0.92,
+   "total": 49.2,
+   "verifiers": 0.12
   }
  },
  "work_item": "1017732d-a352-4f29-89ef-51fa7c5705f8"
