@@ -1,0 +1,52 @@
+{
+ "attachments": [
+  {
+   "attached_at_utc": "2026-10-14T01:49:46Z",
+   "attachment_kind": "evidence",
+   "delivery": {
+    "checked_at_utc": "2026-10-14T01:49:46Z",
+    "created_at": "2026-10-14T01:49:46.941Z",
+    "evidence_id": "10ee4983-dc4e-44cb-a4c7-1c9464755c90",
+    "http": 201,
+    "idempotent": false,
+    "muneral_task_id": "9060b58a-013d-4178-97e7-c335029a206e",
+    "probe": [
+     {
+      "probe": "POST /tasks/<task>/evidence",
+      "status": 201,
+      "task_id": "9060b58a-013d-4178-97e7-c335029a206e"
+     }
+    ],
+    "reason_code": "MUNERAL_EVIDENCE_CREATED",
+    "route": "POST /tasks/{id}/evidence",
+    "status": "posted",
+    "target": "muneral"
+   },
+   "evidence_ref": {
+    "contentType": "application/json",
+    "digest": "sha256:a6b0778b4cd0715fe4408639fc66688cdbb7f4c96b38364ca3df134970c1fd02",
+    "label": "ChangeAdmissionReceipt/v1 car-verify-20261014T014640Z-bbfb497a",
+    "uri": "aup://arcanada-universal-program/receipts/graph/change-admission-rate-limit-9060.json"
+   },
+   "model": "claude-opus-5",
+   "producer": {
+    "tool": "tools/graph/admit_change.py",
+    "version": "1.0.0"
+   },
+   "provisional_until_fable_review": true,
+   "receipt_id": "car-verify-20261014T014640Z-bbfb497a",
+   "receipt_path": "receipts/graph/change-admission-rate-limit-9060.json",
+   "schema": "WorkItemEvidenceAttachment/v1",
+   "work_item": {
+    "epic": null,
+    "muneral_task_id": "9060b58a-013d-4178-97e7-c335029a206e",
+    "system": "muneral",
+    "task_id": "9060b58a-013d-4178-97e7-c335029a206e"
+   }
+  }
+ ],
+ "schema": "WorkItemEvidenceLedger/v1",
+ "system": "muneral",
+ "updated_at_utc": "2026-10-14T01:49:46Z",
+ "work_item": "9060b58a-013d-4178-97e7-c335029a206e"
+}
