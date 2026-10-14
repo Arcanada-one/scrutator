@@ -1,0 +1,29 @@
+{
+  "schema": "CanaryPlan/v1",
+  "id": "kc2-fetch-exact-route-candidate-20261014",
+  "environment": "arcana-devs isolated candidate local",
+  "owner": "KC",
+  "read_only": false,
+  "probes": [
+    {
+      "id": "kc2-fetch-disabled-exact-refusal",
+      "method": "POST",
+      "path": "/v1/fetch",
+      "auth": "none",
+      "body": {
+        "by": "source_id",
+        "id": "b130ae45926d20ec",
+        "range": "full"
+      },
+      "expect": {
+        "status_in": [
+          409
+        ]
+      },
+      "entities": [
+        "route:POST /v1/fetch"
+      ],
+      "mutating": true
+    }
+  ]
+}

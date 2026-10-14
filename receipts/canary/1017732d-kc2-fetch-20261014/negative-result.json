@@ -1,0 +1,66 @@
+{
+ "base_url": "http://127.0.0.1:18311",
+ "captured_at_utc": "2026-10-14T09:18:16Z",
+ "card": "A2-311",
+ "counters": {
+  "failed": 1,
+  "not_measured": 0,
+  "verified": 0
+ },
+ "entity_verdicts": [
+  {
+   "entity": "route:POST /v1/fetch",
+   "probe_ids": [
+    "kc2-fetch-disabled-exact-refusal"
+   ],
+   "reason": "kc2-fetch-disabled-exact-refusal: status 200 not in [409]",
+   "verdict": "failed"
+  }
+ ],
+ "environment": "arcana-devs isolated candidate local",
+ "model": "none: deterministic HTTP producer",
+ "mutating_owner": "KC",
+ "phase": "pre",
+ "plan": {
+  "digest": "sha256:ed36d964fa52de02cce4764aec7267f7d73b452a768d695db397076b646dcd61",
+  "id": "kc2-fetch-exact-route-candidate-20261014",
+  "path": "route-plan.json"
+ },
+ "probes": [
+  {
+   "body_bytes": 5076,
+   "body_sha256": "afbfb0c3174ee2197c01e88faa3ce7e3b7ba15e41edec60cb8fa7026328ee30a",
+   "elapsed_ms": 49,
+   "executed": true,
+   "id": "kc2-fetch-disabled-exact-refusal",
+   "kind": "http",
+   "method": "POST",
+   "outcome": "failed",
+   "reason": "status 200 not in [409]",
+   "status": 200,
+   "url": "http://127.0.0.1:18311/v1/fetch"
+  }
+ ],
+ "producer": {
+  "tool": "tools/canary_probe.py",
+  "version": "1.0.0"
+ },
+ "read_only": false,
+ "resident_openapi": null,
+ "resident_version": null,
+ "rules": [
+  "C3 a probe that could not run is not_measured, never verified",
+  "C4 probes are read-only unless the plan declares mutating with an owner"
+ ],
+ "schema": "CanaryResult/v1",
+ "subject": {
+  "commit": "ecb255a594fd17fa76ee8090eb6ce142144604a9",
+  "evidence": {
+   "path": "negative-result.source-evidence.json",
+   "sha256": "a1aab1ea1203f195e6bdf91211fd1fad90c4ad867114cda41683cb30bf3693b0",
+   "source_field": "commit"
+  },
+  "schema": "GitCanarySubject/v1",
+  "tree": "d9dc395e3a0eff1e8b9a00a491b5c958fe80e28c"
+ }
+}
