@@ -1,8 +1,9 @@
-"""Namespace-bounded exact receiving, retaining legacy compatibility and corrupt-body refusal."""
+"""Namespace-bounded exact receiving and fail-closed corrupt-body refusal."""
 
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from scrutator.config import Settings, settings
@@ -46,10 +47,15 @@ async def test_read_scope_and_actual_bytes(scope, corrupt, exact, monkeypatch):
         patch.object(fetcher, "fetch_chunks_by_doc_id", AsyncMock(return_value=rows)),
         patch.object(fetcher, "fetch_evidence_raw_content", reader),
     ):
-        response = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
-    assert response.content_exact is exact
-    assert response.content_hash == digest
-    assert (response.content == body) is exact
+        if exact:
+            response = await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
+            assert response.content_exact is True
+            assert response.content_hash == digest
+            assert response.content == body
+        else:
+            with pytest.raises(HTTPException) as excinfo:
+                await fetcher.fetch(FetchRequest(by="source_id", id=doc_id, range="full"), frozenset({1}))
+            assert excinfo.value.status_code == 409
     assert reader.await_count == (1 if scope == ["kc2-store"] else 0)
 
 

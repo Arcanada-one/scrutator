@@ -1,0 +1,62 @@
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+from unittest.mock import AsyncMock
+
+import uvicorn
+
+ROOT = Path.cwd()
+sys.path.insert(0, str(ROOT / "tests"))
+from conftest import build_indexed_doc
+
+from scrutator.auth.dependency import require_tenant_context
+from scrutator.auth.models import TenantContext
+from scrutator.config import settings
+from scrutator.health import app
+from scrutator.search import fetcher
+
+EVIDENCE_DOC = (
+    "---\ntitle: Incident Post-mortem\ndate: 2026-07-01\n---\n\n"
+    "# Post-mortem\n\n   \nThe outage began at 03:14 UTC. "
+    + ("detail " * 220)
+    + "\n\n## Timeline\n\nMitigation applied. "
+    + ("event " * 220)
+    + "\n   \n"
+)
+
+
+def configure() -> str:
+    doc_id, _content_hash, rows = build_indexed_doc(
+        EVIDENCE_DOC, namespace="kc2-store", source_path="canary/exact-fetch.md"
+    )
+
+    async def fetch_rows(_doc_id, _allowed_namespace_ids):
+        assert _doc_id == doc_id
+        return rows
+
+    fetcher.fetch_chunks_by_doc_id = fetch_rows
+    fetcher.fetch_evidence_raw_content = AsyncMock(return_value=None)
+    settings.evidence_exact_bytes = False
+    settings.evidence_exact_namespaces = ["kc2-store"]
+    app.dependency_overrides[require_tenant_context] = lambda: TenantContext(
+        principal_id="candidate-canary",
+        principal_type="service",
+        allowed_namespace_ids=frozenset({1}),
+        allowed_namespace_names=frozenset({"kc2-store"}),
+        scopes=frozenset({"kb:ltm.read"}),
+    )
+    return doc_id
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, required=True)
+    parser.parse_args()
+    configure()
+    uvicorn.run(app, host="127.0.0.1", port=parser.parse_args().port, log_level="critical")
+
+
+if __name__ == "__main__":
+    main()
