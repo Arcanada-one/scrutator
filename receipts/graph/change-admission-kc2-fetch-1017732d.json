@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T09:27:36Z",
+ "captured_at_utc": "2026-10-14T09:36:32Z",
  "change_set": {
   "base": "ecb255a594fd17fa76ee8090eb6ce142144604a9",
   "files": [
@@ -88,12 +88,6 @@
     "status": "A"
    },
    {
-    "kind": "receipt",
-    "new": true,
-    "path": "receipts/graph/work-item-evidence/1017732d-a352-4f29-89ef-51fa7c5705f8.json",
-    "status": "A"
-   },
-   {
     "kind": "other",
     "node_id": "code_unit:src/scrutator/search/fetcher.py",
     "node_ids": [
@@ -121,7 +115,7 @@
     "status": "A"
    }
   ],
-  "head": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
+  "head": "ec2d4e068b113e790202b0562bf0b24e1914053c",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -165,11 +159,11 @@
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:8df2a50397c365a9207c90f19668a236af142a1f43e67130a4027f79bca0758d",
-  "path": "/tmp/arcana-verify/verifier-out/graph-head-376dbe40a3db.json",
-  "source_commit": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
+  "graph_digest": "sha256:7df9167cfd7ff75d6cdb2117f29667fa264b25368e36cc1652237f15a12e950a",
+  "path": "/tmp/arcana-verify/verifier-out/graph-head-ec2d4e068b11.json",
+  "source_commit": "ec2d4e068b113e790202b0562bf0b24e1914053c",
   "staleness": {
-   "checked_at_utc": "2026-10-14T09:29:21Z",
+   "checked_at_utc": "2026-10-14T09:38:00Z",
    "checked_nodes": 310,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -2178,7 +2172,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T092736Z-376dbe40",
+ "receipt_id": "car-verify-20261014T093632Z-ec2d4e06",
  "receipt_path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -2347,7 +2341,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T09:29:21Z",
+  "checked_at_utc": "2026-10-14T09:38:00Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -2411,7 +2405,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:445dbf3a5baabb5abcb20d8a3869d0df03cf3e17cf911df98849b624385a6e15"
+    "head": "sha256:762567508a00fe135aa48968572fa0304346131579e313e1443c8609fc08e445"
    },
    "entity": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "node_type": "receipt",
@@ -2447,7 +2441,7 @@
   }
  ],
  "tree": {
-  "commit": "376dbe40a3dbe75d029cc51fe85fff8bed597e3f",
+  "commit": "ec2d4e068b113e790202b0562bf0b24e1914053c",
   "dirty": false
  },
  "verdicts": [
@@ -3095,12 +3089,12 @@
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=376dbe40a3db, graph=head graph)",
-   "duration_s": 0.12,
+   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=ec2d4e068b11, graph=head graph)",
+   "duration_s": 0.18,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -3169,7 +3163,7 @@
    "id": "v-contract-diff",
    "kind": "contract_diff",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -3239,7 +3233,7 @@
    "id": "v-route-config",
    "kind": "config_schema",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -3335,7 +3329,7 @@
    "id": "v-fitness",
    "kind": "fitness_rules",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -3351,12 +3345,12 @@
    "id": "v-doc-reference",
    "kind": "doc_reference",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "1 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.27,
+   "duration_s": 0.46,
    "entities": [
     "route:POST /v1/fetch"
    ],
@@ -3367,12 +3361,12 @@
    "id": "v-canary-1",
    "kind": "canary",
    "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json: 1 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.27,
+   "duration_s": 0.46,
    "entities": [
     "code_unit:src/scrutator/health.py",
     "route:DELETE /v1/edges",
@@ -3437,12 +3431,12 @@
    "id": "v-canary-2",
    "kind": "canary",
    "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json: 28 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.27,
+   "duration_s": 0.46,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "route:GET /__benchmark/fingerprint"
@@ -3455,7 +3449,7 @@
    "id": "v-canary",
    "kind": "canary",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-14T09:29:24Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "2 canary result(s), 2 committed at head; 28 verified / 0 failed / 2 not_measured of 30 entities"
   },
   {
@@ -3472,7 +3466,7 @@
    "kind": "shell_syntax",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T09:29:25Z",
+   "started_at_utc": "2026-10-14T09:38:05Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -3489,7 +3483,7 @@
    "kind": "shell_behavior",
    "output_ref": "/tmp/arcana-verify/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T09:29:25Z",
+   "started_at_utc": "2026-10-14T09:38:06Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3801,9 +3795,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.9,
-   "total": 109.25,
-   "verifiers": 0.94
+   "prepare": 1.47,
+   "total": 93.27,
+   "verifiers": 1.57
   }
  },
  "work_item": "1017732d-a352-4f29-89ef-51fa7c5705f8"
