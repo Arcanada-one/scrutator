@@ -49,8 +49,9 @@ class SlidingWindowRateLimiter:
         """Record an authorized attempt or return Retry-After seconds if full."""
         if not key:
             raise ValueError("rate-limit key must be non-empty")
-        now = self._clock()
         with self._lock:
+            # Sample after lock acquisition so queued callers use current time.
+            now = self._clock()
             if self._key is None:
                 self._key = key
             elif self._key != key:
