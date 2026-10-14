@@ -5,10 +5,79 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-14T08:49:33Z",
+ "captured_at_utc": "2026-10-14T09:21:24Z",
  "change_set": {
   "base": "ecb255a594fd17fa76ee8090eb6ce142144604a9",
   "files": [
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/negative-result.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/negative-result.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "doc",
+    "node_id": "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md",
+    "node_ids": [
+     "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md"
+    ],
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md",
+    "status": "A"
+   },
+   {
+    "kind": "doc",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-canary-server.txt",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "doc",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-server.txt",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/1017732d-kc2-fetch-20261014/scrutator-route-presence.plan.json",
+    "status": "A"
+   },
    {
     "kind": "receipt",
     "node_id": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
@@ -46,7 +115,7 @@
     "status": "A"
    }
   ],
-  "head": "010ea343302c83819980852e55176a49cecc77eb",
+  "head": "478b154bae92f78c431c6b9c9e1181de1473f52c",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -66,13 +135,6 @@
    "reason": "No native shell/workflow edge verifier is available; tracked under Muneral verifier-gap task 8466b22b-b8bc-4a44-b906-0bfce0fce6d0. reverse_if: withdraw this exemption when the native verifier lands and reissue the receipt."
   },
   {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "code_unit:src/scrutator/health.py",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
    "code": "BOUNDED_CHECKER_OUT_OF_SCOPE",
    "entity": "deployable_unit:.",
    "expires_at_utc": "2026-10-20T00:00:00Z",
@@ -81,196 +143,7 @@
   },
   {
    "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:DELETE /v1/edges",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:DELETE /v1/index",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:DELETE /v1/memories",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
    "entity": "route:GET /__benchmark/fingerprint",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /health",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/chunks",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/edges/{chunk_id}",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/index/capability",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/index/rollback-capability",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/memories/stats",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/namespaces",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/navigate/outline",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/navigate/section",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:GET /v1/stats",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/chunk",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/dream/analyze",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/edges",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/edges/by-path",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/fetch",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/index",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/index/batch",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/index/capability-projection",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/index/evidence-exact",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/memories",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/memories/bulk",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/memories/recall",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/namespaces",
-   "expires_at_utc": "2026-10-20T00:00:00Z",
-   "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
-   "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
-  },
-  {
-   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
-   "entity": "route:POST /v1/search",
    "expires_at_utc": "2026-10-20T00:00:00Z",
    "owner": "KC (Muneral 1017732d-a352-4f29-89ef-51fa7c5705f8)",
    "reason": "This source-only change has no candidate or installed endpoint canary for the selected route/code unit. The targeted source tests verify KC2 disabled, absent, stale and exact-positive body handling; they do not establish runtime or installed behavior. reverse_if: before release, measure an exact-head candidate API canary; if it cannot run or returns a non-exact KC2 body without explicit refusal, hold release and reissue or withdraw this exemption."
@@ -280,26 +153,24 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:23b3ef448e0c286a5d10c8601668a6d4307c2d9c73ad604da63a76532d3d3e56",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/graph-ecb255a594fd.json",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/graph-ecb255a594fd.json",
   "source_commit": "ecb255a594fd17fa76ee8090eb6ce142144604a9"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:4af8ce756910775e61ca2c6b1f4930c21701960999c289c4bf69dbf3b76be67a",
-  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/graph-head-010ea343302c.json",
-  "source_commit": "010ea343302c83819980852e55176a49cecc77eb",
+  "graph_digest": "sha256:925972eb830a0d94c5514c13cc1762743c874a579aa0d2252c32363bb08ea40a",
+  "path": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/graph-head-478b154bae92.json",
+  "source_commit": "478b154bae92f78c431c6b9c9e1181de1473f52c",
   "staleness": {
-   "checked_at_utc": "2026-10-14T08:50:20Z",
-   "checked_nodes": 309,
+   "checked_at_utc": "2026-10-14T09:22:55Z",
+   "checked_nodes": 310,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "kc-runner",
- "host_redacted": true,
- "host_sha256": "9fa643565b341fe84ca378dbb6bbf64b45e9940d0a44ec7635528369f641332e",
+ "host": "arcana-devs",
  "impact_set": {
   "deterministic_core": [
    {
@@ -2295,13 +2166,13 @@
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 32 attached from /home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/current-exemptions.json"
+  "exemptions: 4 attached from /home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/exemptions-four.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261014T084933Z-010ea343",
+ "receipt_id": "car-verify-20261014T092124Z-478b154b",
  "receipt_path": "receipts/graph/change-admission-kc2-fetch-1017732d.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -2427,6 +2298,7 @@
    "code_unit:tests/test_skill_maturity_contract.py",
    "code_unit:tools/gen_http_contract.py",
    "deployable_unit:.",
+   "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md",
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "receipt:receipts/graph/A2-311-contracts-and-canary.json",
    "receipt:receipts/graph/A2-324-canary-route-presence.json",
@@ -2469,7 +2341,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-14T08:50:20Z",
+  "checked_at_utc": "2026-10-14T09:22:54Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -2533,7 +2405,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:8db1be5099e259272f6aa2b0a7682ef1ac231e17d638a63a6674fe2ffaa9e315"
+    "head": "sha256:2ef289cc3342d7a2072f0d4c3647cffd6a352640ea799a5af1af5756c2c04763"
    },
    "entity": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "node_type": "receipt",
@@ -2569,7 +2441,7 @@
   }
  ],
  "tree": {
-  "commit": "010ea343302c83819980852e55176a49cecc77eb",
+  "commit": "478b154bae92f78c431c6b9c9e1181de1473f52c",
   "dirty": false
  },
  "verdicts": [
@@ -2595,10 +2467,10 @@
   },
   {
    "entity": "code_unit:src/scrutator/health.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-2: canary scrutator-route-presence (pre) on kb-production: delete-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-fitness"
    ]
@@ -2909,31 +2781,39 @@
    ]
   },
   {
-   "entity": "route:DELETE /v1/edges",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "entity": "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md",
+   "reason": "v-doc-reference: 0 reference(s) resolve at head",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-doc-reference"
+   ]
+  },
+  {
+   "entity": "route:DELETE /v1/edges",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: delete-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: delete-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/memories",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: delete-v1-memories: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
@@ -2950,240 +2830,240 @@
   },
   {
    "entity": "route:GET /health",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-health: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/chunks",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-chunks: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/edges/{chunk_id}",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-edges-chunk-id: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/capability",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-index-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/rollback-capability",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-index-rollback-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/memories/stats",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-memories-stats: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/namespaces",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-namespaces: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/outline",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-navigate-outline: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/section",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-navigate-section: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/stats",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: get-v1-stats: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/chunk",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-chunk: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/dream/analyze",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-dream-analyze: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges/by-path",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-edges-by-path: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/fetch",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary kc2-fetch-exact-route-candidate-20261014 (pre) on arcana-devs isolated candidate local: kc2-fetch-disabled-exact-refusal: status 409 in [409]",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/batch",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-index-batch: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/capability-projection",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-index-capability-projection: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/evidence-exact",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-index-evidence-exact: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-memories: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/bulk",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-memories-bulk: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/recall",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-memories-recall: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/namespaces",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-namespaces: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/search",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-2: canary scrutator-route-presence (pre) on kb-production: post-v1-search: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-2",
     "v-contract-diff",
     "v-route-config"
    ]
@@ -3208,13 +3088,13 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-14T09:23:01Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=010ea343302c, graph=head graph)",
-   "duration_s": 0.11,
+   "command": "tools/graph/contract_diff.py.run_diff(base=ecb255a594fd, head=478b154bae92, graph=head graph)",
+   "duration_s": 0.31,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -3282,8 +3162,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-contract-diff.json",
+   "started_at_utc": "2026-10-14T09:23:01Z",
    "summary": "80→80 contracts, breaking 0, edges {'verified': 79}"
   },
   {
@@ -3352,8 +3232,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-route-config.txt",
+   "started_at_utc": "2026-10-14T09:23:02Z",
    "summary": "28 route(s), 0 failed"
   },
   {
@@ -3448,20 +3328,50 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-fitness.json",
+   "started_at_utc": "2026-10-14T09:23:02Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
-   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
    "duration_s": 0.0,
    "entities": [
-    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md"
+   ],
+   "entity_verdicts": {
+    "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-doc-reference",
+   "kind": "doc_reference",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-doc-reference.txt",
+   "started_at_utc": "2026-10-14T09:23:02Z",
+   "summary": "1 document(s), 0 failed"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.6,
+   "entities": [
+    "route:POST /v1/fetch"
+   ],
+   "entity_verdicts": {
+    "route:POST /v1/fetch": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-canary-1",
+   "kind": "canary",
+   "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json",
+   "started_at_utc": "2026-10-14T09:23:02Z",
+   "summary": "receipts/canary/1017732d-kc2-fetch-20261014/positive-result.json: 1 verified / 0 failed / 0 not_measured"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.6,
+   "entities": [
     "code_unit:src/scrutator/health.py",
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
-    "route:GET /__benchmark/fingerprint",
     "route:GET /health",
     "route:GET /v1/chunks",
     "route:GET /v1/edges/{chunk_id}",
@@ -3488,43 +3398,59 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
+    "code_unit:src/scrutator/health.py": "verified",
+    "route:DELETE /v1/edges": "verified",
+    "route:DELETE /v1/index": "verified",
+    "route:DELETE /v1/memories": "verified",
+    "route:GET /health": "verified",
+    "route:GET /v1/chunks": "verified",
+    "route:GET /v1/edges/{chunk_id}": "verified",
+    "route:GET /v1/index/capability": "verified",
+    "route:GET /v1/index/rollback-capability": "verified",
+    "route:GET /v1/memories/stats": "verified",
+    "route:GET /v1/namespaces": "verified",
+    "route:GET /v1/navigate/outline": "verified",
+    "route:GET /v1/navigate/section": "verified",
+    "route:GET /v1/stats": "verified",
+    "route:POST /v1/chunk": "verified",
+    "route:POST /v1/dream/analyze": "verified",
+    "route:POST /v1/edges": "verified",
+    "route:POST /v1/edges/by-path": "verified",
+    "route:POST /v1/fetch": "verified",
+    "route:POST /v1/index": "verified",
+    "route:POST /v1/index/batch": "verified",
+    "route:POST /v1/index/capability-projection": "verified",
+    "route:POST /v1/index/evidence-exact": "verified",
+    "route:POST /v1/memories": "verified",
+    "route:POST /v1/memories/bulk": "verified",
+    "route:POST /v1/memories/recall": "verified",
+    "route:POST /v1/namespaces": "verified",
+    "route:POST /v1/search": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-canary-2",
+   "kind": "canary",
+   "output_ref": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json",
+   "started_at_utc": "2026-10-14T09:23:02Z",
+   "summary": "receipts/canary/1017732d-kc2-fetch-20261014/route-presence-result.json: 28 verified / 0 failed / 0 not_measured"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.6,
+   "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "route:GET /__benchmark/fingerprint"
+   ],
+   "entity_verdicts": {
     "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
-    "code_unit:src/scrutator/health.py": "not_measured",
-    "route:DELETE /v1/edges": "not_measured",
-    "route:DELETE /v1/index": "not_measured",
-    "route:DELETE /v1/memories": "not_measured",
-    "route:GET /__benchmark/fingerprint": "not_measured",
-    "route:GET /health": "not_measured",
-    "route:GET /v1/chunks": "not_measured",
-    "route:GET /v1/edges/{chunk_id}": "not_measured",
-    "route:GET /v1/index/capability": "not_measured",
-    "route:GET /v1/index/rollback-capability": "not_measured",
-    "route:GET /v1/memories/stats": "not_measured",
-    "route:GET /v1/namespaces": "not_measured",
-    "route:GET /v1/navigate/outline": "not_measured",
-    "route:GET /v1/navigate/section": "not_measured",
-    "route:GET /v1/stats": "not_measured",
-    "route:POST /v1/chunk": "not_measured",
-    "route:POST /v1/dream/analyze": "not_measured",
-    "route:POST /v1/edges": "not_measured",
-    "route:POST /v1/edges/by-path": "not_measured",
-    "route:POST /v1/fetch": "not_measured",
-    "route:POST /v1/index": "not_measured",
-    "route:POST /v1/index/batch": "not_measured",
-    "route:POST /v1/index/capability-projection": "not_measured",
-    "route:POST /v1/index/evidence-exact": "not_measured",
-    "route:POST /v1/memories": "not_measured",
-    "route:POST /v1/memories/bulk": "not_measured",
-    "route:POST /v1/memories/recall": "not_measured",
-    "route:POST /v1/namespaces": "not_measured",
-    "route:POST /v1/search": "not_measured"
+    "route:GET /__benchmark/fingerprint": "not_measured"
    },
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-14T08:50:22Z",
-   "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 30 not_measured of 30 entities"
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-canary.json",
+   "started_at_utc": "2026-10-14T09:23:02Z",
+   "summary": "2 canary result(s), 2 committed at head; 28 verified / 0 failed / 2 not_measured of 30 entities"
   },
   {
    "command": "bash --noprofile --norc -n <exact bytes; Bats declarations translated, never executed>",
@@ -3538,9 +3464,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "started_at_utc": "2026-10-14T09:23:02Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -3555,9 +3481,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-verification-20261014/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/kc-finish-work/scrutator-kc2-fetch-gate-20261014/verifier-out-478b154/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-14T08:50:22Z",
+   "started_at_utc": "2026-10-14T09:23:03Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: directory transition has unresolved execution cwd; line 10: dynamic load/substitution; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: dynamic command/alias/eval; line 41: dynamic command/alias/eval; line 41: dynamic load/substitution; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -3716,6 +3642,9 @@
     "fitness_rules",
     "type_check"
    ],
+   "document:receipts/canary/1017732d-kc2-fetch-20261014/route-canary-method.md": [
+    "doc_reference"
+   ],
    "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
    "receipt:receipts/graph/A2-311-contracts-and-canary.json": [],
    "receipt:receipts/graph/A2-324-canary-route-presence.json": [],
@@ -3866,9 +3795,9 @@
    ]
   },
   "seconds": {
-   "prepare": 0.92,
-   "total": 49.2,
-   "verifiers": 0.12
+   "prepare": 1.64,
+   "total": 98.84,
+   "verifiers": 2.12
   }
  },
  "work_item": "1017732d-a352-4f29-89ef-51fa7c5705f8"
