@@ -10,7 +10,7 @@ on:
 
 jobs:
   network-exposure:
-    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@50351e0468f57a39b280d75cf41827329d6393d2
+    uses: Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@ae54b30c6365003e55a3a2778d4acf439261bb77
     with:
       compose_paths: docker-compose.yml
       datarim_ref: 50351e0468f57a39b280d75cf41827329d6393d2
@@ -76,7 +76,7 @@ jobs:
 
       - name: Pre-deploy host readiness
         id: preflight
-        uses: Arcanada-one/datarim/.github/actions/preflight-check@50351e0468f57a39b280d75cf41827329d6393d2
+        uses: Arcanada-one/datarim/.github/actions/preflight-check@ae54b30c6365003e55a3a2778d4acf439261bb77
         with:
           target-host: arcana-kb
           service-name: scrutator
@@ -219,7 +219,7 @@ jobs:
 
       - name: Upload the canary result
         if: always() && steps.canary.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: canary-post-${{ github.sha }}
           path: ${{ runner.temp }}/canary/*.json
