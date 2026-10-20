@@ -1,5 +1,8 @@
 name: COL-0003 collective DNS oneshot
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/col-0003-collective-dns.yml'
   workflow_dispatch:
 jobs:
   dns:
