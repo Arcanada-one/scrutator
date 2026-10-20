@@ -1,0 +1,43 @@
+name: COL-0003 collective DNS oneshot
+on:
+  workflow_dispatch:
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create collective.arcanada.ai A record
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_API_TOKEN:-}" ]; then
+            echo "CF_API_TOKEN missing" >&2
+            exit 1
+          fi
+          VERIFY=$(curl -sS -o /tmp/v.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify)
+          echo "verify_http=$VERIFY"
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/v.json'))
+          print('verify_success', d.get('success'), 'status', (d.get('result') or {}).get('status'))
+          if not d.get('success'):
+            raise SystemExit(2)
+          PY
+          ZONE=900515c3ca41ab43451f8c3821a8cdd4
+          FQDN=collective.arcanada.ai
+          LIST=$(curl -sS -H "Authorization: Bearer ${CF_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records?type=A&name=${FQDN}")
+          echo "$LIST" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("list_success", d.get("success"), "count", len(d.get("result") or []), "errors", d.get("errors"))'
+          EXISTS=$(echo "$LIST" | python3 -c 'import sys,json; r=json.load(sys.stdin).get("result") or []; print(r[0]["id"] if r else "")')
+          BODY='{"type":"A","name":"collective","content":"37.27.107.227","ttl":1,"proxied":true,"comment":"COL-0003 collective mailbox"}'
+          if [ -n "$EXISTS" ]; then
+            RESP=$(curl -sS -X PUT -H "Authorization: Bearer ${CF_API_TOKEN}" -H 'Content-Type: application/json' \
+              --data "$BODY" "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records/${EXISTS}")
+            echo "$RESP" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("update_success", d.get("success"), "proxied", (d.get("result") or {}).get("proxied"), "content", (d.get("result") or {}).get("content"), "errors", d.get("errors"))'
+          else
+            RESP=$(curl -sS -X POST -H "Authorization: Bearer ${CF_API_TOKEN}" -H 'Content-Type: application/json' \
+              --data "$BODY" "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_records")
+            echo "$RESP" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("create_success", d.get("success"), "proxied", (d.get("result") or {}).get("proxied"), "content", (d.get("result") or {}).get("content"), "errors", d.get("errors"))'
+          fi
