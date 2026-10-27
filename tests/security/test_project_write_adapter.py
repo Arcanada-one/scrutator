@@ -66,6 +66,26 @@ def test_project_index_uses_server_namespace_and_wrong_namespace_never_reaches_i
     assert own.json()["namespace"] == "knowledge-contract"
     assert index.await_args.kwargs["namespace"] == "knowledge-contract"
     assert index.await_args.kwargs["project"] == "knowledge-contract"
+    assert index.await_args.kwargs["authorized_namespace_id"] == 7
+
+
+def test_project_index_rejects_mismatched_source_result():
+    mismatched = IndexResponse(
+        chunks_indexed=1, source_path="other.md", namespace="knowledge-contract", strategy_used="markdown"
+    )
+    with (
+        patch.object(settings, "project_write_namespace", "knowledge-contract"),
+        override_tenant_context(app, PROJECT),
+        patch("scrutator.auth.dependency.resolve_namespace_selector", new_callable=AsyncMock, return_value=7),
+        patch("scrutator.health.index_document", new_callable=AsyncMock, return_value=mismatched),
+        TestClient(app) as client,
+    ):
+        response = client.post(
+            "/v1/project/index",
+            json={"namespace": "knowledge-contract", "content": "synthetic", "source_path": "paper.md"},
+        )
+    assert response.status_code == 503
+    assert response.json() == {"detail": "project index result is inconsistent"}
 
 
 def test_project_delete_uses_granted_namespace_id_and_wrong_namespace_never_reaches_repository():

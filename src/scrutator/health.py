@@ -388,7 +388,7 @@ async def project_index_endpoint(
     ctx: TenantContext = Depends(require_ltm_write_scope),
 ) -> IndexResponse:
     """Index through the principal's dedicated namespace, never a Feeder token."""
-    namespace, _ = await resolve_project_write_namespace(ctx, request.namespace)
+    namespace, namespace_id = await resolve_project_write_namespace(ctx, request.namespace)
     if request.project is not None and request.project != namespace:
         raise HTTPException(status_code=403, detail="project outside write scope")
     try:
@@ -405,14 +405,15 @@ async def project_index_endpoint(
             source_type=request.source_type,
             max_tokens=request.max_tokens,
             overlap_tokens=request.overlap_tokens,
+            authorized_namespace_id=namespace_id,
         )
     except BatchIndexLimitError as exc:
         raise HTTPException(status_code=422, detail="project document exceeds index limits") from exc
     except Exception as exc:
         logger.error("Project index failed: error_type=%s", type(exc).__name__)
         raise HTTPException(status_code=503, detail="project index failed") from None
-    if result.namespace != namespace:
-        logger.error("Project index result crossed its server-derived namespace")
+    if result.namespace != namespace or result.source_path != request.source_path:
+        logger.error("Project index result crossed its server-derived source scope")
         raise HTTPException(status_code=503, detail="project index result is inconsistent")
     return result
 
