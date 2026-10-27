@@ -3,17 +3,33 @@
 No workflow dispatch, suite execution, token lookup, generic URL, or cache-only trust.
 The profile's explicit full_test remains the declaration; evidence never declares it.
 """
+import argparse
 import hashlib
+import importlib.util
+import io
 import json
+import os
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import zipfile
 from datetime import datetime, timedelta
+from pathlib import Path
 from pathlib import PurePosixPath
+from urllib.parse import quote
 
-import canary_evidence
+# The hosted root-typecheck collector runs this file with `python3 -I`; isolated
+# mode excludes the script directory from sys.path. Load the sibling from the
+# already authenticated graph bundle by exact path, without restoring cwd or
+# ambient Python import paths.
+_canary_path = Path(__file__).resolve().with_name("canary_evidence.py")
+_canary_spec = importlib.util.spec_from_file_location("_graph_canary_evidence", _canary_path)
+if _canary_spec is None or _canary_spec.loader is None:
+    raise RuntimeError("canary_evidence module cannot be loaded from the graph bundle")
+canary_evidence = importlib.util.module_from_spec(_canary_spec)
+_canary_spec.loader.exec_module(canary_evidence)
 
 SCHEMA = "GitHubFullSuiteEvidence/v1"
 MAX_BYTES = 16 * 1024 * 1024
@@ -103,6 +119,12 @@ def _blob(repo, head, path):
 
 def _digest(raw):
     return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def canonical_digest_hex(value):
+    """Normalize only full-suite CI's canonical ``sha256:<lowercase hex>`` reference."""
+    match = re.fullmatch(r"sha256:([0-9a-f]{64})", value) if isinstance(value, str) else None
+    return match.group(1) if match else None
 
 
 SQLITE_DEP = "crates/disk-personal/sqlite-abi"
@@ -806,3 +828,635 @@ def receipt_errors(repo, head, repository, rows):
         except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
             errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: committed imported evidence missing")
     return errors
+
+
+# A distinct typed input. It never uses the full-suite scope, profile declaration or consumer.
+ROOT_TYPECHECK_SCHEMA = "GitHubTypecheckEvidence/v1"
+ROOT_TYPECHECK_REPO = "Arcanada-one/auth-arcana"
+ROOT_TYPECHECK_WORKFLOW = ".github/workflows/ci.yml"
+ROOT_TYPECHECK_JOB = "main-package-tsc"
+ROOT_TYPECHECK_JOB_NAME = "Type-check main package"
+ROOT_TYPECHECK_COMMAND = ["pnpm", "exec", "tsc", "--noEmit"]
+ROOT_TYPECHECK_STEP_COMMANDS = {
+    "pnpm install --frozen-lockfile",
+    "pnpm exec prisma generate",
+    "pnpm exec tsc --noEmit",
+}
+ROOT_TYPECHECK_INPUTS = (
+    "tsconfig.json", "package.json", "pnpm-lock.yaml", ".npmrc", "pnpm-workspace.yaml",
+    "prisma/schema.prisma", "prisma.config.ts",
+)
+ROOT_TYPECHECK_BASE_KEYS = {
+    "schema", "scope", "repository", "source_commit", "base", "head", "verdict", "errors",
+}
+ROOT_TYPECHECK_RECORD_KEYS = ROOT_TYPECHECK_BASE_KEYS | {
+    "workflow_sha256", "workflow_blob_oid", "job_key", "job_name", "runner_labels", "step_command",
+    "step_source", "checkout_action", "tsconfig_path", "tsconfig_blob_oid", "tsconfig_sha256",
+    "source_inputs", "entity", "run_id", "run_attempt", "job_id", "workflow", "workflow_path",
+    "workflow_commit", "pr_number", "run_conclusion", "command", "cwd", "checkout_commit",
+    "step_name", "step_number", "process_pid", "numeric_process_exit", "step_started_at",
+    "step_completed_at", "step_status", "step_conclusion", "step_outcomes", "trees", "log_members",
+    "compiler_log_member_sha256", "original_log",
+}
+
+
+def _github_with_token(endpoint, token):
+    """Read one GitHub endpoint with only the explicitly supplied ephemeral token."""
+    if not isinstance(token, str) or not token:
+        raise ValueError("explicit Auth GITHUB_TOKEN is absent; ambient credentials are not a fallback")
+    cli = shutil.which("gh")
+    if not cli:
+        raise ValueError("authenticated GitHub CLI unavailable")
+    env = {key: value for key, value in os.environ.items()
+           if key not in {"GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN"}}
+    env["GH_TOKEN"] = token
+    proc = subprocess.run([cli, "api", "--hostname", "github.com", endpoint], capture_output=True,
+                          timeout=60, env=env)
+    if proc.returncode:
+        raise ValueError("explicit-token GitHub read refused or unavailable")
+    if len(proc.stdout) > MAX_BYTES:
+        raise ValueError("GitHub typecheck metadata exceeds bounded size")
+    return proc.stdout
+
+
+def _tracked_source(repo, source, path):
+    """Exact regular tracked source bytes and object id; no working-tree substitution."""
+    entry = _git(repo, "ls-tree", "-z", source, "--", path)
+    rows = [row for row in entry.split(b"\0") if row]
+    if len(rows) != 1:
+        raise ValueError("typecheck source path absent or ambiguous: " + path)
+    metadata, actual = rows[0].split(b"\t", 1)
+    mode, kind, oid = metadata.split()
+    if (actual.decode("utf-8", "strict") != path or mode != b"100644" or kind != b"blob"
+            or not re.fullmatch(rb"[0-9a-f]{40}", oid)):
+        raise ValueError("typecheck source must be a regular tracked blob: " + path)
+    raw = _git(repo, "show", source + ":" + path)
+    return raw, oid.decode("ascii")
+
+
+def root_typecheck_source_binding(repo, source):
+    """Qualify the one supported committed Auth root project/compiler workflow shape."""
+    import yaml
+
+    workflow, workflow_oid = _tracked_source(repo, source, ROOT_TYPECHECK_WORKFLOW)
+    for token in yaml.scan(workflow.decode("utf-8", "strict")):
+        if isinstance(token, (yaml.tokens.AliasToken, yaml.tokens.AnchorToken,
+                              yaml.tokens.TagToken, yaml.tokens.DirectiveToken)):
+            raise ValueError("Auth CI workflow aliases/tags/directives are unsupported")
+
+    class UniqueLoader(yaml.BaseLoader):
+        pass
+
+    def mapping(loader, node):
+        result = {}
+        for key_node, value_node in node.value:
+            key = loader.construct_object(key_node)
+            if key in result:
+                raise ValueError("Auth CI workflow contains a duplicate mapping key")
+            result[key] = loader.construct_object(value_node)
+        return result
+
+    UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, mapping)
+    doc = yaml.load(workflow, Loader=UniqueLoader)
+    triggers = doc.get("on") if isinstance(doc, dict) else None
+    if (not isinstance(doc, dict) or not isinstance(triggers, dict)
+            or set(triggers) != {"push", "pull_request"} or triggers.get("pull_request") not in (None, "", {})
+            or doc.get("permissions") != {"contents": "read"}):
+        raise ValueError("Auth workflow must be the exact pull_request workflow with contents: read")
+    jobs = doc.get("jobs")
+    job = jobs.get(ROOT_TYPECHECK_JOB) if isinstance(jobs, dict) else None
+    if (not isinstance(job, dict) or job.get("name") != ROOT_TYPECHECK_JOB_NAME
+            or job.get("if") is not None or job.get("strategy") is not None
+            or job.get("continue-on-error") not in (None, "false") or job.get("uses") is not None
+            or job.get("permissions") is not None or job.get("env") is not None
+            or job.get("defaults") is not None or job.get("container") is not None
+            or job.get("services") is not None or doc.get("defaults") is not None
+            or doc.get("env") is not None):
+        raise ValueError("Auth main-package-tsc job is absent or outside the supported simple job shape")
+    runner = job.get("runs-on")
+    if runner != ["self-hosted", "linux", "docker", "ci-general"]:
+        raise ValueError("Auth compiler runner labels differ from the qualified literal runner")
+    steps = job.get("steps")
+    if not isinstance(steps, list) or len(steps) != 6:
+        raise ValueError("Auth compiler job steps are absent or outside the bounded supported shape")
+    checkout = [s for s in steps if isinstance(s, dict) and isinstance(s.get("uses"), str)
+                and s["uses"].startswith("actions/checkout@")]
+    if (len(checkout) != 1 or not re.fullmatch(r"actions/checkout@[0-9a-f]{40}", checkout[0]["uses"])
+            or checkout[0].get("with") != {"persist-credentials": "false"}
+            or checkout[0].get("if") is not None):
+        raise ValueError("Auth compiler job checkout is not one literal full-SHA, nonpersistent checkout")
+    if any(isinstance(step, dict) and "uses" in step
+           and (not isinstance(step["uses"], str)
+                or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}", step["uses"]))
+           for step in steps):
+        raise ValueError("every Auth compiler job action must be pinned to a full commit SHA")
+    pnpm_setup = [s for s in steps if isinstance(s, dict)
+                  and isinstance(s.get("uses"), str) and s["uses"].startswith("pnpm/action-setup@")]
+    node_setup = [s for s in steps if isinstance(s, dict)
+                  and isinstance(s.get("uses"), str) and s["uses"].startswith("actions/setup-node@")]
+    if (len(pnpm_setup) != 1 or pnpm_setup[0]["uses"] !=
+            "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413"
+            or pnpm_setup[0].get("with") != {"dest": "${{ runner.temp }}/setup-pnpm"}
+            or len(node_setup) != 1 or node_setup[0]["uses"] !=
+            "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020"
+            or node_setup[0].get("with") != {"node-version": "24", "cache": "pnpm"}):
+        raise ValueError("Auth compiler toolchain setup differs from the exact qualified pinned actions")
+    by_command = {}
+    for step in steps:
+        if not isinstance(step, dict) or not isinstance(step.get("run"), str):
+            continue
+        command = step["run"].strip()
+        if command in ROOT_TYPECHECK_STEP_COMMANDS:
+            by_command.setdefault(command, []).append(step)
+    if set(by_command) != ROOT_TYPECHECK_STEP_COMMANDS or any(len(v) != 1 for v in by_command.values()):
+        raise ValueError("Auth CI must contain unique frozen install, Prisma generation and literal tsc steps")
+    for command, matches in by_command.items():
+        step = matches[0]
+        if (step.get("if") is not None or step.get("continue-on-error") not in (None, "false")
+                or step.get("working-directory") is not None or step.get("shell") not in (None, "bash")
+                or step.get("env") is not None):
+            raise ValueError("Auth CI compiler prerequisite/step is conditional, tolerated or relocated")
+    if ([steps.index(checkout[0]), steps.index(pnpm_setup[0]), steps.index(node_setup[0]),
+         steps.index(by_command["pnpm install --frozen-lockfile"][0]),
+         steps.index(by_command["pnpm exec prisma generate"][0]),
+         steps.index(by_command["pnpm exec tsc --noEmit"][0])] != list(range(6))):
+        raise ValueError("Auth compiler checkout/setup/install/generate/tsc ordering differs")
+    compiler = by_command["pnpm exec tsc --noEmit"][0]
+    if any(s.get("if") is not None or s.get("continue-on-error") not in (None, "false")
+           for s in steps if isinstance(s, dict)):
+        raise ValueError("Auth compiler job contains a conditional or tolerated step")
+    tsconfig, tsconfig_oid = _tracked_source(repo, source, "tsconfig.json")
+    tsconfig_doc = json.loads(tsconfig)
+    if (not isinstance(tsconfig_doc, dict) or set(tsconfig_doc) != {"compilerOptions", "include", "exclude"}
+            or not isinstance(tsconfig_doc.get("compilerOptions"), dict)
+            or not isinstance(tsconfig_doc.get("include"), list)
+            or not tsconfig_doc["include"] or tsconfig_doc.get("exclude") is None):
+        raise ValueError("root tsconfig is not a regular, self-contained declared project")
+    source_inputs = {}
+    for path in ROOT_TYPECHECK_INPUTS:
+        try:
+            raw, oid = _tracked_source(repo, source, path)
+            source_inputs[path] = {"present": True, "blob_oid": oid, "sha256": _digest(raw)}
+        except ValueError as exc:
+            if path in ("tsconfig.json", "package.json", "pnpm-lock.yaml"):
+                raise
+            if "absent or ambiguous" not in str(exc):
+                raise
+            source_inputs[path] = {"present": False, "blob_oid": None, "sha256": None}
+    return {
+        "workflow_sha256": _digest(workflow), "workflow_blob_oid": workflow_oid,
+        "job_key": ROOT_TYPECHECK_JOB, "job_name": ROOT_TYPECHECK_JOB_NAME,
+        "runner_labels": runner,
+        "step_command": ROOT_TYPECHECK_COMMAND, "step_source": compiler["run"].strip(),
+        "checkout_action": checkout[0]["uses"], "tsconfig_path": "tsconfig.json",
+        "tsconfig_blob_oid": tsconfig_oid, "tsconfig_sha256": _digest(tsconfig),
+        "source_inputs": source_inputs,
+    }
+
+
+def _regular_bytes(path, maximum=MAX_BYTES):
+    path = Path(path)
+    st = path.lstat()
+    if not stat.S_ISREG(st.st_mode) or st.st_size > maximum:
+        raise ValueError("typecheck evidence input is not a bounded regular file")
+    raw = path.read_bytes()
+    if len(raw) != st.st_size:
+        raise ValueError("typecheck evidence changed during read")
+    return raw
+
+
+def _job_log_members(raw):
+    """Return complete bounded log archive members; preserve the archive bytes separately."""
+    if raw.startswith(b"PK\x03\x04"):
+        members = {}
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            infos = archive.infolist()
+            if not infos or len(infos) > 128:
+                raise ValueError("GitHub job-log archive is empty or exceeds the member bound")
+            total = 0
+            for info in infos:
+                name = PurePosixPath(info.filename)
+                mode = info.external_attr >> 16
+                if (name.is_absolute() or ".." in name.parts or info.is_dir() or info.flag_bits & 1
+                        or stat.S_ISLNK(mode) or info.file_size > MAX_BYTES or info.filename in members):
+                    raise ValueError("GitHub job-log archive has an unsafe/duplicate member")
+                data = archive.read(info)
+                if len(data) != info.file_size:
+                    raise ValueError("GitHub job-log member size mismatch")
+                total += len(data)
+                if total > MAX_BYTES:
+                    raise ValueError("GitHub job-log archive expands beyond the total byte bound")
+                members[info.filename] = data
+        return members
+    return {"original-job.log": raw}
+
+
+def _step_log(members, step):
+    if set(members) == {"original-job.log"}:
+        return members["original-job.log"].decode("utf-8", "strict")
+    number = step.get("number")
+    if type(number) is not int or number <= 0:
+        raise ValueError("GitHub typecheck step number is unavailable")
+    candidates = [data for name, data in members.items()
+                  if PurePosixPath(name).name.startswith(f"{number}_")]
+    if len(candidates) != 1:
+        raise ValueError("GitHub job log does not uniquely bind the selected step number")
+    return candidates[0].decode("utf-8", "strict")
+
+
+def _typecheck_record(repo, evidence_root):
+    path = Path(evidence_root)
+    if (not path.is_absolute() or path.name != "ci-typecheck" or path.parent.name != "current-candidate"
+            or path.is_symlink() or path.exists()):
+        raise ValueError("root typecheck evidence root must be a fresh absolute path")
+    parent = path.parent.resolve(strict=True)
+    if parent != path.parent.absolute():
+        raise ValueError("root typecheck evidence parent must not cross a symlink")
+    root = parent / path.name
+    if root.is_relative_to(Path(repo).resolve()):
+        raise ValueError("root typecheck evidence must remain outside the checked-out payload")
+    root.mkdir(mode=0o700)
+    return root
+
+
+def _write_typecheck_record(root, document, log_raw=None):
+    if log_raw is not None:
+        log_path = root / "original-job.log"
+        with log_path.open("xb") as stream:
+            stream.write(log_raw)
+        document["original_log"] = {"path": "original-job.log", "bytes": len(log_raw), "sha256": _digest(log_raw)}
+    target = root / "record.json"
+    with target.open("xb") as stream:
+        stream.write((json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n").encode())
+
+
+def collect_root_typecheck(repo, repository, source, base, event_file, evidence_root, *, token=None,
+                           read_api=None):
+    """Collect only one exact completed Auth PR typecheck run. No run is ever started or retried."""
+    root = _typecheck_record(repo, evidence_root)
+    record = {"schema": ROOT_TYPECHECK_SCHEMA, "scope": "root_tsconfig_typecheck",
+              "repository": repository, "source_commit": source, "base": base, "head": source,
+              "verdict": "not_measured", "errors": []}
+    log_raw = None
+    try:
+        if Path.cwd().resolve(strict=True) != Path(repo).resolve(strict=True):
+            raise ValueError("Auth typecheck collector must run from the exact repository root")
+        if repository != ROOT_TYPECHECK_REPO or not re.fullmatch(r"[0-9a-f]{40}", source) \
+                or not re.fullmatch(r"[0-9a-f]{40}", base):
+            raise ValueError("root typecheck collection is limited to exact Auth repository/base/head")
+        if not token:
+            raise ValueError("explicit Auth GITHUB_TOKEN is missing; no ambient credential fallback")
+        event = json.loads(_regular_bytes(event_file).decode("utf-8", "strict"))
+        pr = event.get("pull_request") if isinstance(event, dict) else None
+        if (not isinstance(pr, dict) or type(pr.get("number")) is not int
+                or (pr.get("head") or {}).get("sha") != source
+                or (pr.get("base") or {}).get("sha") != base):
+            raise ValueError("current Program candidate range does not match its exact Auth pull_request event")
+        api = (lambda endpoint: _github_with_token(endpoint, token)) if read_api is None else read_api
+        branch = (pr.get("head") or {}).get("ref")
+        if not isinstance(branch, str) or not branch:
+            raise ValueError("Auth pull_request branch identity unavailable")
+        endpoint = ("repos/Arcanada-one/auth-arcana/actions/workflows/ci.yml/runs"
+                    f"?event=pull_request&branch={quote(branch, safe='')}&per_page=100")
+        listing = json.loads(api(endpoint))
+        runs = listing.get("workflow_runs") if isinstance(listing, dict) else None
+        if (not isinstance(runs, list) or type(listing.get("total_count")) is not int
+                or listing["total_count"] != len(runs)):
+            raise ValueError("exact Auth PR run listing is incomplete or paginated; uniqueness is not established")
+        matches = [run for run in runs or [] if isinstance(run, dict)
+                   and run.get("path", "").split("@", 1)[0] == ROOT_TYPECHECK_WORKFLOW
+                   and run.get("event") == "pull_request"
+                   and any(isinstance(item, dict) and item.get("number") == pr["number"]
+                           and (item.get("head") or {}).get("sha") == source
+                           and (item.get("base") or {}).get("sha") == base
+                           for item in run.get("pull_requests", []))]
+        if len(matches) != 1:
+            raise ValueError("exact Auth PR has no unique associated ci.yml workflow run")
+        run = matches[0]
+        run_id, attempt = run.get("id"), run.get("run_attempt")
+        if type(run_id) is not int or run_id <= 0 or type(attempt) is not int or attempt <= 0:
+            raise ValueError("Auth CI run/current attempt identity is not a positive integer")
+        current_run = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/actions/runs/{run_id}"))
+        if (current_run.get("id") != run_id or current_run.get("run_attempt") != attempt
+                or current_run.get("event") != "pull_request"
+                or current_run.get("path", "").split("@", 1)[0] != ROOT_TYPECHECK_WORKFLOW
+                or current_run.get("head_sha") != run.get("head_sha")
+                or current_run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
+                or current_run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
+                or current_run.get("status") != "completed"):
+            raise ValueError("Auth CI run detail does not confirm the exact current completed attempt")
+        if (run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
+                or run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO):
+            raise ValueError("Auth CI run repository identity is not canonical same-repository PR")
+        if run.get("status") != "completed":
+            raise ValueError("exact Auth CI run is not completed; no wait or retry was started")
+        job_list = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
+        jobs = job_list.get("jobs") if isinstance(job_list, dict) else None
+        if (not isinstance(jobs, list) or type(job_list.get("total_count")) is not int
+                or job_list["total_count"] != len(jobs)):
+            raise ValueError("exact Auth attempt job listing is incomplete or paginated; uniqueness is not established")
+        selected = [item for item in jobs or [] if isinstance(item, dict)
+                    and item.get("name") == ROOT_TYPECHECK_JOB_NAME]
+        if len(selected) != 1:
+            raise ValueError("Auth CI attempt has no unique Type-check main package job")
+        job = selected[0]
+        binding = root_typecheck_source_binding(repo, source)
+        job_id = job.get("id")
+        if (type(job_id) is not int or job_id <= 0 or job.get("run_id") != run_id
+                or job.get("run_attempt") != attempt or job.get("status") != "completed"):
+            raise ValueError("Auth compiler job numeric identity/attempt is unbound")
+        record.update(binding, entity="deployable_unit:.", run_id=run_id, run_attempt=attempt, job_id=job_id,
+                      workflow=ROOT_TYPECHECK_WORKFLOW, workflow_path=run.get("path"),
+                      workflow_commit=run.get("head_sha"), pr_number=pr["number"],
+                      run_conclusion=current_run.get("conclusion"),
+                      job_key=ROOT_TYPECHECK_JOB, job_name=ROOT_TYPECHECK_JOB_NAME,
+                      command=ROOT_TYPECHECK_COMMAND, cwd=".",
+                      checkout_commit=run.get("head_sha"),
+                      step_name="Run pnpm exec tsc --noEmit", step_number=None,
+                      process_pid="NOT_RETAINED", numeric_process_exit="NOT_RETAINED")
+        steps = job.get("steps")
+        if not isinstance(steps, list):
+            raise ValueError("Auth compiler job step metadata is missing")
+        compiler_steps = [s for s in steps if isinstance(s, dict)
+                          and s.get("name") == "Run pnpm exec tsc --noEmit"]
+        if len(compiler_steps) != 1:
+            raise ValueError("Auth compiler step metadata is absent or ambiguous")
+        compiler = compiler_steps[0]
+        record["step_number"] = compiler.get("number")
+        record["step_started_at"] = compiler.get("started_at")
+        record["step_completed_at"] = compiler.get("completed_at")
+        record["step_status"] = compiler.get("status")
+        record["step_conclusion"] = compiler.get("conclusion")
+        by_command = {"pnpm install --frozen-lockfile": "Run pnpm install --frozen-lockfile",
+                      "pnpm exec prisma generate": "Run pnpm exec prisma generate",
+                      "pnpm exec tsc --noEmit": "Run pnpm exec tsc --noEmit"}
+        for command, name in by_command.items():
+            candidates = [s for s in steps if isinstance(s, dict) and s.get("name") == name]
+            if len(candidates) != 1 or candidates[0].get("status") != "completed":
+                raise ValueError("Auth compiler prerequisite step absent/incomplete: " + name)
+            record.setdefault("step_outcomes", {})[command] = candidates[0].get("conclusion")
+        log_raw = api(f"repos/{ROOT_TYPECHECK_REPO}/actions/jobs/{job_id}/logs")
+        if len(log_raw) > MAX_BYTES:
+            raise ValueError("complete Auth job log exceeds bounded size")
+        members = _job_log_members(log_raw)
+        selected_log = _step_log(members, compiler)
+        run_line = "##[group]Run pnpm exec tsc --noEmit"
+        if selected_log.count(run_line) != 1 or "pnpm exec tsc --noEmit" not in selected_log:
+            raise ValueError("authenticated original job log lacks one literal compiler step boundary")
+        checkout_commit = run.get("head_sha")
+        if not isinstance(checkout_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", checkout_commit):
+            raise ValueError("Auth workflow run checkout commit is not a full Git OID")
+        for oid in (source, checkout_commit):
+            commit = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/git/commits/{oid}"))
+            if commit.get("sha") != oid or not isinstance((commit.get("tree") or {}).get("sha"), str):
+                raise ValueError("GitHub-authenticated Auth source/checkout commit identity unavailable")
+            record.setdefault("trees", {})[oid] = commit["tree"]["sha"]
+        local_source_tree = _git(repo, "rev-parse", source + "^{tree}").decode().strip()
+        if (record["trees"][source] != local_source_tree
+                or record["trees"][checkout_commit] != local_source_tree):
+            raise ValueError("Auth compiler checkout whole Git tree differs from exact current candidate source")
+        record["checkout_commit"] = checkout_commit
+        record["log_members"] = {name: {"bytes": len(data), "sha256": _digest(data)}
+                                 for name, data in sorted(members.items())}
+        record["compiler_log_member_sha256"] = _digest(selected_log.encode("utf-8"))
+        outcomes = record["step_outcomes"]
+        job_conclusion = job.get("conclusion")
+        if compiler.get("status") == "completed" and compiler.get("conclusion") == "success" \
+                and job_conclusion == "success" \
+                and all(outcomes.get(c) == "success" for c in by_command):
+            record["verdict"] = "verified"
+        elif compiler.get("status") == "completed" and compiler.get("conclusion") == "failure":
+            record["verdict"] = "failed"
+        else:
+            raise ValueError("Auth compiler run/job/prerequisites are not all completed successfully")
+        _write_typecheck_record(root, record, log_raw)
+        return record
+    except Exception as exc:
+        record["errors"] = [str(exc)[:500]]
+        _write_typecheck_record(root, record, log_raw)
+        return record
+
+
+def consume_root_typecheck(repo, repository, base, head, evidence_root, *, token=None, read_api=None):
+    """Reauthenticate one externally retained typed root row; never trust its claimed verdict."""
+    result = {"schema": ROOT_TYPECHECK_SCHEMA, "scope": "root_tsconfig_typecheck",
+              "verdict": "not_measured", "errors": []}
+    try:
+        root = Path(evidence_root)
+        if (not root.is_absolute() or root.name != "ci-typecheck" or root.parent.name != "current-candidate"
+                or root.is_symlink() or not root.is_dir()):
+            raise ValueError("root typecheck evidence directory is missing or unsafe")
+        parent = root.parent.resolve(strict=True)
+        if parent != root.parent.absolute():
+            raise ValueError("root typecheck evidence path crosses a symlinked candidate directory")
+        root = root.resolve(strict=True)
+        if root.is_relative_to(Path(repo).resolve(strict=True)):
+            raise ValueError("root typecheck evidence is inside the authenticated repository payload")
+        entries = sorted(path.name for path in root.iterdir())
+        if ("record.json" not in entries or len(entries) > 2
+                or any(name not in {"record.json", "original-job.log"} for name in entries)):
+            raise ValueError("root typecheck evidence directory contains an unexpected member")
+        if any(not stat.S_ISREG(path.lstat().st_mode) for path in root.iterdir()):
+            raise ValueError("root typecheck evidence directory contains a non-regular member")
+        record_raw = _regular_bytes(root / "record.json", 1024 * 1024)
+        doc = json.loads(record_raw)
+        if (not isinstance(doc, dict) or not ROOT_TYPECHECK_BASE_KEYS.issubset(doc)
+                or set(doc) - ROOT_TYPECHECK_RECORD_KEYS
+                or (doc.get("verdict") in ("verified", "failed")
+                    and set(doc) != ROOT_TYPECHECK_RECORD_KEYS)
+                or doc.get("schema") != ROOT_TYPECHECK_SCHEMA
+                or doc.get("scope") != "root_tsconfig_typecheck"
+                or doc.get("repository") != repository or repository != ROOT_TYPECHECK_REPO
+                or doc.get("source_commit") != head or doc.get("head") != head
+                or doc.get("base") != base or doc.get("entity") != "deployable_unit:."
+                or doc.get("workflow") != ROOT_TYPECHECK_WORKFLOW
+                or doc.get("job_key") != ROOT_TYPECHECK_JOB
+                or doc.get("command") != ROOT_TYPECHECK_COMMAND or doc.get("cwd") != "."):
+            raise ValueError("typed Auth root evidence schema/repository/tree/range/project binding mismatch")
+        result.update({k: doc.get(k) for k in ("run_id", "run_attempt", "job_id", "source_commit",
+                      "checkout_commit", "step_name", "step_number", "step_started_at", "step_completed_at",
+                      "step_conclusion", "run_conclusion", "workflow_sha256", "tsconfig_sha256", "source_inputs")})
+        if doc.get("verdict") == "not_measured":
+            result["errors"] = doc.get("errors", [])
+            return result
+        if not isinstance(token, str) or not token:
+            raise ValueError("explicit Auth GITHUB_TOKEN unavailable; no ambient credential fallback")
+        log_meta = doc.get("original_log")
+        if (not isinstance(log_meta, dict) or log_meta.get("path") != "original-job.log"
+                or type(log_meta.get("bytes")) is not int):
+            raise ValueError("original complete Auth job log binding is missing")
+        log_raw = _regular_bytes(root / "original-job.log")
+        if len(log_raw) != log_meta["bytes"] or _digest(log_raw) != log_meta.get("sha256"):
+            raise ValueError("original complete Auth job log bytes differ from their record")
+        api = (lambda endpoint: _github_with_token(endpoint, token)) if read_api is None else read_api
+        prefix = "repos/" + ROOT_TYPECHECK_REPO
+        run = json.loads(api(f"{prefix}/actions/runs/{doc['run_id']}"))
+        job = json.loads(api(f"{prefix}/actions/jobs/{doc['job_id']}"))
+        pull_requests = run.get("pull_requests")
+        pr_matches = [item for item in pull_requests or [] if isinstance(item, dict)
+                      and item.get("number") == doc.get("pr_number")
+                      and (item.get("head") or {}).get("sha") == head
+                      and (item.get("base") or {}).get("sha") == base]
+        if (run.get("id") != doc["run_id"] or run.get("run_attempt") != doc["run_attempt"]
+                or run.get("event") != "pull_request" or run.get("repository", {}).get("full_name") != repository
+                or run.get("head_repository", {}).get("full_name") != repository
+                or run.get("path", "").split("@", 1)[0] != ROOT_TYPECHECK_WORKFLOW
+                or len(pr_matches) != 1
+                or run.get("status") != "completed" or run.get("conclusion") != doc.get("run_conclusion")
+                or job.get("id") != doc["job_id"]
+                or job.get("run_id") != doc["run_id"] or job.get("run_attempt") != doc["run_attempt"]
+                or job.get("name") != ROOT_TYPECHECK_JOB_NAME or job.get("status") != "completed"):
+            raise ValueError("authenticated Auth run/job/current-attempt identity mismatch")
+        if run.get("head_sha") != doc.get("checkout_commit"):
+            raise ValueError("authenticated Auth workflow checkout commit differs from the retained record")
+        for oid in (head, doc["checkout_commit"]):
+            commit = json.loads(api(f"{prefix}/git/commits/{oid}"))
+            if commit.get("sha") != oid or not isinstance((commit.get("tree") or {}).get("sha"), str):
+                raise ValueError("authenticated Auth source/checkout Git tree is unavailable")
+            if commit["tree"]["sha"] != (doc.get("trees") or {}).get(oid):
+                raise ValueError("authenticated Auth source/checkout tree differs from the retained record")
+        if _git(repo, "rev-parse", head + "^{tree}").decode().strip() != doc["trees"][head]:
+            raise ValueError("Auth source tree differs from the exact current candidate tree")
+        binding = root_typecheck_source_binding(repo, head)
+        for key, value in binding.items():
+            if doc.get(key) != value:
+                raise ValueError("committed Auth workflow/project source binding differs: " + key)
+        jobs = json.loads(api(f"{prefix}/actions/runs/{doc['run_id']}/attempts/{doc['run_attempt']}/jobs?per_page=100"))
+        listed_jobs = jobs.get("jobs") if isinstance(jobs, dict) else None
+        if (not isinstance(listed_jobs, list) or type(jobs.get("total_count")) is not int
+                or jobs["total_count"] != len(listed_jobs)):
+            raise ValueError("authenticated Auth attempt job listing is incomplete")
+        job_rows = [row for row in listed_jobs if isinstance(row, dict)
+                    and row.get("id") == doc["job_id"]]
+        if len(job_rows) != 1:
+            raise ValueError("Auth attempt job identity is absent or ambiguous")
+        current_job = job_rows[0]
+        prerequisite_names = {
+            "pnpm install --frozen-lockfile": "Run pnpm install --frozen-lockfile",
+            "pnpm exec prisma generate": "Run pnpm exec prisma generate",
+            "pnpm exec tsc --noEmit": "Run pnpm exec tsc --noEmit",
+        }
+        current_outcomes = {}
+        for command, name in prerequisite_names.items():
+            candidates = [s for s in current_job.get("steps", []) if isinstance(s, dict)
+                          and s.get("name") == name]
+            if len(candidates) != 1 or candidates[0].get("status") != "completed":
+                raise ValueError("authenticated Auth compiler prerequisite is absent/incomplete: " + name)
+            current_outcomes[command] = candidates[0].get("conclusion")
+        if doc.get("step_outcomes") != current_outcomes:
+            raise ValueError("authenticated Auth compiler prerequisite outcomes differ from the record")
+        compiler_steps = [s for s in current_job.get("steps", []) if isinstance(s, dict)
+                          and s.get("name") == doc["step_name"]]
+        if len(compiler_steps) != 1:
+            raise ValueError("authenticated compiler step is absent or ambiguous")
+        compiler = compiler_steps[0]
+        if (compiler.get("number") != doc["step_number"] or compiler.get("status") != "completed"
+                or compiler.get("conclusion") != doc["step_conclusion"]
+                or compiler.get("started_at") != doc["step_started_at"]
+                or compiler.get("completed_at") != doc["step_completed_at"]):
+            raise ValueError("authenticated compiler step metadata differs from the record")
+        fresh_log = api(f"{prefix}/actions/jobs/{doc['job_id']}/logs")
+        if _digest(fresh_log) != log_meta["sha256"] or fresh_log != log_raw:
+            raise ValueError("freshly authenticated original job log differs from retained bytes")
+        members = _job_log_members(fresh_log)
+        selected_log = _step_log(members, compiler)
+        if _digest(selected_log.encode("utf-8")) != doc.get("compiler_log_member_sha256"):
+            raise ValueError("authenticated compiler step log binding differs")
+        if (selected_log.count("##[group]Run pnpm exec tsc --noEmit") != 1
+                or "pnpm exec tsc --noEmit" not in selected_log):
+            raise ValueError("authenticated original job log does not show the literal compiler invocation")
+        if doc.get("verdict") == "failed":
+            if compiler.get("conclusion") != "failure" or job.get("conclusion") != "failure":
+                raise ValueError("claimed failed compiler outcome is not authenticated")
+            result["verdict"] = "failed"
+            return result
+        if (doc.get("verdict") != "verified" or compiler.get("conclusion") != "success"
+                or job.get("conclusion") != "success"):
+            raise ValueError("root CI row is not an authenticated successful compiler result")
+        result.update(verdict="verified", output="authenticated exact Auth root tsconfig typecheck; no local replay",
+                      duration_s=0.0, measurement="authenticated_github_ci")
+    except (ValueError, KeyError, TypeError, OSError, ImportError, subprocess.SubprocessError,
+            zipfile.BadZipFile, UnicodeError, json.JSONDecodeError) as exc:
+        result["errors"].append(str(exc))
+    return result
+
+
+def root_typecheck_receipt_errors(repo, base, head, repository, rows, evidence_root, *, token=None):
+    """Admission reauthenticates each imported CI-verified root typecheck row independently."""
+    errors = []
+    relevant = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        ci_evidence = row.get("ci_evidence")
+        typed_evidence = (
+            isinstance(ci_evidence, str) and ci_evidence.startswith("ci-typecheck/")
+        ) or (
+            isinstance(ci_evidence, list)
+            and any(isinstance(path, str) and path.startswith("ci-typecheck/") for path in ci_evidence)
+        )
+        if (row.get("id") == "v-type-check-root-tsconfig-ci"
+                or row.get("command") == "authenticated GitHub root tsconfig typecheck; no local replay"
+                or row.get("scope") == "root_tsconfig_typecheck"
+                or row.get("measurement_origin") == "authenticated_github_ci"
+                or typed_evidence):
+            relevant.append(row)
+    for row in relevant:
+        if row.get("scope") != "root_tsconfig_typecheck" or row.get("kind") != "type_check":
+            errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: imported CI row has an unknown type/scope")
+            continue
+        entity_verdicts = row.get("entity_verdicts")
+        if (row.get("measurement_origin") != "authenticated_github_ci"
+                or not isinstance(entity_verdicts, dict) or set(entity_verdicts) != {"deployable_unit:."}
+                or row.get("entities") != ["deployable_unit:."]):
+            errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: typed row must bind only the root deployable entity")
+            continue
+        claimed = entity_verdicts["deployable_unit:."]
+        expected_exit = {"verified": 0, "failed": 1, "not_measured": 125}.get(claimed)
+        if (row.get("id") != "v-type-check-root-tsconfig-ci"
+                or row.get("command") != "authenticated GitHub root tsconfig typecheck; no local replay"
+                or type(row.get("exit_code")) is not int or row.get("exit_code") != expected_exit
+                or row.get("process_pid") != "NOT_RETAINED"
+                or row.get("numeric_process_exit") != "NOT_RETAINED"
+                or row.get("ci_repository") != repository
+                or row.get("ci_source_base") != base):
+            errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: typed row projection is malformed")
+            continue
+        if claimed == "not_measured":
+            continue
+        paths = row.get("ci_evidence") or []
+        if (len(paths) != 1 or paths[0] != "ci-typecheck/record.json" or evidence_root is None):
+            errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: exact candidate record path missing")
+            continue
+        try:
+            proof = consume_root_typecheck(repo, repository, base, head,
+                                           evidence_root, token=token)
+            if proof.get("verdict") != claimed:
+                errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: " + "; ".join(proof.get("errors", [])))
+            elif row.get("ci_source_commit") != proof.get("source_commit"):
+                errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: source commit projection differs")
+        except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
+            errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: authenticated record missing")
+    return errors
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Collect the one exact authenticated Auth root typecheck record")
+    sub = parser.add_subparsers(dest="command", required=True)
+    collect = sub.add_parser("collect-root-typecheck")
+    collect.add_argument("--repo", required=True)
+    collect.add_argument("--repo-name", required=True)
+    collect.add_argument("--source", required=True)
+    collect.add_argument("--base", required=True)
+    collect.add_argument("--event-file", required=True)
+    collect.add_argument("--evidence-root", required=True)
+    args = parser.parse_args(argv)
+    token = os.environ.pop("GH_TOKEN", None)
+    result = collect_root_typecheck(args.repo, args.repo_name, args.source, args.base,
+                                    args.event_file, args.evidence_root, token=token)
+    print(json.dumps(result, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

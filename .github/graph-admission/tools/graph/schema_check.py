@@ -19,6 +19,7 @@ import argparse
 import hashlib
 import json
 import re
+import shlex
 import sys
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -116,8 +117,160 @@ def fallback_evidence_problems(doc: dict, units: set[str]) -> list[str]:
                    and eid in v.get("entities", []) and v.get("exit_code") == 0
                    and v.get("entity_verdicts", {}).get(eid) == "verified" and v.get("output_ref")
                    for v in referenced):
-            problems.append("missing measured full fallback test evidence: " + eid)
+            why = absent_suite_problems(doc, eid) if ABSENT_SUITE_CLASS_ENABLED else None
+            if why == []:
+                continue  # typed absent-suite class: an exemption stays; behaviour stays not_measured
+            problems.append("missing measured full fallback test evidence: " + eid
+                            + ("" if why is None else "; absent_declared class refused: " + "; ".join(why)))
     return problems
+
+
+# ------------------------------------------------------------------ typed absent-test-suite class
+# A repository that genuinely has NO test suite cannot produce a full-fallback measurement, so C04/C18
+# refused it forever. The class below is NOT a pass: behaviour stays `not_measured` and the unit keeps an
+# owner+expiry exemption (human-auditable). It only stops "full fallback not measured" being the SOLE
+# refusal when the suite is explicitly declared absent AND static validation ran with exit 0. The receipt
+# check below is structural; impact_pair.absent_suite_repo_problems re-derives the tree facts from Git.
+ABSENT_SUITE_CLASS_ENABLED = True
+_TEST_DIRS = {"test", "tests", "__tests__", "spec", "specs", "e2e"}
+_TEST_FILE_RE = re.compile(r"(^test_.*\.py$|_test\.(py|go|rs)$|\.(test|spec)\.[cm]?[jt]sx?$|\.bats$|^conftest\.py$)")
+# Files whose mere presence declares a test mechanism.
+_TEST_CONFIG_RE = re.compile(r"^(pytest\.ini|tox\.ini|noxfile\.py|\.mocharc(\..+)?|(jest|vitest|playwright|cypress|karma|ava)\.config\..+|\.rspec|phpunit\.xml(\.dist)?)$")
+# Manifests whose test declaration this detector CAN classify (content is inspected below).
+_CLASSIFIED_RE = re.compile(r"^(package\.json|Cargo\.toml|Cargo\.lock|pyproject\.toml|setup\.cfg|go\.mod|go\.sum|"
+                            r"(GNU|[Mm])akefile|requirements.*\.txt|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|"
+                            r"tsconfig.*\.json|\.gitignore|\.npmrc)$")
+# Build/test drivers this detector can NOT classify: unknown is not absent -> the class is refused.
+_UNKNOWN_MANIFEST_RE = re.compile(r"^(pom\.xml|build\.gradle(\.kts)?|settings\.gradle(\.kts)?|Gemfile|Rakefile|composer\.json|mix\.exs|"
+                                  r"CMakeLists\.txt|Package\.swift|deno\.jsonc?|justfile|Justfile|Taskfile\.ya?ml|BUILD(\.bazel)?|WORKSPACE|"
+                                  r"build\.sbt|stack\.yaml|Pipfile|poetry\.lock|.*\.(csproj|fsproj|vbproj|sln)|meson\.build|SConstruct|Dockerfile\.test)$")
+_MAKE_TEST_RE = re.compile(r"(?m)^\s*\.?(test|check|tests|spec)[A-Za-z0-9_.-]*\s*:")
+_RUST_TEST_RE = re.compile(rb"#\s*\[\s*(cfg\s*\(\s*test\s*\)|test|tokio::test|rstest)\b|#\s*\[\s*cfg\s*\(\s*test")
+_TEST_SCRIPT_RE = re.compile(r"^(pre|post)?(test|spec|e2e)([:_.-].*)?$")
+_PKG_TEST_KEYS = ("jest", "vitest", "mocha", "ava", "nyc", "c8", "playwright", "cypress")
+
+
+def _skipped(path: str) -> bool:
+    return "node_modules" in PurePosixPath(path).parts
+
+
+def tracked_test_files(paths) -> list[str]:
+    """Tracked paths that look like tests; any hit makes the absent-suite class inapplicable."""
+    hits = []
+    for p in paths:
+        if _skipped(p):
+            continue
+        parts = PurePosixPath(p).parts
+        if (_TEST_FILE_RE.search(parts[-1]) or _TEST_CONFIG_RE.search(parts[-1])
+                or any(d.lower() in _TEST_DIRS for d in parts[:-1])):
+            hits.append(p)
+    return sorted(hits)
+
+
+def absent_suite_sources(paths) -> list[str]:
+    """Every tracked file whose CONTENT the detector must read (any depth, excluding node_modules)."""
+    out = []
+    for p in paths:
+        name = PurePosixPath(p).name
+        if _skipped(p):
+            continue
+        if (name in ("package.json", "Cargo.toml", "pyproject.toml", "setup.cfg") or p.endswith(".rs")
+                or re.match(r"^(GNU|[Mm])akefile$", name)):
+            out.append(p)
+    return sorted(out)
+
+
+def absent_suite_tree(files) -> dict:
+    """The ONE detector for producer and C18. `files`: tracked path -> bytes (None/missing = unreadable).
+
+    Inspects every declared suite source: path-name patterns and test config files, every package.json
+    at any depth (test-like scripts, jest/mocha/... keys), Cargo crates (inline #[test]/#[cfg(test)] in
+    any .rs, [[test]] targets), pyproject/setup.cfg pytest/tox/nox, Makefile test targets. A source it
+    cannot read or a manifest type it cannot classify lands in `unknown`; unknown is not absent."""
+    paths = [p for p in files if not _skipped(p)]
+    hits = set(tracked_test_files(paths))
+    scripts, unknown = [], []
+    for p in absent_suite_sources(paths):
+        raw = files.get(p)
+        name = PurePosixPath(p).name
+        if not isinstance(raw, (bytes, bytearray)):
+            unknown.append(p)
+            continue
+        if name == "package.json":
+            try:
+                pkg = json.loads(raw)
+                declared = (pkg.get("scripts") or {}) if isinstance(pkg, dict) else None
+                if not isinstance(declared, dict):
+                    raise ValueError("scripts is not an object")
+            except ValueError:
+                unknown.append(p)
+                continue
+            scripts += [p + ":" + k for k, v in declared.items() if _TEST_SCRIPT_RE.match(k)]
+            scripts += [p + ":" + k for k in _PKG_TEST_KEYS if k in pkg]
+        elif p.endswith(".rs"):
+            if _RUST_TEST_RE.search(raw):
+                hits.add(p)
+        else:
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                unknown.append(p)
+                continue
+            if name == "Cargo.toml" and re.search(r"(?m)^\s*\[\[(test|bench)\]\]", text):
+                hits.add(p)
+            elif name in ("pyproject.toml", "setup.cfg") and re.search(r"(?i)pytest|unittest|tox|nox|\[tool:|coverage", text):
+                hits.add(p)
+            elif re.match(r"^(GNU|[Mm])akefile$", name) and _MAKE_TEST_RE.search(text):
+                hits.add(p)
+    for p in paths:
+        name = PurePosixPath(p).name
+        if _UNKNOWN_MANIFEST_RE.match(name):
+            unknown.append(p)
+    return {"test_files": sorted(hits), "scripts_test": ", ".join(sorted(scripts)) or None, "unknown": sorted(set(unknown))}
+
+
+def absent_suite_static_text(static) -> str:
+    """The recorded command of the static-validation row: one rule for producer, record and C18."""
+    return " && ".join(shlex.join(a) for a in static)
+
+
+def absent_suite_problems(doc: dict, eid: str) -> list[str] | None:
+    """None: the receipt makes no absent-suite claim. []: a valid claim for `eid`. else: why it is refused."""
+    ts = doc.get("test_suite")
+    if not isinstance(ts, dict):
+        return None
+    bad = []
+    if ts.get("status") != "absent_declared":
+        bad.append("status is not absent_declared")
+    if ts.get("behavior") != "not_measured":
+        bad.append("behavior must be explicitly not_measured")
+    if eid not in (ts.get("entities") or []):
+        bad.append("entity not named by test_suite.entities")
+    decl = ts.get("declaration") if isinstance(ts.get("declaration"), dict) else {}
+    if decl.get("full_test", 0) is not None or "full_test" not in decl or not str(decl.get("full_test_absent_reason") or "").strip():
+        bad.append("declaration must carry full_test null and a full_test_absent_reason")
+    tree = ts.get("tree") if isinstance(ts.get("tree"), dict) else {}
+    if tree.get("test_files") != [] or tree.get("scripts_test") is not None or tree.get("unknown") != []:
+        bad.append("tree reports tests, test scripts or unclassifiable sources")
+    static = ts.get("static_validation")
+    rows = {v.get("id"): v for v in doc.get("verifiers", []) if isinstance(v, dict)}
+    if not (isinstance(static, list) and static and all(
+            isinstance(x, dict) and isinstance(x.get("command"), str) and x["command"].strip()
+            and type(x.get("exit_code")) is int and x["exit_code"] == 0
+            and isinstance(x.get("output_ref"), str) and x["output_ref"].strip()
+            and (r := rows.get(x.get("verifier_id"))) is not None  # the producer's own row, not a typed-in claim
+            and r.get("exit_code") == 0 and r.get("command") == x["command"] and r.get("output_ref") == x["output_ref"]
+            and eid in r.get("entities", []) for x in static)):
+        bad.append("static validation evidence missing or exit != 0")
+    verdict = {v.get("entity"): v.get("verdict") for v in doc.get("verdicts", []) if isinstance(v, dict)}
+    if verdict.get(eid) != "not_measured":
+        bad.append("unit verdict must stay not_measured")
+    if (doc.get("admission") or {}).get("verdict") != "admitted_with_exemptions":
+        bad.append("admission must be admitted_with_exemptions")
+    if not any(isinstance(x, dict) and x.get("entity") == eid and str(x.get("owner") or "").strip()
+               and str(x.get("expires_at_utc") or "").strip() for x in doc.get("exemptions", [])):
+        bad.append("unit needs an owner+expiry exemption")
+    return bad
 
 
 def fallback_units(rows) -> set[str]:

@@ -65,6 +65,7 @@ from types import SimpleNamespace
 import traceback
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import MappingProxyType
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -72,11 +73,21 @@ sys.path.insert(0, str(HERE))
 import schema_check  # noqa: E402
 import build_graph  # noqa: E402
 import impact  # noqa: E402
+import nest_fixture_scope
+import fixture_contracts
 import impact_pair  # noqa: E402
 import contract_diff  # noqa: E402
 import native_projection  # noqa: E402
 import full_suite_ci
+import process_observation
 import shell_source
+import source_input_contract
+
+
+def _new_private_scratch(prefix: str) -> Path:
+    """Create retained, private scratch unique to this invocation under the temp parent."""
+    return Path(tempfile.mkdtemp(prefix=prefix))
+
 
 VERSION = "1.4.1"   # workflow shell unknown cannot discharge mandatory caller closure
 TOOL = "tools/graph/verify.py"
@@ -154,7 +165,7 @@ def compiler_sdk_input(a, repo, base, head):
     # A Node declaration is a resolution input, not merely executable discovery.
     # Keep legacy tsc-only inputs unchanged; never infer types from PATH or a host SDK.
     node_types = any(name.startswith("@types/node/") for name in paths)
-    type_roots = str((root / "@types").resolve()) if node_types else None
+    type_roots = ",".join(str(p.resolve()) for p in (root / "@types", root)) if node_types else None
 
     def check_resolution():
         if not node_types:
@@ -163,9 +174,13 @@ def compiler_sdk_input(a, repo, base, head):
             metadata = package + "/package.json"
             if metadata not in paths:
                 raise ValueError("compiler SDK resolution metadata undeclared: " + metadata)
-        for package in ("@types/node", "undici-types"):
+        for package in ("typescript", "@types/node", "undici-types"):
             metadata = json.loads((root / package / "package.json").read_text())
             target = metadata.get("typings", metadata.get("types"))
+            # TypeScript publishes a conventional package-relative ./ entry.
+            # Normalize that single prefix while refusing interior/parent escapes.
+            if isinstance(target, str) and target.startswith("./"):
+                target = target[2:]
             if (not isinstance(target, str) or Path(target).is_absolute()
                     or any(part in ("", ".", "..") for part in target.split("/"))
                     or package + "/" + target not in paths):
@@ -181,6 +196,22 @@ def compiler_sdk_input(a, repo, base, head):
                             raise ValueError("compiler SDK resolution member undeclared: " + relative)
         if sorted(p.name for p in (root / "@types").iterdir()) != ["node"]:
             raise ValueError("compiler SDK type root contains an undeclared ambient package")
+        # Both explicit roots are exposed to module/type resolution. Bound every
+        # physical member and namespace, before and after execution, not just .d.ts.
+        if sorted(p.name for p in root.iterdir()) != ["@types", "typescript", "undici-types"]:
+            raise ValueError("compiler SDK exposed namespace differs from declared packages")
+        inventory = set()
+        for directory, dirs, files in os.walk(root, followlinks=False):
+            for name in dirs + files:
+                member = Path(directory) / name
+                if member.is_symlink():
+                    raise ValueError("compiler SDK resolution alias refused: " + str(member))
+                if not member.is_dir() and not member.is_file():
+                    raise ValueError("compiler SDK resolution member is not a regular file")
+                if member.is_file():
+                    inventory.add(member.relative_to(root).as_posix())
+        if inventory != set(paths):
+            raise ValueError("compiler SDK complete resolution inventory differs from declaration")
 
     def check_bytes():
         if declaration.read_bytes() != raw:
@@ -301,12 +332,244 @@ TS_ERR_RE = re.compile(r"^(.+?)\((\d+),(\d+)\): error (TS\d+): (.*)$")
 UNRESOLVED_MODULE_CODES = {"TS2307", "TS2688", "TS7016"}
 SHARED_KINDS = {"library", "shared_package"}
 MANDATORY_IDS = ["type_check", "contract_diff", "route_config_consistency", "schema_diff", "config_schema", "fitness_rules", "doc_reference",
-                 "canary", "shell_syntax", "shell_behavior"]
+                 "canary", "shell_syntax", "shell_behavior", "systemd_unit_semantics", "source_file_integrity",
+                 "source_input_contract"]
 SELECTABLE_IDS = ["targeted_test", "property_check"]
 # internal rules the mutation battery disables one at a time
 RULES = ["aggregate_failed_wins", "missing_required_not_measured", "disabled_mandatory_event", "inferred_boundary_hold",
          "baseline_expiry", "admission_rule", "every_entity_verdict", "changed_node_outgoing",
          "impact_without_verdicts_event"]
+
+# Sole production authority for the owner-provided PRIME source-declaration contract. The JSON file in
+# contracts/graph-verified-change is a drift-checked projection only; this tuple is bundled in verify.py.
+SYSTEMD_POLICY_VERSION = "SystemdSourcePolicy/v1"
+SYSTEMD_POLICY_ROWS = tuple(MappingProxyType(row) for row in (
+ {"key":"collect.batch","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":22,"value_index":23,"flag":"--batch","expected":"10"},
+ {"key":"collect.daily_usd","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":24,"value_index":25,"flag":"--daily-usd","expected":"20"},
+ {"key":"collect.concurrency","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":26,"value_index":27,"flag":"--concurrency","expected":"8"},
+ {"key":"collect.native_concurrency","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":28,"value_index":29,"flag":"--native-concurrency","expected":"2"},
+ {"key":"collect.it_share","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":30,"value_index":31,"flag":"--it-share","expected":"0.5"},
+ {"key":"collect.critic_cli_daily_usd","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":34,"value_index":35,"flag":"--critic-cli-daily-usd","expected":"6"},
+ {"key":"collect.critic_cli_transition_until","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.service","mode":"100644","type":"blob","oid":"25cbbbd2f4a7c493738a914ff7ad5b889118ebe2","bytes":1595,"sha256":"5fcbae9c0403aa32ea8ea267856510b83a36322b1549e37969bce89f85884b3b","section":"Service","directive":"ExecStart","flag_index":36,"value_index":37,"flag":"--critic-cli-transition-until","expected":"2026-10-16T00:00:00Z"},
+ {"key":"collect.calendar","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-collect.timer","mode":"100644","type":"blob","oid":"ae731ec48f2d97dca8fbe6eae5efa8c3bc0b2aa3","bytes":215,"sha256":"db7e53807ce8405d0e6f4e41c152c165206a7cdfbadf8c06bfaf683638ea191c","section":"Timer","directive":"OnCalendar","line":5,"expected":"*-*-* *:00,30:00"},
+ {"key":"sample.cli_daily_usd","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-daily-sample.service","mode":"100644","type":"blob","oid":"0317d8b85a134210afd58ee38d506977d920b3de","bytes":1063,"sha256":"955dfb9cd1e3087b888d252a50cbc68cb689440e414f3a7cd711b2cae740f113","section":"Service","directive":"ExecStart","flag_index":8,"value_index":9,"flag":"--cli-daily-usd","expected":"6"},
+ {"key":"sample.cli_transition_until","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-daily-sample.service","mode":"100644","type":"blob","oid":"0317d8b85a134210afd58ee38d506977d920b3de","bytes":1063,"sha256":"955dfb9cd1e3087b888d252a50cbc68cb689440e414f3a7cd711b2cae740f113","section":"Service","directive":"ExecStart","flag_index":10,"value_index":11,"flag":"--cli-transition-until","expected":"2026-10-16T00:00:00Z"},
+ {"key":"sample.calendar","repo":"Arcanada-one/vocatlas-factory","commit":"85d60cae056a8363eb9ccc6582919afb9c79cdcc","tree":"3787902eec17b7773268f96bcc6e7cd8d953161b","path":"deploy/systemd-user/prime-daily-sample.timer","mode":"100644","type":"blob","oid":"1695ad5657ddb1b724d3a7eda69a08019f605902","bytes":180,"sha256":"333d678a7baa8d328765d90d68dff744bd5004b2ce1e19f1e4db3bde66e5eee3","section":"Timer","directive":"OnCalendar","line":5,"expected":"*-*-* 06:20:00 UTC"},
+))
+
+
+def systemd_policy_compare(rows, observations):
+    """The single production comparator; callers cannot select it as production policy input."""
+    results = []
+    for row in rows:
+        actual = observations.get(row["key"])
+        ok = isinstance(actual, str) and actual == row["expected"]
+        results.append({"key": row["key"], "entity": "systemd_unit:" + row["path"],
+                        "verifier": "systemd_unit_semantics", "verdict": "verified" if ok else "failed",
+                        "expected": row["expected"], "actual": actual,
+                        "reason": "exact source declaration matches" if ok else "SYSTEMD_POLICY_VALUE_MISMATCH"})
+    return results
+
+
+def systemd_policy_projection():
+    return {"schema": SYSTEMD_POLICY_VERSION, "rows": [dict(row) for row in SYSTEMD_POLICY_ROWS]}
+
+
+def systemd_identity_matches(row, identity, raw: bytes) -> bool:
+    expected = {"repo": row["repo"], "commit": row["commit"], "tree": row["tree"], "path": row["path"],
+                "mode": row["mode"], "type": row["type"], "oid": row["oid"], "bytes": row["bytes"],
+                "sha256": row["sha256"]}
+    return (isinstance(identity, dict) and all(identity.get(k) == v for k, v in expected.items())
+            and len(raw) == row["bytes"] and hashlib.sha256(raw).hexdigest() == row["sha256"])
+
+
+def systemd_observations(parsed, rows):
+    observations = {}
+    errors = []
+    for row in rows:
+        value = parsed.get(row["section"], {}).get(row["directive"])
+        if not isinstance(value, dict) or not isinstance(value.get("value"), str):
+            errors.append(row["key"] + ":DIRECTIVE_MISSING")
+            continue
+        if row["directive"] == "OnCalendar":
+            if row.get("line") is not None and value.get("line") != row["line"]:
+                errors.append(row["key"] + ":SOURCE_LINE_MISMATCH")
+            observations[row["key"]] = value["value"]
+            continue
+        tokens = value["value"].split()
+        flag_index, value_index, flag = row["flag_index"], row["value_index"], row["flag"]
+        if (value_index != flag_index + 1 or len(tokens) <= value_index or tokens[flag_index] != flag
+                or tokens.count(flag) != 1):
+            errors.append(row["key"] + ":ARGV_POSITION_OR_DUPLICATE_MISMATCH")
+            continue
+        observations[row["key"]] = tokens[value_index]
+    return observations, errors
+
+
+def systemd_evaluate_unit(path: str, identity: dict, raw: bytes):
+    applicable = [r for r in SYSTEMD_POLICY_ROWS if r["path"] == path]
+    if applicable and not all(systemd_identity_matches(r, identity, raw) for r in applicable):
+        return {"verdict": "failed", "reason": "SYSTEMD_UNIT_SOURCE_IDENTITY_MISMATCH", "results": []}
+    try:
+        parsed = build_graph.parse_systemd_unit(path, raw)
+    except build_graph.SystemdParseError as exc:
+        return {"verdict": "failed", "reason": str(exc), "results": []}
+    if not applicable:
+        return {"verdict": "not_measured", "reason": "SYSTEMD_POLICY_SOURCE_NOT_PINNED", "results": []}
+    observations, errors = systemd_observations(parsed, applicable)
+    if errors:
+        return {"verdict": "failed", "reason": ";".join(errors), "results": []}
+    results = systemd_policy_compare(applicable, observations)
+    return {"verdict": "failed" if any(r["verdict"] == "failed" for r in results) else "verified",
+            "reason": "policy comparison complete", "results": results}
+
+
+def systemd_graph_parity(doc: dict, tree: build_graph.Tree) -> list[str]:
+    """Reconcile represented unit identities and deterministic unit-to-unit edges to source bytes."""
+    errors = []
+    unit_paths = {p for p in tree.paths if Path(p).suffix in build_graph.SYSTEMD_SUFFIX_KIND}
+    nodes_by_path: dict[str, list[dict]] = {}
+    for node in doc.get("nodes", []):
+        if node.get("type") == "systemd_unit":
+            nodes_by_path.setdefault(node.get("path"), []).append(node)
+    if set(nodes_by_path) != unit_paths:
+        errors.append("SYSTEMD_UNIT_INVENTORY_MISMATCH")
+    nodes = {}
+    for path in unit_paths:
+        path_nodes = nodes_by_path.get(path, [])
+        if len(path_nodes) > 1:
+            errors.append("SYSTEMD_UNIT_DUPLICATE_SOURCE_PATH:" + path)
+            continue
+        if not path_nodes:
+            continue
+        node = path_nodes[0]
+        if node.get("id") != "systemd_unit:" + path:
+            errors.append("SYSTEMD_UNIT_NONCANONICAL_ID:" + path)
+            continue
+        nodes[path] = node
+    by_name = {}
+    for path in unit_paths:
+        by_name.setdefault(Path(path).name, []).append(path)
+        node = nodes.get(path)
+        if node is None:
+            continue
+        raw = tree.files[path]
+        entry = tree.meta.get("file_entries", {}).get(path, {})
+        mode = entry.get("mode", tree.meta.get("file_modes", {}).get(path))
+        origin = (node.get("attrs") or {}).get("source_origin") or {}
+        expected_origin = {"repo": tree.meta.get("source_repo"), "commit": tree.meta.get("source_commit"),
+                           "tree": tree.meta.get("source_tree_oid"), "path": path, "mode": mode,
+                           "type": entry.get("type"), "oid": entry.get("oid"), "bytes": len(raw),
+                           "sha256": hashlib.sha256(raw).hexdigest(),
+                           "bound": bool(tree.meta.get("source_tree_oid") and entry.get("type") == "blob"
+                                         and mode in {"100644", "100755"})}
+        try:
+            build_graph.parse_systemd_unit(path, raw)
+            parse_status = "parsed"
+        except build_graph.SystemdParseError:
+            parse_status = "refused"
+        if (node.get("id") != "systemd_unit:" + path or node.get("kind") != build_graph.SYSTEMD_SUFFIX_KIND[Path(path).suffix]
+                or node.get("content_hash") != sha_bytes(raw) or origin != expected_origin
+                or (node.get("attrs") or {}).get("parse_status") != parse_status):
+            errors.append("SYSTEMD_UNIT_SOURCE_ORIGIN_OR_PARSE_MISMATCH:" + path)
+
+    expected = set()
+    expected_unmodeled_relations = set()
+    units_by_name: dict[str, list[str]] = {}
+    for unit_path in unit_paths:
+        units_by_name.setdefault(Path(unit_path).name, []).append(unit_path)
+    path_nodes: dict[str, list[str]] = {}
+    for node in doc.get("nodes", []):
+        if node.get("path"):
+            path_nodes.setdefault(node["path"], []).append(node["id"])
+
+    def clean_target(raw: str) -> bool:
+        return (bool(raw) and not raw.startswith(("/", "~", "\\")) and "://" not in raw and "%" not in raw
+                and "$" not in raw and "*" not in raw and "?" not in raw and "\\" not in raw
+                and all(part not in ("", ".", "..") for part in raw.split("/")))
+
+    for path in unit_paths:
+        try:
+            parsed = build_graph.parse_systemd_unit(path, tree.files[path])
+        except build_graph.SystemdParseError:
+            continue
+        for key in ("After", "Before", "Requires", "Wants", "PartOf"):
+            for token in parsed.get("Unit", {}).get(key, {}).get("value", "").split():
+                matches = units_by_name.get(token, []) if clean_target(token) else []
+                if len(matches) != 1:
+                    continue
+                target_path = matches[0]
+                if key == "After":
+                    expected.add(("orders_after", "systemd_unit:" + path, "systemd_unit:" + target_path))
+                elif key == "Before":
+                    expected.add(("orders_after", "systemd_unit:" + target_path, "systemd_unit:" + path))
+                else:
+                    expected_unmodeled_relations.add(("systemd_unit:" + path, "Unit." + key,
+                                                      parsed["Unit"][key]["line"], token,
+                                                      "not_measured", "SYSTEMD_RELATION_KIND_NOT_MODELED"))
+        if Path(path).suffix == ".timer":
+            explicit = parsed.get("Timer", {}).get("Unit", {}).get("value")
+            target = explicit if explicit is not None else path[:-6] + ".service"
+            matches = [p for p in unit_paths if (Path(p).name == target if explicit is not None else p == target)]
+            if len(matches) == 1 and Path(matches[0]).suffix == ".service":
+                expected.add(("activates", "systemd_unit:" + path, "systemd_unit:" + matches[0]))
+        for section, values in parsed.items():
+            for key, item in values.items():
+                if key not in {"Documentation", "WorkingDirectory", "EnvironmentFile", "ExecStart",
+                               "ExecStartPre", "ExecStartPost", "ExecStop"}:
+                    continue
+                raw = item["value"]
+                if key.startswith("ExecStart") or key == "ExecStop":
+                    if any(c in raw for c in "'\"\\"):
+                        continue
+                    refs = list(enumerate(raw.split()))
+                else:
+                    refs = [(0, raw)]
+                for index, token in refs:
+                    if not clean_target(token) or token not in tree.files:
+                        continue
+                    entry = tree.meta.get("file_entries", {}).get(token, {})
+                    if entry.get("type") != "blob" or entry.get("mode") not in {"100644", "100755"}:
+                        continue
+                    target_ids = path_nodes.get(token) or ["source_file:" + token]
+                    expected.add(("references", "systemd_unit:" + path, target_ids[0]))
+                    if index == 0 and target_ids[0].startswith("code_unit:") and entry.get("mode") == "100755":
+                        expected.add(("calls", "systemd_unit:" + path, target_ids[0]))
+    actual = {(e.get("type"), e.get("from"), e.get("to")) for e in doc.get("edges", [])
+              if e.get("type") in {"orders_after", "activates", "references", "calls"}
+              and e.get("from", "").startswith("systemd_unit:")}
+    if actual != expected:
+        errors.append("SYSTEMD_UNIT_EDGE_PARITY_MISMATCH")
+    actual_unmodeled_relations = set()
+    for node in doc.get("nodes", []):
+        if node.get("type") != "systemd_unit":
+            continue
+        attrs = node.get("attrs") or {}
+        for row in attrs.get("unresolved_references") or []:
+            if row.get("reason_code") == "SYSTEMD_RELATION_KIND_NOT_MODELED":
+                actual_unmodeled_relations.add((row.get("unit_entity"), row.get("directive"), row.get("line"),
+                                                row.get("raw_value"), row.get("status"), row.get("reason_code")))
+    if actual_unmodeled_relations != expected_unmodeled_relations:
+        errors.append("SYSTEMD_UNRESOLVED_RELATIONSHIP_PARITY_MISMATCH")
+    return errors
+
+
+SYSTEMD_MANDATORY_FLOOR = {"systemd_unit": ["systemd_unit_semantics"], "source_file": ["source_file_integrity"]}
+
+
+def validate_systemd_matrix_floor(matrix: dict, node_types: set[str]) -> None:
+    for node_type, required in SYSTEMD_MANDATORY_FLOOR.items():
+        if node_type not in node_types:
+            continue
+        row = matrix.get("node_types", {}).get(node_type, {})
+        declared = set(row.get("mandatory", []))
+        declared_verifiers = matrix.get("verifiers", {})
+        if not set(required) <= declared or any(
+                verifier not in declared_verifiers
+                or node_type not in declared_verifiers[verifier].get("applies_to_nodes", [])
+                for verifier in required):
+            raise Refusal("SYSTEMD_MANDATORY_FLOOR_MISSING", f"fixed {node_type} floor is absent from verifier matrix", {
+                "node_type": node_type, "required": required, "declared": sorted(declared)})
 
 
 # ----------------------------------------------------------------------------------------------- helpers
@@ -357,9 +620,9 @@ def run_cmd(cmd: list[str], cwd: Path, env: dict | None = None, timeout: int = 9
         return 127, f"NOT FOUND: {ex}", round(time.monotonic() - t0, 2)
 
 
-def rel_ref(p: Path) -> str:
+def rel_ref(p: Path, root: Path = ROOT) -> str:
     try:
-        return p.resolve().relative_to(ROOT).as_posix()
+        return p.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
         return str(p.resolve())
 
@@ -725,6 +988,36 @@ def nest_registered_files(scan: TreeScan, root_file: str) -> tuple[set[str], lis
     return registered, notes
 
 
+def nest_production_import_files(scan: TreeScan | None, root_file: str) -> tuple[set[str], bool] | None:
+    """Return known production-reachable files and whether their closure is complete.
+
+    Keep positive resolved reachability even when another relative runtime import
+    is unresolved. Callers may use membership as a positive fact, but may exclude
+    an absent path only when the completeness flag is true. Type-only imports and
+    known asset imports do not participate in runtime reachability.
+    """
+    if scan is None or root_file not in scan.ts:
+        return None
+    seen, stack, complete = set(), [root_file], True
+    while stack:
+        path = stack.pop()
+        if path in seen:
+            continue
+        seen.add(path)
+        tf = scan.ts.get(path)
+        if tf is None:
+            complete = False
+            continue
+        type_only = scan.type_only_specs(path)
+        if any(spec not in type_only for spec in tf.unresolved):
+            complete = False
+        imports = scan.value_imports(path)
+        if any(target not in scan.ts for target in imports):
+            complete = False
+        stack.extend(imports)
+    return seen, complete
+
+
 # ----------------------------------------------------------------------------------------------- fitness rules
 def spec_lang(path: str) -> str | None:
     """`js` | `py` | None — the language whose runner could execute this spec file."""
@@ -767,11 +1060,11 @@ def module_of(path: str, dep: str | None) -> str | None:
 # The discriminator is a DIRECTORY NAME in the path — something a file created tomorrow either sits
 # under or does not — never a list of today's files. The file name itself does not count, so
 # `src/fixtures.ts` stays live code.
-FIXTURE_DIR_NAMES = frozenset({"fixtures", "__fixtures__", "testdata"})
+FIXTURE_DIR_NAMES = impact_pair.FIXTURE_DIR_NAMES
 
 
 def is_fixture_path(path: str) -> bool:
-    return any(part in FIXTURE_DIR_NAMES for part in (path or "").split("/")[:-1])
+    return impact_pair.is_fixture_path(path)
 
 
 
@@ -785,32 +1078,7 @@ def tsconfig_names(tree, cfg: str, rel: str) -> bool:
     `include`? Only an EXPLICIT listing counts: a config that inherits its include through
     `extends`, or that cannot be read, answers False, so an unreadable config never moves a file.
     A config with neither `files` nor `include` nor `extends` covers everything (tsc's `**/*`)."""
-    try:
-        doc = build_graph.load_jsonc(tree.text(cfg) or "")
-    except Exception:  # noqa: BLE001
-        return False
-    if not isinstance(doc, dict):
-        # A2-353, found by control on the rebase. The `or {}` this replaced put «unreadable» into the
-        # SAME branch as «an object with neither files nor include nor extends», which returns True —
-        # so a config parsing to `[]`, or to nothing at all, answered «I name every file you ask me
-        # about». That is the one direction this routing can move a verdict onto a project that never
-        # compiled the code. Only a real object may make the tsc `**/*` claim.
-        return False
-    files, inc = doc.get("files"), doc.get("include")
-    if files is None and inc is None:
-        return "extends" not in doc
-    norm = lambda x: str(x).strip().removeprefix("./")  # noqa: E731
-    if rel in {norm(f) for f in (files or [])}:
-        return True
-    for pat in (norm(x) for x in (inc or [])):
-        if not any(ch in pat for ch in "*?"):
-            if rel == pat or rel.startswith(pat.rstrip("/") + "/"):
-                return True
-            continue
-        rx = re.escape(pat).replace(r"\*\*/", "(?:.*/)?").replace(r"\*", "[^/]*").replace(r"\?", "[^/]")
-        if re.fullmatch(rx, rel):
-            return True
-    return False
+    return impact_pair.tsconfig_names(tree, cfg, rel)
 
 
 
@@ -835,13 +1103,7 @@ def type_project_of(path: str, deployables: dict[str, dict], tree: build_graph.T
     up from that file's directory. The root tsconfig stays the last step, so a repository without
     nested configs answers exactly as before.
     """
-    dep = deployable_of(path, deployables)
-    if dep is not None:
-        return dep
-    nested = nested_type_project(path, tree)
-    if nested is not None:
-        return nested
-    return "." if tree.exists("tsconfig.json") else None
+    return impact_pair.type_project_of(path, deployables, tree)
 
 
 def nested_type_project(path: str, tree: build_graph.Tree) -> str | None:
@@ -855,16 +1117,7 @@ def nested_type_project(path: str, tree: build_graph.Tree) -> str | None:
         reason — a caller does not type-check someone else's shipped code;
       - anything under node_modules/.
     """
-    if (is_fixture_path(path) or path.startswith(".github/graph-admission/") or "node_modules/" in path
-            or "/" not in path):
-        return None
-    parts = path.split("/")[:-1]
-    while parts:
-        d = "/".join(parts)
-        if tree.exists(d + "/tsconfig.json"):
-            return d
-        parts.pop()
-    return None
+    return impact_pair.nested_type_project(path, tree)
 
 
 def tarjan_scc(nodes: list[str], adj: dict[str, list[str]]) -> list[list[str]]:
@@ -951,7 +1204,30 @@ def fitness_violations(graph: dict, tree: build_graph.Tree, scan: TreeScan, rule
         if "fr03" in rules_on and dep_f and dep_f == dep_t:
             mf, mt = module_of(fp, dep_f), module_of(tp, dep_t)
             if mf and mt and mf != mt and BOUNDARY_TARGET_RE.search(tp):
-                add("FR-03", e["from"], f"module {mf} imports {tp} of module {mt} (controller / gateway / processor are not a module's exported surface)", tp)
+                # Inline Nest harnesses retain compiler-expanded dependencies for
+                # reverse impact. FR-03 judges authored imports, not that closure.
+                # Re-resolve the exact source, including import type: a marker
+                # cannot hide a real private import or an unknown local binding.
+                source = scan.ts.get(fp)
+                expanded_only = (
+                    e.get("via") == "inline-harness-compiler-dependency"
+                    and source is not None and tree.exists(tp)
+                    and scan.tree is tree
+                    # Escaped identifiers/literals are not decoded by IMPORT_RE.
+                    # Their presence makes this absence proof unqualified.
+                    and "\\u" not in source.code
+                    # The scanner is deliberately partial. Any import/require
+                    # token outside a recognized declaration/call means its
+                    # inventory cannot prove absence (spacing, import-equals,
+                    # nonliteral loaders, etc.). Refuse the distinction then.
+                    and not re.search(r"\b(?:import|require|export)\b",
+                                      build_graph.IMPORT_RE.sub(" ", source.code))
+                    and all(not imp["spec"].startswith(".") or imp["spec"] in source.resolved
+                            for imp in source.imports)
+                    and tp not in {source.resolved.get(imp["spec"]) for imp in source.imports}
+                )
+                if not expanded_only:
+                    add("FR-03", e["from"], f"module {mf} imports {tp} of module {mt} (controller / gateway / processor are not a module's exported surface)", tp)
         if "fr05" in rules_on and dep_f and dep_t and dep_f != dep_t and deployables[dep_t].get("kind") not in SHARED_KINDS:
             add("FR-05", e["from"], f"deployable {dep_f} imports {tp} of deployable {dep_t} ({deployables[dep_t].get('kind')})", tp)
     if "fr01" in rules_on:
@@ -1137,6 +1413,9 @@ def type_check_incremental_args(config: Path, cache: Path) -> list[str]:
 class Verify:
     def __init__(self, a, matrix: dict):
         self.a = a
+        # Keep the ephemeral workflow credential out of the environment inherited by compilers,
+        # tests and other verifier subprocesses. Typed CI consumers receive it explicitly.
+        self.github_token = getattr(a, "_github_token", None)
         self.matrix = matrix
         self.disabled = {x.strip() for x in (getattr(a, "disable", "") or "").split(",") if x.strip()}
         self.selected = {x.strip() for x in (getattr(a, "select", "") or "").split(",") if x.strip()}
@@ -1153,7 +1432,7 @@ class Verify:
         self.top = self.repo.top
         self.scope_root = self.repo.path
         self.scope_prefix = self.repo.prefix
-        self.workdir = Path(a.workdir) if a.workdir else Path(os.environ.get("TMPDIR", "/tmp")) / "arcana-verify"
+        self.workdir = Path(a.workdir) if a.workdir else _new_private_scratch("arcana-verify-")
         self.workdir.mkdir(parents=True, exist_ok=True)
         # Captured verifier output and the two graph dumps go to the WORKDIR, never beside the receipt.
         # The old default was `<out>.d/` — so `--out receipts/graph/car.json` dropped `car.d/` into the
@@ -1166,6 +1445,7 @@ class Verify:
         self.events: list[dict] = []
         self.notes: list[str] = []
         self.verifiers: list[dict] = []
+        self.test_suite: dict | None = None  # typed absent-suite record; set only by v_global_fallback_test
         self.ev: dict[str, dict[str, tuple[str, str]]] = {}   # verifier id → entity → (verdict, reason)
         self.canary_paths = list(getattr(a, "canary", None) or [])   # CanaryResult/v1 documents (AUP-GRAPH-008)
         self.canary_verified: set[str] = set()
@@ -1333,6 +1613,8 @@ class Verify:
     def collect_entities(self, q: dict):
         imp = q["impact_set"]
         self.entities: dict[str, dict] = {}
+        present_types = {n.get("type") for n in [*self.head_nodes.values(), *self.idx.nodes.values()]}
+        validate_systemd_matrix_floor(self.matrix, present_types)
         self.fallback_entities = impact_pair.fallback_units(q) if imp.get("global_fallback", {}).get("triggered") else set()
         selection = impact_pair.selected(q)
         for section in ("deterministic_core", "inferred_tail"):
@@ -1514,8 +1796,7 @@ class Verify:
 
     def type_project_covers(self, path: str) -> bool:
         """Is some compiler project attributed to this file — the same two steps v_type_check takes?"""
-        dep = type_project_of(path, self.deployables, self.tree_head)
-        return dep is not None and bool(self.tsconfigs_for(dep, path))
+        return impact_pair.type_project_covers(path, self.deployables, self.profile, self.tree_head)
 
     def deployable_has_ts(self, dep_path: str) -> bool:
         """Does this deployable actually contain TypeScript the compiler could check?
@@ -1585,6 +1866,61 @@ class Verify:
     def needing(self, verifier: str) -> list[str]:
         return sorted(e for e, ent in self.entities.items() if verifier in ent["required"] and verifier not in self.disabled)
 
+    def v_source_file_integrity(self):
+        entities = self.needing("source_file_integrity")
+        verdicts, rows = {}, []
+        for eid in entities:
+            ent = self.entities[eid]; path = ent["node"].get("path")
+            origin = (ent["node"].get("attrs") or {}).get("source_origin") or {}
+            raw = self.tree_head.files.get(path) if path else None
+            entry = self.tree_head.meta.get("file_entries", {}).get(path, {}) if path else {}
+            if not origin.get("bound") or raw is None or not entry:
+                verdict, reason = "not_measured", "SOURCE_FILE_ORIGIN_UNBOUND"
+            elif (entry.get("type") != origin.get("type") or entry.get("mode") != origin.get("mode")
+                  or entry.get("oid") != origin.get("oid") or len(raw) != origin.get("bytes")
+                  or hashlib.sha256(raw).hexdigest() != origin.get("sha256")):
+                verdict, reason = "failed", "SOURCE_FILE_IDENTITY_MISMATCH"
+            else:
+                verdict, reason = "verified", "exact regular same-tree source blob"
+            verdicts[eid] = (verdict, reason)
+            rows.append({"entity": eid, "path": path, "verdict": verdict, "reason": reason,
+                         "source_origin": origin})
+        if entities:
+            self.record("v-source_file_integrity", "source_file_integrity", "verify.py source_file_integrity",
+                        entities, 0 if all(v[0] == "verified" for v in verdicts.values()) else 2,
+                        json.dumps({"schema": "SystemdSourceFileIntegrity/v1", "rows": rows}, ensure_ascii=False, indent=1),
+                        now_iso(), 0.0, "same-tree source-file identity", verdicts, ext="json")
+
+    def v_systemd_unit_semantics(self):
+        entities = self.needing("systemd_unit_semantics")
+        verdicts, rows = {}, []
+        parity_errors = systemd_graph_parity(self.graph_head, self.tree_head)
+        for eid in entities:
+            ent = self.entities[eid]; path = ent["node"].get("path")
+            origin = (ent["node"].get("attrs") or {}).get("source_origin") or {}
+            raw = self.tree_head.files.get(path) if path else None
+            if raw is None or not origin.get("bound"):
+                result = {"verdict": "not_measured", "reason": "SYSTEMD_SOURCE_TREE_BINDING_UNAVAILABLE", "results": []}
+            else:
+                result = systemd_evaluate_unit(path, origin, raw)
+            unresolved = ((ent["node"].get("attrs") or {}).get("unresolved_references") or [])
+            if result["verdict"] == "verified" and any(r.get("status") == "failed" for r in unresolved):
+                result = {**result, "verdict": "failed", "reason": "DIRECT_SYSTEMD_TARGET_MISSING_OR_UNSAFE"}
+            elif result["verdict"] == "verified" and unresolved:
+                result = {**result, "verdict": "not_measured",
+                          "reason": "UNRESOLVED_SYSTEMD_REFERENCES: " + ",".join(r["reference_id"] for r in unresolved)}
+            if parity_errors and result["verdict"] == "verified":
+                result = {**result, "verdict": "failed", "reason": ";".join(parity_errors)}
+            verdicts[eid] = (result["verdict"], result["reason"])
+            rows.append({"entity": eid, "path": path, "verdict": result["verdict"], "reason": result["reason"],
+                         "source_origin": origin, "policy_results": result.get("results", []),
+                         "unresolved_references": unresolved, "graph_parity_errors": parity_errors})
+        if entities:
+            self.record("v-systemd_unit_semantics", "systemd_unit_semantics", "verify.py systemd_unit_semantics",
+                        entities, 0 if all(v[0] == "verified" for v in verdicts.values()) else 2,
+                        json.dumps({"schema": "SystemdUnitSemantics/v1", "rows": rows}, ensure_ascii=False, indent=1),
+                        now_iso(), 0.0, "bounded source declaration semantics", verdicts, ext="json")
+
     def entity_file(self, eid: str) -> str | None:
         n = self.entities[eid]["node"]
         return n.get("path")
@@ -1627,13 +1963,48 @@ class Verify:
         # from a process code that cannot express it. They are written down instead — the same
         # verdicts that go into `verdicts[]`, recorded where a reader can see WHICH verifier said so.
         self.verifiers.append({"id": vid, "kind": kind, "command": command, "entities": sorted(entities), "exit_code": int(exit_code),
-                               "output_ref": rel_ref(ref), "started_at_utc": started, "duration_s": secs, "summary": summary,
+                               # Canary output is consumed by the target repository's admission gate.
+                               # In vendored runs ROOT names the vendor directory, not --repo, so bind
+                               # this reference to the repository being verified. Outside-repo paths
+                               # intentionally remain absolute and are refused by repo_relative.
+                               "output_ref": rel_ref(ref, self.top) if kind == "canary" else rel_ref(ref),
+                               "started_at_utc": started, "duration_s": secs, "summary": summary,
                                **({"entity_verdicts": {e: v[0] for e, v in sorted(verdicts.items())}} if verdicts else {})})
         self.ev.setdefault(vid, {}).update(verdicts)
 
     # ---- verifiers
     def v_type_check(self):
         ents = self.needing("type_check")
+        if not ents:
+            return
+        root_ci_root = getattr(self.a, "root_typecheck_ci_root", None)
+        root_ci_entities = []
+        if root_ci_root:
+            for eid in ents:
+                node = self.entities[eid]["node"]
+                if (eid == "deployable_unit:." and node.get("type") == "deployable_unit"
+                        and node.get("path") == "."
+                        and self.repo.name == full_suite_ci.ROOT_TYPECHECK_REPO):
+                    proof = full_suite_ci.consume_root_typecheck(
+                        self.top, self.repo.name, self.base, self.head, root_ci_root,
+                        token=self.github_token)
+                    verdict = proof.get("verdict", "not_measured")
+                    exit_code = 0 if verdict == "verified" else (1 if verdict == "failed" else 125)
+                    started = proof.get("step_started_at") or now_iso()
+                    self.record("v-type-check-root-tsconfig-ci", "type_check",
+                                "authenticated GitHub root tsconfig typecheck; no local replay",
+                                [eid], exit_code, json.dumps(proof, sort_keys=True), started,
+                                proof.get("duration_s", 0.0),
+                                "root tsconfig CI: " + verdict,
+                                {eid: (verdict, "; ".join(proof.get("errors", [])) or
+                                       "authenticated exact root-project CI step")})
+                    self.verifiers[-1].update(
+                        scope="root_tsconfig_typecheck", measurement_origin="authenticated_github_ci",
+                        ci_evidence=["ci-typecheck/record.json"], ci_source_commit=proof.get("source_commit"),
+                        ci_source_base=self.base, ci_repository=self.repo.name,
+                        process_pid="NOT_RETAINED", numeric_process_exit="NOT_RETAINED")
+                    root_ci_entities.append(eid)
+        ents = [eid for eid in ents if eid not in root_ci_entities]
         if not ents:
             return
         groups: dict[tuple[str, str], list[str]] = {}   # (deployable, tsconfig) → entities
@@ -1838,43 +2209,7 @@ class Verify:
             return p
 
     def tsconfigs_for(self, dep: str, path: str | None) -> list[str]:
-        prof = (self.profile.get("deployables") or {}).get(dep, {})
-        prefix = "" if dep in ("", ".") else dep + "/"
-        cfgs = list(prof.get("tsconfig") or [])
-        if "tsconfig" not in prof:
-            if self.tree_head.exists(prefix + "tsconfig.json"):
-                cfgs.append(prefix + "tsconfig.json")
-            # Check genuine sibling projects as well: build-only configs commonly exclude
-            # tests and checkJs tooling. A declared profile remains authoritative.
-            siblings = sorted(p for p in getattr(self.tree_head, "paths", [])
-                              if os.path.dirname(p) == prefix.rstrip("/")
-                              and re.fullmatch(r"tsconfig\.[^.]+\.json", os.path.basename(p))
-                              and os.path.basename(p) != "tsconfig.base.json")
-            cfgs.extend(c for c in siblings if c not in cfgs)
-        if path is not None:
-            test_cfg = prof.get("tsconfig_test") or (prefix + "tsconfig.test.json" if self.tree_head.exists(prefix + "tsconfig.test.json") else None)
-            rel = path[len(prefix):]
-            is_test = bool(re.search(r"\.(spec|test)\.[cm]?[jt]sx?$", rel) or rel.startswith(("test/", "__tests__/", "e2e/")))
-            if test_cfg and is_test:
-                cfgs = [test_cfg]
-            # A2-353. The name heuristic above sends a root-level runner config (vitest.config.ts,
-            # jest.config.mjs) to the BUILD config, which by design does not include it — it emits to
-            # the image — and the verdict was a permanent `does not include`, although the test config
-            # names the file explicitly and `tsc -p tsconfig.test.json` checks it. Measured on muneral
-            # #177. A file the build configs do not name but the test config does is checked there.
-            elif (test_cfg and cfgs and test_cfg not in cfgs
-                  and not any(tsconfig_names(self.tree_head, c, rel) for c in cfgs) and tsconfig_names(self.tree_head, test_cfg, rel)):
-                cfgs = [test_cfg]
-            elif "tsconfig" not in prof:
-                covering = [c for c in cfgs if tsconfig_names(self.tree_head, c,
-                            os.path.relpath(path, os.path.dirname(c) or "."))]
-                if covering:
-                    cfgs = [covering[0]]
-                elif prefix + "tsconfig.json" in cfgs:
-                    cfgs = [prefix + "tsconfig.json"]
-        if prof.get("synthetic_tsconfig") is not None and not cfgs:
-            cfgs.append(f"synthetic:{dep}")
-        return cfgs
+        return impact_pair.tsconfigs_for(dep, path, self.profile, self.tree_head)
 
     def postbuild_spec(self, dep: str) -> dict | None:
         spec = ((self.profile.get("deployables") or {}).get(dep) or {}).get("tsconfig_postbuild")
@@ -2095,6 +2430,9 @@ class Verify:
         t0 = time.monotonic()
         bootstraps: dict[str, nest_bootstrap.Bootstrap] = {}
         registered: dict[str, tuple[set[str], list[str]]] = {}
+        production_imports_by_dep: dict[str, tuple[set[str], bool] | None] = {}
+        inline_projections = {}
+        inline_dependency_unions = {}
         log, verdicts = [], {}
         # A2-277 defect 2. RC-01/RC-02 are NestJS rules; RC-03 (is the served route still there, and
         # does anything consume it) is a statement about the graph and holds in any language. So the
@@ -2123,12 +2461,50 @@ class Verify:
                 if eid not in self.head_nodes:
                     consumers = [e["from"] for e in self.idx.rev.get(eid, []) if e["type"] == "consumes_contract"]
                     if consumers:
-                        problems.append(f"ROUTE_REMOVED_WITH_CONSUMER: not served at head, consumers {consumers[:3]}")
+                        # A proven RC-03 refusal outranks later transport uncertainty.
+                        reason = f"ROUTE_REMOVED_WITH_CONSUMER: not served at head, consumers {consumers[:3]}"
+                        verdicts[eid] = ("failed", reason)
+                        log.append(f"{eid}: failed {reason}")
+                        continue
                     else:
                         notes.append("route no longer served at head, no consumer bound to it")
                         verdicts[eid] = ("verified", notes[-1])
                         log.append(f"{eid}: {notes[-1]}")
                         continue
+            if (n.get('attrs') or {}).get('inline_harness'):
+                # Graph attrs carry identity only. Recompute containment from immutable
+                # HEAD and the actual target compiler before changing rule applicability.
+                if dep not in inline_projections:
+                    bootstrap = nest_bootstrap.resolve(self.tree_head, dep, self.deployables, self.profile) if dep is not None else None
+                    repo = getattr(self, 'top', None)
+                    inline_projections[dep] = nest_fixture_scope.project_inline_harness(
+                        self.tree_head, repo=repo, commit=self.tree_head.meta.get('source_commit'),
+                        root_module_file=bootstrap.root_file if bootstrap else None,
+                        compiler_library=nest_fixture_scope.compiler_library_for(repo, self.tree_head.meta.get('subdir', '')) if repo else None)
+                    base_projection = {}
+                    base_tree = getattr(self, 'tree_base', None)
+                    if base_tree is not None and repo and dep is not None:
+                        base_root = nest_bootstrap.resolve(base_tree, dep, self.deployables, self.profile)
+                        base_projection = nest_fixture_scope.project_inline_harness(
+                            base_tree, repo=repo, commit=base_tree.meta.get('source_commit'),
+                            root_module_file=base_root.root_file,
+                            compiler_library=nest_fixture_scope.compiler_library_for(repo, base_tree.meta.get('subdir', '')))
+                    inline_dependency_unions[dep] = fixture_contracts.dependency_union(
+                        nest_fixture_scope.dependency_map(base_projection),
+                        nest_fixture_scope.dependency_map(inline_projections[dep]))
+                candidates = inline_projections[dep].get('controllers', [])
+                identity = (n.get('attrs') or {})['inline_harness']
+                facts = next((c for c in candidates if c['path'] == path and nest_fixture_scope.graph_identity(c) == identity), None)
+                known_nodes = set(self.head_nodes) | set(getattr(getattr(self, 'idx', None), 'nodes', {}))
+                key = path + '#' + identity.get('class_name', '') if isinstance(identity, dict) else ''
+                dependency_union = inline_dependency_unions[dep].get(key, set())
+                closure_bound = bool(dependency_union) and all('code_unit:' + p in known_nodes for p in dependency_union)
+                if facts and facts['scope'] == 'fixture' and closure_bound:
+                    verdicts[eid] = ('verified', 'compiler-bound inline test harness; BASE/HEAD physical dependency union retained; test module registration verified; production RC-01/RC-02 inapplicable')
+                else:
+                    verdicts[eid] = ('not_measured', 'INLINE_HARNESS_CONTAINMENT_UNPROVED: compiler-bound HEAD does not qualify this fixture identity')
+                log.append(f"{eid}: {verdicts[eid][0]} — {verdicts[eid][1]}")
+                continue
             if dep is None:
                 verdicts[eid] = ("not_measured", f"controller {path} lies in no deployable")
                 continue
@@ -2152,14 +2528,37 @@ class Verify:
             # Legacy test/client IDs may use a colon instead of the canonical space.
             if not route_match:
                 route_match = re.match(r"route:(\w+):(.+)", eid)
+            ws_route = bool(nest and 'rc01' in self.fr_rules and route_match
+                            and route_match.group(1) == 'WS')
             try:
                 effective = bootstrap.effective_prefix(*route_match.groups()) if route_match else bootstrap.prefix
+                if ws_route:
+                    event = route_match.group(2)
+                    providers = [e for e in self.graph_head['edges']
+                                 if e['to'] == eid and e['type'] == 'provides_route']
+                    if n.get('kind') != 'ws_event' or len(providers) != 1:
+                        raise ValueError('ambiguous WebSocket transport/provider')
+                    namespace = nest_bootstrap.websocket_namespace(self.tree_head, path, event)
+                    base_node = self.idx.nodes.get(eid)
+                    if base_node:
+                        base_providers = [e for e in self.idx.rev.get(eid, []) if e['type'] == 'provides_route']
+                        if base_node.get('kind') != 'ws_event' or len(base_providers) != 1:
+                            raise ValueError('ambiguous base WebSocket transport/provider')
+                        before = nest_bootstrap.websocket_namespace(self.tree_base, base_node.get('path') or '', event)
+                        if before != namespace:
+                            problems.append(f'WS_NAMESPACE_CHANGED: {before!r} -> {namespace!r}')
+                    effective = None  # setGlobalPrefix configures HTTP routes only.
+                    notes.append(f'WebSocket namespace {namespace!r} source-bound; HTTP prefix inapplicable')
             except ValueError as exc:
                 verdicts[eid] = ('not_measured', 'BOOTSTRAP_UNRESOLVED: ' + str(exc))
                 continue
             want = (n.get("attrs") or {}).get("global_prefix")
             want = ("/" + want.strip("/")) if want else None
-            if nest and "rc01" in self.fr_rules and want != effective:
+            # The graph may carry the REST global prefix on a gateway event as a
+            # transport-agnostic route attribute. That metadata cannot be compared
+            # with an HTTP prefix: WebSocket identity is namespace + event, checked
+            # above against source at both revisions.
+            if nest and "rc01" in self.fr_rules and not ws_route and want != effective:
                 problems.append(f"PREFIX_MISMATCH: route built with prefix {want!r}, selected bootstrap requires {effective!r}")
             reg, rnotes = registered[dep]
             if nest and "rc02" in self.fr_rules:
@@ -2167,16 +2566,46 @@ class Verify:
                     verdicts[eid] = ("not_measured", f"RC-02 not evaluable: {rnotes[0]}")
                     log.append(f"{eid}: not_measured {rnotes[0]}")
                     continue
-                if path not in reg:
-                    problems.append(f"UNREGISTERED_CONTROLLER: {path} is registered in no @Module reachable from the root module ({rnotes[-1] if rnotes else ''})")
+                provider_paths = {path} | set((n.get('attrs') or {}).get('nest_route_sources', []))
+                if dep not in production_imports_by_dep:
+                    production_imports_by_dep[dep] = nest_production_import_files(self.scan_head, bootstrap.root_file)
+                production_imports_result = production_imports_by_dep[dep]
+                if production_imports_result is None:
+                    production_imports, production_imports_complete = set(), False
+                else:
+                    production_imports, production_imports_complete = production_imports_result
+                incomplete_test_reachability = False
+                for provider_path in sorted(provider_paths - reg):
+                    # Controllers declared in test-only harnesses are not
+                    # production module-registration obligations. A test path
+                    # imported by the production bootstrap remains in scope.
+                    if is_test_path(provider_path):
+                        if provider_path in production_imports:
+                            problems.append(f"UNREGISTERED_CONTROLLER: {provider_path} is registered in no @Module reachable from the root module ({rnotes[-1] if rnotes else ''})")
+                            continue
+                        if not production_imports_complete:
+                            incomplete_test_reachability = True
+                            notes.append(f"RC-02 reachability unknown: incomplete production value-import closure "
+                                         f"from {bootstrap.root_file}; cannot exclude test-path controller {provider_path}")
+                            continue
+                        notes.append(f"RC-02 inapplicable: test-only controller {provider_path} "
+                                     f"not reachable from {bootstrap.root_file}")
+                        continue
+                    problems.append(f"UNREGISTERED_CONTROLLER: {provider_path} is registered in no @Module reachable from the root module ({rnotes[-1] if rnotes else ''})")
             if problems:
                 verdicts[eid] = ("failed", "; ".join(problems)[:300])
+            elif nest and "rc02" in self.fr_rules and incomplete_test_reachability:
+                verdicts[eid] = ("not_measured", "RC-02 not evaluable: incomplete production value-import closure; "
+                                             + "; ".join(notes))
             elif not nest:
                 verdicts[eid] = ("verified", "RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 "
                                              "INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so "
                                              "there is no bootstrap prefix and no @Module graph to check")
             else:
-                verdicts[eid] = ("verified", f"served at head, prefix {effective!r} consistent, selected bootstrap {bootstrap.root_file}, controller registered")
+                registration = ("RC-02 inapplicable to skipped test-only controller(s)"
+                                if any(note.startswith("RC-02 inapplicable:") for note in notes)
+                                else "controller registered")
+                verdicts[eid] = ("verified", f"served at head, prefix {effective!r} consistent, selected bootstrap {bootstrap.root_file}, {registration}" + ('; ' + '; '.join(notes) if notes else ''))
             log.append(f"{eid}: {verdicts[eid][0]} — {verdicts[eid][1]}")
         failed = sum(1 for v in verdicts.values() if v[0] == "failed")
         self.record("v-route-config", "config_schema", "verify.py route_config_consistency RC-01 prefix / RC-02 registration / RC-03 served", ents,
@@ -2264,13 +2693,22 @@ class Verify:
                 verdict = ("not_measured", "workflow source hash differs from selected graph node")
             else:
                 verdict = workflow_config.validate(raw)
-                unknown = self.entities[eid]["node"].get("attrs", {}).get("shell_unknown", [])
-                if unknown and verdict[0] == "verified":
-                    verdict = ("not_measured", "workflow shell caller closure not measured: " + "; ".join(unknown))
+            shell_unknown = self.entities[eid]["node"].get("attrs", {}).get("shell_unknown", [])
+            if shell_unknown and verdict[0] == "verified":
+                verdict = ("not_measured", "workflow shell caller closure not measured: " + "; ".join(shell_unknown))
+            detail = verdict[1]
+            if shell_unknown:
+                detail += (f"; {len(shell_unknown)} workflow shell-caller uncertainty item(s) remain separate "
+                           "from YAML schema validation and are retained in graph closure evidence")
+            proof = {"config_schema_verdict": verdict[0], "detail": detail,
+                     "shell_closure": {"verdict": "not_measured" if shell_unknown else "verified",
+                                       "unknown": shell_unknown,
+                                       "disposition": "retained separately; no shell execution or closure claim"}}
             vid = "v-workflow-config-" + hashlib.sha256(path.encode()).hexdigest()[:16]
+            row_verdict = (verdict[0], detail)
             self.record(vid, "config_schema", "workflow_config.validate exact head bytes", [eid],
-                        0 if verdict[0] == "verified" else 1, verdict[1], now_iso(), 0.0,
-                        verdict[1], {eid: verdict})
+                        0 if verdict[0] == "verified" else 1, proof, now_iso(), 0.0,
+                        detail, {eid: row_verdict})
 
     def v_config_schema(self):
         self.v_workflow_config()
@@ -2356,6 +2794,217 @@ class Verify:
                     ents, 0 if verdict == "verified" else 1, output, started,
                     round(time.monotonic() - t0, 2), detail, {e: (verdict, detail) for e in ents}, "json")
 
+    def _run_source_input_control(self, control: dict) -> dict:
+        """Run one explicitly pinned Python control without inheriting host secrets."""
+        root = Path(self.exec_root).resolve()
+        try:
+            actual_target = source_input_contract.resolve_control_target(
+                control["execution_path"], control["cwd"], control["argv"],
+                "source-input control")
+        except (KeyError, TypeError, source_input_contract.ContractError):
+            return {"state": "failed", "reason": "actual argv target does not bind to pinned execution_path"}
+        interpreter = shutil.which(control["interpreter"])
+        if not interpreter:
+            return {"state": "not_measured", "reason": "pinned interpreter is unavailable"}
+        interpreter_path = Path(interpreter)
+        try:
+            interpreter_sha = hashlib.sha256(interpreter_path.read_bytes()).hexdigest()
+        except OSError:
+            return {"state": "not_measured", "reason": "pinned interpreter could not be read"}
+        if interpreter_sha != control["interpreter_sha256"]:
+            return {"state": "not_measured", "reason": "interpreter bytes differ from the declared pin",
+                    "interpreter_path": str(interpreter_path), "interpreter_sha256": interpreter_sha}
+        cwd = root if control["cwd"] == "." else root / control["cwd"]
+        target = root / control["execution_path"]
+        try:
+            if not cwd.is_dir() or not target.is_file():
+                return {"state": "failed", "reason": "control cwd or target is unavailable"}
+            cwd_real, target_real = cwd.resolve(), target.resolve()
+            if cwd_real != root and root not in cwd_real.parents or root not in target_real.parents:
+                return {"state": "failed", "reason": "control cwd or target escapes the measured tree"}
+            for candidate in (cwd, target):
+                rel = candidate.relative_to(root)
+                cur = root
+                for part in rel.parts:
+                    cur = cur / part
+                    if cur.is_symlink():
+                        return {"state": "failed", "reason": "control path contains a symlink"}
+            actual_hash = hashlib.sha256(target.read_bytes()).hexdigest()
+            if actual_hash != control["execution_sha256"]:
+                return {"state": "failed", "reason": "control source changed in execution tree",
+                        "actual_sha256": actual_hash}
+        except (OSError, ValueError):
+            return {"state": "failed", "reason": "control cwd or target is unavailable"}
+        env = {"PATH": str(interpreter_path.parent), "CI": "1", "PYTHONDONTWRITEBYTECODE": "1"}
+        env.update(control["environment"])
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        argv = [str(interpreter_path), *control["argv"][1:]]
+        started = time.monotonic()
+        try:
+            proc = subprocess.Popen(argv, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    text=True, start_new_session=True)
+            try:
+                stdout, stderr = proc.communicate(timeout=control["timeout_seconds"])
+                rc = proc.returncode
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                stdout, stderr = proc.communicate()
+                return {"state": "failed", "reason": "control timed out", "argv": argv,
+                        "cwd": str(cwd), "timeout_seconds": control["timeout_seconds"],
+                        "actual_target": actual_target,
+                        "stdout": stdout[-65536:], "stderr": stderr[-65536:], "exit_code": 124,
+                        "duration_seconds": round(time.monotonic() - started, 3)}
+        except OSError as exc:
+            return {"state": "not_measured", "reason": "control could not start: " + type(exc).__name__,
+                    "argv": argv, "cwd": str(cwd), "actual_target": actual_target}
+        output = stdout + ("\n[stderr]\n" + stderr if stderr else "")
+        state = "verified" if rc == control["expected_exit_code"] and control["expected_output_contains"] in output else "failed"
+        return {"state": state,
+                "reason": ("declared exit and output oracle matched" if state == "verified"
+                           else "actual exit or output differed from the declared oracle"),
+                "argv": argv, "cwd": str(cwd), "interpreter_sha256": interpreter_sha,
+                "actual_target": actual_target,
+                "exit_code": rc, "expected_exit_code": control["expected_exit_code"],
+                "expected_output_contains": control["expected_output_contains"],
+                "stdout": stdout[-65536:], "stderr": stderr[-65536:],
+                "duration_seconds": round(time.monotonic() - started, 3)}
+
+    def v_source_input_contract(self):
+        entities = self.needing("source_input_contract")
+        if not entities:
+            return
+        started, t0 = now_iso(), time.monotonic()
+        manifest_path = source_input_contract.MANIFEST_PATH
+        raw = self.tree_head.files.get(manifest_path)
+        result = {"schema": "SourceInputContractVerification/v1", "manifest": manifest_path,
+                  "controls": [], "scope": "explicit source-input declarations only; no extension inference"}
+        verdicts = {}
+        if "source_input_contract" in self.disabled:
+            for entity in entities:
+                verdicts[entity] = ("not_measured", "MANDATORY_VERIFIER_DISABLED: source_input_contract")
+            result["disabled"] = True
+        elif raw is None:
+            for entity in entities:
+                verdicts[entity] = ("failed", "required source-input declaration is missing at head")
+            result["error"] = "required declaration missing"
+        else:
+            try:
+                entries = source_input_contract.parse(raw, files=self.tree_head.files,
+                                                      file_modes=self.tree_head.meta.get("file_modes", {}))
+                relevant = []
+                for entry in entries:
+                    owned = {f"code_unit:{manifest_path}", f"code_unit:{entry['source_path']}",
+                             f"code_unit:{entry['consumer_path']}",
+                             *(f"code_unit:{p}" for p in entry["control_sources"])}
+                    overlap = owned.intersection(entities)
+                    if overlap:
+                        relevant.append((entry, owned))
+                covered = set()
+                results_by_entity = {e: [] for e in entities}
+                for entry, owned in relevant:
+                    touched = owned.intersection(entities)
+                    covered.update(touched)
+                    control_results = []
+                    for control in entry["controls"]:
+                        measured = self._run_source_input_control(control)
+                        measured.update({"id": control["id"], "role": control["role"],
+                                         "execution_path": control["execution_path"]})
+                        control_results.append(measured)
+                    states = [r["state"] for r in control_results]
+                    if "failed" in states:
+                        state, reason = "failed", "one or more declared controls failed"
+                    elif "not_measured" in states:
+                        state, reason = "not_measured", "one or more declared controls could not be measured"
+                    else:
+                        state, reason = "verified", "source/consumer/control bytes and all positive/negative controls matched"
+                    for entity in touched:
+                        results_by_entity[entity].append((state, reason))
+                    result["controls"].append({"source_path": entry["source_path"],
+                                                "consumer_path": entry["consumer_path"],
+                                                "source_sha256": entry["source_sha256"],
+                                                "consumer_sha256": entry["consumer_sha256"],
+                                                "literal_reads": entry["read_occurrences"],
+                                                "results": control_results})
+                for entity in entities:
+                    observations = results_by_entity[entity]
+                    if not observations:
+                        verdicts[entity] = ("not_measured", "no explicit source-input entry covers this affected entity")
+                    elif any(v == "failed" for v, _ in observations):
+                        verdicts[entity] = ("failed", "; ".join(r for v, r in observations if v == "failed"))
+                    elif any(v == "not_measured" for v, _ in observations):
+                        verdicts[entity] = ("not_measured", "; ".join(r for v, r in observations if v == "not_measured"))
+                    else:
+                        verdicts[entity] = ("verified", "; ".join(r for _, r in observations))
+                result["uncovered_entities"] = sorted(set(entities) - covered)
+            except source_input_contract.ContractError as exc:
+                for entity in entities:
+                    verdicts[entity] = ("failed", "source-input declaration refused: " + str(exc))
+                result["error"] = str(exc)
+        exit_code = (125 if "source_input_contract" in self.disabled else
+                     1 if any(v == "failed" for v, _ in verdicts.values()) else
+                     127 if any(v == "not_measured" for v, _ in verdicts.values()) else 0)
+        summary = (f"{len(result['controls'])} explicit input binding(s), "
+                   f"{sum(v == 'verified' for v, _ in verdicts.values())} verified / "
+                   f"{sum(v == 'failed' for v, _ in verdicts.values())} failed / "
+                   f"{sum(v == 'not_measured' for v, _ in verdicts.values())} not_measured of {len(entities)} entities")
+        self.record("v-source-input-contract", "other", "verify.py source_input_contract (exact declared argv controls)",
+                    entities, exit_code, json.dumps(result, ensure_ascii=False, indent=1), started,
+                    round(time.monotonic() - t0, 2), summary, verdicts, "json")
+
+    def v_selected_dependency(self):
+        """DEC0146 requalification, never an author-supplied source verdict.
+
+        Foreign source nodes get dedicated dispatch instead of a fake local path.
+        Source qualification alone cannot discharge their semantic obligations.
+        Repositories/replay are native capabilities, not CLI/envelope fields.
+        """
+        import selected_dependency
+        import dataclasses
+        native = selected_dependency.current_native_configuration()
+        repositories = native['repositories'] if native else {}
+        replay = native['replay'] if native else None
+        foreign_fitness = native.get('foreign_fitness') if native else None
+        verdicts = {}
+        semantic_evidence = {}
+        for eid, ent in self.entities.items():
+            attrs = ent['node'].get('attrs', {})
+            facts = attrs.get('selected_dependencies', {})
+            if attrs.get('selected_source_identity'):
+                verdicts[eid] = ('not_measured', 'foreign source semantic verifier not configured; selection proof grants no semantic/runtime admission')
+                if foreign_fitness is not None:
+                    identity = attrs['selected_source_identity']
+                    if not selected_dependency._identity_supported(identity) or eid != selected_dependency.node_id(identity):
+                        verdicts[eid] = ('failed', 'FOREIGN_ENTITY_IDENTITY_MISMATCH')
+                    else:
+                        measured_fitness = foreign_fitness.measure(identity, repositories=repositories)
+                        verdicts[eid] = (measured_fitness.verdict, ', '.join(measured_fitness.reasons))
+                        semantic_evidence[eid] = dataclasses.asdict(measured_fitness)
+            if facts:
+                measured = [selected_dependency.qualify_selected_dependency(fact['envelope'],
+                              repositories=repositories, replay=replay) for fact in facts.values()]
+                rank = {'verified': 0, 'not_measured': 1, 'failed': 2}
+                worst = max(measured, key=lambda result: rank[result.verdict])
+                if attrs.get('selected_source_identity'):
+                    semantic = verdicts[eid]
+                    if rank[worst.verdict] > rank[semantic[0]]:
+                        verdicts[eid] = (worst.verdict, ', '.join(worst.reason_codes))
+                    elif semantic[0] == 'verified':
+                        verdicts[eid] = ('verified', semantic[1] + '; native source selection verified')
+                else:
+                    verdicts[eid] = (worst.verdict, ', '.join(worst.reason_codes))
+        if not verdicts:
+            return
+        self.record('v-selected-dependency', 'fitness_rules',
+                    'native selected_dependency exact Git/occurrence/replay binding', sorted(verdicts),
+                    1 if any(v[0] == 'failed' for v in verdicts.values()) else 0,
+                    {eid: {'verdict': v[0], 'reason': v[1],
+                           **({'native_fitness': semantic_evidence[eid]} if eid in semantic_evidence else {})}
+                     for eid, v in verdicts.items()},
+                    now_iso(), 0.0, 'source selection only; ordinary semantic/canary obligations retained', verdicts, 'json')
+
     def v_fitness(self):
         ents = self.needing("fitness_rules")
         if not ents:
@@ -2388,8 +3037,27 @@ class Verify:
             else:
                 fz = frozen_by.get(eid, [])
                 verdicts[eid] = ("verified", "no new fitness violation" + (f" ({len(fz)} frozen: {', '.join(v['rule'] for v in fz)})" if fz else ""))
+        workflow_native = {}
+        for eid in ents:
+            path = self.entity_file(eid) or ""
+            if not workflow_config.is_workflow(path):
+                continue
+            raw = self.tree_head.files.get(path)
+            expected = (self.entities[eid]["node"].get("content_hash") or "")
+            if raw is None or sha_bytes(raw) != expected:
+                native_verdict, proof = "not_measured", {"reason": "workflow bytes unavailable or differ from selected graph node"}
+            else:
+                actionlint = find_bin("actionlint", None, self.exec_root,
+                                      getattr(self, "scope_root", self.top), [])
+                native_verdict, proof = workflow_config.native_fitness(path, raw, actionlint)
+            workflow_native[eid] = {"verdict": native_verdict, **proof}
+            current, reason = verdicts[eid]
+            if current == "failed" or native_verdict == "failed":
+                verdicts[eid] = ("failed", reason if current == "failed" else proof.get("reason", "workflow fitness failed"))
+            elif current == "not_measured" or native_verdict == "not_measured":
+                verdicts[eid] = ("not_measured", reason + "; workflow actionlint NOT_MEASURED: " + proof.get("reason", "unavailable"))
         out = {"rules": self.matrix["fitness_rules"], "baseline": self.baseline_ref, "baseline_status": self.baseline_status,
-               "new": new, "frozen": frozen}
+               "new": new, "frozen": frozen, "workflow_native": workflow_native}
         failed = sum(1 for v in verdicts.values() if v[0] == "failed")
         self.record("v-fitness", "fitness_rules", "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources", ents, 1 if failed else 0, out,
                     started, round(time.monotonic() - t0, 2), f"{len(viol)} finding(s): {len(new)} new / {len(frozen)} frozen; {failed} entity(ies) failed", verdicts, "json")
@@ -2671,6 +3339,24 @@ class Verify:
         budget = prof.get("full_test_timeout_seconds", 900)
         return budget if type(budget) is int and 1 <= budget <= 7200 else None
 
+    def absent_suite_declaration(self, dep: str) -> dict | None:
+        """The typed absent-suite class applies only when ALL hold; otherwise None and today's NM stays.
+
+        Profile declares `full_test: null` + non-empty `full_test_absent_reason` + `static_validation`
+        (non-empty list of argv lists); the HEAD tree has no tracked test file and no scripts.test
+        (the same detector C18 re-derives with: schema_check.absent_suite_tree)."""
+        prof = (self.profile.get("deployables") or {}).get(dep, {})
+        reason, static = prof.get("full_test_absent_reason"), prof.get("static_validation")
+        if "full_test" not in prof or prof["full_test"] is not None or not isinstance(reason, str) or not reason.strip():
+            return None
+        if not (isinstance(static, list) and static and all(
+                isinstance(a, list) and a and all(isinstance(x, str) for x in a) for a in static)):
+            return None
+        tree = schema_check.absent_suite_tree(self.tree_head.files)
+        if tree["test_files"] or tree["scripts_test"] is not None or tree["unknown"]:
+            return None
+        return {"reason": reason.strip(), "static": static, "tree": tree}
+
     def v_global_fallback_test(self):
         """Run the repository's complete suite, independently of targeted spec selection."""
         groups = {}
@@ -2682,12 +3368,25 @@ class Verify:
             cmd = self.full_fallback_test_runner(dep)
             timeout = self.full_fallback_test_timeout(dep)
             started = now_iso()
+            absent = None
             if timeout is None:
                 rc, out, secs = 125, "FULL_FALLBACK_TEST_NOT_MEASURED: full_test_timeout_seconds must be an integer in 1..7200", 0.0
                 verdict = "not_measured"
             elif "full_fallback_test" in self.disabled or not cmd:
                 rc, out, secs = 127, "FULL_FALLBACK_TEST_NOT_MEASURED: explicit full_test declaration/runner absent or disabled", 0.0
                 verdict = "not_measured"
+                absent = None if "full_fallback_test" in self.disabled else self.absent_suite_declaration(dep)
+                if absent:
+                    # Typed absent-suite class: run ONLY the declared static validation. The row stays
+                    # not_measured (never verified); a failed command stays failed.
+                    static_text = schema_check.absent_suite_static_text(absent["static"])
+                    rc, out, secs = 0, "", 0.0
+                    for argv in absent["static"]:
+                        r, o, t = run_cmd(argv, self.exec_root / dep, env={"CI": "1", "PYTHONDONTWRITEBYTECODE": "1", "FORCE_COLOR": "0", "NO_COLOR": "1"}, timeout=timeout)
+                        rc, out, secs = r, out + o, secs + t
+                        if r:
+                            break
+                    verdict = "failed" if rc not in (0, 124, 127) else "not_measured"
             else:
                 supplied = list(getattr(self.a, "full_test_ci", None) or [])
                 candidates = []
@@ -2732,11 +3431,19 @@ class Verify:
                 verdict = "not_measured" if rc in (124, 127) else ("failed" if rc else ("verified" if passed else "not_measured"))
             vid = "v-global-fallback-test-" + (re.sub(r"[^a-z0-9]+", "-", dep.lower()).strip("-") or "root")
             logical_cmd = [Path(cmd[0]).name if Path(cmd[0]).is_absolute() else cmd[0], *cmd[1:]] if cmd else []
-            self.record(vid, "targeted_test", shlex.join(logical_cmd), entities, rc, out, started, secs,
+            self.record(vid, "targeted_test", static_text if absent else shlex.join(logical_cmd), entities, rc, out, started, secs,
                         "complete fallback suite: " + verdict,
                         {eid: (verdict, "complete fallback suite: " + verdict) for eid in entities})
             self.verifiers[-1]["scope"] = "global_fallback_full_suite"
             self.verifiers[-1]["timeout_seconds"] = timeout
+            if absent and rc == 0 and dep == "." and not self.test_suite:
+                v = self.verifiers[-1]
+                self.test_suite = {
+                    "status": "absent_declared", "behavior": "not_measured", "entities": sorted(entities),
+                    "declaration": {"deployable": dep, "full_test": None, "full_test_absent_reason": absent["reason"]},
+                    "tree": absent["tree"],
+                    "static_validation": [{"verifier_id": vid, "command": v["command"], "exit_code": v["exit_code"],
+                                           "output_ref": v["output_ref"]}]}
 
     def v_shell_syntax(self):
         for eid in self.needing("shell_syntax"):
@@ -2746,11 +3453,22 @@ class Verify:
                 verdict, proof = "not_measured", {"reason": "shell source missing/removed or mandatory syntax disabled"}
             else:
                 verdict, proof = shell_source.syntax(path, raw, self.tree_head.paths)
+                base_tree = getattr(self, "tree_base", None)
+                broken = shell_source.paired_function_regressions(
+                    path, base_tree.files, self.tree_head.files) if base_tree else []
+                if broken:
+                    verdict = "failed"
+                    proof["reason"] = "SHELL_SOURCED_FUNCTION_REMOVED: " + json.dumps(broken)
+                    proof["exit_code"] = 1
+                elif (verdict != "failed" and base_tree and shell_source.changed_function_uncertainty(
+                        path, base_tree.files, self.tree_head.files)):
+                    verdict = "not_measured"
+                    proof["reason"] = "SHELL_CHANGED_FUNCTION_SCOPE_NOT_MEASURED"
                 if sha_bytes(raw) != self.entities[eid]["node"].get("content_hash"):
                     verdict = "not_measured"
                     proof["reason"] = "shell head bytes differ from selected graph node"
             self.record("v-shell-syntax-" + hashlib.sha256(eid.encode()).hexdigest()[:16], "shell_syntax",
-                        "bash --noprofile --norc -n <exact bytes; Bats declarations translated, never executed>",
+                        "bash -n + pinned ShellCheck on syntax projection; no caller/Bats execution",
                         [eid], proof.get("exit_code", 125), json.dumps(proof), now_iso(), 0.0,
                         "shell syntax/closure: " + verdict, {eid: (verdict, "shell syntax/closure: " + verdict)})
             self.verifiers[-1]["scope"] = "shell_source_validation"
@@ -2794,7 +3512,11 @@ class Verify:
                     try:
                         tap = full_suite_ci._blob(self.top, self.head, tap_path) if isinstance(tap_path, str) else b""
                         streams = [p.get("streams", {}).get("stdout", {}) for p in probes]
-                        tap_verified = (len(streams) == 1 and streams[0].get("sha256") == full_suite_ci._digest(tap)
+                        stream_digest = (process_observation.canonical_digest_hex(streams[0].get("sha256"))
+                                         if len(streams) == 1 else None)
+                        tap_digest = full_suite_ci.canonical_digest_hex(full_suite_ci._digest(tap))
+                        tap_verified = (len(streams) == 1 and stream_digest is not None
+                                        and tap_digest is not None and stream_digest == tap_digest
                                         and streams[0].get("captured_bytes") == len(tap)
                                         and not streams[0].get("truncated") and shell_source.tap_membership(tap, inventory))
                     except (ValueError, OSError, TypeError, subprocess.SubprocessError):
@@ -3294,6 +4016,8 @@ class Verify:
                          *exemption_notes, *self.notes],
                "verify": {"events": self.events, "required_by_entity": {e: ent["required"] for e, ent in sorted(self.entities.items())},
                           "seconds": {"prepare": self.prep_seconds, "verifiers": round(sum(v.get("duration_s", 0) for v in self.verifiers), 2)}}}
+        if self.test_suite:
+            rec["test_suite"] = self.test_suite
         rec["verifier_selection"] = self.verifier_selection()
         # A2-418. A selected verifier that applied to nothing leaves the REQUEST unanswered, and the
         # change holds for that reason — workflow-configuration.md: «missing selected checks retain
@@ -3405,7 +4129,8 @@ class Verify:
         if vid.startswith("v-crash-"):
             return vid[len("v-crash-"):]
         return {"v-contract-diff": "contract_diff", "v-schema-diff": "schema_diff", "v-config-schema": "config_schema",
-                "v-fitness": "fitness_rules", "v-doc-reference": "doc_reference"}.get(vid, v["kind"])
+                "v-fitness": "fitness_rules", "v-doc-reference": "doc_reference",
+                "v-source-input-contract": "source_input_contract"}.get(vid, v["kind"])
 
     def run_verifier(self, mid: str, fn) -> None:
         """One verifier's crash costs that verifier's verdicts — never the whole receipt.
@@ -3450,12 +4175,23 @@ class Verify:
         with impact_pair.trace_phase("fitness-baseline"):
             self.load_baseline()
         with impact_pair.trace_phase("collect-entities"):
-            self.collect_entities(q)
+            try:
+                self.collect_entities(q)
+            except Refusal as r:
+                doc = impact.refusal_doc(getattr(self, "idx", None), impact.Refusal(r.code, r.reason, r.details),
+                                         mode="diff" if self.a.diff else "worktree", tree_commit=self.head,
+                                         tree_dirty=self.tree_head.meta.get("dirty"), repo=self.repo,
+                                         graph_path=getattr(self, "graph_path", None), files=self.change_files)
+                return doc, 2
         for mid, fn in (("type_check", self.v_type_check), ("contract_diff", self.v_contract_diff),
                         ("route_config_consistency", self.v_route_config), ("schema_diff", self.v_schema_diff),
                         ("config_schema", self.v_config_schema), ("fitness_rules", self.v_fitness),
+                        ("fitness_rules", self.v_selected_dependency),
                         ("doc_reference", self.v_doc_reference), ("canary", self.v_canary),
                         ("shell_syntax", self.v_shell_syntax), ("shell_behavior", self.v_shell_behavior),
+                        ("systemd_unit_semantics", self.v_systemd_unit_semantics),
+                        ("source_file_integrity", self.v_source_file_integrity),
+                        ("source_input_contract", self.v_source_input_contract),
                         ("full_fallback_test", self.v_global_fallback_test), ("targeted_test", self.v_targeted_test), ("property_check", self.v_property_check)):
             with impact_pair.trace_phase("verifier-" + mid):
                 self.run_verifier(mid, fn)
@@ -3639,10 +4375,13 @@ def run_scenario(scratch: Path, work: Path, fault: dict, tsc: str | None, prisma
 def selftest(a) -> int:
     t0 = time.monotonic()
     checks: list[dict] = []
-    work = Path(a.workdir) if a.workdir else Path(os.environ.get("TMPDIR", "/tmp")) / "arcana-verify-selftest"
-    if work.exists():
-        shutil.rmtree(work)
-    work.mkdir(parents=True)
+    if a.workdir:
+        work = Path(a.workdir)
+        if work.exists():
+            shutil.rmtree(work)
+        work.mkdir(parents=True)
+    else:
+        work = _new_private_scratch("arcana-verify-selftest-")
     matrix = load_matrix()
     gs, rs = schema_check.load_schema(schema_check.GRAPH_SCHEMA_PATH), schema_check.load_schema(schema_check.RECEIPT_SCHEMA_PATH)
 
@@ -3840,6 +4579,25 @@ def selftest(a) -> int:
                                   "survived_when_disabled": survived, "other_verifiers_failed_when_disabled": others_failed})
     # per-verifier summary: every mandatory verifier is load-bearing
     for vid in MANDATORY_IDS:
+        if vid == "source_input_contract":
+            result = subprocess.run([sys.executable, "-m", "unittest",
+                                     "test_source_input_contract.SourceInputContractTests."
+                                     "test_source_input_verifier_enabled_fault_and_disabled_control"],
+                                    cwd=Path(__file__).parent, capture_output=True, text=True)
+            check("mandatory verifier source_input_contract: actual pinned-input fault and disabled control",
+                  result.returncode == 0, output=(result.stdout + result.stderr)[-2000:])
+            continue
+        if vid in {"systemd_unit_semantics", "source_file_integrity"}:
+            method = {
+                "systemd_unit_semantics": "test_systemd_unit_semantics_enabled_fault_and_disabled_control",
+                "source_file_integrity": "test_source_file_integrity_enabled_identity_fault_and_disabled_control",
+            }[vid]
+            result = subprocess.run([sys.executable, "-m", "unittest",
+                                     "test_systemd_source_contract.SystemdVerifierCalibration." + method],
+                                    cwd=Path(__file__).parent, capture_output=True, text=True)
+            check(f"mandatory verifier {vid}: pinned positive, identity fault and disabled controls",
+                  result.returncode == 0, output=(result.stdout + result.stderr)[-2000:])
+            continue
         if vid in {"shell_syntax", "shell_behavior"}:
             # The historical ts-mini fault catalog contains no Bash/Bats nodes. Exercise
             # these additive mandatory verifiers against actual shell/native-process
@@ -4233,6 +4991,8 @@ def main(argv=None) -> int:
                          "boundary entities and canary_required edge types (AUP-GRAPH-008)")
     ap.add_argument("--full-test-ci", action="append", metavar="COMMITTED_PATH",
                     help="committed GitHubFullSuiteEvidence/v1 for explicit full_test; authenticate exact run/job/log/tree, never replay on refusal")
+    ap.add_argument("--root-typecheck-ci-root", type=Path,
+                    help="fresh external current-candidate directory containing GitHubTypecheckEvidence/v1 and its original Auth job log")
     ap.add_argument("--freeze-baseline", help="write a FitnessBaseline/v1 of the findings at --rev and exit")
     ap.add_argument("--rev", default="HEAD")
     ap.add_argument("--owner", default="")
@@ -4244,6 +5004,7 @@ def main(argv=None) -> int:
     ap.add_argument("--pilot-out", help="with --pilot: directory for the per-commit drafts")
     ap.add_argument("--pilot-commits", type=int, default=12)
     a = ap.parse_args(argv)
+    a._github_token = os.environ.pop("GH_TOKEN", None)
     if any(getattr(a, name, None) for name in (
             "compiler_sdk_root", "compiler_sdk_declaration",
             "compiler_sdk_declaration_sha256", "compiler_sdk_evidence")) and (a.selftest or a.freeze_baseline):
