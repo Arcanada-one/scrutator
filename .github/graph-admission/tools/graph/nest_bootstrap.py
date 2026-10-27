@@ -105,6 +105,77 @@ def _pairs(ts):
     return pairs
 
 
+def websocket_namespace(tree, path, event):
+    """Bounded source proof for one literal Nest gateway/event; unknown is NM.
+
+    HTTP global prefixes do not configure WebSocket namespaces. Keep the two
+    channels separate, and never infer a namespace from a graph's WS label.
+    """
+    if not tree.exists(path):
+        raise ValueError('gateway source absent')
+    ts = tokens(tree.text(path))
+    pairs = _pairs(ts)
+    imported = set()
+    for i in range(len(ts) - 1):
+        if ts[i:i + 2] != ['import', '{']:
+            continue
+        end = pairs[i + 1]
+        if ts[end + 1:end + 3] != ['from', "'@nestjs/websockets'"] and ts[end + 1:end + 3] != ['from', '"@nestjs/websockets"']:
+            continue
+        for member in split(ts[i + 2:end]):
+            if len(member) == 1:
+                imported.add(member[0])
+    if not {'WebSocketGateway', 'SubscribeMessage'} <= imported:
+        raise ValueError('gateway decorators lack direct Nest imports')
+    gateways = [i for i in range(len(ts) - 2) if ts[i:i + 3] == ['@', 'WebSocketGateway', '(']]
+    classes = [i for i, t in enumerate(ts) if t == 'class']
+    events = [i for i in range(len(ts) - 2) if ts[i:i + 3] == ['@', 'SubscribeMessage', '(']]
+    if (len(gateways) != 1 or len(classes) != 1 or
+            ts.count('WebSocketGateway') != 2 or ts.count('SubscribeMessage') != len(events) + 1):
+        raise ValueError('ambiguous or shadowed gateway decorators')
+    gateway, cls = gateways[0], classes[0]
+    body = next((i for i in range(cls + 2, len(ts)) if ts[i] == '{'), len(ts))
+    header = ts[cls + 2:body]
+    inert_interfaces = (header[:1] == ['implements'] and
+                        all(len(part) == 1 and re.fullmatch(r'[A-Za-z_$][\w$]*', part[0])
+                            for part in split(header[1:])))
+    gateway_end = pairs[gateway + 2]
+    if (body == len(ts) or (header and not inert_interfaces) or gateway_end >= cls or
+            ts[gateway_end + 1:cls] not in ([], ['export'], ['export', 'default'])):
+        raise ValueError('gateway class ownership unresolved')
+    end = pairs[body]
+    matches = []
+    for pos in events:
+        if not body < pos < end or any(a < pos < b for a, b in pairs.items() if body < a < end):
+            raise ValueError('event outside direct gateway class body')
+        args = call_args(ts, pos + 2)
+        if len(args) != 1 or len(args[0]) != 1:
+            raise ValueError('nonliteral gateway event')
+        if literal(args[0][0]) == event:
+            matches.append(pos)
+    if len(matches) != 1:
+        raise ValueError('event binding absent or ambiguous')
+    args = call_args(ts, gateway + 2)
+    namespace = '/'
+    if args:
+        if len(args) != 1 or args[0][:1] != ['{'] or args[0][-1:] != ['}']:
+            raise ValueError('unsupported gateway options')
+        seen = set()
+        for field in split(args[0][1:-1]):
+            if len(field) < 3 or field[1] != ':' or not re.fullmatch(r'[A-Za-z_$][\w$]*', field[0]):
+                raise ValueError('computed, spread or shorthand gateway option')
+            if field[0] in seen:
+                raise ValueError('duplicate gateway option')
+            seen.add(field[0])
+            if field[0] == 'namespace':
+                if len(field) != 3:
+                    raise ValueError('nonliteral gateway namespace')
+                namespace = literal(field[2])
+                if not namespace.startswith('/'):
+                    raise ValueError('unsupported relative gateway namespace')
+    return namespace
+
+
 def _default_options_parameter(items):
     """One optional boolean-options object with an inert empty-object default.
 

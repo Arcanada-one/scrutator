@@ -18,6 +18,7 @@ Python 3.12 stdlib only; deterministic; never writes to the repository it gates.
 from __future__ import annotations
 
 import argparse
+import copy
 import fnmatch
 import hashlib
 import json
@@ -27,6 +28,7 @@ import full_suite_ci
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -188,6 +190,16 @@ def discover_receipts(paths: list[Path]) -> list[Path]:
     return found
 
 
+def select_gate_receipts(repo: Path, explicit_receipts: list[str] | None,
+                         receipt_dirs: list[str] | None) -> list[Path]:
+    """The stock gate's explicit-over-discovery candidate-selection rule."""
+    if explicit_receipts:
+        return [Path(p) for p in explicit_receipts]
+    search = [Path(p) if Path(p).is_absolute() else repo / p
+              for p in (receipt_dirs or ["receipts"])]
+    return discover_receipts(search)
+
+
 def read_receipt(path: Path):
     try:
         return json.loads(path.read_text(encoding="utf-8")), None
@@ -215,6 +227,34 @@ def receipt_binds(repo: Path, doc: dict, base: str, head: str, commits: set[str]
             return True, f"worktree at {tc[:12]}"
         return False, f"worktree receipt at {str(tc)[:12]} outside the range"
     return False, f"unknown change_set.mode {mode!r}"
+
+
+def gate_receipt_context(repo: Path, base: str, head: str,
+                         receipt_paths: list[Path]) -> dict:
+    """Resolve the exact range and receipt binding set consumed by the stock gate.
+
+    Attach uses this same resolver before it writes a ledger. Candidate selection remains
+    the caller's gate-equivalent responsibility; this helper never accepts claimed bound
+    flags or receipt self-descriptions in place of Git and exact file bytes.
+    """
+    commits = range_commits(repo, base, head)
+    files = range_files(repo, base, head)
+    bound, unbound = [], []
+    for path in receipt_paths:
+        doc, err = read_receipt(path)
+        rec = {"path": str(path), "digest": sha256_file(path) if path.exists() else None}
+        if doc is None:
+            rec.update({"bound": False, "reason": f"unreadable: {err}"})
+            unbound.append(rec)
+            continue
+        if not str(doc.get("schema", "")).startswith("ChangeAdmissionReceipt"):
+            continue
+        rec["receipt_id"] = doc.get("receipt_id")
+        ok, why = receipt_binds(repo, doc, base, head, set(commits))
+        rec.update({"bound": ok, "reason": why})
+        (bound if ok else unbound).append(rec | {"_doc": doc})
+    return {"commits": commits, "files": files, "changed": {f["path"] for f in files},
+            "bound": bound, "unbound": unbound}
 
 
 # ------------------------------------------------------------------ the gate
@@ -527,8 +567,53 @@ PROGRAM_REF_PIN_RE = re.compile(
     r"^[ \t]*program_ref:[ \t]*(?P<quote>['\"]?)(?P<ref>[0-9a-f]{40})(?P=quote)[ \t]*(?:#.*)?$")
 CANONICAL_WORKFLOW_PIN_RE = re.compile(
     r"^[ \t]*uses:[ \t]*(?P<quote>['\"]?)"
-    r"Arcanada-one/arcanada-universal-program/\.github/workflows/graph-admission\.yml@"
+    r"(?P<target>Arcanada-one/arcanada-universal-program/\.github/workflows/graph-admission\.yml@)"
     r"(?P<ref>[0-9a-f]{40})(?P=quote)[ \t]*(?:#.*)?$")
+LOCAL_WORKFLOW_PIN_RE = re.compile(
+    r"^[ \t]*uses:[ \t]*(?P<quote>['\"]?)"
+    r"(?P<target>\./\.github/workflows/graph-admission\.yml)(?P=quote)[ \t]*(?:#.*)?$")
+
+# Muneral's one explicit finished-stage input. The caller may leave it absent during bootstrap;
+# when supplied it is a committed, repo-relative StageEvidence/v1 document under this same root.
+MUNERAL_STAGE_EVIDENCE_PATH = "receipts/graph/stage-evidence/muneral.json"
+MUNERAL_STAGE_EVIDENCE_ROOT = "receipts/graph/stage-evidence"
+
+
+def base_local_workflow_is_manifest_bound(repo: Path, base: str) -> tuple[bool, str]:
+    """Prove the exact legacy workflow named by BASE's bundle manifest is a regular Git blob.
+
+    This is a source-identity check only; it does not verify the BASE signature or replace the
+    existing authenticated HEAD-manifest and enrolled-trust checks.
+    """
+    path = ".github/workflows/graph-admission.yml"
+    _managed, manifest = bundle_paths_at(repo, base, DEFAULT_BUNDLE_DIR)
+    if not isinstance(manifest, dict):
+        return False, "BASE bundle manifest is missing or unreadable"
+    entries = [entry for entry in manifest.get("files", [])
+               if isinstance(entry, dict) and entry.get("path") == path
+               and entry.get("verified_by_the_job") is False]
+    if len(entries) != 1:
+        return False, "BASE manifest must contain exactly one unverified-by-job entry for the local workflow"
+    row = entries[0]
+    tree_entry = git(repo, "ls-tree", base, "--", path, check=False).strip().split("\t")
+    if len(tree_entry) != 2 or tree_entry[1] != path:
+        return False, "BASE local workflow is not an exact tracked Git tree entry"
+    mode_type_oid = tree_entry[0].split()
+    if (len(mode_type_oid) != 3 or mode_type_oid[0] not in {"100644", "100755"}
+            or mode_type_oid[1] != "blob"):
+        return False, "BASE local workflow is not a regular tracked blob"
+    oid = mode_type_oid[2]
+    if not re.fullmatch(r"[0-9a-f]{40}", oid):
+        return False, "BASE local workflow has no full Git blob object id"
+    blob = subprocess.run(["git", "-C", str(repo), "cat-file", "blob", f"{base}:{path}"],
+                          capture_output=True)
+    if blob.returncode != 0:
+        return False, "BASE local workflow blob cannot be read"
+    if row.get("blob_oid") != oid:
+        return False, "BASE manifest blob_oid does not match the tracked local workflow blob"
+    if row.get("sha256") != sha256_bytes(blob.stdout):
+        return False, "BASE manifest sha256 does not match the exact local workflow bytes"
+    return True, f"BASE manifest sha256 and blob_oid bind the regular tracked {path} bytes"
 
 
 def pin_only_edit(repo: Path, base: str, head: str, path: str, expect_ref: str | None) -> tuple[bool, str]:
@@ -549,32 +634,415 @@ def pin_only_edit(repo: Path, base: str, head: str, path: str, expect_ref: str |
         return False, "the file is added or removed by this change, which is not an in-place pin update"
     if old == new:
         return True, "no textual change"
+    if path == ".github/workflows/graph-admission-call.yml":
+        origin = subprocess.run(["git", "-C", str(repo), "remote", "get-url", "origin"],
+                                capture_output=True, text=True)
+        if origin.returncode == 0 and _canonical_auth_origin(origin.stdout.strip()):
+            scoped_ok, scoped_why = _canonical_caller_pin_and_read_scope_edit(old, new, expect_ref)
+        elif origin.returncode == 0 and _canonical_model_connector_origin(origin.stdout.strip()):
+            scoped_ok, scoped_why = _canonical_model_connector_pin_and_read_scope_edit(old, new, expect_ref)
+        else:
+            scoped_ok, scoped_why = False, "read-scope amendment requires a canonical enrolled GitHub origin"
+        if scoped_ok:
+            return True, scoped_why
+        # Preserve the existing strictly line-bound pin-only case. A permission-bearing change
+        # cannot fall through this grammar because every non-pin changed line is refused below.
+    if path == ".github/workflows/ci.yml":
+        origin = subprocess.run(["git", "-C", str(repo), "remote", "get-url", "origin"],
+                                capture_output=True, text=True)
+        if origin.returncode == 0 and _canonical_muneral_origin(origin.stdout.strip()):
+            scoped_ok, scoped_why = _canonical_muneral_pin_and_read_scope_edit(old, new, expect_ref)
+        else:
+            scoped_ok, scoped_why = False, "read-scope amendment is limited to the canonical Muneral GitHub origin"
+        if scoped_ok:
+            return True, scoped_why
+        # Any non-pin change remains refused by the original line-bound grammar below.
     if not isinstance(expect_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", expect_ref):
         return False, "no full40 program_ref from the head bundle — canonical pin replacements are unbound"
     before, after = old.splitlines(keepends=True), new.splitlines(keepends=True)
     if len(before) != len(after):
         return False, "a pin or context line was added or removed, not replaced in place"
     replacements = 0
+    first_migrations = 0
+    workflow_replacements = 0
+    input_replacements = 0
+    local_uses_before = sum(bool(LOCAL_WORKFLOW_PIN_RE.fullmatch(line.rstrip("\r\n")))
+                            for line in before)
     for previous, current in zip(before, after):
         if previous == current:
             continue
+        migration = False
         for pattern in (PROGRAM_REF_PIN_RE, CANONICAL_WORKFLOW_PIN_RE):
             was = pattern.fullmatch(previous.rstrip("\r\n"))
             now = pattern.fullmatch(current.rstrip("\r\n"))
             if was and now:
                 break
         else:
-            return False, f"a changed line is not a paired canonical pin: {current[:90]!r}"
-        old_context = previous[:was.start("ref")] + previous[was.end("ref"):]
-        new_context = current[:now.start("ref")] + current[now.end("ref"):]
+            was_local = LOCAL_WORKFLOW_PIN_RE.fullmatch(previous.rstrip("\r\n"))
+            now_canonical = CANONICAL_WORKFLOW_PIN_RE.fullmatch(current.rstrip("\r\n"))
+            if (path != ".github/workflows/graph-admission-call.yml" or not was_local
+                    or not now_canonical):
+                return False, f"a changed line is not a paired canonical pin: {current[:90]!r}"
+            if local_uses_before != 1:
+                return False, "first migration requires exactly one BASE local reusable-workflow uses line"
+            bound, binding_why = base_local_workflow_is_manifest_bound(repo, base)
+            if not bound:
+                return False, f"first migration refused: {binding_why}"
+            was, now = was_local, now_canonical
+            migration = True
+        if migration:
+            old_context = previous[:was.start("target")] + previous[was.end("target"):]
+            new_context = current[:now.start("target")] + current[now.end("ref"):]
+        else:
+            old_context = previous[:was.start("ref")] + previous[was.end("ref"):]
+            new_context = current[:now.start("ref")] + current[now.end("ref"):]
         if old_context != new_context:
             return False, "a pin's indentation, quoting, comment or line context changed"
         if now.group("ref") != expect_ref:
             return False, (f"the new pin {now.group('ref')[:12]} is not the head bundle's program_ref "
                            f"{expect_ref[:12]} — a caller that pins one SHA and vendors another")
         replacements += 1
+        first_migrations += int(migration)
+        workflow_replacements += int(bool(now is not None and now.re is CANONICAL_WORKFLOW_PIN_RE))
+        input_replacements += int(bool(now is not None and now.re is PROGRAM_REF_PIN_RE))
+    if first_migrations > 1:
+        return False, "only one first-migration local workflow uses line is allowed"
+    if first_migrations and local_uses_before != 1:
+        return False, "first migration requires exactly one BASE local reusable-workflow uses line"
+    if first_migrations and (workflow_replacements != 1 or input_replacements != 1):
+        return False, ("first migration must contain exactly one uses-line migration paired with exactly one "
+                       "existing program_ref input pin update")
     return True, (f"{replacements} paired canonical pin replacement(s), every new value equal to the "
                   f"head bundle's program_ref {str(expect_ref)[:12]}")
+
+
+def _canonical_auth_origin(origin: str) -> bool:
+    """Accept only the canonical Auth repository on github.com, in HTTPS or SSH form."""
+    return bool(re.fullmatch(
+        r"(?:https://github\.com/Arcanada-one/auth-arcana(?:\.git)?|"
+        r"ssh://git@github\.com/Arcanada-one/auth-arcana(?:\.git)?|"
+        r"git@github\.com:Arcanada-one/auth-arcana(?:\.git)?)",
+        origin))
+
+
+def _canonical_model_connector_origin(origin: str) -> bool:
+    """Accept only the canonical Model Connector repository on github.com."""
+    return bool(re.fullmatch(
+        r"(?:https://github\.com/Arcanada-one/model-connector(?:\.git)?|"
+        r"ssh://git@github\.com/Arcanada-one/model-connector(?:\.git)?|"
+        r"git@github\.com:Arcanada-one/model-connector(?:\.git)?)",
+        origin))
+
+
+def _canonical_model_connector_pin_and_read_scope_edit(old: str, new: str,
+                                                         expect_ref: str | None) -> tuple[bool, str]:
+    """Permit only the paired bundle pin and caller-level read-only Actions scope.
+
+    The existing local reusable-workflow reference, trigger, trust pin, and job
+    configuration must remain unchanged. Parsing is inert and rejects ambiguous YAML.
+    """
+    if not isinstance(expect_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", expect_ref):
+        return False, "no full40 head bundle program_ref"
+    try:
+        import yaml
+
+        def parse(raw: str):
+            try:
+                for token in yaml.scan(raw):
+                    if isinstance(token, (yaml.tokens.AliasToken, yaml.tokens.AnchorToken,
+                                          yaml.tokens.TagToken, yaml.tokens.DirectiveToken)):
+                        raise ValueError("workflow aliases/tags/directives unsupported")
+
+                class UniqueLoader(yaml.BaseLoader):
+                    pass
+
+                def unique_mapping(loader, node):
+                    result = {}
+                    for key_node, value_node in node.value:
+                        key = loader.construct_object(key_node)
+                        if key in result:
+                            raise ValueError("duplicate workflow mapping key")
+                        result[key] = loader.construct_object(value_node)
+                    return result
+
+                UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+                value = yaml.load(raw, Loader=UniqueLoader)
+            except yaml.YAMLError as exc:
+                raise ValueError("malformed workflow YAML") from exc
+            if not isinstance(value, dict):
+                raise ValueError("caller workflow is not a YAML mapping")
+            return value
+
+        before, after = parse(old), parse(new)
+        before_jobs, after_jobs = before.get("jobs"), after.get("jobs")
+        before_job = before_jobs.get("graph-admission") if isinstance(before_jobs, dict) else None
+        after_job = after_jobs.get("graph-admission") if isinstance(after_jobs, dict) else None
+        if not isinstance(before_job, dict) or not isinstance(after_job, dict):
+            return False, "canonical graph-admission job is absent"
+        local_uses = "./.github/workflows/graph-admission.yml"
+        if before_job.get("uses") != local_uses or after_job.get("uses") != local_uses:
+            return False, "local reusable-workflow reference changed"
+        before_inputs, after_inputs = before_job.get("with"), after_job.get("with")
+        if not isinstance(before_inputs, dict) or not isinstance(after_inputs, dict):
+            return False, "caller input map is absent"
+        old_ref, new_ref = before_inputs.get("program_ref"), after_inputs.get("program_ref")
+        if not isinstance(old_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", old_ref):
+            return False, "base caller program_ref is not a full40 pin"
+        if old_ref == new_ref or new_ref != expect_ref:
+            return False, "caller program_ref did not move to the head bundle pin"
+        if before.get("permissions") != {"contents": "read"}:
+            return False, "base caller permissions are not exactly contents: read"
+        if after.get("permissions") != {"contents": "read", "actions": "read"}:
+            return False, "head caller permissions are not exactly read-only contents and actions"
+        before_cmp, after_cmp = copy.deepcopy(before), copy.deepcopy(after)
+        before_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        after_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        after_cmp["permissions"] = {"contents": "read"}
+        if before_cmp != after_cmp:
+            return False, "caller change includes fields beyond the paired pin and exact read-only scope"
+    except (ImportError, ValueError, TypeError, KeyError) as exc:
+        return False, "Model Connector caller cannot be safely classified: " + str(exc)
+    return True, "canonical Model Connector pin and caller-level contents/actions read scope are paired"
+
+
+def _canonical_muneral_origin(origin: str) -> bool:
+    """Accept only the canonical Muneral repository on github.com, in HTTPS or SSH form."""
+    return bool(re.fullmatch(
+        r"(?:https://github\.com/Arcanada-one/muneral(?:\.git)?|"
+        r"ssh://git@github\.com/Arcanada-one/muneral(?:\.git)?|"
+        r"git@github\.com:Arcanada-one/muneral(?:\.git)?)",
+        origin))
+
+
+def _canonical_muneral_pin_and_read_scope_edit(old: str, new: str,
+                                                expect_ref: str | None) -> tuple[bool, str]:
+    """Accept the paired Muneral bundle input, read map, and narrow StageEvidence fields.
+
+    The local reusable workflow is already selected by the Muneral caller and remains byte-for-byte
+    the same scalar. The YAML is inert data: ambiguous mappings and YAML indirection are refused.
+    """
+    if not isinstance(expect_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", expect_ref):
+        return False, "no full40 program_ref from the head bundle — canonical Muneral input is unbound"
+    try:
+        import yaml
+        stage_keys = ("stage_evidence_path", "stage_evidence_root", "stage_evidence_required")
+        read_permissions = {"contents": "read", "actions": "read"}
+
+        def parse(raw: str):
+            try:
+                for token in yaml.scan(raw):
+                    if isinstance(token, (yaml.tokens.AliasToken, yaml.tokens.AnchorToken,
+                                          yaml.tokens.TagToken, yaml.tokens.DirectiveToken)):
+                        raise ValueError("workflow aliases/tags/directives unsupported")
+
+                class UniqueLoader(yaml.BaseLoader):
+                    pass
+
+                def unique_mapping(loader, node):
+                    result = {}
+                    for key_node, value_node in node.value:
+                        key = loader.construct_object(key_node)
+                        if key in result:
+                            raise ValueError("duplicate workflow mapping key")
+                        result[key] = loader.construct_object(value_node)
+                    return result
+
+                UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+                value = yaml.load(raw, Loader=UniqueLoader)
+                root_node = yaml.compose(raw, Loader=yaml.BaseLoader)
+            except yaml.YAMLError as exc:
+                raise ValueError("malformed workflow YAML") from exc
+            if not isinstance(value, dict):
+                raise ValueError("caller workflow is not a YAML mapping")
+            return value, root_node
+
+        def node_at(root_node, *keys):
+            node = root_node
+            for key in keys:
+                if not isinstance(node, yaml.nodes.MappingNode):
+                    return None
+                matches = [value_node for key_node, value_node in node.value
+                           if isinstance(key_node, yaml.nodes.ScalarNode) and key_node.value == key]
+                if len(matches) != 1:
+                    return None
+                node = matches[0]
+            return node
+
+        def stage_state(workflow, root_node):
+            jobs = workflow.get("jobs")
+            job = jobs.get("graph-admission") if isinstance(jobs, dict) else None
+            inputs = job.get("with") if isinstance(job, dict) else None
+            if not isinstance(inputs, dict):
+                return None, False, "Muneral graph-admission input map is absent or malformed"
+            present = set(stage_keys) & set(inputs)
+            if not present:
+                return "absent", False, ""
+            if present != set(stage_keys):
+                return None, True, "StageEvidence inputs must be supplied as the exact three-field tuple"
+
+            path, root, required = (inputs.get(key) for key in stage_keys)
+            path_node = node_at(root_node, "jobs", "graph-admission", "with", stage_keys[0])
+            root_value_node = node_at(root_node, "jobs", "graph-admission", "with", stage_keys[1])
+            required_node = node_at(root_node, "jobs", "graph-admission", "with", stage_keys[2])
+            string_tag = "tag:yaml.org,2002:str"
+            if (not isinstance(path_node, yaml.nodes.ScalarNode) or path_node.tag != string_tag
+                    or not isinstance(root_value_node, yaml.nodes.ScalarNode)
+                    or root_value_node.tag != string_tag):
+                return None, True, "StageEvidence path and root must be scalar strings"
+            if (not isinstance(required_node, yaml.nodes.ScalarNode) or required_node.tag != string_tag
+                    or required_node.style is not None or required_node.value not in {"true", "false"}
+                    or required != required_node.value):
+                return None, True, "stage_evidence_required must be an unquoted native true or false boolean"
+            if not isinstance(path, str) or not isinstance(root, str):
+                return None, True, "StageEvidence path and root must be strings"
+            if path == "" and root == "" and required == "false":
+                return "absent", True, ""
+            if (path == MUNERAL_STAGE_EVIDENCE_PATH and root == MUNERAL_STAGE_EVIDENCE_ROOT
+                    and required == "true"):
+                return "present", True, ""
+            return None, True, ("StageEvidence must be either empty/empty/false or the fixed repo-relative "
+                                f"{MUNERAL_STAGE_EVIDENCE_PATH} under {MUNERAL_STAGE_EVIDENCE_ROOT} with true")
+
+        before, before_node = parse(old)
+        after, after_node = parse(new)
+        before_jobs, after_jobs = before.get("jobs"), after.get("jobs")
+        before_job = before_jobs.get("graph-admission") if isinstance(before_jobs, dict) else None
+        after_job = after_jobs.get("graph-admission") if isinstance(after_jobs, dict) else None
+        if not isinstance(before_job, dict) or not isinstance(after_job, dict):
+            return False, "canonical Muneral graph-admission job is absent or malformed"
+        local_uses = "./.github/workflows/graph-admission.yml"
+        if before_job.get("uses") != local_uses or after_job.get("uses") != local_uses:
+            return False, "Muneral graph-admission job must retain its exact local reusable-workflow uses"
+        old_inputs, new_inputs = before_job.get("with"), after_job.get("with")
+        if not isinstance(old_inputs, dict) or not isinstance(new_inputs, dict):
+            return False, "Muneral graph-admission input map is absent or malformed"
+
+        old_stage, old_has_stage_fields, old_stage_error = stage_state(before, before_node)
+        new_stage, new_has_stage_fields, new_stage_error = stage_state(after, after_node)
+        if old_stage_error:
+            return False, old_stage_error
+        if new_stage_error:
+            return False, new_stage_error
+        if old_stage == "present" and new_stage != "present":
+            return False, "a required StageEvidence input cannot be removed or made optional by a pin refresh"
+
+        old_permissions = before_job.get("permissions")
+        new_permissions = after_job.get("permissions")
+        stage_fields_in_scope = old_has_stage_fields or new_has_stage_fields
+        if stage_fields_in_scope:
+            if "permissions" in before_job and old_permissions != read_permissions:
+                return False, "base Muneral graph-admission permissions are not the exact read-only map"
+            if new_permissions != read_permissions:
+                return False, "StageEvidence inputs require the exact contents: read and actions: read job map"
+        else:
+            if "permissions" in before_job:
+                return False, "base Muneral graph-admission job already declares permissions; exact amendment is ambiguous"
+            if new_permissions != read_permissions:
+                return False, "Muneral graph-admission job must add exactly contents: read and actions: read"
+
+        old_ref, new_ref = old_inputs.get("program_ref"), new_inputs.get("program_ref")
+        if not isinstance(old_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", old_ref):
+            return False, "BASE Muneral program_ref is not a canonical full40 input"
+        if new_ref != expect_ref:
+            return False, "Muneral program_ref input must equal the head bundle program_ref"
+        if old_ref == new_ref:
+            return False, "read-scope addition must accompany an actual paired program_ref update"
+
+        before_cmp, after_cmp = copy.deepcopy(before), copy.deepcopy(after)
+        before_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        after_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        for key in stage_keys:
+            before_cmp["jobs"]["graph-admission"]["with"].pop(key, None)
+            after_cmp["jobs"]["graph-admission"]["with"].pop(key, None)
+        if "permissions" not in before_job:
+            del after_cmp["jobs"]["graph-admission"]["permissions"]
+        if before_cmp != after_cmp:
+            return False, ("Muneral caller change includes fields beyond the paired input, exact job read-map, "
+                           "and validated StageEvidence tuple")
+    except (ImportError, ValueError, TypeError, KeyError) as exc:
+        return False, "Muneral caller workflow cannot be safely classified: " + str(exc)
+    return True, ("canonical Muneral graph-admission job retains local uses; its program_ref is paired to the "
+                  "head bundle; caller changes are limited to the exact read-only job map and validated "
+                  "StageEvidence input tuple")
+
+
+def _canonical_caller_pin_and_read_scope_edit(old: str, new: str,
+                                               expect_ref: str | None) -> tuple[bool, str]:
+    """Accept only the paired canonical pins plus the exact Auth graph-job read scopes.
+
+    YAML is parsed as inert data. Aliases, tags and directives are refused; no workflow expression
+    or shell is evaluated. The semantic comparison permits exactly one added job-level permission
+    map while requiring every other caller field to remain unchanged.
+    """
+    if not isinstance(expect_ref, str) or not re.fullmatch(r"[0-9a-f]{40}", expect_ref):
+        return False, "no full40 program_ref from the head bundle — canonical caller pins are unbound"
+    try:
+        import yaml
+
+        def parse(raw: str):
+            for token in yaml.scan(raw):
+                if isinstance(token, (yaml.tokens.AliasToken, yaml.tokens.AnchorToken,
+                                      yaml.tokens.TagToken, yaml.tokens.DirectiveToken)):
+                    raise ValueError("workflow aliases/tags/directives unsupported")
+            class UniqueLoader(yaml.BaseLoader):
+                pass
+
+            def unique_mapping(loader, node):
+                result = {}
+                for key_node, value_node in node.value:
+                    key = loader.construct_object(key_node)
+                    if key in result:
+                        raise ValueError("duplicate workflow mapping key")
+                    result[key] = loader.construct_object(value_node)
+                return result
+
+            UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+            value = yaml.load(raw, Loader=UniqueLoader)
+            if not isinstance(value, dict):
+                raise ValueError("caller workflow is not a YAML mapping")
+            return value
+
+        before, after = parse(old), parse(new)
+        before_jobs, after_jobs = before.get("jobs"), after.get("jobs")
+        before_job = before_jobs.get("graph-admission") if isinstance(before_jobs, dict) else None
+        after_job = after_jobs.get("graph-admission") if isinstance(after_jobs, dict) else None
+        if not isinstance(before_job, dict) or not isinstance(after_job, dict):
+            return False, "canonical graph-admission caller job is absent or malformed"
+        if before.get("permissions") != {"contents": "read"} or after.get("permissions") != before.get("permissions"):
+            return False, "caller top-level permissions must remain exactly contents: read"
+        if before_job.get("permissions") is not None:
+            return False, "base caller graph-admission job already declares permissions; exact amendment is ambiguous"
+        if after_job.get("permissions") != {"contents": "read", "actions": "read"}:
+            return False, "caller job must add exactly contents: read and actions: read"
+        old_uses, new_uses = before_job.get("uses"), after_job.get("uses")
+        old_ref, new_ref = before_job.get("with"), after_job.get("with")
+        pin_re = re.compile(r"^Arcanada-one/arcanada-universal-program/\.github/workflows/graph-admission\.yml@([0-9a-f]{40})$")
+        if not isinstance(old_uses, str) or not pin_re.fullmatch(old_uses):
+            return False, "base caller must already use the canonical full40 Program workflow"
+        match = pin_re.fullmatch(new_uses) if isinstance(new_uses, str) else None
+        if not match or match.group(1) != expect_ref:
+            return False, "head caller reusable-workflow pin must equal the head bundle program_ref"
+        if not isinstance(old_ref, dict) or not isinstance(new_ref, dict):
+            return False, "caller input map is absent or malformed"
+        if old_ref.get("program_ref") != old_uses.rsplit("@", 1)[1]:
+            return False, "base caller program_ref does not match its canonical reusable-workflow pin"
+        if new_ref.get("program_ref") != expect_ref:
+            return False, "head caller program_ref does not match the head bundle"
+        if old_uses == new_uses or old_ref.get("program_ref") == new_ref.get("program_ref"):
+            return False, "exact caller read-scope amendment must accompany an actual paired Program pin update"
+        # Erase only the two paired SHA values and the single authorized permission addition.
+        before_cmp, after_cmp = copy.deepcopy(before), copy.deepcopy(after)
+        before_cmp["jobs"]["graph-admission"]["uses"] = "<paired-program-pin>"
+        after_cmp["jobs"]["graph-admission"]["uses"] = "<paired-program-pin>"
+        before_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        after_cmp["jobs"]["graph-admission"]["with"]["program_ref"] = "<paired-program-pin>"
+        del after_cmp["jobs"]["graph-admission"]["permissions"]
+        if before_cmp != after_cmp:
+            return False, "caller change includes fields beyond the paired canonical pins and exact read-scope map"
+    except (ImportError, ValueError, TypeError, KeyError) as exc:
+        return False, "caller workflow cannot be safely classified: " + str(exc)
+    return True, ("canonical Program uses/program_ref pins are paired to the head bundle; the only additional "
+                  "caller change is graph-admission job permissions contents: read and actions: read")
 
 
 # ============================================================================================
@@ -647,8 +1115,62 @@ def split_self_update_receipt(repo: Path, base: str, head: str, outside: list[st
     if not ok:
         return [], list(outside), ev
     ev["admitted"] = path
-    ev["work_item"] = work_item_id((json.loads(git(repo, "show", f"{head}:{path}")) or {}).get("work_item"))
-    return [path], [p for p in outside if p != path], ev
+    receipt = json.loads(git(repo, "show", f"{head}:{path}"))
+    ev["work_item"] = work_item_id(receipt.get("work_item"))
+    # This only classifies exact inert records, never grants a verifier verdict or an exemption.
+    # CAN consumption is re-derived from Git; unchanged/unused claims license no sibling paths.
+    verdicts, verifiers = receipt.get("verdicts"), receipt.get("verifiers")
+    if not isinstance(verdicts, list) or not isinstance(verifiers, list):
+        ev["canary_record_refusals"] = ["unsupported receipt verdict/verifier structure"]
+        return [path], [p for p in outside if p != path], ev
+    cashed = {vid for row in verdicts if isinstance(row, dict)
+              and row.get("verdict") == "verified" and isinstance(row.get("verifier_ids"), list)
+              for vid in row["verifier_ids"] if isinstance(vid, str)}
+    records: set[str] = set()
+    failures: list[str] = []
+    for verifier in verifiers:
+        if (not isinstance(verifier, dict) or verifier.get("kind") != "canary"
+                or not isinstance(verifier.get("id"), str) or verifier.get("id") not in cashed):
+            continue
+        ref = verifier.get("output_ref")
+        # No directory licence. Only a nested JSON record named by this receipt is considered.
+        if (not isinstance(ref, str) or not re.fullmatch(r"receipts/graph/[^/]+/[^/]+\.json", ref)
+                or ref.startswith(LEDGER_REL + "/") or ref not in outside):
+            continue
+        try:
+            rows, errors, doc = canary_evidence.consume(repo / ref, repo, head, at_head=ref)
+            if errors:
+                raise ValueError("; ".join(errors[:3]))
+            entities = verifier.get("entities")
+            if (not isinstance(entities, list) or not entities or any(
+                    entity not in rows or rows[entity].get("verdict") != "verified" for entity in entities)):
+                raise ValueError("claimed entities are not verified by the committed result")
+            if doc.get("schema") != "CanaryResult/v2" or doc.get("read_only") is not True:
+                raise ValueError("only read-only original-plan-bound process results are supported")
+            if any(probe.get("kind") != "process" for probe in doc.get("probes", [])):
+                raise ValueError("unsupported dynamic canary evidence")
+            siblings = [doc["plan"]["path"], doc["subject"]["evidence"]["path"]]
+            if any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_-][A-Za-z0-9_.-]*\.json", name)
+                   for name in siblings):
+                raise ValueError("plan/source must be exact sibling JSON documents")
+            closure = {ref, *(ref.rsplit("/", 1)[0] + "/" + name for name in siblings)}
+            if len(closure) != 3:
+                raise ValueError("result, plan and source must be three distinct records")
+            if records and records != closure:
+                raise ValueError("one own CAR may classify only one distinct canary record triple")
+            for record in sorted(closure):
+                if (changed.get(record) != "A" or record not in outside
+                        or git_ok(repo, "cat-file", "-e", f"{base}:{record}")):
+                    raise ValueError(f"{record} is not an exact newly added record of this range")
+                mode = git(repo, "ls-tree", head, "--", record).split()[0]
+                if mode != "100644":
+                    raise ValueError(f"{record} is not a regular non-executable record (mode {mode})")
+            records.update(closure)
+        except (KeyError, IndexError, TypeError, ValueError, OSError, subprocess.SubprocessError) as exc:
+            failures.append(f"{ref}: {exc}")
+    ev["canary_records"] = sorted(records)
+    ev["canary_record_refusals"] = failures
+    return [path], [p for p in outside if p != path and p not in records], ev
 
 
 # ============================================================================================
@@ -802,6 +1324,16 @@ def ledger_record_path_refusal(repo: Path, base: str, head: str, path: str, boun
         return f"{path} does not parse as a {LEDGER_SCHEMA} object at base {base[:12]}"
     doc_b = doc_b if doc_b is not None else {"schema": LEDGER_SCHEMA, "work_item": doc_h.get("work_item"),
                                              "system": doc_h.get("system"), "attachments": []}
+    return ledger_record_document_refusal(path, wanted, doc_h, doc_b, bound)
+
+
+def ledger_record_document_refusal(path: str, wanted: str, doc_h: dict, doc_b: dict,
+                                   bound: list[dict]) -> str | None:
+    """Apply unchanged C06 clause (c) to parsed head/base ledger documents.
+
+    The stock gate supplies Git-read documents; attach uses this same predicate to
+    preflight the exact candidate bytes before it writes them.
+    """
     skel_h = {k: v for k, v in doc_h.items() if k not in ("attachments", "updated_at_utc")}
     skel_b = {k: v for k, v in doc_b.items() if k not in ("attachments", "updated_at_utc")}
     if canonical(skel_h) != canonical(skel_b):
@@ -1798,7 +2330,8 @@ def _selftest_output(raw: bytes) -> dict:
     return out
 
 
-def _bundle_selftest(bundle_root: Path, *, evidence: dict | None = None) -> tuple[int | None, int | None, str]:
+def _bundle_selftest(bundle_root: Path, *, evidence: dict | None = None,
+                     legacy_base: bool = False) -> tuple[int | None, int | None, str]:
     """→ (exit code, measured arm count, tail); retain full stdout/stderr in `evidence`.
 
     A FAIL summary measures a count, not a success. Missing, ambiguous, malformed or unfinished
@@ -1830,15 +2363,18 @@ def _bundle_selftest(bundle_root: Path, *, evidence: dict | None = None) -> tupl
     text = report["stdout"]["text"]
     # Only the single final aggregate is comparable. Per-battery totals, a duplicate aggregate,
     # zero measured arms, truncated output and contradictory totals cannot prove monotonicity.
-    summaries = re.findall(r"^TOTAL (PASS|FAIL): (\d+)/(\d+) checks across eight batteries "
-                           r"\((\d+) not_measured\)$", text, re.M)
+    # The signed pre-upgrade caller bundle reports three batteries. It can serve as
+    # B4's BASE measurement only; the candidate HEAD still owes the current eight.
+    batteries = r"(?:three|eight)" if legacy_base else "eight"
+    aggregate = (rf"TOTAL (PASS|FAIL): (\d+)/(\d+) checks across {batteries} batteries "
+                 r"\((\d+) not_measured\)")
+    summaries = re.findall(rf"^{aggregate}$", text, re.M)
     if report["complete"] and len(summaries) == 1:
         status, passed, total, nm = summaries[0]
         passed, total, nm = int(passed), int(total), int(nm)
         if (total > 0 and 0 <= passed <= total
                 and ((status == "PASS" and passed == total) or (status == "FAIL" and passed < total))
-                and re.fullmatch(r"TOTAL (PASS|FAIL): (\d+)/(\d+) checks across eight batteries "
-                                 r"\((\d+) not_measured\)", text.rstrip().splitlines()[-1])):
+                and re.fullmatch(aggregate, text.rstrip().splitlines()[-1])):
             report["summary"] = {"status": status, "passed": passed, "measured": total,
                                  "not_measured": nm}
             report["arms"] = total
@@ -2278,15 +2814,15 @@ def evaluate_self_update(repo: Path, base: str, head: str, files: list[dict], wo
     ev["declared_derived_artefacts"] = derived
     ev["self_update_receipt"] = receipt_ev
     b1 = _chk(ev, "B1", "SELF_UPDATE_SHAPE", not outside_real,
-              (f"{len(outside_real)} changed path(s) are neither bundle-managed, nor a bare program_ref pin "
+              (f"{len(outside_real)} changed path(s) are neither bundle-managed, nor an exactly validated canonical caller pin/read-scope amendment "
                f"update, nor a declared derived artefact ({'; '.join(outside_real[:3])}) — this is an ordinary "
                f"change wearing a bundle refresh's clothes"
                if outside_real else
                f"all {len(changed)} changed path(s) are bundle-managed at base or head"
-               + (f", except {len(pin_only)} caller workflow file(s) whose ONLY change is the program_ref pin, "
-                  f"updated to the head bundle's own program_ref "
-                  f"({str((man_h or {}).get('program_ref'))[:12]}) — the pin lives outside the bundle by "
-                  f"design, so that the bundle cannot vouch for it" if pin_only else "")
+               + (f", except {len(pin_only)} caller workflow file(s) with a paired canonical uses/program_ref pin "
+                  f"updated to the head bundle's own program_ref ({str((man_h or {}).get('program_ref'))[:12]}) "
+                  f"and only the exact graph-admission job permissions contents: read plus actions: read — "
+                  f"the caller is checked from its own Git source, never vouched for by the bundle" if pin_only else "")
                + (f", and {len(derived)} declared derived artefact(s) ({', '.join(derived[:3])}), which B6 "
                   f"has still to measure — appearing in the declaration is not yet a pass" if derived else "")
                + (f", and {declaration_rel}, which this refresh ADDS: the BOOTSTRAP clause of B6.1, "
@@ -2345,7 +2881,7 @@ def evaluate_self_update(repo: Path, base: str, head: str, files: list[dict], wo
         ids_b = _bundle_policy_check_ids(base_bundle) if base_bundle else None
         base_test: dict = {}
         if base_bundle:
-            rc_b, arms_b, _ = _bundle_selftest(base_bundle, evidence=base_test)
+            rc_b, arms_b, _ = _bundle_selftest(base_bundle, evidence=base_test, legacy_base=True)
         else:
             rc_b, arms_b = None, None
             base_test = {"exit_code": None, "arms": None, "complete": False, "summary": None,
@@ -2891,12 +3427,22 @@ def cashed_canary_ids(doc: dict, boundary_inferred: set[str]) -> set[str]:
     vds = doc.get("verdicts") if isinstance(doc.get("verdicts"), list) else []
     cited = {vid for rec in vds if isinstance(rec, dict) and rec.get("verdict") == "verified"
              for vid in (rec.get("verifier_ids") or []) if isinstance(vid, str)}
+    # Match schema_check's A2-270 owes_canary predicate: diagnostic scope
+    # alone spends nothing when the receipt honestly pauses/refuses. Admission
+    # and verified boundary claims still require committed canary evidence.
+    verified_entities = {rec.get("entity") for rec in vds
+                         if isinstance(rec, dict) and rec.get("verdict") == "verified"
+                         and isinstance(rec.get("entity"), str)}
+    admission = doc.get("admission")
+    admission_claim = isinstance(admission, dict) and admission.get("verdict") in (
+        "admitted", "admitted_with_exemptions")
+    boundary_claims = boundary_inferred if admission_claim else boundary_inferred & verified_entities
     out = set()
     for v in doc.get("verifiers") or []:
         if not isinstance(v, dict) or v.get("kind") not in {"canary", "shell_behavior"}:
             continue
         vid = v.get("id")
-        if vid in cited or (set(v.get("entities") or []) & boundary_inferred):
+        if vid in cited or (set(v.get("entities") or []) & boundary_claims):
             out.add(vid)
     return out
 
@@ -3075,7 +3621,19 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
          bundle_rel: str = DEFAULT_BUNDLE_DIR,
          structural_workdir: Path | None = None,
          base_branch: str | None = None,
-         origin_association_path: Path | None = None) -> dict:
+         origin_association_path: Path | None = None,
+         stage_evidence_path: Path | None = None,
+         stage_evidence_root: Path | None = None,
+         current_source_userpath_result: Path | None = None,
+         current_source_userpath_root: Path | None = None,
+         current_source_userpath_exit: int | None = None,
+         current_source_producer_exit: int | None = None,
+         current_source_program_tools_root: Path | None = None,
+         current_source_program_ref: str | None = None,
+         current_source_signing_key_fingerprint: str | None = None,
+         root_typecheck_ci_root: Path | None = None,
+         current_evaluator: dict | None = None,
+         github_token: str | None = None) -> dict:
     checks: list[dict] = []
     # A2-238. The policy's own words: `off` means "the attachment is not required (never used in a
     # PROGRAM-OWNED repository)", and `.github/workflows/graph-admission.yml` therefore defaults its
@@ -3115,7 +3673,6 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         src = (["--skip-receipt"] if bypass_flag else []) + [f"env:{k}" for k in env_bypass] + [f"phrase:{p}" for p in phrases]
         add("C01", "bypass attempt: " + ", ".join(src))
 
-    commits = range_commits(repo, base, head)
     files = range_files(repo, base, head)
     changed = {f["path"] for f in files}
 
@@ -3188,21 +3745,10 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
     elif event is not None and au_evidence.get("reason"):
         add("C15", au_evidence["reason"])
 
-    # bind receipts
-    bound, unbound = [], []
-    for p in receipt_paths:
-        doc, err = read_receipt(p)
-        rec = {"path": str(p), "digest": sha256_file(p) if p.exists() else None}
-        if doc is None:
-            rec.update({"bound": False, "reason": f"unreadable: {err}"})
-            unbound.append(rec)
-            continue
-        if not str(doc.get("schema", "")).startswith("ChangeAdmissionReceipt"):
-            continue  # a document that merely mentions the schema (a dossier, a readiness receipt) is not a receipt
-        rec["receipt_id"] = doc.get("receipt_id")
-        ok, why = receipt_binds(repo, doc, base, head, set(commits))
-        rec.update({"bound": ok, "reason": why})
-        (bound if ok else unbound).append(rec | {"_doc": doc})
+    # Bind through the shared range/candidate contract also required by native attach.
+    receipt_context = gate_receipt_context(repo, base, head, receipt_paths)
+    commits = receipt_context["commits"]
+    bound, unbound = receipt_context["bound"], receipt_context["unbound"]
 
     # C05 — a receipt was named for this change but belongs to another range
     if explicit_receipts:
@@ -3233,6 +3779,70 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             if isinstance(f, dict) and isinstance(f.get("path"), str):
                 covered.add(f["path"])
 
+        # DEC-AUP-0167 is a separate, exact-head StageEvidence path. It can satisfy the receipt's
+        # C09/C11 pause and, when work_item is null, replace the per-change ledger attachment with
+        # the stage-level delivery record. It never edits the receipt or admits a failed row, and
+        # every ordinary gate check below still runs.
+        stage_ok = False
+        stage_nm_entities: set[str] = set()
+        if stage_evidence_path is not None:
+            stage_doc, stage_problems = stage_evidence_for_receipt(
+                Path(rec["path"]), doc, repo, base, head, stage_evidence_path,
+                stage_evidence_root or Path(stage_evidence_path).parent,
+                expected_repo_name=repo_name or repo_remote_name(repo),
+                current_evaluator=current_evaluator, github_token=github_token)
+            preexisting_failed = (stage_doc.get("pre_existing_failed", [])
+                                  if isinstance(stage_doc, dict) else [])
+            if preexisting_failed:
+                rec["pre_existing_failed"] = preexisting_failed
+            if stage_problems:
+                rec["stage_evidence"] = {"verdict": "refuse", "reasons": stage_problems}
+                checks.append({"id": "STAGE-EVIDENCE", "code": "STAGE_EVIDENCE_REFUSED", "verdict": "refuse",
+                               "detail": "; ".join(stage_problems[:5]), "receipt": Path(rec["path"]).name})
+            else:
+                stage_ok = True
+                stage_nm_entities = {row["entity"] for row in stage_doc["nm_entities"]}
+                rec["stage_evidence"] = {"verdict": "eligible", "stage_id": stage_doc["stage_id"],
+                                          "raw_car_sha256": rec["digest"],
+                                          "authority_sha256": STAGE_AUTHORITY_SHA256,
+                                          "not_measured_entities": stage_doc["nm_entities"],
+                                          "path_coverage": stage_doc["path_coverage"],
+                                          "entity_coverage": stage_doc["entity_coverage"]}
+                if "current_evaluator_check" in stage_doc:
+                    rec["stage_evidence"]["current_evaluator_check"] = stage_doc["current_evaluator_check"]
+                checks.append({"id": "STAGE-EVIDENCE", "code": "STAGE_EVIDENCE_ELIGIBLE", "verdict": "admit",
+                               "detail": (f"{stage_doc['stage_id']} binds this exact CAR/range; stage evidence satisfies only "
+                                          "C09/C11 and null-work-item C13 while raw CAR verdicts remain unchanged"
+                                          + ("; current required evaluator remains PENDING_CURRENT_EVALUATOR"
+                                             if "current_evaluator_check" in stage_doc else "")),
+                               "receipt": Path(rec["path"]).name})
+
+        if any((current_source_userpath_result, current_source_userpath_root,
+                current_source_userpath_exit is not None, current_source_producer_exit is not None)):
+            current_doc, current_problems = current_source_stage_outcome_for_receipt(
+                Path(rec["path"]), doc, repo, base, head, current_source_userpath_result,
+                current_source_userpath_root, current_source_userpath_exit,
+                current_source_producer_exit, expected_repo_name=repo_name or repo_remote_name(repo),
+                program_tools_root=current_source_program_tools_root,
+                program_ref=current_source_program_ref,
+                signing_key_fingerprint=current_source_signing_key_fingerprint)
+            if stage_evidence_path is not None:
+                current_problems = ["current-source outcome cannot be combined with StageEvidence/v1"]
+                current_doc = {}
+            if current_problems:
+                rec["current_source_stage"] = {"verdict": "refuse", "reasons": current_problems}
+                checks.append({"id": "CURRENT-SOURCE-STAGE", "code": "CURRENT_SOURCE_STAGE_REFUSED",
+                               "verdict": "refuse", "detail": "; ".join(current_problems[:5]),
+                               "receipt": Path(rec["path"]).name})
+            else:
+                stage_ok = True
+                rec["current_source_stage"] = current_doc
+                checks.append({"id": "CURRENT-SOURCE-STAGE", "code": "CURRENT_SOURCE_STAGE_ELIGIBLE",
+                               "verdict": "admit",
+                               "detail": ("the exact current-source CLI outcome qualifies this admitted/verified or "
+                                          "paused-safe/NM-only raw CAR for DEC-AUP-0167; CAR bytes and verdicts remain unchanged"),
+                               "receipt": Path(rec["path"]).name})
+
         stale = (doc.get("staleness") or {}).get("verdict")
         if stale != "fresh":
             add("C07", f"{Path(rec['path']).name}: staleness.verdict={stale!r}")
@@ -3247,6 +3857,9 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
                 coverage_problems = impact_pair.receipt_problems(repo, doc, origin_binding=origin_binding)
                 coverage_problems += full_suite_ci.receipt_errors(
                     repo, head, impact_pair.build_graph.source_repo_name(repo), doc.get("verifiers", []))
+                coverage_problems += full_suite_ci.root_typecheck_receipt_errors(
+                    repo, base, head, impact_pair.build_graph.source_repo_name(repo), doc.get("verifiers", []),
+                    root_typecheck_ci_root, token=github_token)
             if origin_binding is not None and "proof" in origin_binding:
                 rec["origin_association_proof"] = origin_binding["proof"]
         except Exception as exc:
@@ -3363,7 +3976,10 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             if probe_downgrades:
                 rec["probe_downgrades"] = dict(sorted(probe_downgrades.items()))
 
-        failed = sorted(e for e, v in verdict_of.items() if v == "failed" and e not in valid_exempt)
+        preexisting_entities = {row.get("entity") for row in rec.get("pre_existing_failed", [])
+                                if isinstance(row, dict) and row.get("disposition") == "PRE_EXISTING_FAILED"}
+        failed = sorted(e for e, v in verdict_of.items()
+                        if v == "failed" and e not in valid_exempt and e not in preexisting_entities)
         notm = sorted(e for e, v in verdict_of.items() if v == "not_measured" and e not in valid_exempt)
         rec["entity_counts"] = {
             "verified": sum(1 for v in verdict_of.values() if v == "verified"),
@@ -3373,14 +3989,19 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         }
         if failed:
             add("C08", f"{Path(rec['path']).name}: {len(failed)} entity(ies) failed without an exemption", failed)
-        if notm:
+        if notm and not stage_ok:
             add("C09", f"{Path(rec['path']).name}: {len(notm)} entity(ies) not_measured without an exemption", notm)
 
         av = (doc.get("admission") or {}).get("verdict")
         rec["admission"] = av
-        if av == "paused_safe":
+        raw_failed_entities = {e for e, v in verdict_of.items() if v == "failed"}
+        preexisting_only_refusal = (av == "refused" and bool(raw_failed_entities)
+                                    and raw_failed_entities == preexisting_entities)
+        if av == "paused_safe" and not stage_ok:
             add("C11", f"{Path(rec['path']).name}: the receipt itself pauses the change", verdict="paused_safe")
-        elif av not in ("admitted", "admitted_with_exemptions"):
+        elif preexisting_only_refusal and stage_ok:
+            pass
+        elif av not in ("admitted", "admitted_with_exemptions", "paused_safe"):
             add("C11", f"{Path(rec['path']).name}: admission.verdict={av!r}")
 
         # C12 — inferred/observed hop onto a service boundary without a canary.
@@ -3412,8 +4033,14 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             cashed=cashed_canary_ids(doc, set(boundary_inferred) - set(valid_exempt)), head=head)
         for problem in canary_problems:
             add("C12", f"{Path(rec['path']).name}: {problem}")
+        # An exact eligible DEC-AUP-0167 record may carry a C1 canary measurement that remains
+        # NOT_MEASURED. Keep that raw verdict honest; only the matching stage-bound NM entity is
+        # excused from this C12 refusal. A failed or verified claim, an invalid stage record, and
+        # every non-stage route still require the ordinary native canary coverage.
+        stage_nm_c1 = {entity for entity in stage_nm_entities
+                       if verdict_of.get(entity) == "not_measured"}
         boundary = [e for e in boundary_inferred
-                    if e not in canary_entities and e not in valid_exempt]
+                    if e not in canary_entities and e not in valid_exempt and e not in stage_nm_c1]
         if boundary:
             add("C12", f"{Path(rec['path']).name}: {len(boundary)} boundary entity(ies) reached over an "
                        f"inferred/observed edge with no canary", sorted(set(boundary)))
@@ -3431,15 +4058,69 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         # ownership says whether a file at that path can be anything but the artefact of that check.
         # A caller repository owns no ledger, so there the path stays ordinary content.
         ledger_rel = LEDGER_REL if is_program_repo(repo, repo_name) else None
-        record = trailing_record_commits(repo, base, head, bound, changed, wd_rc, ledger_rel)
-        uncovered = sorted(changed - covered - set(record["admitted_paths"]["receipts"])
-                           - set(record["admitted_paths"]["derived"])
-                           - set(record["admitted_paths"]["work_item_evidence"]))
+        gate_repo = impact_pair.impact.Repo(repo)
+        record = trailing_record_commits(gate_repo.top, base, head, bound, changed, wd_rc, ledger_rel)
+        record_paths = (set(record["admitted_paths"]["receipts"])
+                        | set(record["admitted_paths"]["derived"])
+                        | set(record["admitted_paths"]["work_item_evidence"]))
+        scope_prefix = gate_repo.prefix
+        scope_path_problems = []
+        if scope_prefix:
+            # Git's full-range diff and a scoped verifier receipt use different coordinates.
+            # Derive the prefix from the actual --repo path; receipt labels cannot choose it.
+            # Keep outside paths separate so a root-level `x.py` cannot collide with scoped `x.py`.
+            scoped_changed = {path[len(scope_prefix):] for path in changed
+                              if path.startswith(scope_prefix)}
+            outside_scope = {path for path in changed if not path.startswith(scope_prefix)}
+
+            scoped_covered = set()
+            ambiguous_scoped_paths = set()
+            for rec in bound:
+                seen_in_receipt = set()
+                doc = rec["_doc"]
+                for row in (doc.get("change_set") or {}).get("files") or []:
+                    path = row.get("path") if isinstance(row, dict) else None
+                    if not isinstance(path, str) or not path or path.startswith("/") or "\\" in path \
+                            or "\x00" in path or any(part in ("", ".", "..") for part in path.split("/")):
+                        scope_path_problems.append("malformed or traversal receipt change_set path")
+                        if isinstance(path, str) and path and not path.startswith("/") \
+                                and "\\" not in path and "\x00" not in path:
+                            parts = []
+                            escaped = False
+                            for part in path.split("/"):
+                                if part in ("", "."):
+                                    continue
+                                if part == "..":
+                                    if not parts:
+                                        escaped = True
+                                        break
+                                    parts.pop()
+                                else:
+                                    parts.append(part)
+                            alias = "/".join(parts)
+                            if not escaped and alias in scoped_changed:
+                                ambiguous_scoped_paths.add(alias)
+                        continue
+                    if path in seen_in_receipt:
+                        scope_path_problems.append("duplicate receipt change_set path is ambiguous")
+                        ambiguous_scoped_paths.add(path)
+                        continue
+                    seen_in_receipt.add(path)
+                    scoped_covered.add(path)
+
+            uncovered_scoped = {scope_prefix + path for path in scoped_changed
+                                if path not in scoped_covered or path in ambiguous_scoped_paths}
+            uncovered = sorted((uncovered_scoped | outside_scope) - record_paths)
+        else:
+            # Preserve canonical root-repository comparison exactly.
+            uncovered = sorted(changed - covered - record_paths)
         after = record["edited_after_receipt_head"]
-        if uncovered or after:
+        if uncovered or after or scope_path_problems:
             parts = []
             if uncovered:
                 parts.append(f"{len(uncovered)}/{len(changed)} changed file(s) are absent from the receipt change_set")
+            if scope_path_problems:
+                parts.append("scoped receipt paths refused: " + "; ".join(sorted(set(scope_path_problems))))
             if after:
                 parts.append(f"{len(after)} path(s) changed AFTER the receipt head by a commit no receipt has seen "
                              f"({', '.join(after[:4])}) — only the receipt file itself, a declared derived "
@@ -3455,10 +4136,21 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
                 "entries": [], "status": "not_measured"}
     if bound and enforcement != "off":
         missing = []
+        stage_eligible_without_work_item = []
         for rec in bound:
             doc = rec["_doc"]
             wi = doc.get("work_item")
             digest = rec["digest"]
+            stage_route = (rec.get("stage_evidence") or rec.get("current_source_stage"))
+            if (not wi and isinstance(stage_route, dict)
+                    and stage_route.get("verdict") == "eligible"):
+                stage_eligible_without_work_item.append(Path(rec["path"]).name)
+                evidence["entries"].append({"receipt": Path(rec["path"]).name, "work_item": None,
+                                            "ledger": False, "delivery": None,
+                                            "route": ("DEC-AUP-0167 current-source CLI outcome"
+                                                      if stage_route.get("schema") == "ProgramCurrentSourceStageEligibility/v1"
+                                                      else "DEC-AUP-0167 exact stage eligibility")})
+                continue
             entry = ledger_lookup(ledger_dir, wi, digest)
             evidence["entries"].append({"receipt": Path(rec["path"]).name, "work_item": wi,
                                         "ledger": bool(entry),
@@ -3470,7 +4162,8 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             elif enforcement == "muneral" and (entry.get("delivery") or {}).get("status") != "posted":
                 missing.append(f"{Path(rec['path']).name}: Muneral delivery "
                                f"{(entry.get('delivery') or {}).get('status')!r}")
-        evidence["status"] = "verified" if not missing else "not_measured"
+        evidence["status"] = ("not_measured" if missing else
+                               "stage_eligible" if stage_eligible_without_work_item else "verified")
         if missing:
             # The detail names the lever, because the two ways out are different actions and the
             # code alone points at neither: in the program repository the answer is to WRITE the
@@ -3478,6 +4171,10 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             add("C13", "; ".join(missing[:6]) + f" [enforcement={enforcement!r} from {enforcement_source}] — "
                        "attach the evidence with `admit_change.py attach --receipt <path> --work-item <id>`, "
                        "or pass `--enforcement off` if this repository does not own the ledger")
+        elif stage_eligible_without_work_item:
+            add("C13", f"{', '.join(stage_eligible_without_work_item)} has no declared work_item; exact DEC-AUP-0167 "
+                       "stage eligibility is the stage-level delivery record; raw CAR bytes and work_item=null "
+                       "remain unchanged", verdict="admit", code="WORK_ITEM_EVIDENCE_STAGE_ELIGIBLE")
 
     verdict = "admit"
     for c in checks:
@@ -3703,6 +4400,60 @@ def _repo_root_of(d: Path) -> Path | None:
     return Path(r.stdout.strip()).resolve() if r.returncode == 0 and r.stdout.strip() else None
 
 
+def _attach_ledger_relative_path(root: Path, ledger_file: Path) -> str:
+    """Validate the lexical ledger path without following it or its parent components."""
+    raw_path = Path(ledger_file)
+    if ".." in raw_path.parts:
+        raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger path contains traversal")
+    lexical_path = Path(os.path.abspath(os.fspath(raw_path)))
+    try:
+        relative = lexical_path.relative_to(root)
+    except ValueError:
+        raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger path is outside the repository") from None
+    if not relative.parts:
+        raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger path names the repository root")
+
+    current = root
+    for component in relative.parts[:-1]:
+        current = current / component
+        try:
+            mode = current.lstat().st_mode
+        except FileNotFoundError:
+            break
+        except OSError as exc:
+            raise AttachRefusal(f"ATTACH_LEDGER_INVALID: cannot inspect working ledger parent: {exc}") from None
+        if stat.S_ISLNK(mode):
+            raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger parent is a symlink")
+        if not stat.S_ISDIR(mode):
+            raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger parent is not a directory")
+
+    try:
+        leaf_mode = lexical_path.lstat().st_mode
+    except FileNotFoundError:
+        leaf_mode = None
+    except OSError as exc:
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: cannot inspect working ledger: {exc}") from None
+    if leaf_mode is not None and stat.S_ISLNK(leaf_mode):
+        raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger is a symlink")
+    if leaf_mode is not None and not stat.S_ISREG(leaf_mode):
+        raise AttachRefusal("ATTACH_LEDGER_INVALID: working ledger is not a regular file")
+
+    return relative.as_posix()
+
+
+def _attach_ledger_context(repo: Path, ledger_dir: Path, ledger_file: Path, base: str, head: str,
+                           bound: list[dict], work_item: str) -> tuple[Path, str, str, dict, str, dict, str]:
+    """Refuse unsafe lexical paths before resolving the ledger root or reading Git history."""
+    ledger_rel = _attach_ledger_relative_path(repo, ledger_file)
+    root = _repo_root_of(ledger_dir) or PROGRAM_ROOT
+    if root != repo:
+        raise AttachRefusal(f"ATTACH_REPO_MISMATCH: ledger root {root} differs from range repository {repo}")
+    covered = _covered_ledger_anchor(root, base, head, ledger_rel, bound)
+    anchor_ledger, anchor_label = _ledger_at_ref(root, covered, ledger_rel, work_item)
+    base_ledger, base_label = _ledger_at_ref(root, base, ledger_rel, work_item)
+    return root, ledger_rel, covered, anchor_ledger, anchor_label, base_ledger, base_label
+
+
 def cmd_attach(a) -> int:
     policy = load_policy(a.policy)
     receipt_path = Path(a.receipt).resolve()
@@ -3710,16 +4461,109 @@ def cmd_attach(a) -> int:
     if doc is None:
         print(f"unreadable receipt: {err}", file=sys.stderr)
         return 2
-    wi = a.work_item or work_item_id(doc.get("work_item"))
+    repo = repo_of(a)
+    try:
+        base, head = resolve_range(a)
+    except UsageError as e:
+        print(f"refuse ATTACH_RANGE_REQUIRED: {e}", file=sys.stderr)
+        return 2
+    explicit_candidates = getattr(a, "candidate_receipt", None) or []
+    candidates = select_gate_receipts(repo, explicit_candidates,
+                                      getattr(a, "receipt_dir", None))
+    if not candidates:
+        print("refuse ATTACH_GATE_CANDIDATES_REQUIRED: pass the same explicit receipts or receipt directories as gate",
+              file=sys.stderr)
+        return 2
+    event_path = getattr(a, "event_file", None)
+    if not event_path:
+        print("refuse ATTACH_GATE_EVENT_CONTEXT_REQUIRED: pass the same event input used by gate (use an empty object when absent)",
+              file=sys.stderr)
+        return 2
+    try:
+        event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"refuse ATTACH_GATE_EVENT_CONTEXT_INVALID: {e}", file=sys.stderr)
+        return 2
+    au_spec, _au_evidence = match_automated_author(policy, event)
+    if au_spec is not None:
+        print("refuse ATTACH_GATE_GENERATED_CANDIDATE_UNAVAILABLE: the stock gate may synthesize an event-bound receipt; "
+              "attach cannot prove byte-identical candidate parity before the gate run", file=sys.stderr)
+        return 2
+    context = gate_receipt_context(repo, base, head, candidates)
+    if explicit_candidates and context["unbound"]:
+        print("refuse ATTACH_GATE_CANDIDATE_UNBOUND: explicit gate candidates include unreadable or wrong-range receipts",
+              file=sys.stderr)
+        return 2
+    target_digest = sha256_file(receipt_path)
+    target_matches = [r for r in context["bound"]
+                      if Path(r["path"]).resolve() == receipt_path and r.get("digest") == target_digest]
+    if len(target_matches) != 1:
+        print("refuse ATTACH_TARGET_NOT_UNIQUELY_GATE_BOUND: target must be one exact-path, exact-byte receipt in the "
+              "gate-equivalent bound candidate set", file=sys.stderr)
+        return 2
+    receipt_wi = work_item_id(doc.get("work_item"))
+    if not receipt_wi:
+        print("no work item: a null receipt work_item cannot be assigned by attach", file=sys.stderr)
+        return 2
+    if a.work_item and a.work_item != receipt_wi:
+        print("refuse ATTACH_WORK_ITEM_MISMATCH: --work-item cannot transfer identity to a receipt", file=sys.stderr)
+        return 2
+    wi = receipt_wi
     if not wi:
         print("no work item: pass --work-item or set receipt.work_item", file=sys.stderr)
         return 2
     ledger_dir = Path(a.ledger_dir) if a.ledger_dir else LEDGER_DIR
     p = ledger_path(ledger_dir, wi)
-    root = _repo_root_of(ledger_dir) or PROGRAM_ROOT
+    try:
+        root, ledger_rel, covered, anchor_ledger, anchor_label, base_ledger, base_label = _attach_ledger_context(
+            repo, ledger_dir, p, base, head, context["bound"], wi)
+    except (ValueError, AttachRefusal) as e:
+        print(f"refuse {e}", file=sys.stderr)
+        return 2
+    bound_digests = {r.get("digest") for r in context["bound"] if r.get("digest")}
+    anchor_rows = {canonical(row) for row in anchor_ledger.get("attachments", [])}
+    for row in base_ledger.get("attachments", []):
+        if canonical(row) not in anchor_rows and _att_digest(row) not in bound_digests:
+            print(f"refuse ATTACH_CLAUSE_C_BASE_DIVERGENCE: actual base {base_label} has an unbound attachment "
+                  "absent or changed at the covered anchor; preserving it would violate stock C06 clause (c)",
+                  file=sys.stderr)
+            return 2
+    if p.is_symlink():
+        print("refuse ATTACH_LEDGER_INVALID: working ledger is a symlink", file=sys.stderr)
+        return 2
+    if p.exists():
+        if not p.is_file():
+            print("refuse ATTACH_LEDGER_INVALID: working ledger is not a regular file", file=sys.stderr)
+            return 2
+        try:
+            ledger = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"refuse ATTACH_LEDGER_INVALID: working ledger cannot be parsed: {e}", file=sys.stderr)
+            return 2
+        if (not isinstance(ledger, dict) or ledger.get("schema") != LEDGER_SCHEMA
+                or work_item_id(ledger.get("work_item")) != wi
+                or not isinstance(ledger.get("attachments"), list)):
+            print("refuse ATTACH_LEDGER_INVALID: working ledger schema, work item or attachments shape is invalid",
+                  file=sys.stderr)
+            return 2
+    else:
+        ledger = anchor_ledger
     try:
         att = build_attachment(receipt_path, doc, wi, a.label or f"ChangeAdmissionReceipt/v1 {doc.get('receipt_id')}",
                                a.uri, a.muneral_task_id, root=root)
+    except AttachRefusal as e:
+        print(f"refuse {e}", file=sys.stderr)
+        return 2
+
+    def candidate_ledger():
+        merged, outcome = merge_attachment(ledger, att, anchor_ledger, f"covered anchor {anchor_label}")
+        reason = ledger_record_document_refusal(ledger_rel, wi, merged, anchor_ledger, context["bound"])
+        if reason:
+            raise AttachRefusal(f"ATTACH_C06_PREFLIGHT: {reason}")
+        return merged, outcome
+
+    try:
+        ledger, outcome = candidate_ledger()
     except AttachRefusal as e:
         print(f"refuse {e}", file=sys.stderr)
         return 2
@@ -3746,15 +4590,14 @@ def cmd_attach(a) -> int:
                 "checked_at_utc": now_iso()}
             att["work_item"]["muneral_task_id"] = task_id
 
-    ledger = {"schema": "WorkItemEvidenceLedger/v1", "work_item": wi, "system": "muneral", "attachments": []}
-    if p.exists():
-        try:
-            ledger = json.loads(p.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            pass
     try:
-        base_ledger, base_where = _attach_base_ledger(root, p, a.base) if _stale_for(ledger, att) else (None, None)
-        ledger, outcome = merge_attachment(ledger, att, base_ledger, base_where)
+        # Delivery changes fields on the newly attached row, but it must not
+        # recompute the already selected semantic transition. Revalidate the
+        # final candidate with the stock C06 predicate while retaining the
+        # original action/superseded/kept_at_base result.
+        reason = ledger_record_document_refusal(ledger_rel, wi, ledger, anchor_ledger, context["bound"])
+        if reason:
+            raise AttachRefusal(f"ATTACH_C06_PREFLIGHT: {reason}")
     except AttachRefusal as e:
         print(f"refuse {e}", file=sys.stderr)
         return 2
@@ -3762,9 +4605,9 @@ def cmd_attach(a) -> int:
     write_json(p, ledger)
     for s in outcome["superseded"]:
         print(f"superseded {s['digest_old']} -> {s['digest_new']} ({s['receipt_path']}): not in the ledger at "
-              f"{base_where}, so the gate would refuse it (C06 CHANGE_SET_INCOMPLETE)", file=sys.stderr)
+              f"{anchor_label}, so the gate would refuse it (C06 CHANGE_SET_INCOMPLETE)", file=sys.stderr)
     for k in outcome["kept_at_base"]:
-        print(f"kept {k['digest_old']} ({k['receipt_path']}): present in the ledger at {base_where}; the gate "
+        print(f"kept {k['digest_old']} ({k['receipt_path']}): present in the ledger at {anchor_label}; the gate "
               f"refuses dropping it, and admits it untouched beside {att['evidence_ref']['digest']}", file=sys.stderr)
     print(json.dumps({"ledger": str(p), "work_item": wi, "digest": att["evidence_ref"]["digest"],
                       "action": outcome["action"], "superseded": outcome["superseded"],
@@ -3816,6 +4659,28 @@ def _attach_base_ledger(root: Path, ledger_file: Path, base: str | None) -> tupl
     except (json.JSONDecodeError, UnicodeDecodeError):
         raise AttachRefusal(f"ATTACH_BASE_UNKNOWN: {rel} at base {sha[:12]} does not parse; {hint}") from None
     return (doc if isinstance(doc, dict) else {"attachments": []}), f"base {sha[:12]}"
+
+
+def _ledger_at_ref(repo: Path, ref: str, path: str, work_item: str) -> tuple[dict, str]:
+    """Read one exact regular ledger object from Git, or return its empty state."""
+    mode = blob_mode(repo, ref, path)
+    label = f"{ref[:12]}"
+    if mode is None:
+        return {"schema": LEDGER_SCHEMA, "work_item": work_item, "system": "muneral", "attachments": []}, label
+    if mode not in REGULAR_MODES:
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: {path} at {label} is mode {mode}, not a regular file")
+    raw = subprocess.run(["git", "-C", str(repo), "show", f"{ref}:{path}"], capture_output=True)
+    if raw.returncode != 0:
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: cannot read {path} at {label}")
+    try:
+        doc = json.loads(raw.stdout)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: {path} at {label} is malformed JSON") from None
+    if not isinstance(doc, dict) or doc.get("schema") != LEDGER_SCHEMA:
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: {path} at {label} is not {LEDGER_SCHEMA}")
+    if work_item_id(doc.get("work_item")) != work_item or not isinstance(doc.get("attachments"), list):
+        raise AttachRefusal(f"ATTACH_LEDGER_INVALID: {path} at {label} has the wrong work item or attachments shape")
+    return doc, label
 
 
 def merge_attachment(ledger: dict, att: dict, base_ledger: dict | None, base_where: str | None) -> tuple[dict, dict]:
@@ -4594,9 +5459,14 @@ def selftest(receipt_out: Path | None, keep: bool = False) -> int:
         # meant: the only network call site is `muneral_deliver`, and the only route it can be given is
         # the policy's evidence route, which is neither a status nor a transition.
         src = Path(__file__).read_text(encoding="utf-8")
+        delivery_start = src.index("def muneral_deliver(")
+        delivery_end = src.find("\ndef ", delivery_start + 1)
+        delivery_src = src[delivery_start:delivery_end if delivery_end >= 0 else None]
+        # Read-only authenticated GitHub status checks are allowed above. The safety property is
+        # that this tool's sole network write remains the exact Muneral evidence route.
         needles = ["/trans" + "itions", "/sta" + "tus", "method=" + "\"POST\""]
         route = policy["work_item_evidence"]["muneral"].get("evidence_route")
-        ok = (not any(n in src for n in needles) and src.count("urlopen" + "(") == 1
+        ok = (not any(n in delivery_src for n in needles) and src.count("urlopen" + "(") == 1
               and route == "POST /tasks/{id}/evidence")
         results.append({"case": "no-status-write-path", "ok": ok})
         passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
@@ -4716,14 +5586,56 @@ def compiler_bound_command(a, repo, base, head):
 
 
 def cmd_gate(a) -> int:
+    if bool(getattr(a, "stage_evidence", None)) != bool(getattr(a, "stage_evidence_root", None)):
+        raise UsageError("--stage-evidence and --stage-evidence-root must be supplied together")
+    current_values = (getattr(a, "current_source_userpath_result", None),
+                      getattr(a, "current_source_userpath_root", None),
+                      getattr(a, "current_source_userpath_exit", None),
+                      getattr(a, "current_source_producer_exit", None))
+    current_program_values = (getattr(a, "current_source_program_tools_root", None),
+                              getattr(a, "current_source_program_ref", None),
+                              getattr(a, "current_source_signing_key_fingerprint", None))
+    current_evaluator_names = (
+        "current_evaluator_run_id", "current_evaluator_attempt", "current_evaluator_check_run_id",
+        "current_evaluator_job_key", "current_evaluator_repository", "current_evaluator_caller_workflow_ref",
+        "current_evaluator_caller_workflow_sha", "current_evaluator_workflow_repository",
+        "current_evaluator_workflow_file_path", "current_evaluator_workflow_ref",
+        "current_evaluator_workflow_sha", "current_evaluator_program_ref",
+    )
+    current_evaluator_values = tuple(getattr(a, name, None) for name in current_evaluator_names)
+    current_evaluator = None
+    if any(value is not None for value in current_evaluator_values):
+        if not all(value is not None for value in current_evaluator_values):
+            raise UsageError("current evaluator run, attempt, job, caller and canonical workflow identity must be supplied together")
+        if not getattr(a, "stage_evidence", None):
+            raise UsageError("current evaluator identity is only valid with explicit StageEvidence/v1")
+        if not isinstance(getattr(a, "_github_token", None), str) or not a._github_token:
+            raise UsageError("current evaluator validation requires the explicitly forwarded GitHub token")
+        current_evaluator = dict(zip((
+            "run_id", "attempt", "check_run_id", "job_key", "repository", "caller_workflow_ref",
+            "caller_workflow_sha", "workflow_repository", "workflow_file_path", "workflow_ref",
+            "workflow_sha", "program_ref",
+        ), current_evaluator_values))
+    if any(value is not None for value in current_values) and not all(value is not None for value in current_values):
+        raise UsageError("current-source stage result, root, userpath exit, and producer exit must be supplied together")
+    actual_repo_name = getattr(a, "repo_name", None) or repo_remote_name(Path(a.repo).resolve())
+    if (any(value is not None for value in current_values)
+            and actual_repo_name != "Arcanada-one/arcanada-universal-program"
+            and not (isinstance(current_program_values[0], Path)
+                     and all(isinstance(value, str) and value for value in current_program_values[1:]))):
+        raise UsageError("external current-source stage requires the pinned Program bundle, program_ref, and signer fingerprint")
+    if (actual_repo_name == "Arcanada-one/arcanada-universal-program"
+            and any(value is not None for value in current_program_values)):
+        raise UsageError("Program self-source current-source route cannot be overridden by an external bundle")
+    if any(value is not None for value in current_values) and getattr(a, "stage_evidence", None):
+        raise UsageError("current-source stage outcome cannot be combined with StageEvidence/v1")
     policy = load_policy(a.policy)
     repo = Path(a.repo).resolve()
     base, head = resolve_range(a)
     desc = a.description or ""
     if a.description_file:
         desc += "\n" + Path(a.description_file).read_text(encoding="utf-8")
-    search = [Path(p) if Path(p).is_absolute() else repo / p for p in (a.receipt_dir or ["receipts"])]
-    paths = [Path(p) for p in (a.receipt or [])] or discover_receipts(search)
+    paths = select_gate_receipts(repo, a.receipt, a.receipt_dir)
     event = None
     if a.event_file:
         ep = Path(a.event_file)
@@ -4752,7 +5664,23 @@ def cmd_gate(a) -> int:
                bundle_rel=getattr(a, "bundle_dir", None) or DEFAULT_BUNDLE_DIR,
                structural_workdir=(Path(a.workdir) / "gate4b") if a.workdir else None,
                base_branch=getattr(a, "base_branch", None),
-               origin_association_path=Path(a.origin_association) if getattr(a, "origin_association", None) else None)
+               origin_association_path=Path(a.origin_association) if getattr(a, "origin_association", None) else None,
+               stage_evidence_path=Path(a.stage_evidence) if getattr(a, "stage_evidence", None) else None,
+               stage_evidence_root=Path(a.stage_evidence_root) if getattr(a, "stage_evidence_root", None) else None,
+               current_source_userpath_result=(Path(a.current_source_userpath_result)
+                                               if getattr(a, "current_source_userpath_result", None) else None),
+               current_source_userpath_root=(Path(a.current_source_userpath_root)
+                                             if getattr(a, "current_source_userpath_root", None) else None),
+               current_source_userpath_exit=getattr(a, "current_source_userpath_exit", None),
+               current_source_producer_exit=getattr(a, "current_source_producer_exit", None),
+               current_source_program_tools_root=(Path(a.current_source_program_tools_root)
+                                                  if getattr(a, "current_source_program_tools_root", None) else None),
+               current_source_program_ref=getattr(a, "current_source_program_ref", None),
+               current_source_signing_key_fingerprint=getattr(a, "current_source_signing_key_fingerprint", None),
+               root_typecheck_ci_root=(Path(a.root_typecheck_ci_root)
+                                       if getattr(a, "root_typecheck_ci_root", None) else None),
+               current_evaluator=current_evaluator,
+               github_token=getattr(a, "_github_token", None))
     if a.out:
         command_output_json(a, Path(a.out), doc)
     if a.json:
@@ -4764,6 +5692,1182 @@ def cmd_gate(a) -> int:
         for c in doc["checks"]:
             print(f"  [{c['verdict']}] {c['code']}: {c['detail']}")
     return doc["exit_code"]
+
+
+# DEC-AUP-0167 is an externally adopted delivery authority.  It deliberately does not live in
+# the candidate Program policy bundle: a candidate policy or stage document cannot adopt itself.
+STAGE_AUTHORITY_PATH = Path("/home/dev/aup/root-orch/STAGE-DELIVERY-DEC-AUP-0167.md")
+STAGE_AUTHORITY_SHA256 = "sha256:50dab9d0c3d03ca52e3163f7c56edb61acab214adc548a5c533cdf248e9ae17e"
+STAGE_AUTHORITY_SOURCE_PATH = "governance/decisions/DEC-AUP-0167.md"
+STAGE_EVIDENCE_SCHEMA_PATH = PROGRAM_ROOT / "contracts/graph-verified-change/stage-evidence.v1.json"
+CURRENT_SOURCE_OUTCOME_FILES = (
+    "tools/ci/stage_userpath.py",
+    "tools/graph/ci_gate.py",
+    "tools/graph/test_stage_userpath.py",
+    "tools/graph/test_ci_gate_stage_input.py",
+    "tools/graph/build_graph.py",
+    "tools/graph/impact.py",
+    "tools/graph/verify.py",
+    "tools/graph/admit_change.py",
+    "tools/graph/source_input_contract.py",
+    "tools/graph/test_source_input_contract.py",
+    "contracts/graph-verified-change/source-input-contract.v1.json",
+    ".github/workflows/ci.yml",
+    ".github/workflows/graph-admission.yml",
+)
+
+
+def _stage_sha256(raw: bytes) -> str:
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _candidate_stage_authority(repo: Path, head: str) -> tuple[str | None, str | None]:
+    """Read DEC-0167 only from the exact candidate Git tree and verify its pinned bytes."""
+    try:
+        tree_row = subprocess.run(
+            ["git", "-C", str(repo), "ls-tree", "-z", head, "--", STAGE_AUTHORITY_SOURCE_PATH],
+            capture_output=True, check=True)
+        rows = [row for row in tree_row.stdout.split(b"\0") if row]
+        if len(rows) != 1:
+            return None, "candidate DEC-AUP-0167 source is missing or ambiguous"
+        metadata, separator, path = rows[0].partition(b"\t")
+        fields = metadata.split(b" ")
+        if (not separator or path != os.fsencode(STAGE_AUTHORITY_SOURCE_PATH)
+                or len(fields) != 3 or fields[0] != b"100644" or fields[1] != b"blob"
+                or not re.fullmatch(rb"[0-9a-f]{40,64}", fields[2])):
+            return None, "candidate DEC-AUP-0167 source is not a regular committed file"
+        committed = subprocess.run(
+            ["git", "-C", str(repo), "show", f"{head}:{STAGE_AUTHORITY_SOURCE_PATH}"],
+            capture_output=True, check=True).stdout
+        if _stage_sha256(committed) != STAGE_AUTHORITY_SHA256:
+            return None, "candidate DEC-AUP-0167 source pin mismatch"
+        source_file = repo / STAGE_AUTHORITY_SOURCE_PATH
+        cursor = repo
+        path_is_symlink = False
+        for component in Path(STAGE_AUTHORITY_SOURCE_PATH).parts:
+            cursor = cursor / component
+            if cursor.is_symlink():
+                path_is_symlink = True
+                break
+        if path_is_symlink or not source_file.is_file():
+            return None, "candidate DEC-AUP-0167 working source is missing or unsafe"
+        if source_file.read_bytes() != committed:
+            return None, "candidate DEC-AUP-0167 working source differs from its committed blob"
+        return fields[2].decode("ascii"), None
+    except (OSError, subprocess.CalledProcessError, RuntimeError) as exc:
+        return None, "candidate DEC-AUP-0167 source is unavailable: " + type(exc).__name__
+
+
+def current_source_stage_outcome_for_receipt(receipt_path: Path, receipt: dict, repo: Path,
+                                              base: str, head: str, userpath_result: Path | None,
+                                              userpath_root: Path | None, userpath_exit: int | None,
+                                              producer_exit: int | None,
+                                              expected_repo_name: str | None = None,
+                                              program_tools_root: Path | None = None,
+                                              program_ref: str | None = None,
+                                              signing_key_fingerprint: str | None = None) -> tuple[dict, list[str]]:
+    """Qualify same-run current-source CLI captures under the exact Program source authority.
+
+    This consumes ProgramStageUserpath/ProgramCurrentSourceCLIOutcome directly. It is deliberately
+    separate from StageEvidence/v1 and never rewrites the raw CAR or turns an NM row into verified.
+    Program's own PR binds its tools to the candidate Git tree; another caller must bind them to the
+    caller's exact signed Program bundle instead.
+    """
+    problems = []
+    if not userpath_result or not userpath_root or producer_exit is None or userpath_exit is None:
+        return {}, ["current-source stage route requires the exact userpath, source-CAR, and exit inputs"]
+    actual_repo_name = expected_repo_name or repo_remote_name(repo)
+    program_repo = actual_repo_name == "Arcanada-one/arcanada-universal-program"
+    trusted_bundle = None
+    bundle_authority_blob = None
+    try:
+        actual_head = git(repo, "rev-parse", "HEAD").strip()
+        actual_tree = git(repo, "rev-parse", f"{head}^{{tree}}").strip()
+        if actual_head != head:
+            return {}, ["current-source stage checkout HEAD differs from the native gate head"]
+        if program_repo:
+            authority_blob, authority_problem = _candidate_stage_authority(repo, head)
+            if authority_problem:
+                return {}, [authority_problem]
+        else:
+            if not program_tools_root or not program_ref or not signing_key_fingerprint:
+                return {}, ["external current-source route lacks the exact pinned Program bundle inputs"]
+            import ci_gate as stage_ci_gate
+            trusted_bundle, bundle_problems, signature_record = stage_ci_gate.verify_bundle(
+                program_tools_root, program_ref, signing_key_fingerprint, repo=repo)
+            if (bundle_problems or not isinstance(trusted_bundle, dict)
+                    or signature_record.get("verified") is not True
+                    or signature_record.get("fingerprint_pinned") is not True):
+                detail = "; ".join(bundle_problems[:3]) if bundle_problems else "bundle signer is not pinned"
+                return {}, ["external current-source Program bundle is not trusted: " + detail]
+            authority_rows = [row for row in trusted_bundle.get("files", [])
+                              if isinstance(row, dict) and row.get("path") == STAGE_AUTHORITY_SOURCE_PATH]
+            if len(authority_rows) != 1:
+                return {}, ["signed Program bundle does not carry one canonical DEC-AUP-0167 source"]
+            authority_path = program_tools_root / STAGE_AUTHORITY_SOURCE_PATH
+            authority_row = authority_rows[0]
+            if (authority_path.is_symlink() or not authority_path.is_file()
+                    or _stage_sha256(authority_path.read_bytes()) != STAGE_AUTHORITY_SHA256
+                    or authority_row.get("sha256") != hashlib.sha256(authority_path.read_bytes()).hexdigest()
+                    or not isinstance(authority_row.get("blob_oid"), str)
+                    or not re.fullmatch(r"[0-9a-f]{40,64}", authority_row["blob_oid"])):
+                return {}, ["signed Program bundle DEC-AUP-0167 source does not match the pinned authority bytes"]
+            authority_blob = authority_row["blob_oid"]
+        if receipt_path.is_symlink() or not receipt_path.is_file():
+            return {}, ["current-source stage raw CAR is missing or not a regular file"]
+        raw_car = receipt_path.read_bytes()
+        if json.loads(raw_car.decode("utf-8")) != receipt:
+            return {}, ["raw CAR bytes changed during current-source stage evaluation"]
+    except (OSError, UnicodeError, json.JSONDecodeError, RuntimeError) as exc:
+        return {}, ["current-source stage source or CAR is unavailable: " + type(exc).__name__]
+
+    # ci_gate owns the byte-level ProgramStageUserpath and process-capture validator. The native
+    # consumer calls that same validator independently at the point it decides stage eligibility.
+    try:
+        import ci_gate as stage_ci_gate
+        proof, capture_problems = stage_ci_gate.validate_stage_userpath_result(
+            str(userpath_result), str(userpath_root), True, repo, actual_repo_name,
+            base, head, userpath_exit, candidate_outcome_required=True,
+            tools_root=(repo if program_repo else program_tools_root),
+            trusted_bundle=trusted_bundle)
+    except Exception as exc:
+        return {}, ["current-source stage validator is unavailable: " + type(exc).__name__]
+    if capture_problems:
+        return {}, ["ProgramStageUserpath refused: " + "; ".join(capture_problems[:4])]
+    outcome = proof.get("candidate_cli_outcome") if isinstance(proof, dict) else None
+    result_digest = proof.get("result_sha256") if isinstance(proof, dict) else None
+    if not isinstance(result_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", result_digest):
+        return {}, ["ProgramStageUserpath result bytes were not bound by the native validator"]
+    subject = outcome.get("subject") if isinstance(outcome, dict) else None
+    expected_paths = sorted(row["path"] for row in range_files(repo, base, head))
+    if (not isinstance(subject, dict) or subject.get("repository") != actual_repo_name
+            or subject.get("base") != base or subject.get("head") != head
+            or subject.get("tree") != actual_tree or subject.get("changed_paths") != expected_paths):
+        return {}, ["current-source CLI outcome has a stale or wrong repository/base/head/tree/path tuple"]
+    program_source = outcome.get("program_source") if isinstance(outcome, dict) else None
+    source_rows = program_source.get("files") if isinstance(program_source, dict) else None
+    if not isinstance(source_rows, list):
+        return {}, ["current-source CLI outcome Program source inventory is incomplete"]
+    source_paths = []
+    for row in source_rows:
+        if not isinstance(row, dict) or not isinstance(row.get("path"), str):
+            return {}, ["current-source CLI outcome source inventory is incomplete or malformed"]
+        source_paths.append(row["path"])
+    # Program's own PR binds the implementation to its candidate tree. An external caller instead
+    # binds the same implementation to every signed file in the exact trusted Program bundle.
+    if program_repo:
+        if (program_source.get("origin") != "candidate_program_tree"
+                or program_source.get("program_ref") != head
+                or program_source.get("bundle_digest") is not None
+                or program_source.get("manifest_sha256") is not None
+                or len(source_paths) != len(CURRENT_SOURCE_OUTCOME_FILES)
+                or len(set(source_paths)) != len(source_paths)
+                or set(source_paths) != set(CURRENT_SOURCE_OUTCOME_FILES)):
+            return {}, ["current-source CLI Program source inventory is incomplete or unexpected"]
+        for row in source_rows:
+            if (not isinstance(row, dict) or set(row) != {"path", "sha256"}
+                    or not isinstance(row.get("sha256"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"])):
+                return {}, ["current-source CLI Program source pin is malformed"]
+            blob = subprocess.run(["git", "-C", str(repo), "show", f"{head}:{row['path']}"],
+                                  capture_output=True)
+            if blob.returncode != 0 or hashlib.sha256(blob.stdout).hexdigest() != row["sha256"]:
+                return {}, ["current-source CLI Program source pin differs from Git HEAD: " + row["path"]]
+    else:
+        expected_rows = [
+            {"path": row.get("path"), "sha256": row.get("sha256")}
+            for row in trusted_bundle.get("files", [])
+            if isinstance(row, dict) and row.get("verified_by_the_job") is not False
+        ] if isinstance(trusted_bundle, dict) and isinstance(trusted_bundle.get("files"), list) else []
+        if (program_source.get("origin") != "pinned_program_bundle"
+                or program_source.get("program_ref") != program_ref
+                or program_source.get("bundle_digest") != trusted_bundle.get("bundle_digest")
+                or len(source_paths) != len(expected_rows)
+                or len(set(source_paths)) != len(source_paths)
+                or source_rows != expected_rows):
+            return {}, ["current-source CLI Program source pins do not match the exact signed bundle"]
+    mismatch = stage_ci_gate.current_source_outcome_car_mismatch(
+        outcome, Path(userpath_root), receipt_path.resolve(strict=True), raw_car, producer_exit)
+    if mismatch:
+        return {}, ["current-source CLI outcome does not bind the selected raw CAR: " + mismatch]
+
+    change = receipt.get("change_set") if isinstance(receipt, dict) else None
+    admission = receipt.get("admission") if isinstance(receipt, dict) else None
+    rows = receipt.get("verdicts") if isinstance(receipt, dict) else None
+    if (not isinstance(change, dict) or change.get("mode") != "diff"
+            or change.get("base") != base or change.get("head") != head
+            or not isinstance(admission, dict)
+            or admission.get("verdict") not in {"admitted", "paused_safe"}
+            or not isinstance(rows, list) or not rows):
+        return {}, ["current-source stage route requires an admitted or paused-safe exact-range raw CAR"]
+    entities = [row.get("entity") for row in rows if isinstance(row, dict)]
+    if (len(entities) != len(rows) or any(not isinstance(entity, str) or not entity for entity in entities)
+            or len(set(entities)) != len(entities)):
+        return {}, ["current-source stage raw CAR verdict rows are malformed or duplicated"]
+    counts = {name: sum(row.get("verdict") == name for row in rows)
+              for name in ("verified", "not_measured", "failed")}
+    admitted_verified = (
+        admission.get("verdict") == "admitted"
+        and counts["verified"] == len(rows)
+        and counts["not_measured"] == 0
+        and counts["failed"] == 0
+        and producer_exit == 0
+    )
+    paused_safe_nm_only = (
+        admission.get("verdict") == "paused_safe"
+        and counts["verified"] > 0
+        and counts["not_measured"] > 0
+        and counts["failed"] == 0
+        and producer_exit == 1
+    )
+    if (sum(counts.values()) != len(rows)
+            or not (admitted_verified or paused_safe_nm_only)):
+        return {}, ["current-source stage route requires either a complete ADMITTED/verified producer-exit-0 CAR "
+                    "or the existing PAUSED_SAFE/verified-plus-NM producer-exit-1 CAR"]
+    raw_admission = admission["verdict"]
+    return {
+        "schema": "ProgramCurrentSourceStageEligibility/v1",
+        "verdict": "eligible",
+        "authority": {"id": "DEC-AUP-0167", "sha256": STAGE_AUTHORITY_SHA256,
+                       "source_path": STAGE_AUTHORITY_SOURCE_PATH,
+                       "git_blob": authority_blob},
+        "repository": actual_repo_name,
+        "base": base,
+        "head": head,
+        "tree": actual_tree,
+        "raw_car_sha256": _stage_sha256(raw_car),
+        "raw_car_admission": raw_admission,
+        "raw_car_counts": counts,
+        "not_measured_entities": sorted(row["entity"] for row in rows if row["verdict"] == "not_measured"),
+        "producer_outcome": "admitted_verified_exit_zero" if admitted_verified else "paused_safe_nm_exit_one",
+        "process_outcome": "ProgramCurrentSourceCLIOutcome/v1",
+        "userpath_result_sha256": result_digest,
+    }, problems
+
+
+def _stage_exact_keys(obj, required, optional=()) -> bool:
+    return isinstance(obj, dict) and set(required) <= set(obj) and set(obj) <= set(required) | set(optional)
+
+
+def _stage_git_blob_identity(repo: Path, rev: str, path: str) -> dict | None:
+    """Read one path's Git tree identity without reading its blob contents."""
+    try:
+        result = subprocess.run(["git", "-C", str(repo), "ls-tree", "-z", rev, "--", path],
+                                capture_output=True, check=True)
+        rows = [row for row in result.stdout.split(b"\0") if row]
+        if len(rows) != 1:
+            return None
+        metadata, separator, raw_path = rows[0].partition(b"\t")
+        fields = metadata.split(b" ")
+        if (not separator or len(fields) != 3 or raw_path != os.fsencode(path)
+                or fields[0] not in {b"100644", b"100755"} or fields[1] != b"blob"
+                or not re.fullmatch(rb"[0-9a-f]{40,64}", fields[2])):
+            return None
+        return {"mode": fields[0].decode("ascii"), "type": "blob", "oid": fields[2].decode("ascii")}
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _stage_preexisting_failed(receipt: dict, repo: Path, base: str, head: str,
+                              actual_paths: list[dict], authority: bytes) -> list[dict]:
+    """Project only the one explicitly qualified DEC-0167 unchanged failure.
+
+    This is deliberately an exact authority-derived case, not a general unchanged-file rule.
+    Git tree metadata proves identity without opening the excluded source body. The full impact
+    selection must also be present, internally count-consistent, and show no dependency edge to
+    the failed entity; missing or ambiguous impact evidence leaves the failure blocking.
+    """
+    try:
+        authority_text = authority.decode("utf-8")
+    except UnicodeDecodeError:
+        return []
+    bindings = re.findall(
+        r"First case: workspace PR1618, `([^`]+)` \(blob ([0-9a-f]{8,40}) both sides; "
+        r"PAXBT is outside the fleet — owner is the operator, managed from the Mac\)\.",
+        authority_text)
+    if len(bindings) != 1:
+        return []
+    path, blob_prefix = bindings[0]
+    entity = "code_unit:" + path
+    if any(not isinstance(row, dict) or not isinstance(row.get("path"), str)
+           or not isinstance(row.get("status"), str) for row in actual_paths):
+        return []
+    changed_paths = {row["path"] for row in actual_paths}
+    change = receipt.get("change_set") if isinstance(receipt.get("change_set"), dict) else {}
+    files = change.get("files") if isinstance(change.get("files"), list) else []
+    # The impact-pair checker intentionally keeps legacy receipts readable. In particular, it
+    # returns no problems for a non-diff receipt, an empty intersection with the Git diff, or a
+    # legacy empty selection before it compares paired graph digests and revision selections.
+    # None of those compatibility outcomes is proof that this failed entity was outside impact.
+    if change.get("mode") != "diff" or change.get("base") != base or change.get("head") != head:
+        return []
+    if any(not isinstance(row, dict) or not isinstance(row.get("path"), str)
+           or not isinstance(row.get("status"), str) for row in files):
+        return []
+    expected_files = sorted((row["path"], row["status"]) for row in actual_paths)
+    receipt_files = sorted((row["path"], row["status"]) for row in files)
+    if not expected_files or receipt_files != expected_files:
+        return []
+    for field, revision in (("graph", base), ("head_graph", head)):
+        binding = receipt.get(field)
+        if (not isinstance(binding, dict)
+                or binding.get("source_commit") != revision
+                or not isinstance(binding.get("graph_digest"), str)
+                or not binding["graph_digest"].strip()):
+            return []
+    revision_selection = receipt.get("revision_selection")
+    if (not isinstance(revision_selection, dict)
+            or set(revision_selection) != {"schema", "base", "head", "unmeasured_head_files"}
+            or revision_selection.get("schema") != "RevisionImpactSelection/v1"
+            or any(not isinstance(revision_selection.get(key), list)
+                   or any(not isinstance(item, str) or not item for item in revision_selection[key])
+                   or revision_selection[key] != sorted(set(revision_selection[key]))
+                   for key in ("base", "head", "unmeasured_head_files"))):
+        return []
+    if path in changed_paths or any(isinstance(row, dict) and
+                                    (row.get("path") == path or row.get("node_id") == entity
+                                     or entity in (row.get("node_ids") if isinstance(row.get("node_ids"), list) else []))
+                                    for row in files):
+        return []
+    failed = [row for row in receipt.get("verdicts", []) if isinstance(row, dict)
+              and row.get("entity") == entity and row.get("verdict") == "failed"]
+    if len(failed) != 1:
+        return []
+    base_identity = _stage_git_blob_identity(repo, base, path)
+    head_identity = _stage_git_blob_identity(repo, head, path)
+    if (not base_identity or not head_identity or base_identity != head_identity
+            or not base_identity["oid"].startswith(blob_prefix)):
+        return []
+
+    impact_set = receipt.get("impact_set")
+    if not isinstance(impact_set, dict):
+        return []
+    core, tail = impact_set.get("deterministic_core"), impact_set.get("inferred_tail")
+    fallback, total = impact_set.get("global_fallback"), impact_set.get("total")
+    if (not isinstance(core, list) or not isinstance(tail, list)
+            or not isinstance(fallback, dict) or fallback.get("triggered") is not False
+            or type(total) is not int):
+        return []
+    impact_entities = []
+    for row in core + tail:
+        if not isinstance(row, dict) or not isinstance(row.get("entity"), str) or not row["entity"]:
+            return []
+        impact_entities.append(row["entity"])
+    if total != len(impact_entities) or len(set(impact_entities)) != total or entity in impact_entities:
+        return []
+    try:
+        # Preconditions above prevent the native compatibility API's intentional legacy/empty
+        # early returns. Here a clean result means it rebuilt and compared both graph digests,
+        # the exact base/head selection, and both traversal arrays for this exact source range.
+        if impact_pair.receipt_problems(repo, receipt):
+            return []
+    except Exception:
+        return []
+    return [{"entity": entity, "disposition": "PRE_EXISTING_FAILED",
+             "reason": failed[0].get("reason"), "path": path,
+             "base_blob": base_identity["oid"], "head_blob": head_identity["oid"],
+             "impact_boundary": "complete selection; entity absent from deterministic_core and inferred_tail",
+             "owner_route": "operator (outside the fleet; managed from the Mac)"}]
+
+
+def _stage_authenticated_github_problems(repo_name: str, base: str, head: str,
+                                         pull_number: int, review_comment_id: int, *,
+                                         current_evaluator: dict | None = None,
+                                         github_token: str | None = None,
+                                         pending_current_evaluator: list[dict] | None = None) -> list[str]:
+    """Re-read PR approval and required checks from authenticated GitHub for this exact range."""
+    if (not isinstance(repo_name, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo_name)
+            or type(pull_number) is not int or pull_number < 1
+            or type(review_comment_id) is not int or review_comment_id < 1):
+        return ["stage pull request identity is invalid"]
+    canonical_caller_path = {
+        "Arcanada-one/muneral": ".github/workflows/ci.yml",
+    }.get(repo_name)
+
+    def get(endpoint, expected_type):
+        if current_evaluator is not None and (not isinstance(github_token, str) or not github_token):
+            raise ValueError("explicit forwarded GitHub token is required for current-evaluator validation")
+        had_token = "GH_TOKEN" in os.environ
+        previous_token = os.environ.get("GH_TOKEN")
+        try:
+            if current_evaluator is not None:
+                os.environ["GH_TOKEN"] = github_token
+            value = json.loads(full_suite_ci.github(endpoint))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError, subprocess.SubprocessError):
+            raise ValueError("authenticated GitHub evidence is unavailable or malformed")
+        finally:
+            if current_evaluator is not None:
+                if had_token:
+                    os.environ["GH_TOKEN"] = previous_token
+                else:
+                    os.environ.pop("GH_TOKEN", None)
+        if not isinstance(value, expected_type):
+            raise ValueError("authenticated GitHub evidence has an unexpected response shape")
+        return value
+
+    try:
+        prefix = f"repos/{repo_name}"
+        pr = get(f"{prefix}/pulls/{pull_number}", dict)
+        if (pr.get("number") != pull_number or pr.get("state") != "open"
+                or pr.get("draft") is True):
+            return ["stage pull request is not the exact open, non-draft request"]
+        base_info, head_info = pr.get("base"), pr.get("head")
+        base_repo = base_info.get("repo") if isinstance(base_info, dict) else None
+        head_repo = head_info.get("repo") if isinstance(head_info, dict) else None
+        author_info = pr.get("user")
+        author = author_info.get("login") if isinstance(author_info, dict) else None
+        if (not isinstance(base_repo, dict) or base_repo.get("full_name") != repo_name
+                or not isinstance(head_repo, dict) or head_repo.get("full_name") != repo_name
+                or not isinstance(base_info, dict) or base_info.get("sha") != base
+                or not isinstance(head_info, dict) or head_info.get("sha") != head
+                or not isinstance(author, str) or not author):
+            return ["authenticated pull request repository/base/head does not match the CAR range"]
+        base_ref = base_info.get("ref")
+        if not isinstance(base_ref, str) or not base_ref:
+            return ["authenticated pull request base ref is unavailable"]
+
+        comment = get(f"{prefix}/issues/comments/{review_comment_id}", dict)
+        expected_issue = f"https://api.github.com/repos/{repo_name}/issues/{pull_number}"
+        expected_comment_url = f"https://github.com/{repo_name}/pull/{pull_number}#issuecomment-{review_comment_id}"
+        body = comment.get("body")
+        if (comment.get("id") != review_comment_id or comment.get("issue_url") != expected_issue
+                or comment.get("html_url") != expected_comment_url or not isinstance(body, str)
+                or head not in body):
+            return ["selected authenticated review comment does not bind the exact PR and full head"]
+        verdict_lines = set()
+        for line in body.splitlines():
+            normalized = line.strip().upper()
+            normalized = re.sub(r"^#{1,6}\s+", "", normalized)
+
+            def strip_paired_markup(value):
+                markers = "*_`"
+                while value and (value[0] in markers or value[-1] in markers):
+                    opener = value[0]
+                    if opener not in markers:
+                        return None
+                    opening_width = len(value) - len(value.lstrip(opener))
+                    closing_width = len(value) - len(value.rstrip(opener))
+                    if opening_width != closing_width:
+                        return None
+                    value = value[opening_width:-closing_width].strip()
+                return value
+
+            # Markdown formatting is optional only when its boundary markers are paired
+            # with the same delimiter and width. Do not normalize malformed wrappers into
+            # an approval token.
+            if normalized.startswith(tuple("*_`")):
+                normalized = strip_paired_markup(normalized)
+                if normalized is None:
+                    continue
+            if normalized.startswith("VERDICT:"):
+                token = strip_paired_markup(normalized[len("VERDICT:"):].strip())
+                if token is None:
+                    continue
+                normalized = "VERDICT: " + token
+            else:
+                normalized = strip_paired_markup(normalized)
+                if normalized is None:
+                    continue
+            verdict_lines.add(normalized)
+        if not verdict_lines.intersection({"APPROVE", "VERDICT: APPROVE", "APPROVE_SOURCE",
+                                           "VERDICT: APPROVE_SOURCE"}):
+            return ["selected authenticated review comment does not contain an explicit approval verdict"]
+        commenter = comment.get("user")
+        if not isinstance(commenter, dict) or not isinstance(commenter.get("login"), str) or not commenter["login"]:
+            return ["selected authenticated review comment has no attributable author"]
+
+        from urllib.parse import quote
+        protection = get(f"{prefix}/branches/{quote(base_ref, safe='')}/protection/required_status_checks", dict)
+        required = []
+        checks = protection.get("checks")
+        contexts = protection.get("contexts")
+        if checks is not None:
+            if not isinstance(checks, list):
+                return ["required check configuration is malformed"]
+            for row in checks:
+                if not isinstance(row, dict) or not isinstance(row.get("context"), str) or not row["context"]:
+                    return ["required check configuration is malformed"]
+                app_id = row.get("app_id")
+                if app_id is not None and type(app_id) is not int:
+                    return ["required check app binding is malformed"]
+                required.append((row["context"], app_id))
+        if contexts is not None:
+            if not isinstance(contexts, list) or any(not isinstance(item, str) or not item for item in contexts):
+                return ["required status context configuration is malformed"]
+            required.extend((item, None) for item in contexts)
+        if not required or len({name for name, _ in required}) != len(required):
+            return ["branch protection has no unambiguous required checks"]
+
+        evaluator_check = None
+        if current_evaluator is not None:
+            if pending_current_evaluator is None:
+                return ["current evaluator requires a pending-result capture target"]
+            if canonical_caller_path is None:
+                return ["current evaluator repository has no supported canonical caller workflow binding"]
+            expected_fields = ("run_id", "attempt", "check_run_id", "job_key", "repository",
+                               "caller_workflow_ref", "caller_workflow_sha", "workflow_repository",
+                               "workflow_file_path", "workflow_ref", "workflow_sha", "program_ref")
+            if (not isinstance(current_evaluator, dict)
+                    or set(current_evaluator) != set(expected_fields)
+                    or any(type(current_evaluator.get(name)) is not int
+                           or current_evaluator[name] < 1 for name in ("run_id", "attempt", "check_run_id"))
+                    or any(not isinstance(current_evaluator.get(name), str) or not current_evaluator[name]
+                           for name in expected_fields[3:])):
+                return ["current evaluator identity is incomplete or malformed"]
+            if (current_evaluator["repository"] != repo_name
+                    or current_evaluator["job_key"] != "graph-admission"
+                    or current_evaluator["workflow_repository"] != "Arcanada-one/arcanada-universal-program"
+                    or current_evaluator["workflow_file_path"] != ".github/workflows/graph-admission.yml"):
+                return ["current evaluator is not the canonical repository workflow job"]
+            for sha_name in ("caller_workflow_sha", "workflow_sha", "program_ref"):
+                if not re.fullmatch(r"[0-9a-f]{40}", current_evaluator[sha_name]):
+                    return ["current evaluator workflow source SHA is malformed"]
+            if current_evaluator["workflow_sha"] != current_evaluator["program_ref"]:
+                return ["current reusable workflow SHA does not match the verified bundle program_ref"]
+            caller_prefix = repo_name + "/"
+            workflow_prefix = "Arcanada-one/arcanada-universal-program/"
+            caller_ref = current_evaluator["caller_workflow_ref"]
+            job_ref = current_evaluator["workflow_ref"]
+            if (not caller_ref.startswith(caller_prefix) or "@" not in caller_ref
+                    or not job_ref.startswith(workflow_prefix) or "@" not in job_ref):
+                return ["current evaluator workflow refs are not repository-qualified"]
+            caller_path_ref = caller_ref[len(caller_prefix):]
+            caller_path, caller_sep, caller_ref_name = caller_path_ref.rpartition("@")
+            job_path_ref = job_ref[len(workflow_prefix):]
+            job_path, job_sep, job_ref_name = job_path_ref.rpartition("@")
+            if (not caller_sep or not job_sep
+                    or not caller_path.startswith(".github/workflows/")
+                    or not caller_path.endswith((".yml", ".yaml"))
+                    or caller_ref_name != f"refs/pull/{pull_number}/merge"
+                    or job_path != current_evaluator["workflow_file_path"]
+                    or job_ref_name != current_evaluator["program_ref"]):
+                return ["current evaluator caller or reusable workflow path is not canonical"]
+            if not any(name == "graph-admission" and app_id == 15368 for name, app_id in required):
+                return ["protected checks do not contain the canonical graph evaluator"]
+            evaluator_check = {
+                "run_id": current_evaluator["run_id"],
+                "attempt": current_evaluator["attempt"],
+                "check_run_id": current_evaluator["check_run_id"],
+                "job_key": current_evaluator["job_key"],
+            }
+            run_prefix = f"{prefix}/actions/runs/{evaluator_check['run_id']}"
+            run_doc = get(run_prefix, dict)
+            run_repo = run_doc.get("repository")
+            pr_merge_sha = pr.get("merge_commit_sha")
+            allowed_caller_workflow_shas = {base, head}
+            allowed_run_head_shas = {head}
+            if isinstance(pr_merge_sha, str) and re.fullmatch(r"[0-9a-f]{40}", pr_merge_sha):
+                allowed_caller_workflow_shas.add(pr_merge_sha)
+                allowed_run_head_shas.add(pr_merge_sha)
+            run_path = caller_path + "@" + caller_ref_name
+            run_pull_requests = run_doc.get("pull_requests")
+            run_pull_matches = ([row for row in run_pull_requests if isinstance(row, dict)
+                                 and row.get("number") == pull_number
+                                 and isinstance(row.get("head"), dict)
+                                 and row["head"].get("sha") == head
+                                 and isinstance(row.get("base"), dict)
+                                 and row["base"].get("sha") == base]
+                                if isinstance(run_pull_requests, list) else [])
+            if (type(run_doc.get("id")) is not int
+                    or run_doc["id"] != evaluator_check["run_id"]
+                    or type(run_doc.get("run_attempt")) is not int
+                    or run_doc["run_attempt"] != evaluator_check["attempt"]
+                    or not isinstance(run_repo, dict) or run_repo.get("full_name") != repo_name
+                    or run_doc.get("head_sha") not in allowed_run_head_shas
+                    or run_doc.get("event") != "pull_request"
+                    or run_doc.get("status") != "in_progress" or run_doc.get("conclusion") is not None
+                    or run_doc.get("path") != run_path
+                    or current_evaluator["caller_workflow_sha"] not in allowed_caller_workflow_shas
+                    or len(run_pull_matches) != 1):
+                return ["authenticated current run does not bind the exact PR head and workflow source"]
+            jobs_doc = get(f"{run_prefix}/attempts/{evaluator_check['attempt']}/jobs?per_page=100", dict)
+            jobs = jobs_doc.get("jobs")
+            if (not isinstance(jobs, list) or type(jobs_doc.get("total_count")) is not int
+                    or jobs_doc["total_count"] != len(jobs) or len(jobs) >= 100
+                    or any(not isinstance(job, dict) for job in jobs)):
+                return ["authenticated current-attempt job inventory is incomplete or malformed"]
+            job_check_url = (f"https://api.github.com/repos/{repo_name}/check-runs/"
+                             f"{evaluator_check['check_run_id']}")
+            current_jobs = [job for job in jobs if job.get("check_run_url") == job_check_url]
+            named_jobs = [job for job in jobs if job.get("name") == evaluator_check["job_key"]]
+            if len(current_jobs) != 1 or len(named_jobs) != 1 or current_jobs != named_jobs:
+                return ["authenticated current attempt does not uniquely map the current job to its check run"]
+            job = current_jobs[0]
+            if (type(job.get("id")) is not int or job["id"] < 1
+                    or type(job.get("run_id")) is not int
+                    or job["run_id"] != evaluator_check["run_id"]
+                    or job.get("head_sha") != run_doc.get("head_sha")
+                    or job.get("head_sha") not in allowed_run_head_shas
+                    or job.get("name") != evaluator_check["job_key"]
+                    or job.get("status") != "in_progress" or job.get("conclusion") is not None):
+                return ["authenticated current evaluator job is not in progress on the exact candidate"]
+            from urllib.parse import urlsplit
+            parsed_check_url = urlsplit(job.get("check_run_url", ""))
+            if (parsed_check_url.scheme != "https" or parsed_check_url.netloc != "api.github.com"
+                    or parsed_check_url.path != f"/repos/{repo_name}/check-runs/{evaluator_check['check_run_id']}"
+                    or parsed_check_url.query or parsed_check_url.fragment or parsed_check_url.username
+                    or parsed_check_url.password):
+                return ["authenticated current job check-run URL is not the exact GitHub API resource"]
+
+        check_doc = get(f"{prefix}/commits/{head}/check-runs?per_page=100", dict)
+        runs = check_doc.get("check_runs")
+        if (not isinstance(runs, list) or type(check_doc.get("total_count")) is not int
+                or check_doc["total_count"] != len(runs) or len(runs) >= 100
+                or any(not isinstance(row, dict) or type(row.get("id")) is not int
+                       or row["id"] < 1 or not isinstance(row.get("name"), str)
+                       or not isinstance(row.get("head_sha"), str) for row in runs)):
+            return ["exact-head check-run inventory is incomplete or malformed"]
+        if current_evaluator is not None and evaluator_check is not None:
+            current_rows = [row for row in runs if isinstance(row, dict)
+                            and row.get("id") == evaluator_check["check_run_id"]]
+            if len(current_rows) != 1:
+                return ["current job check_run_url does not identify one exact-head check run"]
+            current_row = current_rows[0]
+            current_app = current_row.get("app")
+            if (type(current_row.get("id")) is not int or current_row["id"] < 1
+                    or current_row.get("name") != evaluator_check["job_key"]
+                    or current_row.get("head_sha") != head
+                    or not isinstance(current_app, dict) or current_app.get("id") != 15368
+                    or current_row.get("status") != "in_progress"
+                    or current_row.get("conclusion") is not None):
+                return ["current job check run does not match the exact protected pending check"]
+            if caller_path != canonical_caller_path:
+                return ["authenticated current evaluator does not use the canonical repository caller workflow"]
+        current_pending_record = None
+        for name, app_id in required:
+            matches = [r for r in runs if isinstance(r, dict) and r.get("name") == name
+                       and r.get("head_sha") == head
+                       and (app_id is None or (isinstance(r.get("app"), dict)
+                                               and r["app"].get("id") == app_id))]
+            if matches:
+                if any(type(item.get("id")) is not int or item["id"] < 1 for item in matches):
+                    return [f"required exact-head check {name!r} has a malformed check-run identity"]
+                latest = max(matches, key=lambda item: item.get("id", -1)
+                             if type(item.get("id")) is int else -1)
+                if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+                    if (current_evaluator is not None and evaluator_check is not None
+                            and name == "graph-admission" and app_id == 15368
+                            and latest.get("id") == evaluator_check["check_run_id"]
+                            and latest.get("head_sha") == head
+                            and latest.get("status") == "in_progress"
+                            and latest.get("conclusion") is None):
+                        current_pending_record = {
+                            "state": "PENDING_CURRENT_EVALUATOR",
+                            "check_run_id": evaluator_check["check_run_id"],
+                            "name": name,
+                            "app_id": app_id,
+                            "head_sha": head,
+                            "run_id": evaluator_check["run_id"],
+                            "attempt": evaluator_check["attempt"],
+                            "job_id": job["id"],
+                        }
+                        continue
+                    return [f"required exact-head check {name!r} is not successful"]
+                continue
+            if app_id is not None:
+                return [f"required exact-head check {name!r} from its protected app is missing"]
+            status_doc = get(f"{prefix}/commits/{head}/status", dict)
+            statuses = status_doc.get("statuses")
+            if (status_doc.get("sha") != head or not isinstance(statuses, list)
+                    or type(status_doc.get("total_count")) is not int
+                    or status_doc["total_count"] != len(statuses) or len(statuses) >= 100):
+                return ["exact-head status inventory is incomplete or malformed"]
+            context_rows = [s for s in statuses if isinstance(s, dict) and s.get("context") == name
+                            and s.get("sha") == head]
+            if not context_rows:
+                return [f"required exact-head status {name!r} is missing"]
+            latest_status = max(context_rows, key=lambda item: item.get("id", -1)
+                                if type(item.get("id")) is int else -1)
+            if latest_status.get("state") != "success":
+                return [f"required exact-head status {name!r} is not successful"]
+        if current_pending_record is not None:
+            pending_current_evaluator.append(current_pending_record)
+        return []
+    except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError) as exc:
+        return ["authenticated GitHub stage evidence refused: " + str(exc)[:240]]
+
+
+def _stage_process_problems(evidence: dict, repo: Path, candidate_head: str,
+                            source_head: str) -> tuple[list[str], dict[str, dict]]:
+    """Return only source-bound probe inputs and entity rows; callers cannot label their scope."""
+    problems = []
+    verified_runs = {}
+    runs = evidence.get("e2e_runs")
+    if not isinstance(runs, list) or not runs:
+        return ["at least one source-bound native stage process result is required"], verified_runs
+    seen = set()
+    for run in runs:
+        if not _stage_exact_keys(run, ("id", "result_ref", "probe_id")):
+            problems.append("stage process result reference fields are invalid")
+            continue
+        rid = run.get("id")
+        ref, probe_id = run.get("result_ref"), run.get("probe_id")
+        if not isinstance(rid, str) or not rid or rid in seen:
+            problems.append("stage process result ID is empty or duplicated")
+            continue
+        seen.add(rid)
+        if (not isinstance(ref, str) or not ref.startswith("receipts/graph/")
+                or not ref.endswith(".json") or not schema_check.repo_relative(ref)):
+            problems.append("stage process result must name a repository-relative committed graph JSON")
+            continue
+        if not isinstance(probe_id, str) or not probe_id:
+            problems.append("stage process probe ID is invalid")
+            continue
+        result_path = repo / ref
+        rows, binding_errors, doc = canary_evidence.consume(
+            result_path, repo, candidate_head, at_head=ref)
+        if binding_errors:
+            problems.append(f"{rid}: source-bound process result refused: " + "; ".join(binding_errors[:3]))
+            continue
+        if not isinstance(doc, dict) or doc.get("schema") != "CanaryResult/v2":
+            problems.append(f"{rid}: result is not a native CanaryResult/v2")
+            continue
+        subject = doc.get("subject")
+        if not isinstance(subject, dict) or subject.get("commit") != source_head:
+            problems.append(f"{rid}: measured process source does not match the raw CAR head")
+            continue
+        if doc.get("execution_freshness_not_measured"):
+            problems.append(f"{rid}: process execution inputs are not currently measurable")
+            continue
+        probes = doc.get("probes")
+        matches = [p for p in probes if isinstance(p, dict) and p.get("id") == probe_id] if isinstance(probes, list) else []
+        if len(matches) != 1:
+            problems.append(f"{rid}: result does not contain exactly one referenced process probe")
+            continue
+        probe = matches[0]
+        if (probe.get("kind") != "process" or probe.get("executed") is not True
+                or probe.get("execution_identity_unchanged") is not True
+                or probe.get("capture_complete") is not True
+                or probe.get("artifacts_verifiable") is not True
+                or probe.get("outcome") != "verified"
+                or probe.get("termination") != {"kind": "exit", "code": 0}):
+            problems.append(f"{rid}: referenced process lacks a complete verified zero-exit observation")
+            continue
+        if not rows or any(row.get("verdict") != "verified" for row in rows.values()):
+            problems.append(f"{rid}: process result has no fully verified source-bound entity rows")
+            continue
+        try:
+            plan_ref = canary_evidence.commit_reader(repo, candidate_head, ref)(doc["plan"]["path"])
+            plan = json.loads(plan_ref)
+            plan_probes = plan.get("probes")
+            plan_matches = [p for p in plan_probes if isinstance(p, dict) and p.get("id") == probe_id] \
+                if isinstance(plan_probes, list) else []
+            if len(plan_matches) != 1 or plan.get("subject", {}).get("commit") != source_head:
+                problems.append(f"{rid}: original process plan does not bind one exact probe to the raw CAR source")
+                continue
+            producer_root = plan.get("producer_repository")
+            if not isinstance(producer_root, str) or not Path(producer_root).is_absolute():
+                problems.append(f"{rid}: process plan has no source-bound producer repository root")
+                continue
+            expected_inputs = plan_matches[0].get("execution_files")
+            actual_inputs = probe.get("execution_files")
+            if not isinstance(expected_inputs, list) or not expected_inputs or not isinstance(actual_inputs, list):
+                problems.append(f"{rid}: referenced probe has no measurable source inputs")
+                continue
+            if (any(not isinstance(item, dict) for item in expected_inputs + actual_inputs)
+                    or len({item.get("path") for item in expected_inputs if isinstance(item, dict)}) != len(expected_inputs)
+                    or len({item.get("path") for item in actual_inputs if isinstance(item, dict)}) != len(actual_inputs)
+                    or [(item.get("path"), item.get("sha256"), item.get("attribution")) for item in expected_inputs]
+                    != [(item.get("path"), item.get("sha256"), item.get("attribution")) for item in actual_inputs]):
+                problems.append(f"{rid}: observed execution inputs or attribution differ from the original process plan")
+                continue
+            input_paths = set()
+            source_tree = canary_evidence.tree_entries(repo, source_head)
+            input_error = None
+            for expected, actual in zip(expected_inputs, actual_inputs):
+                if not isinstance(expected, dict) or not isinstance(actual, dict):
+                    input_error = "process input row is malformed"
+                    break
+                absolute = expected.get("path")
+                if (not isinstance(absolute, str) or not Path(absolute).is_absolute()
+                        or ".." in Path(absolute).parts):
+                    input_error = "process input path is not a normalized absolute path"
+                    break
+                attribution = expected.get("attribution")
+                if attribution is None:
+                    # A legacy row remains product source only under its one source-bound root.
+                    kind = "product_source"
+                elif isinstance(attribution, dict):
+                    kind = attribution.get("kind")
+                else:
+                    input_error = "process input attribution is malformed"
+                    break
+                if not re.fullmatch(r"[0-9a-f]{64}", str(expected.get("sha256", ""))):
+                    input_error = "process input content pin is invalid"
+                    break
+                if (actual.get("matched") is not True or actual.get("sha256") != expected.get("sha256")
+                        or actual.get("bytes") is None):
+                    input_error = "process input does not match its exact measured content pin"
+                    break
+                if kind in ("program_producer", "system_executable"):
+                    # Keep external producer/tool identity and its measured bytes bound to the
+                    # result, but never count it as a product-repository source path.
+                    if (not isinstance(attribution, dict)
+                            or set(attribution) != {"kind", "source_id", "version"}
+                            or not isinstance(attribution.get("source_id"), str)
+                            or not attribution["source_id"].strip()
+                            or attribution.get("version") != "sha256:" + expected["sha256"]
+                            or (kind == "system_executable" and attribution["source_id"] != absolute)):
+                        input_error = "external process input lacks its exact source/content-version identity"
+                        break
+                    continue
+                if kind != "product_source" or (attribution is not None and set(attribution) != {"kind"}):
+                    input_error = "process input attribution kind is unsupported"
+                    break
+                try:
+                    relative = Path(absolute).relative_to(Path(producer_root)).as_posix()
+                except (TypeError, ValueError):
+                    input_error = "product process input is outside the source-bound producer repository"
+                    break
+                if (not relative or relative == "." or relative.startswith("../")
+                        or "\\" in relative):
+                    input_error = "product process input path is invalid"
+                    break
+                tree_entry = source_tree.get(relative)
+                if not tree_entry or tree_entry[0] not in {"100644", "100755"}:
+                    input_error = f"product process input is not a regular source file at the raw CAR head: {relative}"
+                    break
+                source_bytes = canary_evidence.read_at_commit(repo, source_head, relative)
+                expected_sha = expected["sha256"]
+                if hashlib.sha256(source_bytes).hexdigest() != expected_sha:
+                    input_error = f"product process input does not match the exact source blob: {relative}"
+                    break
+                input_paths.add(relative)
+            if input_error:
+                problems.append(f"{rid}: {input_error}")
+                continue
+            if not input_paths:
+                problems.append(f"{rid}: external process inputs cannot substitute for product source inputs")
+                continue
+            verified_entities = {
+                entity for entity, row in rows.items()
+                if row.get("verdict") == "verified"
+                and isinstance(row.get("probe_ids"), list)
+                and probe_id in row["probe_ids"]
+            }
+            if not verified_entities:
+                problems.append(f"{rid}: probe has no verified entity rows attributed to its exact probe ID")
+                continue
+            verified_runs[rid] = {
+                "probe_id": probe_id,
+                "source_inputs": sorted(input_paths),
+                "verified_entities": sorted(verified_entities),
+            }
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError, subprocess.SubprocessError) as exc:
+            problems.append(f"{rid}: original source-bound probe inputs are unavailable: {str(exc)[:180]}")
+    return problems, verified_runs
+
+
+def _stage_git_inventory(repo: Path, base: str, head: str, *,
+                         require_current_head: bool = True) -> tuple[str | None, list[dict] | None]:
+    """Measure the exact committed path/status inventory; no receipt fields are trusted for it."""
+    if not re.fullmatch(r"[0-9a-f]{40}", base or "") or not re.fullmatch(r"[0-9a-f]{40}", head or ""):
+        return "base and head must be full lowercase commit IDs", None
+    try:
+        actual_head = git(repo, "rev-parse", "HEAD").strip()
+        if require_current_head and actual_head != head:
+            return "repository HEAD differs from stage head", None
+        for rev in (base, head):
+            if not git_ok(repo, "cat-file", "-e", rev + "^{commit}"):
+                return "base/head commit is absent from repository", None
+        raw = subprocess.run(["git", "-C", str(repo), "diff", "--no-renames", "--name-status", "-z", base, head],
+                             capture_output=True, check=True).stdout
+    except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        return "cannot measure committed range: " + exc.__class__.__name__, None
+    fields = raw.decode("utf-8", errors="strict").split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 2:
+        return "git returned malformed name-status inventory", None
+    rows = []
+    for status, path in zip(fields[::2], fields[1::2]):
+        if status not in {"A", "M", "D"} or not path or path.startswith("/") or ".." in Path(path).parts:
+            return "git inventory contains unsupported status/path", None
+        rows.append({"path": path, "status": status})
+    if not rows:
+        return "stage range has no changed paths", None
+    return None, sorted(rows, key=lambda row: row["path"])
+
+
+def _stage_input_problems(receipt: dict, evidence: dict, receipt_digest: str,
+                          actual_paths: list[dict],
+                          verified_runs: dict[str, dict],
+                          preexisting_failed: list[dict] | None = None) -> list[str]:
+    """Validate stage claims while preserving the stock receipt and its tri-valued verdicts."""
+    problems = []
+    top = ("schema", "stage_id", "repository", "raw_car_sha256", "changed_paths", "nm_entities",
+           "e2e_runs", "path_coverage", "entity_coverage", "pull_request")
+    try:
+        contract = json.loads(STAGE_EVIDENCE_SCHEMA_PATH.read_text(encoding="utf-8"))
+        if (contract.get("$id") != "https://arcanada.ai/contracts/graph-verified-change/stage-evidence.v1.json"
+                or contract.get("properties", {}).get("schema", {}).get("const") != "StageEvidence/v1"
+                or contract.get("additionalProperties") is not False
+                or set(contract.get("required", [])) != set(top)
+                or set(contract.get("properties", {})) != set(top)):
+            return ["committed StageEvidence/v1 contract does not match the native gate fields"]
+    except (OSError, UnicodeError, json.JSONDecodeError, AttributeError):
+        return ["committed StageEvidence/v1 contract is unavailable or malformed"]
+    if not _stage_exact_keys(evidence, top):
+        return ["stage evidence fields do not match StageEvidence/v1"]
+    if evidence.get("schema") != "StageEvidence/v1" or not isinstance(evidence.get("stage_id"), str) or not evidence["stage_id"].strip():
+        problems.append("stage identity/schema is invalid")
+    if evidence.get("raw_car_sha256") != receipt_digest:
+        problems.append("stage evidence is not bound to exact raw CAR bytes")
+    repo = receipt.get("repo") if isinstance(receipt.get("repo"), dict) else {}
+    change = receipt.get("change_set") if isinstance(receipt.get("change_set"), dict) else {}
+    binding = evidence.get("repository")
+    if not _stage_exact_keys(binding, ("name", "base", "head")):
+        problems.append("repository binding fields are invalid")
+        binding = {}
+    if (binding.get("name") != repo.get("name") or binding.get("base") != change.get("base")
+            or binding.get("head") != change.get("head")):
+        problems.append("stage repository/base/head differs from raw CAR")
+
+    raw_files = change.get("files") if isinstance(change.get("files"), list) else []
+    car_paths = sorted(({"path": f.get("path"), "status": f.get("status")} for f in raw_files if isinstance(f, dict)),
+                       key=lambda row: str(row["path"]))
+    declared_paths = evidence.get("changed_paths")
+    if not isinstance(declared_paths, list) or any(not _stage_exact_keys(x, ("path", "status")) for x in declared_paths):
+        problems.append("changed_paths must contain only path/status rows")
+    else:
+        normalized = sorted(declared_paths, key=lambda row: str(row["path"]))
+        if normalized != car_paths or normalized != actual_paths:
+            problems.append("changed path/status inventory does not exactly match raw CAR and Git")
+
+    preexisting_entities = {row.get("entity") for row in (preexisting_failed or [])
+                            if isinstance(row, dict) and row.get("disposition") == "PRE_EXISTING_FAILED"}
+    verdicts = receipt.get("verdicts") if isinstance(receipt.get("verdicts"), list) else []
+    by_entity = {}
+    for row in verdicts:
+        if not isinstance(row, dict) or not isinstance(row.get("entity"), str):
+            problems.append("raw CAR has malformed verdict row")
+            continue
+        entity = row["entity"]
+        if entity in by_entity:
+            problems.append("raw CAR has duplicate entity verdicts")
+        by_entity[entity] = row
+        if row.get("verdict") == "failed":
+            if entity not in preexisting_entities:
+                problems.append("raw CAR contains a failed entity verdict without a native PRE_EXISTING_FAILED disposition")
+        elif row.get("verdict") not in {"verified", "not_measured"}:
+            problems.append("raw CAR contains an unsupported entity verdict")
+    verify = receipt.get("verify") if isinstance(receipt.get("verify"), dict) else {}
+    if verify.get("events") != []:
+        problems.append("raw CAR contains blocking verification events")
+    raw_nm_count = sum(1 for row in verdicts if isinstance(row, dict) and row.get("verdict") == "not_measured")
+    admission = receipt.get("admission") if isinstance(receipt.get("admission"), dict) else {}
+    failed_entities = {row.get("entity") for row in verdicts
+                       if isinstance(row, dict) and row.get("verdict") == "failed"}
+    admission_ok = admission.get("verdict") == "paused_safe"
+    if admission.get("verdict") == "refused" and failed_entities and failed_entities == preexisting_entities:
+        rule = admission.get("rule")
+        admission_ok = (isinstance(rule, str) and "failed without exemption" in rule
+                        and "refused" in rule and not receipt.get("exemptions"))
+    if not raw_nm_count or not admission_ok:
+        problems.append("stage evidence applies only to a paused_safe raw CAR, or a refusal caused solely by natively qualified PRE_EXISTING_FAILED rows, with explicit NM rows")
+    if receipt.get("exemptions"):
+        problems.append("stage evidence cannot rely on or alter receipt exemptions")
+    if (receipt.get("staleness", {}).get("verdict") != "fresh"
+            or receipt.get("staleness", {}).get("mismatched_nodes") not in ([], None)
+            or receipt.get("tree", {}).get("dirty") is not False
+            or receipt.get("tree", {}).get("commit") != change.get("head")
+            or receipt.get("graph", {}).get("source_commit") != change.get("base")
+            or receipt.get("head_graph", {}).get("source_commit") != change.get("head")):
+        problems.append("raw CAR graph/tree freshness does not bind exact base/head")
+
+    nm = []
+    for entity, row in by_entity.items():
+        if row.get("verdict") == "not_measured":
+            if not isinstance(row.get("reason"), str) or not row["reason"].strip():
+                problems.append("raw CAR has an NM verdict without a reason")
+            else:
+                nm.append({"entity": entity, "reason": row["reason"]})
+    nm_entities = {row["entity"] for row in nm}
+    declared_nm = evidence.get("nm_entities")
+    if not isinstance(declared_nm, list) or any(not _stage_exact_keys(x, ("entity", "reason")) for x in declared_nm):
+        problems.append("nm_entities must contain exact entity/reason rows")
+    elif sorted(declared_nm, key=lambda x: x["entity"]) != sorted(nm, key=lambda x: x["entity"]):
+        problems.append("stage NM rows differ from raw CAR; NM cannot be omitted or rewritten")
+
+    # Coverage references carry identities only; scopes are derived from neither caller labels nor
+    # file extensions. Stage E2E remains mandatory, but a path whose only native entities are NM
+    # does not owe a second per-path proof; the complete changed-path inventory remains mandatory.
+    changed_set = {row["path"] for row in actual_paths}
+    nm_paths = set()
+    for file_row in raw_files:
+        if not isinstance(file_row, dict) or not isinstance(file_row.get("path"), str):
+            continue
+        path_entities = set(file_row.get("node_ids", [])) if isinstance(file_row.get("node_ids"), list) else set()
+        if isinstance(file_row.get("node_id"), str):
+            path_entities.add(file_row["node_id"])
+        if path_entities and path_entities <= nm_entities:
+            nm_paths.add(file_row["path"])
+    path_cov = evidence.get("path_coverage")
+    covered_paths = set()
+    if not isinstance(path_cov, list):
+        problems.append("path_coverage must be a list")
+    else:
+        for row in path_cov:
+            if not _stage_exact_keys(row, ("path", "evidence")):
+                problems.append("path coverage row is malformed"); continue
+            path = row.get("path")
+            proofs = row.get("evidence")
+            if not isinstance(path, str) or path in covered_paths or path not in changed_set:
+                problems.append("path coverage has duplicate or non-changed path")
+            covered_paths.add(path)
+            if not isinstance(proofs, list) or not proofs:
+                problems.append("path coverage has no source-bound process evidence")
+            else:
+                for proof in proofs:
+                    if not _stage_exact_keys(proof, ("run_id",)):
+                        problems.append("path coverage evidence is malformed"); continue
+                    rid = proof.get("run_id")
+                    run = verified_runs.get(rid) if isinstance(rid, str) else None
+                    if not isinstance(run, dict):
+                        problems.append("path coverage references a process run not verified at the admitted head")
+                    elif path not in run.get("source_inputs", []):
+                        problems.append(f"{path}: cited process did not consume this source input")
+    required_path_coverage = changed_set - nm_paths
+    if not required_path_coverage <= covered_paths:
+        problems.append("stage evidence omits one or more changed paths with measured native entities")
+
+    changed_entities = set()
+    for f in raw_files:
+        if isinstance(f, dict):
+            for entity in f.get("node_ids", []) if isinstance(f.get("node_ids"), list) else []:
+                if isinstance(entity, str): changed_entities.add(entity)
+            if isinstance(f.get("node_id"), str): changed_entities.add(f["node_id"])
+    for row in verdicts:
+        if (isinstance(row, dict) and isinstance(row.get("entity"), str)
+                and row.get("entity") not in preexisting_entities):
+            changed_entities.add(row["entity"])
+    # Stage E2E is the evidence route for entities whose native verifier is NOT_MEASURED.
+    # Keep those rows explicit in the raw CAR and the exact nm_entities inventory, but do not
+    # require a second native canary/entity proof to cover them.
+    entity_cov = evidence.get("entity_coverage")
+    covered_entities = set()
+    if not isinstance(entity_cov, list):
+        problems.append("entity_coverage must be a list")
+    else:
+        for row in entity_cov:
+            if not _stage_exact_keys(row, ("entity", "evidence")):
+                problems.append("entity coverage row is malformed"); continue
+            entity, proofs = row.get("entity"), row.get("evidence")
+            if not isinstance(entity, str) or entity in covered_entities or entity not in changed_entities:
+                problems.append("entity coverage has duplicate or non-affected entity")
+            covered_entities.add(entity)
+            if not isinstance(proofs, list) or not proofs:
+                problems.append("entity coverage has no source-bound process evidence")
+            else:
+                for proof in proofs:
+                    if not _stage_exact_keys(proof, ("run_id",)):
+                        problems.append("entity coverage evidence is malformed"); continue
+                    rid = proof.get("run_id")
+                    run = verified_runs.get(rid) if isinstance(rid, str) else None
+                    if not isinstance(run, dict):
+                        problems.append("entity coverage references a process run not verified at the admitted head")
+                    elif entity not in run.get("verified_entities", []):
+                        problems.append(f"{entity}: cited process has no matching verified entity row")
+    required_entity_coverage = changed_entities - nm_entities
+    if not required_entity_coverage <= covered_entities:
+        problems.append("stage evidence omits one or more changed verified entities")
+
+    pull = evidence.get("pull_request")
+    if (not _stage_exact_keys(pull, ("number", "review_comment_id"))
+            or type(pull.get("number")) is not int or pull["number"] < 1
+            or type(pull.get("review_comment_id")) is not int or pull["review_comment_id"] < 1):
+        problems.append("pull_request must identify the PR and selected authenticated review comment")
+
+    # A canary obligation remains native for measured entities. For a raw NOT_MEASURED row,
+    # DEC-AUP-0167's exact stage E2E evidence is the route; do not demand a native canary proof
+    # merely to make that same row cease being NOT_MEASURED.
+    required_by = verify.get("required_by_entity") if isinstance(verify.get("required_by_entity"), dict) else {}
+    verifier_rows = receipt.get("verifiers") if isinstance(receipt.get("verifiers"), list) else []
+    for entity, obligations in required_by.items():
+        if not isinstance(obligations, list) or "canary" not in obligations:
+            continue
+        if entity in nm_entities:
+            continue
+        rows = [v for v in verifier_rows if isinstance(v, dict) and v.get("kind") == "canary"
+                and entity in v.get("entities", []) and v.get("exit_code") == 0
+                and isinstance(v.get("entity_verdicts"), dict) and v["entity_verdicts"].get(entity) == "verified"]
+        if not rows:
+            problems.append("raw CAR has an unmet canary obligation for " + str(entity))
+    return problems
+
+
+def stage_evidence_for_receipt(receipt_path: Path, receipt: dict, repo: Path, base: str, head: str,
+                               evidence_path: Path, evidence_root: Path,
+                               expected_repo_name: str | None = None,
+                               current_evaluator: dict | None = None,
+                               github_token: str | None = None) -> tuple[dict, list[str]]:
+    """Return a verified stage record only for the exact stock CAR and native gate range."""
+    problems = []
+    try:
+        authority = STAGE_AUTHORITY_PATH.read_bytes()
+        if _stage_sha256(authority) != STAGE_AUTHORITY_SHA256:
+            return {}, ["external DEC-AUP-0167 authority pin mismatch"]
+        raw = receipt_path.read_bytes()
+        receipt_digest = _stage_sha256(raw)
+        if json.loads(raw.decode("utf-8")) != receipt:
+            return {}, ["bound receipt bytes changed during gate evaluation"]
+        if schema_check.classify(receipt)["verdict"] != "conformant":
+            return {}, ["raw CAR does not conform to ChangeAdmissionReceipt/v1"]
+        resolved_root = evidence_root.resolve(strict=True)
+        if evidence_path.is_symlink() or not evidence_path.is_file():
+            return {}, ["stage evidence is not a regular non-symlink file"]
+        resolved_evidence = evidence_path.resolve(strict=True)
+        if resolved_root not in resolved_evidence.parents:
+            return {}, ["stage evidence escapes its evidence root"]
+        if evidence_path.stat().st_size > 4 * 1024 * 1024:
+            return {}, ["stage evidence exceeds the native size limit"]
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        actual_repo_name = expected_repo_name or repo_remote_name(repo)
+        binding = evidence.get("repository") if isinstance(evidence, dict) else None
+        source_change = receipt.get("change_set") if isinstance(receipt, dict) else None
+        source_base = source_change.get("base") if isinstance(source_change, dict) else None
+        source_head = source_change.get("head") if isinstance(source_change, dict) else None
+        if not isinstance(binding, dict) or binding.get("name") != actual_repo_name:
+            problems.append("stage repository name does not match the native gate repository")
+        if (not isinstance(binding, dict) or binding.get("base") != source_base
+                or binding.get("head") != source_head):
+            problems.append("stage source binding does not match the raw CAR base/head")
+        actual_candidate = git(repo, "rev-parse", "HEAD").strip()
+        if actual_candidate != head:
+            return {}, ["repository HEAD differs from the admitted candidate head"]
+        if source_base != base or not isinstance(source_head, str) or not source_head:
+            return {}, ["raw CAR source range does not match the admitted base"]
+        inventory_error, actual_paths = _stage_git_inventory(
+            repo, source_base, source_head, require_current_head=False)
+        if inventory_error: problems.append(inventory_error)
+        if actual_paths is not None:
+            preexisting_failed = _stage_preexisting_failed(
+                receipt, repo, source_base, source_head, actual_paths, authority)
+            process_problems, verified_runs = _stage_process_problems(
+                evidence, repo, head, source_head)
+            problems.extend(process_problems)
+            problems.extend(_stage_input_problems(
+                receipt, evidence, receipt_digest, actual_paths, verified_runs, preexisting_failed))
+        pull = evidence.get("pull_request") if isinstance(evidence, dict) else None
+        pending_current_evaluator: list[dict] = []
+        if (isinstance(binding, dict) and actual_paths is not None
+                and _stage_exact_keys(pull, ("number", "review_comment_id"))):
+            problems.extend(_stage_authenticated_github_problems(
+                actual_repo_name, base, head, pull["number"], pull["review_comment_id"],
+                current_evaluator=current_evaluator,
+                github_token=github_token,
+                pending_current_evaluator=pending_current_evaluator))
+        stage_record = dict(evidence) if isinstance(evidence, dict) else {}
+        if actual_paths is not None and preexisting_failed:
+            stage_record["pre_existing_failed"] = preexisting_failed
+        if pending_current_evaluator:
+            if len(pending_current_evaluator) != 1:
+                problems.append("more than one required current evaluator was classified pending")
+            else:
+                stage_record["current_evaluator_check"] = pending_current_evaluator[0]
+        return stage_record, sorted(set(problems))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, TypeError, KeyError) as exc:
+        return {}, ["stage evidence unavailable or malformed: " + str(exc)[:300]]
 
 
 def previous_self_receipts(repo: Path, rev: str, work_item: str) -> list[str]:
@@ -5323,6 +7427,38 @@ def main(argv=None) -> int:
     g.add_argument("--enforcement", choices=["off", "ledger", "muneral"])
     g.add_argument("--ledger-dir")
     g.add_argument("--origin-association", help="signed GraphOriginAssociation/v1 plus adjacent .sig; requires BASE-trusted canonical key, exact raw receipt and full graph equality, and Muneral enforcement")
+    g.add_argument("--stage-evidence", type=Path,
+                   help="DEC-AUP-0167 StageEvidence/v1 for the exact bound receipt; supports exact stage eligibility for C09/C11 and a null-work-item C13")
+    g.add_argument("--stage-evidence-root", type=Path,
+                   help="root containing the regular hashed stage E2E/review/CI artifacts")
+    g.add_argument("--current-source-userpath-result", type=Path,
+                   help="captured ProgramStageUserpath/v1 result with a source-bound current-candidate CLI outcome")
+    g.add_argument("--current-source-userpath-root", type=Path,
+                   help="run-temporary root containing the result, exact raw CAR, and referenced process outputs")
+    g.add_argument("--current-source-userpath-exit", type=int,
+                   help="actual outer ProgramStageUserpath process exit")
+    g.add_argument("--current-source-producer-exit", type=int,
+                   help="actual current-candidate CAR producer process exit")
+    g.add_argument("--current-source-program-tools-root", type=Path,
+                   help="exact signed Program bundle used for an external caller's source and fixture commands")
+    g.add_argument("--current-source-program-ref",
+                   help="the caller's exact pinned Program bundle commit")
+    g.add_argument("--current-source-signing-key-fingerprint",
+                   help="the caller-owned existing pin required to verify the Program bundle")
+    g.add_argument("--root-typecheck-ci-root", type=Path,
+                   help="fresh external candidate directory containing authenticated Auth GitHubTypecheckEvidence/v1")
+    g.add_argument("--current-evaluator-run-id", type=int)
+    g.add_argument("--current-evaluator-attempt", type=int)
+    g.add_argument("--current-evaluator-check-run-id", type=int)
+    g.add_argument("--current-evaluator-job-key")
+    g.add_argument("--current-evaluator-repository")
+    g.add_argument("--current-evaluator-caller-workflow-ref")
+    g.add_argument("--current-evaluator-caller-workflow-sha")
+    g.add_argument("--current-evaluator-workflow-repository")
+    g.add_argument("--current-evaluator-workflow-file-path")
+    g.add_argument("--current-evaluator-workflow-ref")
+    g.add_argument("--current-evaluator-workflow-sha")
+    g.add_argument("--current-evaluator-program-ref")
     g.add_argument("--policy", type=Path)
     g.add_argument("--out")
     g.add_argument("--json", action="store_true")
@@ -5429,7 +7565,17 @@ def main(argv=None) -> int:
     bo.set_defaults(fn=cmd_b7_opine)
 
     at = sub.add_parser("attach", help="attach a receipt to a Work Item as evidence (never a status)")
+    at.add_argument("--repo", required=True, help="the repository whose exact range and stock gate are authoritative")
     at.add_argument("--receipt", required=True)
+    at.add_argument("--candidate-receipt", action="append",
+                    help="repeat the stock gate's explicit --receipt candidates; takes precedence over --receipt-dir")
+    at.add_argument("--receipt-dir", action="append",
+                    help="repeat the stock gate's discovered receipt directories when no explicit candidates are supplied")
+    at.add_argument("--event-file", required=True,
+                    help="the exact gate event JSON (use an empty object when gate had no event payload)")
+    at.add_argument("--range", help="the exact gate range <base>..<head>")
+    at.add_argument("--base", help="the exact gate base, paired with --head")
+    at.add_argument("--head", help="the exact gate head, paired with --base")
     at.add_argument("--work-item")
     at.add_argument("--muneral-task-id", help="the Muneral task uuid the evidence belongs to (receipts/muneral/*task-map*)")
     at.add_argument("--label")
@@ -5440,8 +7586,6 @@ def main(argv=None) -> int:
                     help="POST the attachment to Muneral's evidence route (policy work_item_evidence.muneral."
                          "evidence_route) for --muneral-task-id with $MUNERAL_API_KEY, and record the outcome "
                          "(posted / failed / not_measured with its reason); $MUNERAL_BASE_URL overrides the base URL")
-    at.add_argument("--base", help="the PR's base ref; decides whether an older entry for the same receipt_path is "
-                                   "history (kept) or dead (superseded). Default: merge-base of HEAD and origin/main")
     at.set_defaults(fn=cmd_attach)
 
     cs = sub.add_parser("charter-scan", help="classify TDD / test-first hits across the live charter surfaces")
@@ -5465,6 +7609,7 @@ def main(argv=None) -> int:
         sp.set_defaults(parser=sp)
 
     a = ap.parse_args(argv)
+    a._github_token = os.environ.pop("GH_TOKEN", None)
     if a.selftest:
         return selftest(a.receipt_out, a.keep)
     if a.make_fixtures:

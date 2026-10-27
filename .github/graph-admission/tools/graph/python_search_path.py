@@ -8,16 +8,89 @@ Paths refer to Git tree names; no host filesystem or module is imported.
 from __future__ import annotations
 
 import ast
+import hashlib
+import io
 import posixpath
+import tokenize
 from collections import deque
 
 MAX_MODULE_CONTEXTS = 32
 MAX_TOTAL_CONTEXTS = 2048
+# Caller provenance is separate from semantic (module, ordered-roots) states.
+# Retain at most 32 origin-labelled visits per total-state budget, never truncate.
+MAX_CONTEXT_ORIGIN_VISITS = 65536
 # Closed source-model assumptions, not a host import or general stdlib exemption.
 # A matching Git module anywhere defeats this assumption conservatively.
 PATH_NEUTRAL_STDLIB = frozenset({'sys', 'pathlib', 'functools', 'copy', 'json', 'unittest',
                                'collections', 'dataclasses', 'decimal', 'hashlib', 'math', 're', 'typing',
                                'glob', 'heapq'})
+
+
+def import_occurrences(raw: bytes) -> list[dict]:
+    """Index actual imports without resolving or executing a provider.
+
+    Columns are CPython AST UTF-8 byte offsets. Each alias has a separate
+    occurrence, including aliases sharing one statement/line. Refuse partial
+    output if the source cannot be parsed losslessly.
+    """
+    try:
+        encoding, _ = tokenize.detect_encoding(io.BytesIO(raw).readline)
+        if encoding != 'utf-8':
+            raise ValueError('unsupported Python source encoding')
+        text = raw.decode('utf-8')
+        tree = ast.parse(text)
+    except (UnicodeError, SyntaxError, RecursionError) as exc:
+        raise ValueError('Python import occurrence source is unmeasured') from exc
+    nodes = sorted((n for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))),
+                   key=lambda n: (n.lineno, n.col_offset, n.end_lineno, n.end_col_offset))
+    rows = []
+    for node in nodes:
+        segment = ast.get_source_segment(text, node)
+        if segment is None:
+            raise ValueError('Python import occurrence span is unavailable')
+        for index, alias in enumerate(node.names):
+            rows.append({
+                'kind': 'import' if isinstance(node, ast.Import) else 'from',
+                'module': alias.name if isinstance(node, ast.Import) else node.module,
+                'level': 0 if isinstance(node, ast.Import) else node.level,
+                'imported_name': None if isinstance(node, ast.Import) else alias.name,
+                'local_name': alias.asname or (alias.name.split('.')[0] if isinstance(node, ast.Import) else alias.name),
+                'line': node.lineno, 'column': node.col_offset,
+                'end_line': node.end_lineno, 'end_column': node.end_col_offset,
+                'alias_index': index, 'ordinal': len(rows),
+                'statement_sha256': hashlib.sha256(segment.encode('utf-8')).hexdigest(),
+            })
+    return rows
+
+
+def qualify_import_occurrence(raw: bytes, expected: dict) -> dict:
+    """Bind one claimed consumer occurrence; this is NOT loader qualification.
+
+    This leaf checks source identity only. `bound` never authorizes a foreign
+    dependency edge or discharges semantic/runtime verifier obligations.
+    """
+    fields = {'kind', 'module', 'level', 'imported_name', 'local_name', 'line', 'column',
+              'end_line', 'end_column', 'alias_index', 'ordinal', 'statement_sha256'}
+    if not isinstance(expected, dict) or set(expected) != fields | {'source_sha256'}:
+        return {'status': 'unmeasured', 'reason': 'incomplete/unsupported occurrence binding'}
+    digest = hashlib.sha256(raw).hexdigest()
+    if expected['source_sha256'] != digest:
+        return {'status': 'contradiction', 'reason': 'consumer source SHA256 mismatch'}
+    for key in ('level', 'line', 'column', 'end_line', 'end_column', 'alias_index', 'ordinal'):
+        if type(expected[key]) is not int:
+            return {'status': 'unmeasured', 'reason': 'unsupported occurrence position'}
+    try:
+        rows = import_occurrences(raw)
+    except ValueError as exc:
+        return {'status': 'unmeasured', 'reason': str(exc)}
+    wanted = {key: expected[key] for key in fields}
+    matches = [row for row in rows if row == wanted]
+    if len(matches) != 1:
+        return {'status': 'contradiction', 'reason': 'claimed import occurrence differs from source'}
+    if wanted['imported_name'] == '*' or wanted['module'] is None:
+        return {'status': 'unmeasured', 'reason': 'star/bare relative provider selection unsupported'}
+    return {'status': 'bound', 'occurrence': matches[0], 'source_sha256': digest,
+            'scope': 'consumer import occurrence identity only; loader/selection/runtime NOT_MEASURED'}
 
 
 def import_roots(text: str, file: str, *, incoming=(), final_roots=None) -> tuple[dict[int, list[str] | None], list[str]]:
@@ -375,6 +448,8 @@ def contextual_imports(files, modes, discovered_roots):
 
     pending = deque()
     visited = set()
+    semantic_contexts = set()
+    projection_cache = {}
     module_roots = {}
     edges = {}
 
@@ -385,8 +460,11 @@ def contextual_imports(files, modes, discovered_roots):
             return
         contexts = module_roots.setdefault(target, set())
         contexts.add(tuple(roots))
-        if len(contexts) > MAX_MODULE_CONTEXTS or len(visited) >= MAX_TOTAL_CONTEXTS:
+        semantic_contexts.add((target, roots))
+        if len(contexts) > MAX_MODULE_CONTEXTS or len(semantic_contexts) > MAX_TOTAL_CONTEXTS:
             raise ValueError(f'python caller-context cap exhausted at {target}; incomplete graph refused')
+        if len(visited) >= MAX_CONTEXT_ORIGIN_VISITS:
+            raise ValueError(f'python caller-context origin cap exhausted at {target}; incomplete graph refused')
         visited.add(key)
         pending.append(key)
 
@@ -405,7 +483,13 @@ def contextual_imports(files, modes, discovered_roots):
         tree, reason = parsed[file]
         if tree is None or reason:
             continue
-        rows, _ = imports_and_effects(file, roots)
+        # The projection depends on source and ordered roots, not its caller.
+        # Compute it once, then retain the full initiating-origin closure below.
+        # Unknown/partial projections retain their existing explicit limitations.
+        projection_key = (file, roots)
+        if projection_key not in projection_cache:
+            projection_cache[projection_key] = imports_and_effects(file, roots)
+        rows, _ = projection_cache[projection_key]
         for line, target, at_import in rows:
             if not target or target == file:
                 continue

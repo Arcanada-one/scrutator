@@ -4,6 +4,11 @@ PyYAML is optional at verification time only. Graph construction stays stdlib-on
 No YAML constructors run: inspect the representation tree using BaseLoader.
 """
 import re
+import hashlib
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 
 
 def pr_job_guard(value):
@@ -566,3 +571,144 @@ def validate(raw):
         return 'not_measured', 'workflow configuration not measured: ' + str(ex)
     except (ValueError, UnicodeError, yaml.YAMLError, RecursionError) as ex:
         return 'failed', 'unsupported/malformed workflow configuration: ' + str(ex)
+
+
+ACTIONLINT_VERSION = '1.7.12'
+ACTIONLINT_SHA256 = 'c872d6db8c6bf83a8eaa704fc93999f027d55dffbc63b8a6abdccb47df5f4cd4'
+# Current authenticated runner inventory (2026-10-18); keep the allowlist
+# aligned with the organization labels used by supported Program workflows.
+ACTIONLINT_CONFIG = (b'self-hosted-runner:\n  labels:\n    - ci-general\n'
+                     b'    - arcana-ci-general-host\n    - arcana-ai\n    - ci-broad\n    - ci-nodocker\n'
+                     b'    - arcana-devs\n    - deploy-gate\n    - docker\n'
+                     b'    - arcana-prd-host\n    - arcana-prod-ci\n')
+
+
+def native_fitness(path, raw, executable=None):
+    """Run pinned actionlint and bounded workflow safety rules over exact bytes."""
+    binding = {'path': path, 'source_sha256': hashlib.sha256(raw).hexdigest()}
+    binary = executable or shutil.which('actionlint')
+    if not binary or not Path(binary).is_file():
+        return 'not_measured', {**binding, 'reason': 'pinned actionlint binary unavailable'}
+    try:
+        identity = {'path': str(Path(binary).resolve()),
+                    'sha256': hashlib.sha256(Path(binary).read_bytes()).hexdigest()}
+        version = subprocess.run([binary, '-version'], capture_output=True, timeout=5, check=False)
+        version_text = (version.stdout + version.stderr).decode('utf-8', 'replace')
+        if (identity['sha256'] != ACTIONLINT_SHA256 or version.returncode != 0 or
+                not re.search(rf'(?m)^{re.escape(ACTIONLINT_VERSION)}$', version_text)):
+            return 'not_measured', {**binding, 'reason': 'actionlint binary identity is not the pinned release',
+                                    'identity': identity, 'version_output': version_text[:1000]}
+        args = [binary]
+        with tempfile.TemporaryDirectory(prefix='graph-actionlint-') as td:
+            config = Path(td) / 'actionlint.yaml'
+            config.write_bytes(ACTIONLINT_CONFIG)
+            args += ['-config-file', str(config)]
+            run = subprocess.run([*args, '-'], input=raw, capture_output=True, timeout=15, check=False)
+        output = (run.stdout + run.stderr).decode('utf-8', 'replace')
+        if run.returncode:
+            return 'failed', {**binding, 'reason': 'actionlint rejected workflow', 'identity': identity,
+                              'version': ACTIONLINT_VERSION, 'exit_code': run.returncode,
+                              'output': output[:4000]}
+        policy_verdict, policy = fitness_policy(raw)
+        if policy_verdict != 'verified':
+            return policy_verdict, {**binding, 'reason': '; '.join(policy), 'identity': identity,
+                                    'version': ACTIONLINT_VERSION, 'exit_code': 0, 'output': output}
+        return 'verified', {**binding, 'reason': 'actionlint and bounded workflow safety rules passed',
+                            'identity': identity, 'version': ACTIONLINT_VERSION,
+                            'exit_code': 0, 'output': output}
+    except (OSError, subprocess.SubprocessError) as ex:
+        return 'not_measured', {**binding, 'reason': 'actionlint execution not complete: ' + type(ex).__name__,
+                                'identity': identity if 'identity' in locals() else None}
+
+
+def fitness_policy(raw):
+    """Conservative static rules; expressions are not evaluated."""
+    try:
+        import yaml
+        doc = yaml.safe_load(raw.decode('utf-8'))
+    except Exception as ex:
+        return 'not_measured', ['workflow safety rules could not parse input: ' + type(ex).__name__]
+    if not isinstance(doc, dict):
+        return 'failed', ['workflow root is not a mapping']
+    failures = []
+    unknown = []
+    if 'permissions' not in doc:
+        failures.append('workflow must declare explicit token permissions')
+    def permissions_bad(value, label):
+        if isinstance(value, str):
+            if value in ('write-all', 'read-all'):
+                failures.append(label + ' grants broad ' + value)
+            elif value != 'none':
+                unknown.append(label + ' uses unresolved permission expression')
+        elif isinstance(value, dict):
+            for permission, mode in value.items():
+                if isinstance(mode, str) and '${{' in mode:
+                    unknown.append(label + ' permission ' + str(permission) + ' is expression-dependent')
+                elif mode not in ('read', 'write', 'none'):
+                    failures.append(label + ' permission ' + str(permission) + ' has invalid mode')
+        elif value is not None:
+            failures.append(label + ' is not a supported permission map')
+    permissions_bad(doc.get('permissions'), 'workflow permissions')
+    jobs = doc.get('jobs')
+    if not isinstance(jobs, dict):
+        return 'failed', failures + ['workflow jobs is not a mapping']
+    events = doc.get('on', doc.get(True, {}))
+    if isinstance(events, str):
+        event_names = {events}
+    elif isinstance(events, list):
+        event_names = {event for event in events if isinstance(event, str)}
+    elif isinstance(events, dict):
+        event_names = set(events)
+    else:
+        event_names = set()
+    is_pr_target = 'pull_request_target' in event_names
+
+    def pinned_action(reference):
+        if reference.startswith('docker://'):
+            return bool(re.search(r'@sha256:[0-9a-f]{64}$', reference))
+        return bool(re.search(r'@[0-9a-fA-F]{40}$', reference))
+
+    for job_name, job in jobs.items():
+        if not isinstance(job, dict):
+            continue
+        job_uses = job.get('uses')
+        if isinstance(job_uses, str) and job_uses and not job_uses.startswith('./'):
+            if '${{' in job_uses:
+                unknown.append(f'job {job_name} reusable workflow reference is expression-dependent')
+            elif not pinned_action(job_uses):
+                failures.append(f'job {job_name} reusable workflow is not pinned to a full commit SHA')
+        if 'permissions' in job:
+            permissions_bad(job['permissions'], f'job {job_name} permissions')
+        steps = job.get('steps', [])
+        if not isinstance(steps, list):
+            continue
+        checkout_state = 'none'
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+            uses = str(step.get('uses', ''))
+            if uses and not uses.startswith('./'):
+                if '${{' in uses:
+                    unknown.append(f'job {job_name} action reference is expression-dependent')
+                elif not pinned_action(uses):
+                    failures.append(f'job {job_name} action reference is not pinned to a full commit SHA')
+            if uses.startswith('actions/checkout@') and is_pr_target:
+                checkout_with = step.get('with') if isinstance(step.get('with'), dict) else {}
+                ref = checkout_with.get('ref')
+                repository = checkout_with.get('repository')
+                if isinstance(ref, str) and ('github.event.pull_request.head' in ref or
+                                             'github.head_ref' in ref):
+                    checkout_state = 'untrusted'
+                    failures.append(f'pull_request_target job {job_name} checks out pull-request content')
+                elif ref or repository:
+                    checkout_state = 'unknown'
+                    unknown.append(f'pull_request_target job {job_name} checkout ref/repository is not classified')
+                else:
+                    checkout_state = 'trusted_base'
+            executes_checkout_content = bool(step.get('run')) or uses.startswith('./')
+            if is_pr_target and checkout_state == 'untrusted' and executes_checkout_content:
+                failures.append(f'pull_request_target job {job_name} runs commands after untrusted checkout')
+            elif is_pr_target and checkout_state == 'unknown' and executes_checkout_content:
+                unknown.append(f'pull_request_target job {job_name} runs after unresolved checkout')
+    return ('failed', sorted(set(failures))) if failures else (
+        ('not_measured', sorted(set(unknown))) if unknown else ('verified', []))

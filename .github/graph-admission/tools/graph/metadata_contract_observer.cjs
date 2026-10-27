@@ -1,9 +1,27 @@
 /* Bounded compiler observation derived from Security v7; never a supplied-count admission. */
 const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto');
+/** @typedef {import('typescript').Node} TsNode */
+/** @typedef {import('typescript').Type} TsType */
+/** @typedef {import('typescript').SignatureDeclaration | import('typescript').JSDocSignature} CallableDeclaration */
+/** @typedef {import('typescript').FunctionDeclaration | import('typescript').MethodDeclaration | import('typescript').ArrowFunction} EnclosingFunction */
+/** @typedef {{root: string, head: string, repo: string, contract: string, files: {path: string, sha256: string}[], compiler_project: {path: string, sha256: string}}} ObserverInput */
+/** @typedef {{file: string, line: number}} SourceLocation */
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
+function isRecord(value){return typeof value==='object'&&value!==null&&!Array.isArray(value);}
+/** @param {unknown} value @returns {value is ObserverInput} */
+function isObserverInput(value){
+ if(!isRecord(value)||typeof value.root!=='string'||typeof value.head!=='string'||typeof value.repo!=='string'||typeof value.contract!=='string'||!Array.isArray(value.files)||!isRecord(value.compiler_project))return false;
+ /** @type {unknown[]} */ const files=value.files;
+ return typeof value.compiler_project.path==='string'&&typeof value.compiler_project.sha256==='string'&&files.every(f=>isRecord(f)&&typeof f.path==='string'&&typeof f.sha256==='string');
+}
+/** @type {unknown} */
 const input=JSON.parse(fs.readFileSync(0,'utf8'));
+if(!isObserverInput(input))throw Error('METADATA_INPUT_SHAPE_INVALID');
 const root=path.resolve(input.root);
+/** @type {string[]} */
 const bindingErrors=[];
 for(const f of input.files){const full=path.resolve(root,f.path);if(!full.startsWith(root+path.sep)||!fs.existsSync(full)||hash(fs.readFileSync(full))!==f.sha256)bindingErrors.push('SOURCE_BYTES_MISMATCH');}
+/** @type {typeof import('typescript')} */
 const ts=require(path.join(root,'apps/api/node_modules/typescript'));
 const project=input.compiler_project;
 if(!project||typeof project.path!=='string'||path.isAbsolute(project.path)||project.path.split('/').includes('..'))throw Error('METADATA_PROJECT_BINDING_INVALID');
@@ -16,9 +34,19 @@ const expectedHead=input.head;
 const actualHead=input.head;
 const decoratorRel='apps/api/src/auth/agent-scope.decorator.ts';
 const guardRel='apps/api/src/auth/guards/agent-task-scope.guard.ts';
+/** @param {string | NodeJS.ArrayBufferView} s */
 function hash(s){return crypto.createHash('sha256').update(s).digest('hex');}
+/** @param {Record<string, string>} overrides @param {string} claimedHead */
 function analyze(overrides={},claimedHead=expectedHead){
- const errors=[...bindingErrors],unknown=[],classified=[],contextReads=[],contextEscapes=[],containerFlows=[],containerClosure=[],containerEscapePositions=[],rawMetadataEscapes=[];
+ const errors=[...bindingErrors];
+ /** @type {Record<string, unknown>[]} */ const unknown=[];
+ /** @type {Record<string, unknown>[]} */ const classified=[];
+ /** @type {Record<string, unknown>[]} */ const contextReads=[];
+ /** @type {Record<string, unknown>[]} */ const contextEscapes=[];
+ /** @type {Record<string, unknown>[]} */ const containerFlows=[];
+ /** @type {Record<string, unknown>[]} */ const containerClosure=[];
+ /** @type {Record<string, unknown>[]} */ const containerEscapePositions=[];
+ /** @type {Record<string, unknown>[]} */ const rawMetadataEscapes=[];
  if(claimedHead!==actualHead)errors.push('HEAD_BINDING_MISMATCH');
  const host=ts.createCompilerHost(options),original=host.getSourceFile.bind(host);
  host.getSourceFile=(name,version,onError,fresh)=>overrides[path.relative(root,path.resolve(name))]!==undefined?ts.createSourceFile(name,overrides[path.relative(root,path.resolve(name))],version,true):original(name,version,onError,fresh);
@@ -29,14 +57,18 @@ function analyze(overrides={},claimedHead=expectedHead){
   errors:['METADATA_PROJECT_MEMBERSHIP_NOT_MEASURED'],
   diagnostics:projectDiagnostics.map(d=>({code:d.code,message:ts.flattenDiagnosticMessageText(d.messageText,' '),file:d.file?path.relative(root,d.file.fileName):null})),
   closed:false};
- const sym=n=>{let s=checker.getSymbolAtLocation(n);if(s?.flags&ts.SymbolFlags.Alias)s=checker.getAliasedSymbol(s);return s;};
+/** @param {TsNode} n */
+ const sym=n=>{let s=checker.getSymbolAtLocation(n);if(s&&(s.flags&ts.SymbolFlags.Alias))s=checker.getAliasedSymbol(s);return s;};
+/** @param {TsNode} n @returns {SourceLocation} */
  const loc=n=>({file:path.relative(root,n.getSourceFile().fileName),line:n.getSourceFile().getLineAndCharacterOfPosition(n.getStart()).line+1});
- const alias=dec.statements.find(n=>ts.isTypeAliasDeclaration(n)&&n.name.text==='AgentScopeKind');
- const ctx=guard.statements.find(n=>ts.isInterfaceDeclaration(n)&&n.name.text==='AgentScopeContext');
+ const alias=dec.statements.filter(ts.isTypeAliasDeclaration).find(n=>n.name.text==='AgentScopeKind');
+ const ctx=guard.statements.filter(ts.isInterfaceDeclaration).find(n=>n.name.text==='AgentScopeContext');
  if(!alias||!ctx)return {errors:['MISSING_DECLARATION'],closed:false};
  const kindSymbol=sym(alias.name),ctxSymbol=sym(ctx.name);
+ if(!kindSymbol||!ctxSymbol)return {errors:['DECLARATION_SYMBOL_NOT_MEASURED'],closed:false};
  const ctxKind=checker.getDeclaredTypeOfSymbol(ctxSymbol).getProperty('kind');
  const kindDeclarations=ctxKind?.declarations||[];
+ /** @param {TsType|undefined} t @param {Set<TsType>} seen @returns {boolean} */
  const hasContext=(t,seen=new Set())=>{
   if(!t||seen.has(t))return false;seen.add(t);
   if(t.getSymbol()===ctxSymbol)return true;
@@ -45,26 +77,32 @@ function analyze(overrides={},claimedHead=expectedHead){
   if((t.isUnion()||t.isIntersection())&&t.types.some(x=>hasContext(x,seen)))return true;
   return typeof t.getBaseTypes==='function'&&(t.getBaseTypes()||[]).some(x=>hasContext(x,seen));
  };
- const hasContainer=t=>{const prop=t?.getProperty('agentScope');return prop&&hasContext(checker.getTypeOfSymbolAtLocation(prop,prop.valueDeclaration||prop.declarations[0]));};
+ /** @param {TsType|undefined} t */
+ const hasContainer=t=>{const prop=t?.getProperty('agentScope');if(!prop)return undefined;const declaration=prop.valueDeclaration||prop.declarations?.[0];if(!declaration){errors.push('CONTAINER_DECLARATION_NOT_MEASURED');return false;}return hasContext(checker.getTypeOfSymbolAtLocation(prop,declaration));};
  const vars=dec.statements.filter(ts.isVariableStatement).flatMap(s=>s.declarationList.declarations);
- const helper=vars.find(d=>d.name.text==='AgentScope'),key=vars.find(d=>d.name.text==='AGENT_SCOPE_KEY');
+ const helper=vars.find(d=>ts.isIdentifier(d.name)&&d.name.text==='AgentScope'),key=vars.find(d=>ts.isIdentifier(d.name)&&d.name.text==='AGENT_SCOPE_KEY');
  const helperSymbol=helper&&sym(helper.name),keySymbol=key&&sym(key.name);
- const values=ts.isUnionTypeNode(alias.type)?alias.type.types.filter(ts.isLiteralTypeNode).map(t=>t.literal.text):[];
- const metadataCall=helper&&ts.isArrowFunction(helper.initializer)&&helper.initializer.body;
+ const values=ts.isUnionTypeNode(alias.type)?alias.type.types.filter(ts.isLiteralTypeNode).map(t=>'text' in t.literal?t.literal.text:undefined):[];
+ const metadataCall=helper&&helper.initializer&&ts.isArrowFunction(helper.initializer)&&helper.initializer.body;
+ /** @param {import('typescript').CallExpression} call */
  const dependencyDeclaration=call=>checker.getResolvedSignature(call)?.declaration;
+ /** @param {CallableDeclaration|undefined} decl @param {string} rel */
  const declarationAt=(decl,rel)=>!!decl&&fs.realpathSync(decl.getSourceFile().fileName)===fs.realpathSync(path.join(root,rel));
- const parameter=helper?.initializer?.parameters?.[0];
+ const initializer=helper?.initializer;
+ const parameter=initializer&&ts.isArrowFunction(initializer)?initializer.parameters[0]:undefined;
  if(!metadataCall||!ts.isCallExpression(metadataCall)||metadataCall.arguments.length!==2||sym(metadataCall.arguments[0])!==keySymbol||!parameter||!ts.isIdentifier(parameter.name)||sym(metadataCall.arguments[1])!==sym(parameter.name)||!declarationAt(dependencyDeclaration(metadataCall),'apps/api/node_modules/@nestjs/common/decorators/core/set-metadata.decorator.d.ts')||sym(metadataCall.expression)?.name!=='SetMetadata')errors.push('METADATA_HELPER_UNSUPPORTED');
- if(!key||!ts.isStringLiteral(key.initializer)||key.initializer.text!=='mun0043:agentScope')errors.push('METADATA_KEY_CHANGED_OR_UNPROVEN');
+ if(!key?.initializer||!ts.isStringLiteral(key.initializer)||key.initializer.text!=='mun0043:agentScope')errors.push('METADATA_KEY_CHANGED_OR_UNPROVEN');
  /** @type {import('typescript').SwitchStatement | undefined} */
  let switchNode;
  /** @type {import('typescript').Symbol | undefined} */
  let metadataBinding;
  // Only the observed read-only two-binding scalar extractor grammar is supported.
  // Names do not grant closure: every operand resolves to the actual parameter/local symbol.
+ /** @param {import('typescript').MethodDeclaration} d */
  function scalarExtractorGrammar(d){
   const statements=d?.body?.statements;
   if(!statements||statements.length!==3||d.parameters.length!==2)return false;
+  /** @param {import('typescript').Statement} s */
   const binding=s=>ts.isVariableStatement(s)&&s.declarationList.declarations.length===1&&
    (s.declarationList.flags&ts.NodeFlags.Const)?s.declarationList.declarations[0]:null;
   const container=binding(statements[0]),value=binding(statements[1]);
@@ -96,25 +134,28 @@ function analyze(overrides={},claimedHead=expectedHead){
  }
  const files=program.getSourceFiles().filter(s=>s.fileName.startsWith(root+'/apps/api/src/'));
  const coveredConsumers=new Set();
- function enclosingFunction(n){while(n&&!ts.isFunctionDeclaration(n)&&!ts.isMethodDeclaration(n)&&!ts.isArrowFunction(n))n=n.parent;return n;}
+ /** @param {TsNode|undefined} n @returns {EnclosingFunction|undefined} */
+ function enclosingFunction(n){while(n&&!ts.isFunctionDeclaration(n)&&!ts.isMethodDeclaration(n)&&!ts.isArrowFunction(n))n=n.parent;return /** @type {EnclosingFunction|undefined} */ (n);}
+ /** @param {import('typescript').PropertyAccessExpression|import('typescript').ElementAccessExpression} n @param {import('typescript').SourceFile} sf */
  function classifyRecordRead(n,sf){
   const fn=enclosingFunction(n),parameter=fn?.parameters?.find(p=>sym(p.name)===sym(n.expression)),comparison=n.parent;
   const constant=ts.isBinaryExpression(comparison)&&comparison.operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&comparison.left===n&&ts.isStringLiteral(comparison.right)?comparison.right.text:null;
   const signature=fn&&checker.getSignatureFromDeclaration(fn),returnType=signature&&checker.getReturnTypeOfSignature(signature);
   const types=returnType?.isUnion()?returnType.types:[returnType];
   const outputKinds=[];
-  for(const t of types.filter(Boolean)){const prop=t.getProperty('kind');if(prop){const pt=checker.getTypeOfSymbolAtLocation(prop,fn);if(pt.isStringLiteral())outputKinds.push(pt.value);}}
+  for(const t of types.filter(t=>t!==undefined)){const prop=t.getProperty('kind');if(prop&&fn){const pt=checker.getTypeOfSymbolAtLocation(prop,fn);if(pt.isStringLiteral())outputKinds.push(pt.value);}}
   const row={...loc(n),expression:n.getText(sf),function:fn?.name?.getText(sf)||null,parameter_symbol_declarations:(sym(n.expression)?.declarations||[]).map(loc),parameter_declared_unknown:parameter?.type?.kind===ts.SyntaxKind.UnknownKeyword,comparison_literal:constant,declared_return_kind_literals:outputKinds};
-  if(parameter&&row.parameter_declared_unknown&&constant&&!values.includes(constant)&&outputKinds.includes(constant)&&ts.isFunctionDeclaration(fn))classified.push(row);else unknown.push(row);
+  if(parameter&&row.parameter_declared_unknown&&constant&&!values.includes(constant)&&outputKinds.includes(constant)&&fn&&ts.isFunctionDeclaration(fn))classified.push(row);else unknown.push(row);
  }
  for(const sf of files){
+  /** @param {TsNode} n */
   function visit(n){
    if(ts.isIdentifier(n)&&[kindSymbol,helperSymbol,keySymbol].includes(sym(n)))coveredConsumers.add(path.relative(root,sf.fileName));
    if(ts.isVariableDeclaration(n)&&n.initializer&&ts.isCallExpression(n.initializer)&&n.initializer.arguments[0]&&sym(n.initializer.arguments[0])===keySymbol){
     const d=dependencyDeclaration(n.initializer);
     const call=n.initializer,targets=call.arguments[1],fn=enclosingFunction(n),context=fn?.parameters?.[0];
     const targetNames=targets&&ts.isArrayLiteralExpression(targets)?targets.elements.map(x=>ts.isCallExpression(x)&&x.arguments.length===0&&ts.isPropertyAccessExpression(x.expression)&&context&&sym(x.expression.expression)===sym(context.name)?x.expression.name.text:null):[];
-    if(declarationAt(d,'apps/api/node_modules/@nestjs/core/services/reflector.service.d.ts')&&d.name?.text==='getAllAndOverride'&&ts.isPropertyAccessExpression(call.expression)&&call.expression.name.text==='getAllAndOverride'&&call.arguments.length===2&&targetNames.length===2&&targetNames[0]==='getHandler'&&targetNames[1]==='getClass'&&loc(fn||n).file===guardRel&&fn?.name?.getText(sf)==='canActivate'&&checker.getTypeAtLocation(call).isUnion())metadataBinding=sym(n.name);else errors.push('METADATA_READER_UNSUPPORTED');
+    if(declarationAt(d,'apps/api/node_modules/@nestjs/core/services/reflector.service.d.ts')&&d&&'name' in d&&d.name&&'text' in d.name&&d.name.text==='getAllAndOverride'&&ts.isPropertyAccessExpression(call.expression)&&call.expression.name.text==='getAllAndOverride'&&call.arguments.length===2&&targetNames.length===2&&targetNames[0]==='getHandler'&&targetNames[1]==='getClass'&&loc(fn||n).file===guardRel&&fn?.name?.getText(sf)==='canActivate'&&checker.getTypeAtLocation(call).isUnion())metadataBinding=sym(n.name);else errors.push('METADATA_READER_UNSUPPORTED');
    }
    if(ts.isSwitchStatement(n)&&checker.getTypeAtLocation(n.expression).aliasSymbol===kindSymbol){if(switchNode)errors.push('MULTIPLE_SCOPE_SWITCHES');switchNode=n;}
    if(ts.isIdentifier(n)&&helperSymbol&&sym(n)===helperSymbol){
@@ -128,7 +169,7 @@ function analyze(overrides={},claimedHead=expectedHead){
     const p=n.parent;
     const declaration=ts.isVariableDeclaration(p)&&p.name===n;
     const imported=ts.isImportSpecifier(p)||ts.isImportClause(p);
-    const writer=p===metadataCall&&p.arguments[0]===n;
+    const writer=ts.isCallExpression(p)&&p===metadataCall&&p.arguments[0]===n;
     const reader=ts.isCallExpression(p)&&p.arguments[0]===n&&ts.isVariableDeclaration(p.parent)&&metadataBinding&&sym(p.parent.name)===metadataBinding;
     if(!declaration&&!imported&&!writer&&!reader)errors.push('METADATA_KEY_ESCAPE_UNPROVEN');
    }
@@ -137,7 +178,7 @@ function analyze(overrides={},claimedHead=expectedHead){
     const prop=checker.getTypeAtLocation(n.expression).getProperty('kind');
     if(prop&&(prop.declarations||[]).some(d=>kindDeclarations.includes(d))){
      const p=n.parent,literal=ts.isBinaryExpression(p)&&p.left===n&&ts.isStringLiteral(p.right)?p.right.text:null;
-     const safe=ts.isBinaryExpression(p)&&p.operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&values.includes(literal);
+     const safe=ts.isBinaryExpression(p)&&p.operatorToken.kind===ts.SyntaxKind.ExclamationEqualsEqualsToken&&literal!==null&&values.includes(literal);
      contextReads.push({...loc(n),expression:n.getText(sf),literal,safe_comparison:safe});if(!safe)errors.push('CONTEXT_KIND_OUTPUT_OR_UNKNOWN_USE');
     }else if(!prop)classifyRecordRead(n,sf);
    }
@@ -161,10 +202,10 @@ function analyze(overrides={},claimedHead=expectedHead){
     const booleanTest=ts.isPrefixUnaryExpression(p)&&p.operator===ts.SyntaxKind.ExclamationToken;
     const exhaustive=ts.isVariableDeclaration(p)&&p.initializer===n&&p.type?.kind===ts.SyntaxKind.NeverKeyword;
     const shorthand=ts.isShorthandPropertyAssignment(p)&&p.name===n;
-    const object=shorthand&&p.parent;
+    const object=shorthand?p.parent:undefined;
     const assignment=object?.parent;
     const fn=enclosingFunction(n);
-    const contextWrite=shorthand&&ts.isObjectLiteralExpression(object)&&ts.isBinaryExpression(assignment)&&assignment.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isPropertyAccessExpression(assignment.left)&&assignment.left.name.text==='agentScope'&&hasContainer(checker.getTypeAtLocation(assignment.left.expression))&&loc(fn||n).file===guardRel&&fn?.name?.getText(sf)==='canActivate';
+    const contextWrite=shorthand&&object&&assignment&&ts.isObjectLiteralExpression(object)&&ts.isBinaryExpression(assignment)&&assignment.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isPropertyAccessExpression(assignment.left)&&assignment.left.name.text==='agentScope'&&hasContainer(checker.getTypeAtLocation(assignment.left.expression))&&loc(fn||n).file===guardRel&&fn?.name?.getText(sf)==='canActivate';
     if(!declaration&&!switchUse&&!booleanTest&&!exhaustive&&!contextWrite){errors.push('RAW_METADATA_VALUE_ESCAPE_UNPROVEN');rawMetadataEscapes.push({...loc(n),parent_kind:ts.SyntaxKind[p.kind],parent:p.getText(sf).slice(0,300)});}
    }
    if(ts.isIdentifier(n)&&hasContainer(checker.getTypeAtLocation(n))){
@@ -176,21 +217,29 @@ function analyze(overrides={},claimedHead=expectedHead){
     if(!nonRuntime&&!safeRead&&!safeAlias&&!argument){errors.push('REQUEST_CONTAINER_ESCAPE_UNPROVEN');containerEscapePositions.push({...loc(n),expression:n.getText(sf),parent_kind:ts.SyntaxKind[p.kind],parent:p.getText(sf).slice(0,500)});}
     if(argument){
      const d=dependencyDeclaration(p),parameter=d?.parameters?.[p.arguments.indexOf(n)];
-     const parameterSymbol=parameter&&sym(parameter.name);const uses=[],bad=[];let calls=0;
+     const parameterSymbol=parameter&&sym(parameter.name);
+     /** @type {Record<string, unknown>[]} */
+     const uses=[];
+     /** @type {SourceLocation[]} */
+     const bad=[];
+     let calls=0;
+     /** @param {TsNode} x */
      function trace(x){
       if(ts.isCallExpression(x))calls++;
       // The bounded private extractors are read-only, including all local aliases.
       // Assignment, deletion and updates anywhere in their bodies refuse closure.
       if(ts.isBinaryExpression(x)&&x.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&x.operatorToken.kind<=ts.SyntaxKind.LastAssignment||ts.isDeleteExpression(x)||ts.isPostfixUnaryExpression(x)||ts.isPrefixUnaryExpression(x)&&[ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(x.operator))bad.push(loc(x));
-      if(ts.isIdentifier(x)&&sym(x)===parameterSymbol&&x!==parameter.name){
+      if(parameter&&ts.isIdentifier(x)&&sym(x)===parameterSymbol&&x!==parameter.name){
        const parent=x.parent;
        const effect=ts.isBinaryExpression(parent.parent)&&parent.parent.left===parent&&parent.parent.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&parent.parent.operatorToken.kind<=ts.SyntaxKind.LastAssignment||ts.isDeleteExpression(parent.parent)||ts.isPostfixUnaryExpression(parent.parent)||ts.isPrefixUnaryExpression(parent.parent)&&[ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(parent.parent.operator);
        const allowed=ts.isPropertyAccessExpression(parent)&&parent.expression===x&&['body','params'].includes(parent.name.text)&&!effect;
        uses.push({...loc(x),parent_kind:ts.SyntaxKind[parent.kind],read:allowed?parent.name.text:null});if(!allowed)bad.push(loc(x));
       }ts.forEachChild(x,trace);
      }
-     if(d?.body&&parameter)trace(d.body);
-     const returns=d&&checker.getReturnTypeOfSignature(checker.getSignatureFromDeclaration(d));
+     const body=d&&(ts.isMethodDeclaration(d)||ts.isFunctionDeclaration(d)||ts.isFunctionExpression(d)||ts.isArrowFunction(d)||ts.isConstructorDeclaration(d)||ts.isGetAccessorDeclaration(d)||ts.isSetAccessorDeclaration(d))?d.body:undefined;
+     if(body&&parameter)trace(body);
+     const calleeSignature=d&&d.kind!==ts.SyntaxKind.JSDocSignature?checker.getSignatureFromDeclaration(d):undefined;
+     const returns=calleeSignature&&checker.getReturnTypeOfSignature(calleeSignature);
      const returnParts=returns?.isUnion()?returns.types:[returns];
      const scalar=returnParts?.length&&returnParts.every(t=>t&&(t.flags&(ts.TypeFlags.String|ts.TypeFlags.Undefined)));
      const privateMethod=d&&ts.isMethodDeclaration(d)&&d.modifiers?.some(m=>m.kind===ts.SyntaxKind.PrivateKeyword);
@@ -207,9 +256,10 @@ function analyze(overrides={},claimedHead=expectedHead){
  const cases=switchNode?.caseBlock.clauses.filter(n=>'expression' in n).map(n=>ts.isStringLiteral(n.expression)&&'text' in n.expression&&typeof n.expression.text==='string'?n.expression.text:null)||[];
  let neverFallback=false;
  const fallback=switchNode?.caseBlock.clauses.find(ts.isDefaultClause);
+ /** @param {TsNode} n */
  function checkNever(n){if(ts.isVariableDeclaration(n)&&n.type?.kind===ts.SyntaxKind.NeverKeyword&&n.initializer&&sym(n.initializer)===metadataBinding&&(checker.getTypeAtLocation(n.name).flags&ts.TypeFlags.Never))neverFallback=true;ts.forEachChild(n,checkNever);}
  if(fallback)checkNever(fallback);if(!neverFallback)errors.push('NO_SYMBOL_BOUND_NEVER_FALLBACK');
- if(values.length!==cases.length||new Set(cases).size!==cases.length||values.some(v=>!cases.includes(v)))errors.push('EXHAUSTIVE_CASE_SET_MISMATCH');
+ if(values.length!==cases.length||new Set(cases).size!==cases.length||values.some(v=>v===undefined||!cases.includes(v)))errors.push('EXHAUSTIVE_CASE_SET_MISMATCH');
  if(unknown.length)errors.push('UNCLASSIFIED_KIND_READ');
  const diagnostics=ts.getPreEmitDiagnostics(program).map(d=>({code:d.code,message:ts.flattenDiagnosticMessageText(d.messageText,' '),file:d.file?path.relative(root,d.file.fileName):null}));
  if(diagnostics.length)errors.push('COMPILER_DIAGNOSTICS');

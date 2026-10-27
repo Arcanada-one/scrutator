@@ -51,7 +51,7 @@ jobs:
     # "workflow file issue", with no job and no retrievable annotation. A hole, not a solved problem.
     uses: ./.github/workflows/graph-admission.yml
     with:
-      program_ref: "089a771c5a4abf1494e7a389925d2da9bd710273"
+      program_ref: "ade6ed5c4a90eb705adf0b6bf7bb281cd84b9ec0"
       # AUP-GRAPH-006:gate2b. The fingerprint of the Ed25519 key that signs the vendored bundle's
       # BUNDLE.json. It lives HERE, in this repository's own workflow file, deliberately OUTSIDE
       # .github/graph-admission/: a fingerprint kept inside the bundle would be replaced by the very

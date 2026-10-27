@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import contextlib
 import contextvars
+import difflib
 import hashlib
 import json
 import os
@@ -23,8 +24,11 @@ import build_graph
 import impact
 import schema_check
 import origin_association
+import nest_bootstrap
 
 SOURCE_EXTS = impact.CODE_EXTS | {".prisma", ".py", ".rs", ".go", ".java", ".kt", ".cs", ".c", ".cpp", ".h"}
+ENV_KEY_LINE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=\n?\Z")
+ENV_ASSIGNMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 _phase_fd = contextvars.ContextVar("graph_phase_fd", default=None)
 
@@ -222,8 +226,23 @@ def _caller_graph_pair(repo: impact.Repo, base: str, head: str, bundle_path: str
 
 
 def index_at(repo: impact.Repo, revision: str) -> impact.GraphIndex:
+    import selected_dependency
     with trace_phase("revision-graph-build"):
-        doc = build_graph.build(repo.top, rev=revision, subdir=repo.prefix, built_at=build_graph.FIXED_BUILT_AT)
+        native = selected_dependency.current_native_configuration()
+        key = (build_graph.source_repo_name(repo.top), revision)
+        envelopes = native['selections'].get(key) if native else None
+        if envelopes is not None:
+            if repo.prefix:
+                raise impact.Refusal('SELECTED_SUBDIR_UNSUPPORTED', 'selected source view requires the exact repository root')
+            try:
+                doc, _ = selected_dependency.build_selected_graph(repo.top, rev=revision, envelopes=envelopes,
+                        repositories=native['repositories'], replay=native['replay'])
+            except selected_dependency.NativeContradiction as exc:
+                raise impact.Refusal('SELECTED_GRAPH_CONTRADICTION', 'native selected graph qualification failed') from exc
+            except (ValueError, OSError, subprocess.SubprocessError) as exc:
+                raise impact.Refusal('SELECTED_GRAPH_NOT_MEASURED', 'native selected graph could not be built') from exc
+        else:
+            doc = build_graph.build(repo.top, rev=revision, subdir=repo.prefix, built_at=build_graph.FIXED_BUILT_AT)
     with trace_phase("revision-graph-schema"):
         errors = schema_check.check_graph(doc, schema_check.load_schema(schema_check.GRAPH_SCHEMA_PATH))
     if errors:
@@ -279,18 +298,145 @@ def merge_revisions(versions: list[tuple[str, dict]]) -> dict:
     return out
 
 
+def selected_dependency_impact(idx, q, seeds, *, max_depth, edge_types):
+    """Normal native traversal from revision-bound foreign selection obligations.
+
+    Never fabricate a missing source node or treat an unknown provider as absent.
+    Legacy graphs without selected facts do not enter this path.
+    """
+    if not seeds:
+        return
+    missing = set(seeds) - set(idx.nodes)
+    if missing:
+        raise impact.Refusal('SELECTED_SOURCE_NOT_MEASURED',
+                             'selected provider lacks a qualified source node', {'entities': sorted(missing)})
+    reached = []
+    # Preserve boundary-bearing paths even if the same caller is also a seed.
+    for seed in sorted(seeds):
+        reached.extend(impact.traverse(idx, {seed}, max_depth, edge_types, set(impact.RULES), set()))
+    entries = {}
+    for section in ('deterministic_core', 'inferred_tail'):
+        for row in q['impact_set'][section]:
+            entries[row['entity']] = (section, row)
+    for row in reached:
+        section = 'inferred_tail' if any(h['provenance'] != 'deterministic' for h in row['path']) else 'deterministic_core'
+        previous = entries.get(row['entity'])
+        if previous is None or (section == 'inferred_tail' and previous[0] != 'inferred_tail'):
+            entries[row['entity']] = (section, row)
+    # Foreign selection seeds have no changed local file to collect them from.
+    # Keep an explicit depth-zero obligation so issuance and receipt recheck see
+    # the same providers. This is a selection row, not an invented source edge;
+    # an existing inferred caller path above remains intact.
+    for seed in sorted(seeds):
+        if seed not in entries:
+            entries[seed] = ('deterministic_core', {
+                'entity': seed, 'node_type': idx.nodes[seed]['type'],
+                'depth': 0, 'boundary': 'intra_unit', 'path': [],
+                'verifier_hint': 'native-selected-dependency'})
+    for section in ('deterministic_core', 'inferred_tail'):
+        q['impact_set'][section] = [row for _, (s, row) in sorted(entries.items()) if s == section]
+    q['impact_set']['total'] = len(entries)
+    q['seeds'] = sorted(set(q['seeds']) | set(seeds))
+
+
+def env_example_key_delta(repo: impact.Repo, base: str, head: str, files: list[dict]) -> set[str] | None:
+    """Return only a pure add/remove set of unique, empty root .env.example keys.
+
+    Changed lines must be bare KEY= lines. Every other changed line shape keeps the
+    existing repository-wide fallback.
+    """
+    matches = [f for f in files if f.get("path") == ".env.example"]
+    if len(matches) != 1 or matches[0].get("status") != "M":
+        return None
+    git_path = (repo.prefix or "") + ".env.example"
+    for revision in (base, head):
+        try:
+            tree = subprocess.run(["git", "-C", str(repo.top), "ls-tree", "-z", revision, "--", git_path],
+                                  check=True, capture_output=True).stdout
+        except (OSError, subprocess.SubprocessError):
+            return None
+        record = next((row for row in tree.split(b"\0") if row), b"")
+        mode = record.split(b" ", 1)[0] if record else b""
+        if mode not in {b"100644", b"100755"}:
+            return None
+    old = repo.read_at(base, [".env.example"]).get(".env.example")
+    new = repo.read_at(head, [".env.example"]).get(".env.example")
+    if old is None or new is None or b"\r" in old or b"\r" in new:
+        return None
+    try:
+        old_lines = old.decode("utf-8").splitlines(keepends=True)
+        new_lines = new.decode("utf-8").splitlines(keepends=True)
+    except UnicodeDecodeError:
+        return None
+
+    def assignments(lines):
+        keys, counts = [], {}
+        for line in lines:
+            bare = line[:-1] if line.endswith("\n") else line
+            if ENV_ASSIGNMENT_RE.match(bare):
+                key = bare.split("=", 1)[0]
+                counts[key] = counts.get(key, 0) + 1
+                keys.append(key)
+        return keys, counts
+
+    old_keys, old_counts = assignments(old_lines)
+    new_keys, new_counts = assignments(new_lines)
+    if any(n > 1 for n in old_counts.values()) or any(n > 1 for n in new_counts.values()):
+        return None
+    removed, added = [], []
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=old_lines, b=new_lines, autojunk=False).get_opcodes():
+        if tag == "equal":
+            continue
+        for line in old_lines[i1:i2]:
+            match = ENV_KEY_LINE_RE.fullmatch(line)
+            if not match:
+                return None
+            removed.append(match.group(1))
+        for line in new_lines[j1:j2]:
+            match = ENV_KEY_LINE_RE.fullmatch(line)
+            if not match:
+                return None
+            added.append(match.group(1))
+    if not removed and not added:
+        return None
+    if set(removed) & set(added):
+        return None
+    if set(removed) != set(old_keys) - set(new_keys) or set(added) != set(new_keys) - set(old_keys):
+        return None
+    return set(removed) | set(added)
+
+
 def query(base_idx: impact.GraphIndex, head_idx: impact.GraphIndex, files: list[dict], *,
           repo: impact.Repo, base: str, head: str, tree_commit: str, tree_dirty: bool,
           max_depth=impact.DEFAULT_MAX_DEPTH, graph_path=None, head_graph_path=None, edge_types=None) -> dict:
+    env_keys = env_example_key_delta(repo, base, head, files)
+    if env_keys is not None and not all(f"config_key:{key}" in base_idx.nodes or f"config_key:{key}" in head_idx.nodes
+                                        for key in env_keys):
+        env_keys = None
+    query_files = copy.deepcopy(files)
+    if env_keys is not None:
+        for f in query_files:
+            if f.get("path") == ".env.example":
+                f["_config_schema_keys"] = sorted(env_keys)
     common = dict(mode="diff", base=base, head=head, tree_commit=tree_commit, tree_dirty=tree_dirty,
                   repo=repo, max_depth=max_depth, edge_types=edge_types)
-    before = impact.query(base_idx, copy.deepcopy(files), graph_path=graph_path, **common)
-    head_files = [f for f in files if f["status"] not in {"D", "R"}]
+    before = impact.query(base_idx, copy.deepcopy(query_files), graph_path=graph_path, **common)
+    head_files = [f for f in query_files if f["status"] not in {"D", "R"}]
     # A deletion-only range still binds and checks the head graph, even with no head seeds.
     head_stale = impact.check_staleness(head_idx, repo, "diff", base, tree_commit, tree_dirty,
                                        set(), set(impact.RULES), head=head, graph_role="head")
     after = impact.query(head_idx, copy.deepcopy(head_files), graph_role="head",
                          graph_path=head_graph_path, **common) if head_files else None
+    # DEC0146: no envelope/qualification fact means byte-identical legacy behavior.
+    if any(node.get('attrs', {}).get('selected_dependencies')
+           for idx in (base_idx, head_idx) for node in idx.nodes.values()):
+        import selected_dependency
+        obligations = selected_dependency.paired_obligations(base_idx.doc, head_idx.doc)
+        selected_dependency_impact(base_idx, before, obligations['base'], max_depth=max_depth, edge_types=edge_types)
+        if obligations['head'] and after is None:
+            raise impact.Refusal('SELECTED_HEAD_NOT_MEASURED', 'head selection changed without a native head traversal')
+        if after is not None:
+            selected_dependency_impact(head_idx, after, obligations['head'], max_depth=max_depth, edge_types=edge_types)
     out = copy.deepcopy(before)
     versions = [("base", before)] + ([("head", after)] if after else [])
     merged = merge_revisions(versions)
@@ -379,6 +525,48 @@ def blocking_query_events(q):
     return [e for e in q.get("events", []) if not (bound and e.get("code") == "EMPTY_IMPACT_REQUIRES_EXPLANATION")]
 
 
+def absent_suite_repo_problems(repo, head: str, doc: dict, units: set[str]) -> list[str]:
+    """Re-derive from Git at HEAD that a claimed absent suite is really absent and really declared.
+
+    Nothing is taken from the receipt: the class is root-only, so the fallback unit must be exactly
+    `deployable_unit:.` as derived from the impact graph (`units`), the declaration is read from the
+    COMMITTED profile, and the static row must carry that profile's own argv."""
+    ts = doc["test_suite"]
+    out = []
+    if units != {"deployable_unit:."} or set(ts.get("entities") or []) != units:
+        out.append("absent_declared class refused: supported only when the derived fallback unit is exactly deployable_unit:.")
+    if (ts.get("declaration") or {}).get("deployable") != ".":
+        out.append("absent_declared class refused: receipt declaration.deployable is not the root")
+    try:
+        names = impact.git(["ls-tree", "-r", "--name-only", head], repo.path).splitlines()
+        prefix = repo.prefix
+        names = [n[len(prefix):] for n in names if n.startswith(prefix)]
+        files = dict.fromkeys(names)
+        files.update(repo.read_at(head, schema_check.absent_suite_sources(names)))
+        profile = json.loads(repo.read_at(head, [".arcana/verify.json"])[".arcana/verify.json"] or b"{}")
+    except (impact.Refusal, ValueError, OSError, subprocess.SubprocessError):
+        return ["absent_declared class refused: head tree/profile unreadable"]
+    facts = schema_check.absent_suite_tree(files)
+    if facts["test_files"]:
+        out.append("absent_declared class refused: tracked tests at head: " + ", ".join(facts["test_files"][:5]))
+    if facts["scripts_test"] is not None:
+        out.append("absent_declared class refused: declared test scripts at head: " + facts["scripts_test"])
+    if facts["unknown"]:
+        out.append("absent_declared class refused: unclassifiable sources (unknown is not absent): " + ", ".join(facts["unknown"][:5]))
+    deps = (profile.get("deployables") or {}) if isinstance(profile, dict) else {}
+    row = deps.get(".") if isinstance(deps.get("."), dict) else {}
+    static = row.get("static_validation")
+    if "full_test" not in row or row["full_test"] is not None or not str(row.get("full_test_absent_reason") or "").strip():
+        out.append("absent_declared class refused: .arcana/verify.json at head does not declare full_test null with full_test_absent_reason")
+    elif (ts.get("declaration") or {}).get("full_test_absent_reason") != row["full_test_absent_reason"].strip():
+        out.append("absent_declared class refused: receipt reason differs from the committed profile")
+    expected = schema_check.absent_suite_static_text(static) if isinstance(static, list) and static else None
+    rows = ts.get("static_validation")
+    if expected is None or not isinstance(rows, list) or [r.get("command") for r in rows if isinstance(r, dict)] != [expected] or len(rows) != 1:
+        out.append("absent_declared class refused: static_validation row differs from the committed profile commands")
+    return out
+
+
 def receipt_problems(repo_path: Path, doc: dict, *, origin_binding: dict | None = None) -> list[str]:
     """Rebuild from Git, never from receipt node_ids or declared revision selections.
 
@@ -443,6 +631,8 @@ A paired receipt must match both graph digests and the complete dual selection.
     if not enforce_mandatory and not new_required and not selection["unmeasured_head_files"]:
         return []
     problems = schema_check.fallback_evidence_problems(doc, fallback_units(q)) if q["impact_set"].get("global_fallback", {}).get("triggered") else []
+    if schema_check.ABSENT_SUITE_CLASS_ENABLED and isinstance(doc.get("test_suite"), dict) and q["impact_set"].get("global_fallback", {}).get("triggered"):
+        problems.extend(absent_suite_repo_problems(repo, head, doc, fallback_units(q)))
     explanation = doc.get("empty_impact_explanation") or {}
     if "binding" in explanation:
         try:
@@ -482,17 +672,19 @@ A paired receipt must match both graph digests and the complete dual selection.
     admitted = (doc.get("admission") or {}).get("verdict") in {"admitted", "admitted_with_exemptions"}
     verification = doc.get("verify") if isinstance(doc.get("verify"), dict) else {}
     required = verification.get("required_by_entity")
+    head_tree = (build_graph.load_tree_git(repo.top, head, repo.prefix or "")
+                 if required is not None or (enforce_mandatory and admitted) else None)
     if enforce_mandatory and admitted and required is None:
         problems.append("admitted receipt has no mandatory verifier mapping")
     if required is not None:
         if not isinstance(required, dict) or expected - set(required):
             problems.append("required_by_entity omits independently selected entities")
         else:
-            mandatory = mandatory_by_entity(before, after, q, not_owed=not_owed)
+            mandatory = mandatory_by_entity(before, after, q, not_owed=not_owed, head_tree=head_tree)
             if any(not isinstance(required[e], list) or not set(vs) <= set(required[e]) for e, vs in mandatory.items()):
                 problems.append("required_by_entity omits mandatory base/head verifier obligations")
     if enforce_mandatory and admitted:
-        mandatory = mandatory_by_entity(before, after, q, not_owed=not_owed)
+        mandatory = mandatory_by_entity(before, after, q, not_owed=not_owed, head_tree=head_tree)
         records = {v.get("entity"): v for v in doc.get("verdicts", []) if isinstance(v, dict)}
         verifiers = {v.get("id"): v for v in doc.get("verifiers", []) if isinstance(v, dict)}
         for entity, minimum in mandatory.items():
@@ -825,10 +1017,14 @@ def not_owed_context(repo: impact.Repo, base: str, head: str, now_utc: str, afte
 
 
 def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: dict,
-                       not_owed: dict | None = None) -> dict[str, list[str]]:
+                       not_owed: dict | None = None,
+                       head_tree: build_graph.Tree | None = None) -> dict[str, list[str]]:
     """The matrix minimum, independent of a producer's supplied requirement arrays."""
     matrix = json.loads((Path(__file__).resolve().parents[2] / "contracts/graph-verified-change/verifier-matrix.v1.json").read_text())
     affected = selected(q)
+    # Independent admission-side floor; intentionally not imported from verify.py or derived from the matrix.
+    present_types = {(after.nodes.get(eid) or before.nodes.get(eid) or {}).get("type") for eid in affected}
+    validate_systemd_admission_floor(matrix, present_types)
     changed = set(q["seeds"])
     full_test_units = fallback_units(q) if q["impact_set"].get("global_fallback", {}).get("triggered") else set()
     hops = {e: set() for e in affected}
@@ -866,6 +1062,14 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
             required.discard("type_check")
         if node["type"] == "deployable_unit" and not _deployable_has_ts(node.get("path", ""), before, after):
             required.discard("type_check")
+        # A2-452: verify.py discharges type_check for fixture data only when no compiler
+        # project is attributed to that exact head-tree path. Recompute the same bounded
+        # project/config selection here; otherwise C18 requires an obligation the producer
+        # correctly omitted (or would risk treating an actually covered fixture as exempt).
+        if ("type_check" in required and node["type"] in ("code_unit", "route")
+                and head_tree is not None
+                and not fixture_type_check_is_owed(node.get("path", ""), before, after, head_tree)):
+            required.discard("type_check")
         # Muneral d2c3de8c: the declared discharge, the SAME function verify.py calls.
         if (not_owed and "type_check" in required and node["type"] in ("code_unit", "route")
                 and type_check_not_owed(node.get("path", ""), not_owed["entries"], not_owed["revision_paths"],
@@ -878,6 +1082,138 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
             required.add("full_fallback_test")  # separate full-suite row, never targeted spec coverage
         result[eid] = sorted(required)
     return result
+
+
+FIXTURE_DIR_NAMES = frozenset({"fixtures", "__fixtures__", "testdata"})
+
+
+def is_fixture_path(path: str) -> bool:
+    return any(part in FIXTURE_DIR_NAMES for part in (path or "").split("/")[:-1])
+
+
+def tsconfig_names(tree: build_graph.Tree, cfg: str, rel: str) -> bool:
+    try:
+        doc = build_graph.load_jsonc(tree.text(cfg) or "")
+    except Exception:  # malformed/unreadable config cannot prove coverage
+        return False
+    if not isinstance(doc, dict):
+        return False
+    files, include = doc.get("files"), doc.get("include")
+    if files is None and include is None:
+        return "extends" not in doc
+    norm = lambda value: str(value).strip().removeprefix("./")  # noqa: E731
+    if rel in {norm(value) for value in (files or [])}:
+        return True
+    for pattern in (norm(value) for value in (include or [])):
+        if not any(char in pattern for char in "*?"):
+            if rel == pattern or rel.startswith(pattern.rstrip("/") + "/"):
+                return True
+            continue
+        regex = re.escape(pattern).replace(r"\*\*/", "(?:.*/)?").replace(r"\*", "[^/]*").replace(r"\?", "[^/]")
+        if re.fullmatch(regex, rel):
+            return True
+    return False
+
+
+def nested_type_project(path: str, tree: build_graph.Tree) -> str | None:
+    if (is_fixture_path(path) or path.startswith(".github/graph-admission/") or "node_modules/" in path
+            or "/" not in path):
+        return None
+    parts = path.split("/")[:-1]
+    while parts:
+        directory = "/".join(parts)
+        if tree.exists(directory + "/tsconfig.json"):
+            return directory
+        parts.pop()
+    return None
+
+
+def type_project_of(path: str, deployables: dict[str, dict], tree: build_graph.Tree) -> str | None:
+    dep = nest_bootstrap.deployable_of(path, list(deployables))
+    if dep is not None:
+        return dep
+    nested = nested_type_project(path, tree)
+    if nested is not None:
+        return nested
+    return "." if tree.exists("tsconfig.json") else None
+
+
+def tsconfigs_for(dep: str, path: str | None, profile: dict, tree: build_graph.Tree) -> list[str]:
+    profs = profile.get("deployables") if isinstance(profile.get("deployables"), dict) else {}
+    prof = profs.get(dep) if isinstance(profs.get(dep), dict) else {}
+    prefix = "" if dep in ("", ".") else dep + "/"
+    configs = list(prof.get("tsconfig") or [])
+    if "tsconfig" not in prof:
+        if tree.exists(prefix + "tsconfig.json"):
+            configs.append(prefix + "tsconfig.json")
+        siblings = sorted(item for item in tree.paths
+                          if os.path.dirname(item) == prefix.rstrip("/")
+                          and re.fullmatch(r"tsconfig\.[^.]+\.json", os.path.basename(item))
+                          and os.path.basename(item) != "tsconfig.base.json")
+        configs.extend(item for item in siblings if item not in configs)
+    if path is not None:
+        test_config = prof.get("tsconfig_test") or (prefix + "tsconfig.test.json"
+                                                       if tree.exists(prefix + "tsconfig.test.json") else None)
+        rel = path[len(prefix):] if path.startswith(prefix) else path
+        is_test = bool(re.search(r"\.(spec|test)\.[cm]?[jt]sx?$", rel)
+                       or rel.startswith(("test/", "__tests__/", "e2e/")))
+        if test_config and is_test:
+            configs = [test_config]
+        elif (test_config and configs and test_config not in configs
+              and not any(tsconfig_names(tree, cfg, rel) for cfg in configs)
+              and tsconfig_names(tree, test_config, rel)):
+            configs = [test_config]
+        elif "tsconfig" not in prof:
+            covering = [cfg for cfg in configs
+                        if tsconfig_names(tree, cfg, os.path.relpath(path, os.path.dirname(cfg) or "."))]
+            if covering:
+                configs = [covering[0]]
+            elif prefix + "tsconfig.json" in configs:
+                configs = [prefix + "tsconfig.json"]
+    if prof.get("synthetic_tsconfig") is not None and not configs:
+        configs.append(f"synthetic:{dep}")
+    return configs
+
+
+def type_project_covers(path: str, deployables: dict[str, dict], profile: dict,
+                        tree: build_graph.Tree) -> bool:
+    project = type_project_of(path, deployables, tree)
+    return project is not None and bool(tsconfigs_for(project, path, profile, tree))
+
+
+def fixture_type_check_is_owed(path: str, before: impact.GraphIndex, after: impact.GraphIndex,
+                               tree: build_graph.Tree) -> bool:
+    """Whether a fixture code path has an attributed compiler project under verify.py's rule."""
+    if not is_fixture_path(path):
+        return True
+    deployables = {node.get("path", "").rstrip("/"): node
+                   for index in (before, after) for node in index.nodes.values()
+                   if node.get("type") == "deployable_unit" and node.get("path")}
+    try:
+        profile = json.loads(tree.text(".arcana/verify.json")) if tree.exists(".arcana/verify.json") else {
+            "schema": "VerifyProfile/v1", "deployables": {}, "auto": True}
+    except (ValueError, TypeError):
+        profile = {"deployables": {}, "auto": True}
+    if not isinstance(profile, dict):
+        profile = {"deployables": {}, "auto": True}
+    return type_project_covers(path, deployables, profile, tree)
+
+
+def validate_systemd_admission_floor(matrix: dict, present_types: set[str]) -> None:
+    """Independent fixed floor for admission; deliberately duplicates verify.py's constant."""
+    fixed_systemd_floor = {"systemd_unit": ("systemd_unit_semantics",),
+                           "source_file": ("source_file_integrity",)}
+    for node_type, floor in fixed_systemd_floor.items():
+        if node_type not in present_types:
+            continue
+        node_row = matrix.get("node_types", {}).get(node_type, {})
+        verifier_rows = matrix.get("verifiers", {})
+        if (not set(floor) <= set(node_row.get("mandatory", []))
+                or any(v not in verifier_rows or node_type not in verifier_rows[v].get("applies_to_nodes", []) for v in floor)):
+            raise impact.Refusal("SYSTEMD_MANDATORY_FLOOR_MISSING",
+                                 f"fixed admission-side {node_type} floor is absent from verifier matrix",
+                                 {"node_type": node_type, "required": list(floor),
+                                  "declared": node_row.get("mandatory", [])})
 
 
 def _deployable_has_ts(dep_path: str, before: impact.GraphIndex, after: impact.GraphIndex) -> bool:
