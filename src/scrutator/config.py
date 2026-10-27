@@ -163,6 +163,17 @@ class Settings(BaseSettings):
     # log only, never rejects. MUST stay False until the operator explicitly flips it in prod.
     # env_prefix below makes this SCRUTATOR_AUTH_ENFORCE.
     auth_enforce: bool = False
+    # KCP-0025: opt-in project-principal write adapter. The shared instance
+    # leaves this empty; a dedicated instance names exactly one namespace.
+    project_write_namespace: str = ""
+
+    @field_validator("project_write_namespace")
+    @classmethod
+    def validate_project_write_namespace(cls, value: str) -> str:
+        if value and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", value):
+            raise ValueError("project write namespace must be one explicit namespace name")
+        return value
+
     # LTM-0025 structured/generic ingest credential. This is separate from
     # both reader grants and the /v1/index Feeder credential.
     ltm_writer_token: str = ""

@@ -113,3 +113,21 @@ async def require_ltm_write_scope(ctx: TenantContext = Depends(require_tenant_co
             detail=f"scope '{settings.auth_ltm_write_scope}' required for this operation",
         )
     return ctx
+
+
+async def resolve_project_write_namespace(ctx: TenantContext, requested: str) -> tuple[str, int]:
+    """Bind a project write to the dedicated instance and verified principal.
+
+    The payload name is only a mismatch check. The effective namespace comes
+    from this instance's opt-in setting and the principal's live grant; a
+    client-supplied name never chooses the mutation target.
+    """
+    namespace = settings.project_write_namespace
+    if not namespace:
+        raise HTTPException(status_code=503, detail="project write adapter unavailable")
+    if ctx.principal_type != "service" or settings.auth_ltm_write_scope not in ctx.scopes:
+        raise HTTPException(status_code=403, detail="project write scope required")
+    if requested != namespace:
+        raise HTTPException(status_code=403, detail="namespace outside project write scope")
+    namespace_id = await resolve_namespace_selector(ctx, namespace)
+    return namespace, namespace_id

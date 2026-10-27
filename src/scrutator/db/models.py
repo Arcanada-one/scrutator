@@ -142,6 +142,13 @@ class DeleteSourceResponse(BaseModel):
     chunks_deleted: int
 
 
+class ProjectWritePreflightResponse(BaseModel):
+    """A nonmutating confirmation of one principal-bound write scope."""
+
+    namespace: str
+    writable: Literal[True] = True
+
+
 _MAX_SEARCH_LIMIT = 50
 
 
