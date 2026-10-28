@@ -5808,7 +5808,7 @@ def current_source_stage_outcome_for_receipt(receipt_path: Path, receipt: dict, 
             authority_row = authority_rows[0]
             if (authority_path.is_symlink() or not authority_path.is_file()
                     or _stage_sha256(authority_path.read_bytes()) != STAGE_AUTHORITY_SHA256
-                    or authority_row.get("sha256") != hashlib.sha256(authority_path.read_bytes()).hexdigest()
+                    or authority_row.get("sha256") != _stage_sha256(authority_path.read_bytes())
                     or not isinstance(authority_row.get("blob_oid"), str)
                     or not re.fullmatch(r"[0-9a-f]{40,64}", authority_row["blob_oid"])):
                 return {}, ["signed Program bundle DEC-AUP-0167 source does not match the pinned authority bytes"]
