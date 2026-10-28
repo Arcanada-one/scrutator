@@ -22,6 +22,7 @@ from scrutator.auth.dependency import (
     require_ltm_write_scope,
     require_tenant_context,
     resolve_namespace_selector,
+    resolve_project_write_namespace,
 )
 from scrutator.auth.models import TenantContext
 from scrutator.capability_projection import (
@@ -38,6 +39,7 @@ from scrutator.chunker.models import ChunkRequest, ChunkResponse
 from scrutator.config import settings
 from scrutator.db.connection import apply_schema, close_pool, get_pool
 from scrutator.db.models import (
+    INDEX_BATCH_MAX_DOCUMENT_BYTES,
     INDEX_BATCH_MAX_REQUEST_BYTES,
     BatchIndexRequest,
     BatchIndexResponse,
@@ -52,6 +54,7 @@ from scrutator.db.models import (
     NamespaceCreate,
     NamespaceInfo,
     OutlineResponse,
+    ProjectWritePreflightResponse,
     SearchRequest,
     SearchResponse,
     SectionContext,
@@ -137,6 +140,11 @@ app.add_middleware(
     BoundedRequestBodyMiddleware,
     path="/v1/index/capability-projection",
     max_bytes=CAPABILITY_PROJECTION_MAX_REQUEST_BYTES,
+)
+app.add_middleware(
+    BoundedRequestBodyMiddleware,
+    path="/v1/project/index",
+    max_bytes=INDEX_BATCH_MAX_REQUEST_BYTES,
 )
 
 
@@ -362,6 +370,67 @@ async def delete_source_endpoint(
         )
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Delete failed: {e}") from e
+
+
+@app.get("/v1/project/write-preflight", response_model=ProjectWritePreflightResponse)
+async def project_write_preflight(
+    namespace: str,
+    ctx: TenantContext = Depends(require_ltm_write_scope),
+) -> ProjectWritePreflightResponse:
+    """Check current principal scope and namespace grant without a mutation."""
+    effective_namespace, _ = await resolve_project_write_namespace(ctx, namespace)
+    return ProjectWritePreflightResponse(namespace=effective_namespace)
+
+
+@app.post("/v1/project/index", response_model=IndexResponse)
+async def project_index_endpoint(
+    request: IndexRequest,
+    ctx: TenantContext = Depends(require_ltm_write_scope),
+) -> IndexResponse:
+    """Index through the principal's dedicated namespace, never a Feeder token."""
+    namespace, namespace_id = await resolve_project_write_namespace(ctx, request.namespace)
+    if request.project is not None and request.project != namespace:
+        raise HTTPException(status_code=403, detail="project outside write scope")
+    try:
+        if len(request.content.encode("utf-8")) > INDEX_BATCH_MAX_DOCUMENT_BYTES:
+            raise HTTPException(status_code=422, detail="document content exceeds project write byte limit")
+    except UnicodeEncodeError as exc:
+        raise HTTPException(status_code=422, detail="document content has invalid Unicode") from exc
+    try:
+        result = await index_document(
+            content=request.content,
+            source_path=request.source_path,
+            namespace=namespace,
+            project=namespace,
+            source_type=request.source_type,
+            max_tokens=request.max_tokens,
+            overlap_tokens=request.overlap_tokens,
+            authorized_namespace_id=namespace_id,
+        )
+    except BatchIndexLimitError as exc:
+        raise HTTPException(status_code=422, detail="project document exceeds index limits") from exc
+    except Exception as exc:
+        logger.error("Project index failed: error_type=%s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="project index failed") from None
+    if result.namespace != namespace or result.source_path != request.source_path:
+        logger.error("Project index result crossed its server-derived source scope")
+        raise HTTPException(status_code=503, detail="project index result is inconsistent")
+    return result
+
+
+@app.delete("/v1/project/index", response_model=DeleteSourceResponse)
+async def project_delete_source_endpoint(
+    request: DeleteSourceRequest,
+    ctx: TenantContext = Depends(require_ltm_write_scope),
+) -> DeleteSourceResponse:
+    """Delete one source through the principal's dedicated namespace grant."""
+    namespace, namespace_id = await resolve_project_write_namespace(ctx, request.namespace)
+    try:
+        deleted = await delete_by_source(request.source_path, namespace_id)
+    except Exception as exc:
+        logger.error("Project source delete failed: error_type=%s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="project source delete failed") from None
+    return DeleteSourceResponse(namespace=namespace, source_path=request.source_path, chunks_deleted=deleted)
 
 
 @app.post("/v1/search", response_model=SearchResponse)

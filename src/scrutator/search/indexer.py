@@ -1291,8 +1291,13 @@ async def index_document(
     source_type: str | None = None,
     max_tokens: int = 512,
     overlap_tokens: int = 50,
+    authorized_namespace_id: int | None = None,
 ) -> IndexResponse:
-    """Full index pipeline: chunk → embed → store."""
+    """Full index pipeline: chunk → embed → store.
+
+    A principal-scoped caller supplies its resolved namespace ID. In that mode,
+    persistence must not create or reselect a namespace by name.
+    """
     # ARAS-0057: validate and derive skill proposal metadata BEFORE embedding,
     # so a malformed plan is rejected without wasting compute.
     skill_plan = _prepare_skill_plan(namespace, content, source_path)
@@ -1318,8 +1323,8 @@ async def index_document(
     embeddings, sparse_weights = await _embed_single_document(texts)
 
     # 3. Ensure namespace (and project) exist
-    namespace_id = await upsert_namespace(namespace)
-    project_id = await upsert_project(namespace_id, project) if project else None
+    namespace_id = authorized_namespace_id if authorized_namespace_id is not None else await upsert_namespace(namespace)
+    project_id = await upsert_project(namespace_id, project) if project and authorized_namespace_id is None else None
 
     # 4. Replace dense and sparse rows as one source generation.
     chunk_dicts = _chunk_dicts(
@@ -1340,6 +1345,8 @@ async def index_document(
         project_id,
         source_document=source_document,
         evidence_document=evidence_document,
+        expected_namespace_name=namespace if authorized_namespace_id is not None else None,
+        authorized_project_name=project if authorized_namespace_id is not None else None,
     )
 
     return IndexResponse(

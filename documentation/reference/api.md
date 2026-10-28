@@ -17,6 +17,9 @@ route addition or removal must update this page in the same pull request.
 | `POST /v1/index/evidence-exact` | Populate exact raw evidence for an existing indexed generation without replacing chunks or graph links; requires the feeder credential, one configured server namespace, and matching document digests |
 | `POST /v1/index/capability-projection` | Index one PostgreSQL-origin capability as non-authorizing search evidence; requires the dedicated projection-producer credential and configured tenant scope |
 | `DELETE /v1/index` | Delete one indexed source |
+| `GET /v1/project/write-preflight` | Check whether an authenticated service principal can write to the dedicated project namespace without changing data; unavailable unless the project adapter is enabled |
+| `POST /v1/project/index` | Index one bounded source in the configured project namespace using the principal's write scope and namespace grant; unavailable on shared instances by default |
+| `DELETE /v1/project/index` | Delete one source in the configured project namespace using the principal's write scope and namespace grant; unavailable on shared instances by default |
 | `POST /v1/index/batch` | Index a bounded same-namespace batch |
 | `POST /v1/search` | Run hybrid retrieval |
 | `POST /v1/fetch` | Fetch a document or bounded range by opaque ID |

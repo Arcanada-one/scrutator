@@ -18,6 +18,7 @@ export type ScrutatorRouteRequest =
   | "DELETE /v1/index"
   | "DELETE /v1/ltm/source"
   | "DELETE /v1/memories"
+  | "DELETE /v1/project/index"
   | "GET /health"
   | "GET /v1/chunks"
   | "GET /v1/edges/{chunk_id}"
@@ -32,6 +33,7 @@ export type ScrutatorRouteRequest =
   | "GET /v1/namespaces"
   | "GET /v1/navigate/outline"
   | "GET /v1/navigate/section"
+  | "GET /v1/project/write-preflight"
   | "GET /v1/stats"
   | "POST /v1/chunk"
   | "POST /v1/dream/analyze"
@@ -49,6 +51,7 @@ export type ScrutatorRouteRequest =
   | "POST /v1/memories/bulk"
   | "POST /v1/memories/recall"
   | "POST /v1/namespaces"
+  | "POST /v1/project/index"
   | "POST /v1/search";
 
 
@@ -579,6 +582,11 @@ export const OutlineResponseSchema = z.object({
     doc_id: z.string(),
     total_chunks: z.number().int(),
     outline: z.array(OutlineNodeSchema).optional(),
+  });
+
+export const ProjectWritePreflightResponseSchema = z.object({
+    namespace: z.string(),
+    writable: z.literal(true).optional(),
   });
 
 export const RecallRequestSchema = z.object({

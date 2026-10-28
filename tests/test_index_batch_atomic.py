@@ -200,6 +200,54 @@ async def test_single_document_keeps_sparse_soft_fail_contract_with_atomic_dense
 
 
 @pytest.mark.asyncio
+async def test_principal_scoped_index_uses_authorized_id_without_namespace_or_project_upsert():
+    from scrutator.search.indexer import index_document
+
+    with (
+        patch("scrutator.search.indexer.embed_texts", new_callable=AsyncMock, return_value=[[0.1] * 1024]),
+        patch("scrutator.search.indexer.embed_sparse", new_callable=AsyncMock, return_value=[{}]),
+        patch("scrutator.search.indexer.upsert_namespace", new_callable=AsyncMock) as upsert_namespace,
+        patch("scrutator.search.indexer.upsert_project", new_callable=AsyncMock) as upsert_project,
+        patch(
+            "scrutator.search.indexer.replace_source_chunks_atomic", new_callable=AsyncMock, return_value=1
+        ) as replace,
+    ):
+        response = await index_document(
+            content="single lesson",
+            source_path="one.md",
+            namespace="knowledge-contract",
+            project="knowledge-contract",
+            authorized_namespace_id=7,
+        )
+    assert response.chunks_indexed == 1
+    upsert_namespace.assert_not_awaited()
+    upsert_project.assert_not_awaited()
+    assert replace.await_args.args[3] == 7
+    assert replace.await_args.kwargs["expected_namespace_name"] == "knowledge-contract"
+    assert replace.await_args.kwargs["authorized_project_name"] == "knowledge-contract"
+
+
+@pytest.mark.asyncio
+async def test_atomic_replace_rejects_namespace_rename_before_any_source_mutation():
+    conn = _FaithfulConnection()
+    conn.fetchval = AsyncMock(return_value="renamed")
+    with (
+        patch("scrutator.db.repository.get_pool", return_value=_Pool(conn)),
+        pytest.raises(ValueError, match="authorized namespace changed"),
+    ):
+        await repository.replace_source_chunks_atomic(
+            _chunks(),
+            [[0.1] * 1024],
+            [{}],
+            namespace_id=7,
+            expected_namespace_name="knowledge-contract",
+            authorized_project_name="knowledge-contract",
+        )
+    assert conn.state[0]["content"] == "old"
+    assert "advisory-lock" not in conn.events
+
+
+@pytest.mark.asyncio
 async def test_atomic_replace_is_idempotent_on_replay():
     conn = _FaithfulConnection()
     with patch("scrutator.db.repository.get_pool", return_value=_Pool(conn)):

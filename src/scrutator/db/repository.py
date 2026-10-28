@@ -243,6 +243,8 @@ async def replace_source_chunks_atomic(
     project_id: int | None = None,
     source_document: dict[str, Any] | None = None,
     evidence_document: dict[str, Any] | None = None,
+    expected_namespace_name: str | None = None,
+    authorized_project_name: str | None = None,
 ) -> int:
     """Replace one source generation under an advisory lock and one transaction.
 
@@ -262,6 +264,21 @@ async def replace_source_chunks_atomic(
 
     pool = await get_pool()
     async with pool.acquire() as conn, conn.transaction():
+        if expected_namespace_name is not None:
+            # Hold the checked row through replacement. A concurrent rename or
+            # deletion must finish before this check or wait until commit.
+            actual_name = await conn.fetchval("SELECT name FROM namespaces WHERE id = $1 FOR SHARE", namespace_id)
+            if actual_name != expected_namespace_name:
+                raise ValueError("authorized namespace changed before source replacement")
+            if authorized_project_name is not None:
+                project_id = await conn.fetchval(
+                    """INSERT INTO projects (namespace_id, name)
+                    VALUES ($1, $2)
+                    ON CONFLICT (namespace_id, name) DO UPDATE SET name = EXCLUDED.name
+                    RETURNING id""",
+                    namespace_id,
+                    authorized_project_name,
+                )
         await conn.execute(
             "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
             namespace_id,

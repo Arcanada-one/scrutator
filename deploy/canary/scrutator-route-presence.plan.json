@@ -70,6 +70,21 @@
       "mutating": true
     },
     {
+      "id": "delete-v1-project-index",
+      "method": "DELETE",
+      "path": "/v1/project/index",
+      "route": "/v1/project/index",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:DELETE /v1/project/index",
+        "code_unit:src/scrutator/health.py"
+      ],
+      "mutating": true
+    },
+    {
       "id": "get-health",
       "method": "GET",
       "path": "/health",
@@ -262,6 +277,20 @@
       },
       "entities": [
         "route:GET /v1/navigate/section",
+        "code_unit:src/scrutator/health.py"
+      ]
+    },
+    {
+      "id": "get-v1-project-write-preflight",
+      "method": "GET",
+      "path": "/v1/project/write-preflight",
+      "route": "/v1/project/write-preflight",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:GET /v1/project/write-preflight",
         "code_unit:src/scrutator/health.py"
       ]
     },
@@ -515,6 +544,21 @@
       },
       "entities": [
         "route:POST /v1/namespaces",
+        "code_unit:src/scrutator/health.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-project-index",
+      "method": "POST",
+      "path": "/v1/project/index",
+      "route": "/v1/project/index",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/project/index",
         "code_unit:src/scrutator/health.py"
       ],
       "mutating": true

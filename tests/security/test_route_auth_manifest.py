@@ -27,8 +27,11 @@ MACHINE_ROUTES = {
     ("DELETE", "/v1/ltm/source"): "require_ltm_writer_capability",
 }
 
-# Routes that change stored state (or spend a budget) — bearer + `kb:ltm.write`.
+# Routes that change stored state, spend a budget, or preflight a write — bearer + `kb:ltm.write`.
 WRITE_ROUTES = {
+    ("GET", "/v1/project/write-preflight"),
+    ("POST", "/v1/project/index"),
+    ("DELETE", "/v1/project/index"),
     ("POST", "/v1/namespaces"),
     ("POST", "/v1/edges"),
     ("POST", "/v1/edges/by-path"),
