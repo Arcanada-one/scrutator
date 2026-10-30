@@ -1,6 +1,6 @@
 {
  "base_url": "http://127.0.0.1:35291",
- "captured_at_utc": "2026-10-30T13:05:45Z",
+ "captured_at_utc": "2026-10-30T13:19:49Z",
  "card": "A2-311",
  "counters": {
   "failed": 0,
@@ -388,7 +388,7 @@
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 4,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "delete-v1-edges",
    "kind": "http",
@@ -418,7 +418,7 @@
    "body_bytes": 43,
    "body_sha256": "d3870e0b3f984e4612aaa8f1aa18d6f05a3c75a3741a40a8236ef3bc8e056d72",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 0,
    "executed": true,
    "id": "delete-v1-ltm-source",
    "kind": "http",
@@ -988,13 +988,13 @@
  ],
  "schema": "CanaryResult/v1",
  "subject": {
-  "commit": "72a73b6e85ef60529318b9c1cc8e2b703af8ddf5",
+  "commit": "6e713443d72e7600902474a6f739c25f33f0c2e8",
   "evidence": {
    "path": "result.source-evidence.json",
-   "sha256": "e240963e4a020003998c5171effbcfd925a404f2138901e5b24c86dba8691852",
+   "sha256": "678e7609465f22477a62783fc5b50cfe9d75c08fa19d1fed407d8793d710a05e",
    "source_field": "commit"
   },
   "schema": "GitCanarySubject/v1",
-  "tree": "98748b3d2808fafe791f945e4edb16f78530f703"
+  "tree": "7acf640d9eb1a83a2567949e93a93178a0b87a64"
  }
 }
