@@ -274,12 +274,13 @@ class TestDeadline:
 
 
 def _app() -> FastAPI:
-    app = FastAPI()
-
-    @app.get("/v1/probe")
+    # Registered without a decorator on purpose: this test-only endpoint is not a served route of
+    # Scrutator and must not appear as one in the repository's route graph.
     async def probe(ctx=Depends(require_tenant_context)):  # noqa: B008
         return {"principal": ctx.principal_id}
 
+    app = FastAPI()
+    app.add_api_route("/kcp17-test/probe", probe, methods=["GET"])
     return app
 
 
@@ -293,13 +294,13 @@ class TestEnforceModeDenyIsExplained:
             patch("scrutator.auth.verifier.httpx.AsyncClient", side_effect=_client_factory(script)),
             caplog.at_level(logging.WARNING, logger="scrutator.auth.dependency"),
         ):
-            resp = TestClient(_app()).get("/v1/probe", headers={"Authorization": f"Bearer {TOKEN}"})
+            resp = TestClient(_app()).get("/kcp17-test/probe", headers={"Authorization": f"Bearer {TOKEN}"})
 
         assert resp.status_code == 401
         assert resp.json() == {"detail": "unauthenticated"}
         denies = [r.getMessage() for r in caplog.records if r.name == "scrutator.auth.dependency"]
         assert len(denies) == 1
-        assert "GET /v1/probe" in denies[0]
+        assert "GET /kcp17-test/probe" in denies[0]
         assert "introspection returned status 401" in denies[0]
         assert all(TOKEN not in r.getMessage() for r in caplog.records)
         assert script.calls == 1
@@ -314,7 +315,7 @@ class TestEnforceModeDenyIsExplained:
             patch("scrutator.auth.verifier._sleep", new_callable=AsyncMock),
             caplog.at_level(logging.WARNING, logger="scrutator.auth.dependency"),
         ):
-            resp = TestClient(_app()).get("/v1/probe", headers={"Authorization": f"Bearer {TOKEN}"})
+            resp = TestClient(_app()).get("/kcp17-test/probe", headers={"Authorization": f"Bearer {TOKEN}"})
 
         assert resp.status_code == 401
         assert resp.json() == {"detail": "unauthenticated"}
