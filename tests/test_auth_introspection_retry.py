@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 from unittest.mock import AsyncMock, patch
 
@@ -555,3 +556,133 @@ class TestInFlightGuard:
         assert isinstance(results[0], asyncio.CancelledError)
         assert all(isinstance(r, VerifiedPrincipal) for r in results[1:])
         assert script.calls == 1
+
+
+TOKEN_A = TOKEN + "-a"
+TOKEN_B = TOKEN + "-b"
+
+
+def _principal_body(principal_id: str) -> dict:
+    return {**GOOD_BODY, "principal_id": principal_id}
+
+
+class _PerTokenScript:
+    """Answers by the token in the request body; optionally holds every call until released."""
+
+    def __init__(self, answers: dict, gated: bool = True):
+        self.answers = answers
+        self.calls_by_token: dict[str, int] = {}
+        self.release = asyncio.Event()
+        if not gated:
+            self.release.set()
+
+    @property
+    def calls(self) -> int:
+        return sum(self.calls_by_token.values())
+
+    async def handler(self, request: httpx.Request) -> httpx.Response:
+        token = json.loads(request.content)["token"]
+        self.calls_by_token[token] = self.calls_by_token.get(token, 0) + 1
+        await self.release.wait()
+        return self.answers[token]()
+
+
+async def _verify_tokens(script: _PerTokenScript, tokens, concurrent: bool):
+    clock = _Clock()
+
+    def factory(*args, **kwargs):
+        kwargs["transport"] = httpx.MockTransport(script.handler)
+        return _RealAsyncClient(*args, **kwargs)
+
+    async def one(token):
+        try:
+            return await verify_service_token(token)
+        except Unauthenticated as exc:
+            return exc
+
+    with (
+        patch("scrutator.auth.verifier.settings", _settings()),
+        patch("scrutator.auth.verifier.httpx.AsyncClient", side_effect=factory),
+        patch("scrutator.auth.verifier._monotonic", clock.monotonic),
+        patch("scrutator.auth.verifier._sleep", new=AsyncMock(side_effect=clock.sleep)),
+    ):
+        if not concurrent:
+            return [await one(t) for t in tokens]
+        tasks = [asyncio.ensure_future(one(t)) for t in tokens]
+        for _ in range(5):
+            await asyncio.sleep(0)
+        script.release.set()
+        return await asyncio.gather(*tasks)
+
+
+class TestDifferentTokensNeverShareAPrincipal:
+    """The worst regression: one token approved as ANOTHER token's principal (KCP-0017 delta review)."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "denial",
+        [lambda: httpx.Response(401), lambda: httpx.Response(200, json={"active": False})],
+    )
+    async def test_concurrent_good_and_denied_tokens_do_not_share_a_call(self, denial):
+        script = _PerTokenScript(
+            {TOKEN_A: lambda: httpx.Response(200, json=_principal_body("principal-A")), TOKEN_B: denial}
+        )
+        a, b = await _verify_tokens(script, [TOKEN_A, TOKEN_B], concurrent=True)
+        assert script.calls == 2
+        assert script.calls_by_token == {TOKEN_A: 1, TOKEN_B: 1}
+        assert isinstance(a, VerifiedPrincipal) and a.principal_id == "principal-A"
+        assert isinstance(b, Unauthenticated)
+
+    @pytest.mark.asyncio
+    async def test_denied_first_then_good_concurrently_do_not_share_a_call(self):
+        script = _PerTokenScript(
+            {
+                TOKEN_B: lambda: httpx.Response(401),
+                TOKEN_A: lambda: httpx.Response(200, json=_principal_body("principal-A")),
+            }
+        )
+        b, a = await _verify_tokens(script, [TOKEN_B, TOKEN_A], concurrent=True)
+        assert script.calls == 2
+        assert isinstance(b, Unauthenticated)
+        assert isinstance(a, VerifiedPrincipal) and a.principal_id == "principal-A"
+
+    @pytest.mark.asyncio
+    async def test_concurrent_good_tokens_each_get_their_own_principal(self):
+        script = _PerTokenScript(
+            {
+                TOKEN_A: lambda: httpx.Response(200, json=_principal_body("principal-A")),
+                TOKEN_B: lambda: httpx.Response(200, json=_principal_body("principal-B")),
+            }
+        )
+        a, b = await _verify_tokens(script, [TOKEN_A, TOKEN_B], concurrent=True)
+        assert script.calls == 2
+        assert a.principal_id == "principal-A"
+        assert b.principal_id == "principal-B"
+
+    @pytest.mark.asyncio
+    async def test_cache_never_serves_one_token_for_another(self):
+        script = _PerTokenScript(
+            {
+                TOKEN_A: lambda: httpx.Response(200, json=_principal_body("principal-A")),
+                TOKEN_B: lambda: httpx.Response(200, json=_principal_body("principal-B")),
+            },
+            gated=False,
+        )
+        a1, b1, a2, b2 = await _verify_tokens(script, [TOKEN_A, TOKEN_B, TOKEN_A, TOKEN_B], concurrent=False)
+        assert script.calls_by_token == {TOKEN_A: 1, TOKEN_B: 1}
+        assert (a1.principal_id, a2.principal_id) == ("principal-A", "principal-A")
+        assert (b1.principal_id, b2.principal_id) == ("principal-B", "principal-B")
+
+    @pytest.mark.asyncio
+    async def test_cached_good_token_does_not_admit_a_denied_token(self):
+        script = _PerTokenScript(
+            {
+                TOKEN_A: lambda: httpx.Response(200, json=_principal_body("principal-A")),
+                TOKEN_B: lambda: httpx.Response(401),
+            },
+            gated=False,
+        )
+        a, b = await _verify_tokens(script, [TOKEN_A, TOKEN_B], concurrent=False)
+        assert a.principal_id == "principal-A"
+        assert isinstance(b, Unauthenticated)
+        assert script.calls_by_token == {TOKEN_A: 1, TOKEN_B: 1}
