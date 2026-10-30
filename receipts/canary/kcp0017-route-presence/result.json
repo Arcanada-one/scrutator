@@ -1,6 +1,6 @@
 {
  "base_url": "http://127.0.0.1:35291",
- "captured_at_utc": "2026-10-30T12:42:21Z",
+ "captured_at_utc": "2026-10-30T12:51:36Z",
  "card": "A2-311",
  "counters": {
   "failed": 0,
@@ -403,7 +403,7 @@
    "body_bytes": 41,
    "body_sha256": "203ef3361aea968471f84718a3a9684f6ab96a2699a8a4520803fdca3d607de1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 0,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "delete-v1-index",
    "kind": "http",
@@ -418,7 +418,7 @@
    "body_bytes": 43,
    "body_sha256": "d3870e0b3f984e4612aaa8f1aa18d6f05a3c75a3741a40a8236ef3bc8e056d72",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 0,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "delete-v1-ltm-source",
    "kind": "http",
@@ -628,7 +628,7 @@
    "body_bytes": 70,
    "body_sha256": "7d533bca4a0ff37fcce1046a35d269d4e0b94ea3cfc12f537848e0eb9ee68c06",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "get-v1-namespaces",
    "kind": "http",
@@ -943,7 +943,7 @@
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 0,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "post-v1-project-index",
    "kind": "http",
@@ -988,13 +988,13 @@
  ],
  "schema": "CanaryResult/v1",
  "subject": {
-  "commit": "9754b7c496625cb2b5f3fef544de2724509d28cf",
+  "commit": "1bdc49e5e093882fe7389967e1480d898815440b",
   "evidence": {
    "path": "result.source-evidence.json",
-   "sha256": "9be7d38bcb41952a405cfc3f2f820ed98df034766c2738a213950a51c067ae48",
+   "sha256": "9cd327e463ed6890eafad1dda7dcb42f8a6c364ac1f0782c11674230c254cdac",
    "source_field": "commit"
   },
   "schema": "GitCanarySubject/v1",
-  "tree": "c6b29a96e97965ac96f6e3c531da5123e63e3673"
+  "tree": "920d5b30e23bfd7815ece3a8ed68dcf009967f5b"
  }
 }
