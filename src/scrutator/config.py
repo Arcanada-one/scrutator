@@ -156,6 +156,13 @@ class Settings(BaseSettings):
     auth_ltm_argana_client_id: Literal["argana-dev"] = "argana-dev"
     auth_ltm_max_token_lifetime_seconds: Literal[300] = 300
     auth_arcana_introspect_url: str = ""  # arc_api_* service-token introspection; [to-be-confirmed]
+    # KCP-0017: bounded retry of the introspection POST on TRANSIENT failures only (timeout,
+    # connect/read/protocol error, 429/500/502/503/504). A definitive answer (401/403/other 4xx,
+    # invalid JSON, inactive token) is never retried. No caching. Fail-closed is unchanged: once
+    # the retries or the overall deadline are spent the credential is still Unauthenticated.
+    # Env: SCRUTATOR_AUTH_INTROSPECT_RETRIES / SCRUTATOR_AUTH_INTROSPECT_RETRY_DEADLINE_SECONDS.
+    auth_introspect_retries: int = Field(default=2, ge=0, le=5)
+    auth_introspect_retry_deadline_seconds: float = Field(default=6.0, gt=0, le=30.0)
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
     auth_arcana_openfga_store_id: str = ""
 

@@ -42,6 +42,15 @@ async def require_tenant_context(request: Request) -> TenantContext:
         principal = await verify_bearer_token(authorization)
     except Unauthenticated as exc:
         if settings.auth_enforce:
+            # KCP-0017: a 401 must explain itself in the server log. Every Unauthenticated
+            # reason is a fixed phrase, an exception class name or a status code — never the
+            # credential — so it is safe to log. The response body stays exactly the same.
+            logger.warning(
+                "deny (SCRUTATOR_AUTH_ENFORCE=True): %s %s — %s",
+                request.method,
+                request.url.path,
+                exc,
+            )
             raise HTTPException(status_code=401, detail="unauthenticated") from exc
         logger.warning(
             "would-deny (SCRUTATOR_AUTH_ENFORCE=False): %s %s — %s",

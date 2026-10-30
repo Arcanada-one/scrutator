@@ -12,12 +12,18 @@ legacy unauthenticated behaviour.
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import time
+
 import httpx
 import jwt
 from jwt import PyJWKClient
 
 from scrutator.auth.models import VerifiedPrincipal
 from scrutator.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Unauthenticated(Exception):
@@ -73,23 +79,94 @@ def _get_jwks_client(jwks_url: str) -> PyJWKClient:
     return _jwks_client
 
 
+# KCP-0017: introspection outcomes that say nothing about the credential itself. Only these are
+# retried; every other outcome is a definitive answer and is returned/raised immediately.
+_TRANSIENT_HTTP_ERRORS = (httpx.TimeoutException, httpx.ConnectError, httpx.ReadError, httpx.RemoteProtocolError)
+_TRANSIENT_STATUSES = frozenset({429, 500, 502, 503, 504})
+_RETRY_BACKOFF_SECONDS = (0.2, 0.5)
+_RETRY_AFTER_CAP_SECONDS = 1.0
+_INTROSPECT_ATTEMPT_TIMEOUT_SECONDS = 5.0
+# Indirections so tests can drive the clock and the backoff without touching the global modules.
+_monotonic = time.monotonic
+_sleep = asyncio.sleep
+
+
+def _retry_delay(attempt_index: int, resp: httpx.Response | None) -> float:
+    """Backoff before the next attempt: 0.2 s, then 0.5 s; a 429 Retry-After is honoured up to 1 s."""
+    delay = _RETRY_BACKOFF_SECONDS[min(attempt_index, len(_RETRY_BACKOFF_SECONDS) - 1)]
+    if resp is not None and resp.status_code == 429:
+        raw = resp.headers.get("retry-after")
+        try:
+            requested = float(raw) if raw is not None else None
+        except (TypeError, ValueError):
+            requested = None
+        if requested is not None and requested >= 0:
+            delay = min(requested, _RETRY_AFTER_CAP_SECONDS)
+    return delay
+
+
+async def _post_introspection(token: str) -> httpx.Response:
+    """POST to the introspection endpoint, retrying only transient failures within a deadline.
+
+    Returns the first non-transient response (any status the caller must judge). Raises
+    Unauthenticated when the transient failures outlast the retries or the overall deadline,
+    or on a non-transient transport error. Logs every failed attempt by reason class only —
+    never the token, never a response body.
+    """
+    max_attempts = 1 + settings.auth_introspect_retries
+    deadline = _monotonic() + settings.auth_introspect_retry_deadline_seconds
+    async with httpx.AsyncClient(timeout=_INTROSPECT_ATTEMPT_TIMEOUT_SECONDS) as client:
+        attempt = 0
+        while True:
+            attempt += 1
+            remaining = deadline - _monotonic()
+            resp: httpx.Response | None = None
+            try:
+                resp = await client.post(
+                    settings.auth_arcana_introspect_url,
+                    json={"token": token},
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=max(0.001, min(_INTROSPECT_ATTEMPT_TIMEOUT_SECONDS, remaining)),
+                )
+            except _TRANSIENT_HTTP_ERRORS as exc:
+                reason = f"introspection request failed: {type(exc).__name__}"
+            except httpx.HTTPError as exc:
+                raise Unauthenticated(f"introspection request failed: {type(exc).__name__}") from exc
+            else:
+                if resp.status_code not in _TRANSIENT_STATUSES:
+                    return resp
+                reason = f"introspection returned status {resp.status_code}"
+
+            delay = _retry_delay(attempt - 1, resp)
+            if attempt >= max_attempts or _monotonic() + delay >= deadline:
+                logger.warning(
+                    "service-token introspection attempt %d/%d failed (%s); giving up",
+                    attempt,
+                    max_attempts,
+                    reason,
+                )
+                raise Unauthenticated(f"{reason} (attempt {attempt}/{max_attempts})")
+            logger.warning(
+                "service-token introspection attempt %d/%d failed (%s); retrying in %.1fs",
+                attempt,
+                max_attempts,
+                reason,
+                delay,
+            )
+            await _sleep(delay)
+
+
 async def verify_service_token(token: str) -> VerifiedPrincipal:
     """Verify an `arc_api_*` service token via Auth Arcana introspection.
 
     Raises Unauthenticated on any failure (network error, non-200, inactive token,
-    missing principal_id, unrecognized scope) — fail-closed.
+    missing principal_id, unrecognized scope) — fail-closed. Transient introspection
+    failures are retried a bounded number of times first (KCP-0017); definitive answers
+    (401/403/other 4xx, invalid JSON, inactive token) are never retried.
     """
     if not settings.auth_arcana_introspect_url:
         raise Unauthenticated("Auth Arcana introspection endpoint not configured")
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(
-                settings.auth_arcana_introspect_url,
-                json={"token": token},
-                headers={"Authorization": f"Bearer {token}"},
-            )
-    except httpx.HTTPError as exc:
-        raise Unauthenticated(f"introspection request failed: {type(exc).__name__}") from exc
+    resp = await _post_introspection(token)
     if resp.status_code != 200:
         raise Unauthenticated(f"introspection returned status {resp.status_code}")
     try:
