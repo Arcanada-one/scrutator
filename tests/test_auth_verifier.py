@@ -101,7 +101,19 @@ class TestMissingOrMalformedHeader:
             await verify_bearer_token("Bearer ")
 
 
+def _retry_settings(mock_settings, retries=2, deadline=6.0, cache_ttl=60.0):
+    """A MagicMock settings object needs the KCP-0017 retry/cache knobs set to real numbers."""
+    mock_settings.auth_introspect_retries = retries
+    mock_settings.auth_introspect_retry_deadline_seconds = deadline
+    mock_settings.auth_introspect_cache_ttl_seconds = cache_ttl
+
+
 class TestServiceTokenIntrospection:
+    @pytest.fixture(autouse=True)
+    def _no_real_backoff(self):
+        with patch("scrutator.auth.verifier._sleep", new_callable=AsyncMock):
+            yield
+
     @pytest.mark.asyncio
     async def test_valid_service_token_returns_principal(self):
         mock_resp = MagicMock()
@@ -115,6 +127,7 @@ class TestServiceTokenIntrospection:
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_settings.auth_service_audience = "urn:test:scrutator"
             mock_settings.auth_service_scope = "kb:read"
             mock_client = AsyncMock()
@@ -136,6 +149,7 @@ class TestServiceTokenIntrospection:
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_client = AsyncMock()
             mock_client.post.return_value = mock_resp
             mock_client.__aenter__.return_value = mock_client
@@ -158,6 +172,7 @@ class TestServiceTokenIntrospection:
         }
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_settings.auth_service_audience = "urn:test:scrutator"
             mock_settings.auth_service_scope = "kb:read"
             mock_client = AsyncMock()
@@ -189,6 +204,7 @@ class TestServiceTokenIntrospection:
         mock_resp.json.return_value = response
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_settings.auth_service_audience = "urn:test:scrutator"
             mock_settings.auth_service_scope = "kb:read"
             mock_client = AsyncMock()
@@ -207,6 +223,7 @@ class TestServiceTokenIntrospection:
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_client = AsyncMock()
             mock_client.post.side_effect = httpx.ConnectError("connection refused")
             mock_client.__aenter__.return_value = mock_client
@@ -224,6 +241,7 @@ class TestServiceTokenIntrospection:
 
         with patch("scrutator.auth.verifier.settings") as mock_settings:
             mock_settings.auth_arcana_introspect_url = "https://auth.arcanada.ai/introspect"
+            _retry_settings(mock_settings)
             mock_client = AsyncMock()
             mock_client.post.return_value = mock_resp
             mock_client.__aenter__.return_value = mock_client
