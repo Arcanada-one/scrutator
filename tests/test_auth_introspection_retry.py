@@ -9,6 +9,7 @@ pin the two changes made in response:
 - a definitive answer (401/403/other 4xx, invalid JSON, inactive token) is NEVER retried;
 - fail-closed is unchanged: spent retries still raise Unauthenticated;
 - in enforce mode the 401 is logged with its failure class and reason; the body is unchanged;
+- concurrent cold-cache requests for one token share a single introspection call;
 - a SUCCESSFUL verification is cached per process for the TTL under sha256(token); failures,
   denials and inactive tokens are never cached (KCP-ROOT-REPLY-17: the public introspection
   route answered about half of a burst with 429 at the edge).
@@ -18,6 +19,7 @@ Uses a real httpx.AsyncClient over httpx.MockTransport: no network call ever hap
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 from unittest.mock import AsyncMock, patch
@@ -485,3 +487,71 @@ class TestPositiveCache:
         assert keys == [hashlib.sha256(TOKEN.encode("utf-8")).hexdigest()]
         assert all(TOKEN not in k and "arc_api_" not in k for k in keys)
         assert all(TOKEN not in r.getMessage() for r in caplog.records)
+
+
+class _GatedScript:
+    """Async introspection stub that holds every call until `release` is set (concurrency tests)."""
+
+    def __init__(self, response_factory):
+        self.response_factory = response_factory
+        self.calls = 0
+        self.release = asyncio.Event()
+
+    async def handler(self, request: httpx.Request) -> httpx.Response:
+        self.calls += 1
+        await self.release.wait()
+        return self.response_factory()
+
+
+class TestInFlightGuard:
+    async def _concurrent(self, script: _GatedScript, n: int, cancel_first: bool = False):
+        clock = _Clock()
+
+        def factory(*args, **kwargs):
+            kwargs["transport"] = httpx.MockTransport(script.handler)
+            return _RealAsyncClient(*args, **kwargs)
+
+        with (
+            patch("scrutator.auth.verifier.settings", _settings()),
+            patch("scrutator.auth.verifier.httpx.AsyncClient", side_effect=factory),
+            patch("scrutator.auth.verifier._monotonic", clock.monotonic),
+            patch("scrutator.auth.verifier._sleep", new=AsyncMock(side_effect=clock.sleep)),
+        ):
+            tasks = [asyncio.ensure_future(verify_service_token(TOKEN)) for _ in range(n)]
+            for _ in range(5):
+                await asyncio.sleep(0)
+            if cancel_first:
+                tasks[0].cancel()
+            script.release.set()
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        return results
+
+    @pytest.mark.asyncio
+    async def test_concurrent_cold_key_requests_share_one_introspection(self):
+        script = _GatedScript(_ok)
+        results = await self._concurrent(script, 5)
+        assert script.calls == 1
+        assert all(isinstance(r, VerifiedPrincipal) and r.principal_id == "svc-kcp17" for r in results)
+        assert verifier_module._inflight == {}
+
+    @pytest.mark.asyncio
+    async def test_shared_denial_reaches_every_waiter_and_is_not_cached(self):
+        script = _GatedScript(lambda: httpx.Response(401))
+        results = await self._concurrent(script, 3)
+        assert script.calls == 1
+        assert all(isinstance(r, Unauthenticated) for r in results)
+        assert len(verifier_module._introspection_cache) == 0
+        assert verifier_module._inflight == {}
+        # The next request is a new introspection: the denial was not remembered.
+        again = _GatedScript(_ok)
+        again.release.set()
+        assert isinstance((await self._concurrent(again, 1))[0], VerifiedPrincipal)
+        assert again.calls == 1
+
+    @pytest.mark.asyncio
+    async def test_one_cancelled_waiter_does_not_cancel_the_shared_call(self):
+        script = _GatedScript(_ok)
+        results = await self._concurrent(script, 3, cancel_first=True)
+        assert isinstance(results[0], asyncio.CancelledError)
+        assert all(isinstance(r, VerifiedPrincipal) for r in results[1:])
+        assert script.calls == 1

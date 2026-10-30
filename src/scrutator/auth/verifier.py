@@ -125,6 +125,11 @@ class _IntrospectionCache:
     denial or an inactive token is never stored. Keyed by sha256(token). Bounded: expired
     entries are dropped first, then the oldest insertion. The TTL is read at insertion time
     and stored per entry; a TTL of 0 stores nothing.
+
+    REVOCATION WINDOW: an entry outlives a revocation or expiry of the key in Auth Arcana by
+    up to the TTL (`auth_introspect_cache_ttl_seconds`, default 60 s, cap 300 s). The
+    introspection answer carries no `exp`, so the cache cannot know an earlier end; if Auth
+    Arcana ever returns `exp`, the entry's TTL must be capped by it.
     """
 
     def __init__(self, max_entries: int = _INTROSPECT_CACHE_MAX_ENTRIES) -> None:
@@ -153,7 +158,9 @@ class _IntrospectionCache:
         self._entries[key] = (now + ttl, principal)
 
     def clear(self) -> None:
+        """Drop every entry and the in-flight bookkeeping (used to isolate tests)."""
         self._entries.clear()
+        _inflight.clear()
 
     def __len__(self) -> int:
         return len(self._entries)
@@ -163,6 +170,17 @@ class _IntrospectionCache:
 
 
 _introspection_cache = _IntrospectionCache()
+# Per-key in-flight introspections: concurrent cold-cache requests for the same token share one
+# call instead of each hitting Auth Arcana. Keyed by sha256(token); an entry lives only while its
+# call runs. A shared FAILURE is returned to every waiter of that call and is still not cached.
+_inflight: dict[str, asyncio.Task] = {}
+
+
+def _forget_inflight(key: str, task: asyncio.Task) -> None:
+    if _inflight.get(key) is task:
+        del _inflight[key]
+    if not task.cancelled():
+        task.exception()  # mark retrieved: the waiters already received it
 
 
 def _retry_delay(attempt_index: int, resp: httpx.Response | None) -> float:
@@ -256,7 +274,13 @@ async def verify_service_token(token: str) -> VerifiedPrincipal:
     cached = _introspection_cache.get(cache_key, _monotonic())
     if cached is not None:
         return cached
-    principal = await _introspect_service_token(token)
+    task = _inflight.get(cache_key)
+    if task is None:
+        task = asyncio.ensure_future(_introspect_service_token(token))
+        _inflight[cache_key] = task
+        task.add_done_callback(lambda t, k=cache_key: _forget_inflight(k, t))
+    # shield: one cancelled request (client gone) must not cancel the call other waiters share.
+    principal = await asyncio.shield(task)
     # Only a principal that passed every check in _introspect_service_token reaches this line:
     # failures, denials and inactive tokens raise before it and are never cached.
     _introspection_cache.put(cache_key, principal, _monotonic(), settings.auth_introspect_cache_ttl_seconds)
