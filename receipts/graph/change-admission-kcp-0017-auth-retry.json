@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-10-30T12:43:39Z",
+ "captured_at_utc": "2026-10-30T12:51:42Z",
  "change_set": {
   "base": "75594b8f68af906476005448cee177513fc750da",
   "files": [
@@ -25,6 +25,15 @@
     "kind": "receipt",
     "new": true,
     "path": "receipts/canary/kcp0017-route-presence/result.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json"
+    ],
+    "path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
     "status": "A"
    },
    {
@@ -56,6 +65,15 @@
    },
    {
     "kind": "test",
+    "node_id": "code_unit:tests/conftest.py",
+    "node_ids": [
+     "code_unit:tests/conftest.py"
+    ],
+    "path": "tests/conftest.py",
+    "status": "M"
+   },
+   {
+    "kind": "test",
     "node_id": "code_unit:tests/test_auth_introspection_retry.py",
     "node_ids": [
      "code_unit:tests/test_auth_introspection_retry.py"
@@ -73,7 +91,7 @@
     "status": "M"
    }
   ],
-  "head": "48b9bd95f0be61426b19d4e3288bc020574545c5",
+  "head": "76d09f231ae67e0edf140c92efba19ac542f9c51",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -209,18 +227,18 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:25544142a84e589e7523d6a27fb65493f65a0acdfd8cdbc7df1a534caadab9fd",
-  "path": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/graph-75594b8f68af.json",
+  "path": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/graph-75594b8f68af.json",
   "source_commit": "75594b8f68af906476005448cee177513fc750da"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:ac93381a109a22c8ebb671f48b62d2f4337d45cde8451835be1e641449e0098a",
-  "path": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/graph-head-48b9bd95f0be.json",
-  "source_commit": "48b9bd95f0be61426b19d4e3288bc020574545c5",
+  "graph_digest": "sha256:50744c03e5c1c864f36b1a05c5c281c41321b6fd5a5699df78249e0f36c3a909",
+  "path": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/graph-head-76d09f231ae6.json",
+  "source_commit": "76d09f231ae67e0edf140c92efba19ac542f9c51",
   "staleness": {
-   "checked_at_utc": "2026-10-30T12:44:16Z",
-   "checked_nodes": 334,
+   "checked_at_utc": "2026-10-30T12:52:24Z",
+   "checked_nodes": 335,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -793,26 +811,6 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "code_unit:tests/conftest.py",
-    "node_type": "code_unit",
-    "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "type-check / compile of the importer"
-   },
-   {
-    "boundary": "intra_unit",
     "depth": 2,
     "entity": "code_unit:tests/helpers/capability_projection_server.py",
     "node_type": "code_unit",
@@ -907,17 +905,10 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/security/test_fetch_hash_integrity.py",
     "node_type": "code_unit",
     "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
      {
       "edge_type": "imports",
       "from": "code_unit:tests/security/test_fetch_hash_integrity.py",
@@ -934,17 +925,10 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/security/test_fetch_response_typing.py",
     "node_type": "code_unit",
     "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
      {
       "edge_type": "imports",
       "from": "code_unit:tests/security/test_fetch_response_typing.py",
@@ -961,23 +945,16 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/security/test_fetch_skills_byte_exact.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/search/indexer.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/config.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/security/test_fetch_skills_byte_exact.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/search/indexer.py",
-      "via": "python-absolute-import"
+      "to": "code_unit:tests/conftest.py",
+      "via": "python-relative-import"
      }
     ],
     "revisions": [
@@ -988,23 +965,16 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/security/test_fetch_tenant_isolation.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/health.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/security/test_fetch_tenant_isolation.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/health.py",
-      "via": "python-absolute-import"
+      "to": "code_unit:tests/conftest.py",
+      "via": "python-relative-import"
      }
     ],
     "revisions": [
@@ -1163,22 +1133,15 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/security/test_tenant_mutation_scope.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/db/repository.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/config.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/security/test_tenant_mutation_scope.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/db/repository.py",
+      "to": "code_unit:tests/conftest.py",
       "via": "python-absolute-import"
      }
     ],
@@ -1237,17 +1200,10 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_backfill_doc_content_hash.py",
     "node_type": "code_unit",
     "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
      {
       "edge_type": "imports",
       "from": "code_unit:tests/test_backfill_doc_content_hash.py",
@@ -1264,17 +1220,10 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_backfill_evidence_exact_bytes.py",
     "node_type": "code_unit",
     "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
      {
       "edge_type": "imports",
       "from": "code_unit:tests/test_backfill_evidence_exact_bytes.py",
@@ -1311,23 +1260,16 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_chunk_lookup.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/db/repository.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/config.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/test_chunk_lookup.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/db/repository.py",
-      "via": "python-absolute-import"
+      "to": "code_unit:tests/conftest.py",
+      "via": "python-relative-import"
      }
     ],
     "revisions": [
@@ -1459,22 +1401,15 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_edges_by_path.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/db/repository.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/config.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/test_edges_by_path.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/db/repository.py",
+      "to": "code_unit:tests/conftest.py",
       "via": "python-absolute-import"
      }
     ],
@@ -1720,23 +1655,16 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_fetch.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/health.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/test_fetch.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/health.py",
-      "via": "python-absolute-import"
+      "to": "code_unit:tests/conftest.py",
+      "via": "python-relative-import"
      }
     ],
     "revisions": [
@@ -1767,17 +1695,10 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_fetch_range.py",
     "node_type": "code_unit",
     "path": [
-     {
-      "edge_type": "imports",
-      "from": "code_unit:tests/conftest.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
      {
       "edge_type": "imports",
       "from": "code_unit:tests/test_fetch_range.py",
@@ -2169,22 +2090,15 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_navigation.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/db/repository.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/config.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/test_navigation.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/db/repository.py",
+      "to": "code_unit:tests/conftest.py",
       "via": "python-absolute-import"
      }
     ],
@@ -2196,22 +2110,15 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
+    "depth": 1,
     "entity": "code_unit:tests/test_path_param_parsing.py",
     "node_type": "code_unit",
     "path": [
      {
       "edge_type": "imports",
-      "from": "code_unit:src/scrutator/health.py",
-      "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/auth/dependency.py",
-      "via": "python-absolute-import"
-     },
-     {
-      "edge_type": "imports",
       "from": "code_unit:tests/test_path_param_parsing.py",
       "provenance": "deterministic",
-      "to": "code_unit:src/scrutator/health.py",
+      "to": "code_unit:tests/conftest.py",
       "via": "python-absolute-import"
      }
     ],
@@ -5087,7 +4994,7 @@
   ],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 186
+  "total": 185
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
@@ -5098,7 +5005,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261030T124339Z-48b9bd95",
+ "receipt_id": "car-verify-20261030T125142Z-76d09f23",
  "receipt_path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -5440,6 +5347,7 @@
    "receipt:receipts/graph/change-admission-deploy-through-broker.json",
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
+   "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
    "receipt:receipts/graph/change-admission-kcp-0017-namespace-bootstrap.json",
    "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
    "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
@@ -5495,7 +5403,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-10-30T12:44:16Z",
+  "checked_at_utc": "2026-10-30T12:52:24Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -5734,6 +5642,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:4568a90e94499097a3f0cecd4448bb3a132f57fe10fc1910d39a0fa9ebf93756"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-kcp-0017-auth-retry.json for work item KCP-0017",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
+    "work_item": "KCP-0017"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:5b0f919bea2863e896ebea11aaa860892e5ef860804e8fc7e7a59848da6131eb",
     "head": "sha256:5b0f919bea2863e896ebea11aaa860892e5ef860804e8fc7e7a59848da6131eb"
    },
@@ -5833,7 +5756,7 @@
   }
  ],
  "tree": {
-  "commit": "48b9bd95f0be61426b19d4e3288bc020574545c5",
+  "commit": "76d09f231ae67e0edf140c92efba19ac542f9c51",
   "dirty": false
  },
  "verdicts": [
@@ -7232,8 +7155,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/kcp17-hL08G5/repo/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kcp17-hL08G5/repo/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/type-check-xds0wg5b/check.tsbuildinfo --listFiles",
-   "duration_s": 1.04,
+   "command": "/home/dev/aup/claude-work/kcp17-hL08G5/repo/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kcp17-hL08G5/repo/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/type-check-gk1s46qs/check.tsbuildinfo --listFiles",
+   "duration_s": 1.12,
    "entities": [
     "deployable_unit:."
    ],
@@ -7243,12 +7166,12 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-10-30T12:44:20Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-10-30T12:52:28Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=75594b8f68af, head=48b9bd95f0be, graph=head graph)",
+   "command": "tools/graph/contract_diff.py.run_diff(base=75594b8f68af, head=76d09f231ae6, graph=head graph)",
    "duration_s": 0.06,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
@@ -7343,8 +7266,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "81→81 contracts, breaking 0, edges {'verified': 80}"
   },
   {
@@ -7437,8 +7360,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "40 route(s), 0 failed"
   },
   {
@@ -7453,8 +7376,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7469,8 +7392,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7485,8 +7408,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7501,8 +7424,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7517,8 +7440,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7533,8 +7456,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 18: command/process substitution closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 23: local action/checkout path scope unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 4: command/process substitution closure is unresolved; job graph-admission step 8: checkout root or source-affecting workflow environment unresolved; job graph-admission step 8: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 31 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7549,8 +7472,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -7795,8 +7718,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -7819,13 +7742,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "5 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.01,
+   "duration_s": 0.02,
    "entities": [
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/ltm/router.py",
@@ -7916,12 +7839,12 @@
    "id": "v-canary-1",
    "kind": "canary",
    "output_ref": "receipts/canary/kcp0017-route-presence/result.json",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "receipts/canary/kcp0017-route-presence/result.json: 34 verified / 0 failed / 7 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.01,
+   "duration_s": 0.02,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "route:GET /__benchmark/fingerprint"
@@ -7933,8 +7856,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-canary.json",
-   "started_at_utc": "2026-10-30T12:44:21Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-canary.json",
+   "started_at_utc": "2026-10-30T12:52:30Z",
    "summary": "1 canary result(s), 1 committed at head; 34 verified / 0 failed / 9 not_measured of 43 entities"
   },
   {
@@ -7949,9 +7872,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-30T12:44:23Z",
+   "started_at_utc": "2026-10-30T12:52:32Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -7966,9 +7889,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-10-30T12:44:24Z",
+   "started_at_utc": "2026-10-30T12:52:34Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -7983,9 +7906,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-30T12:44:24Z",
+   "started_at_utc": "2026-10-30T12:52:34Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 19: relative execution cwd is not declared; line 206: dynamic load/substitution; line 20: relative execution cwd is not declared; line 210: missing/ambiguous literal helper ../*; line 213: dynamic load/substitution; line 238: dynamic command/alias/eval; line 240: dynamic command/alias/eval; line 245: dynamic command/alias/eval; line 246: dynamic command/alias/eval; line 249: multiline/opaque shell statement; line 253: multiline/opaque shell statement; line 254: multiline/opaque shell statement; line 255: dynamic command/alias/eval; line 25: relative execution cwd is not declared; line 260: wrapper execution scope/options unresolved; line 262: wrapper execution scope/options unresolved; line 286: wrapper execution scope/options unresolved; line 28: relative execution cwd is not declared; line 300: dynamic command/alias/eval; line 321: dynamic load/substitution; line 322: dynamic load/substitution; line 323: dynamic load/substitution; line 332: wrapper options/child command unresolved; line 333: dynamic load/substitution; line 334: dynamic load/substitution; line 335: multiline/opaque shell statement; line 336: dynamic command/alias/eval; line 33: relative execution cwd is not declared; line 354: relative execution cwd is not declared; line 372: dynamic load/substitution; line 385: multiline/opaque shell statement; line 386: multiline/opaque shell statement; line 387: multiline/opaque shell statement; line 388: multiline/opaque shell statement; line 404: wrapper options/child command unresolved; line 405: multiline/opaque shell statement; line 406: multiline/opaque shell statement; line 407: dynamic command/alias/eval; line 417: dynamic command/alias/eval; line 422: dynamic command/alias/eval; line 423: dynamic command/alias/eval; line 437: dynamic load/substitution; line 438: dynamic load/substitution; line 439: dynamic load/substitution; line 441: dynamic command/alias/eval; line 442: dynamic load/substitution; line 450: dynamic command/alias/eval; line 451: dynamic load/substitution; line 467: dynamic command/alias/eval; line 472: dynamic load/substitution; line 486: dynamic load/substitution; line 520: wrapper options/child command unresolved; line 543: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
@@ -8000,9 +7923,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work5/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/claude-work/kcp17-hL08G5/verify-work6/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-10-30T12:44:24Z",
+   "started_at_utc": "2026-10-30T12:52:34Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: directory transition has unresolved execution cwd; line 41: directory transition has unresolved execution cwd; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -8019,9 +7942,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-kcp-0017-auth-retry.json is the previous version of the one this run is writing, for the same work item KCP-0017 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "30 affected entity(ies) owe no verdict (receipt: 30): unchanged at both revisions and given no verifier by the matrix"
+    "text": "31 affected entity(ies) owe no verdict (receipt: 31): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -8427,6 +8356,7 @@
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": [],
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json": [],
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json": [],
+   "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
    "receipt:receipts/graph/change-admission-kcp-0017-namespace-bootstrap.json": [],
    "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json": [],
    "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json": [],
@@ -8638,9 +8568,9 @@
    ]
   },
   "seconds": {
-   "prepare": 1.18,
-   "total": 45.63,
-   "verifiers": 1.13
+   "prepare": 1.25,
+   "total": 51.38,
+   "verifiers": 1.23
   }
  },
  "work_item": "KCP-0017"
