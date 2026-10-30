@@ -101,10 +101,11 @@ class TestMissingOrMalformedHeader:
             await verify_bearer_token("Bearer ")
 
 
-def _retry_settings(mock_settings, retries=2, deadline=6.0):
-    """A MagicMock settings object needs the KCP-0017 retry knobs set to real numbers."""
+def _retry_settings(mock_settings, retries=2, deadline=6.0, cache_ttl=60.0):
+    """A MagicMock settings object needs the KCP-0017 retry/cache knobs set to real numbers."""
     mock_settings.auth_introspect_retries = retries
     mock_settings.auth_introspect_retry_deadline_seconds = deadline
+    mock_settings.auth_introspect_cache_ttl_seconds = cache_ttl
 
 
 class TestServiceTokenIntrospection:

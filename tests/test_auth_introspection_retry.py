@@ -1,4 +1,4 @@
-"""KCP-0017: bounded retry of `arc_api_*` introspection + an explained enforce-mode 401.
+"""KCP-0017: bounded retry + positive cache of `arc_api_*` introspection; an explained 401.
 
 The project Scrutator instance answered 401 intermittently for a valid service key. These tests
 pin the two changes made in response:
@@ -8,13 +8,17 @@ pin the two changes made in response:
   0.2 s / 0.5 s backoff (a 429 Retry-After is honoured up to 1 s);
 - a definitive answer (401/403/other 4xx, invalid JSON, inactive token) is NEVER retried;
 - fail-closed is unchanged: spent retries still raise Unauthenticated;
-- in enforce mode the 401 is logged with its reason, and the response body is unchanged.
+- in enforce mode the 401 is logged with its failure class and reason; the body is unchanged;
+- a SUCCESSFUL verification is cached per process for the TTL under sha256(token); failures,
+  denials and inactive tokens are never cached (KCP-ROOT-REPLY-17: the public introspection
+  route answered about half of a burst with 429 at the edge).
 
 Uses a real httpx.AsyncClient over httpx.MockTransport: no network call ever happens.
 """
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from unittest.mock import AsyncMock, patch
 
@@ -23,8 +27,10 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
+import scrutator.auth.verifier as verifier_module
 from scrutator.auth.dependency import require_tenant_context
-from scrutator.auth.verifier import Unauthenticated, verify_service_token
+from scrutator.auth.models import VerifiedPrincipal
+from scrutator.auth.verifier import Unauthenticated, _IntrospectionCache, verify_service_token
 from scrutator.config import Settings
 
 INTROSPECT_URL = "https://auth.example.invalid/api/v1/introspect"
@@ -41,6 +47,7 @@ def _settings(**overrides) -> Settings:
         "auth_service_scope": "kb:read",
         "auth_introspect_retries": 2,
         "auth_introspect_retry_deadline_seconds": 6.0,
+        "auth_introspect_cache_ttl_seconds": 60.0,
     }
     values.update(overrides)
     return Settings(**values)
@@ -98,6 +105,31 @@ async def _run(script: _Script, settings_obj: Settings | None = None, clock: _Cl
             return await verify_service_token(TOKEN), sleep
         except Unauthenticated as exc:
             return exc, sleep
+
+
+async def _run_many(
+    tokens, script: _Script, settings_obj: Settings | None = None, clock: _Clock | None = None, advance=None
+):
+    """Verify several tokens in sequence under ONE patched environment (the cache persists).
+
+    `advance[i]` seconds are added to the clock before verification i.
+    """
+    clock = clock or _Clock()
+    results = []
+    with (
+        patch("scrutator.auth.verifier.settings", settings_obj or _settings()),
+        patch("scrutator.auth.verifier.httpx.AsyncClient", side_effect=_client_factory(script)),
+        patch("scrutator.auth.verifier._monotonic", clock.monotonic),
+        patch("scrutator.auth.verifier._sleep", new=AsyncMock(side_effect=clock.sleep)),
+    ):
+        for i, token in enumerate(tokens):
+            if advance:
+                clock.now += advance[i]
+            try:
+                results.append(await verify_service_token(token))
+            except Unauthenticated as exc:
+                results.append(exc)
+    return results
 
 
 def _ok() -> httpx.Response:
@@ -301,7 +333,7 @@ class TestEnforceModeDenyIsExplained:
         denies = [r.getMessage() for r in caplog.records if r.name == "scrutator.auth.dependency"]
         assert len(denies) == 1
         assert "GET /kcp17-test/probe" in denies[0]
-        assert "introspection returned status 401" in denies[0]
+        assert "class=denied introspection returned status 401" in denies[0]
         assert all(TOKEN not in r.getMessage() for r in caplog.records)
         assert script.calls == 1
 
@@ -321,4 +353,135 @@ class TestEnforceModeDenyIsExplained:
         assert resp.json() == {"detail": "unauthenticated"}
         denies = [r.getMessage() for r in caplog.records if r.name == "scrutator.auth.dependency"]
         assert len(denies) == 1
-        assert "introspection returned status 503 (attempt 3/3)" in denies[0]
+        assert "class=5xx introspection returned status 503 (attempt 3/3)" in denies[0]
+
+
+class TestFailureClassIsExplicit:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("steps", "failure_class"),
+        [
+            ([httpx.Response(429), httpx.Response(429), httpx.Response(429)], "429"),
+            ([httpx.Response(502), httpx.Response(503), httpx.Response(504)], "5xx"),
+            ([httpx.ConnectError("x"), httpx.ReadError("x"), _timeout()], "transport"),
+            ([httpx.UnsupportedProtocol("x")], "transport"),
+            ([httpx.Response(401)], "denied"),
+            ([httpx.Response(403)], "denied"),
+            ([httpx.Response(200, json={"active": False})], "denied"),
+        ],
+    )
+    async def test_unauthenticated_carries_the_failure_class(self, steps, failure_class, caplog):
+        script = _Script(steps)
+        with caplog.at_level(logging.WARNING, logger="scrutator.auth.verifier"):
+            result, _ = await _run(script)
+        assert isinstance(result, Unauthenticated)
+        assert result.failure_class == failure_class
+        if failure_class != "denied":
+            assert any(f"class={failure_class}" in r.getMessage() for r in caplog.records)
+        assert all(TOKEN not in r.getMessage() for r in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_429_then_success_retries_and_logs_the_class(self, caplog):
+        script = _Script([httpx.Response(429), _ok()])
+        with caplog.at_level(logging.WARNING, logger="scrutator.auth.verifier"):
+            principal, _ = await _run(script)
+        assert principal.principal_id == "svc-kcp17"
+        assert script.calls == 2
+        assert any("class=429" in r.getMessage() for r in caplog.records)
+
+
+class TestPositiveCache:
+    @pytest.mark.asyncio
+    async def test_cache_hit_makes_no_second_http_call(self):
+        script = _Script([_ok()])
+        first, second = await _run_many([TOKEN, TOKEN], script)
+        assert script.calls == 1
+        assert first.principal_id == second.principal_id == "svc-kcp17"
+
+    @pytest.mark.asyncio
+    async def test_cached_principal_equals_a_fresh_verification(self):
+        cached = (await _run_many([TOKEN, TOKEN], _Script([_ok()])))[1]
+        verifier_module._introspection_cache.clear()
+        fresh = (await _run_many([TOKEN], _Script([_ok()])))[0]
+        assert isinstance(cached, VerifiedPrincipal)
+        assert cached == fresh
+        assert cached.scopes == frozenset({"kb:read"})
+
+    @pytest.mark.asyncio
+    async def test_a_different_token_is_not_served_from_the_cache(self):
+        script = _Script([_ok(), httpx.Response(401)])
+        first, second = await _run_many([TOKEN, TOKEN + "-other"], script)
+        assert first.principal_id == "svc-kcp17"
+        assert isinstance(second, Unauthenticated)
+        assert script.calls == 2
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "denial",
+        [
+            lambda: httpx.Response(401),
+            lambda: httpx.Response(403),
+            lambda: httpx.Response(200, json={"active": False}),
+            lambda: httpx.Response(200, json={**GOOD_BODY, "audience": "urn:other"}),
+        ],
+    )
+    async def test_denial_stays_denied_and_is_not_cached(self, denial):
+        script = _Script([denial(), denial()])
+        first, second = await _run_many([TOKEN, TOKEN], script)
+        assert isinstance(first, Unauthenticated)
+        assert isinstance(second, Unauthenticated)
+        assert script.calls == 2
+        assert len(verifier_module._introspection_cache) == 0
+
+    @pytest.mark.asyncio
+    async def test_spent_transient_failure_is_not_cached(self):
+        script = _Script([httpx.Response(429), httpx.Response(429), httpx.Response(429), _ok()])
+        first, second = await _run_many([TOKEN, TOKEN], script)
+        assert isinstance(first, Unauthenticated)
+        assert second.principal_id == "svc-kcp17"
+        assert script.calls == 4
+
+    @pytest.mark.asyncio
+    async def test_entry_is_served_until_the_ttl_and_expires_after_it(self):
+        script = _Script([_ok(), _ok()])
+        results = await _run_many([TOKEN, TOKEN, TOKEN], script, advance=[0.0, 59.9, 0.2])
+        assert all(r.principal_id == "svc-kcp17" for r in results)
+        # 59.9 s later: still cached (1 call); 60.1 s after insertion: expired -> second call.
+        assert script.calls == 2
+
+    @pytest.mark.asyncio
+    async def test_ttl_zero_disables_the_cache(self):
+        script = _Script([_ok(), _ok()])
+        await _run_many([TOKEN, TOKEN], script, _settings(auth_introspect_cache_ttl_seconds=0))
+        assert script.calls == 2
+        assert len(verifier_module._introspection_cache) == 0
+
+    @pytest.mark.asyncio
+    async def test_cache_size_is_bounded_and_evicts_the_oldest(self):
+        small = _IntrospectionCache(max_entries=3)
+        tokens = [f"{TOKEN}-{i}" for i in range(4)]
+        script = _Script([_ok() for _ in range(5)])
+        with patch.object(verifier_module, "_introspection_cache", small):
+            await _run_many([*tokens, tokens[0]], script)
+            assert len(small) == 3
+        # tokens[0] was evicted by tokens[3], so its second verification went to the network.
+        assert script.calls == 5
+
+    def test_expired_entries_are_evicted_before_live_ones(self):
+        principal = VerifiedPrincipal(principal_id="p", principal_type="service", scopes=frozenset())
+        cache = _IntrospectionCache(max_entries=2)
+        cache.put("old-expired", principal, now=0.0, ttl=1.0)
+        cache.put("live", principal, now=0.5, ttl=60.0)
+        cache.put("new", principal, now=10.0, ttl=60.0)
+        assert cache.keys() == ["live", "new"]
+        assert cache.get("live", 10.0) is principal
+
+    @pytest.mark.asyncio
+    async def test_token_is_never_a_cache_key_nor_logged(self, caplog):
+        script = _Script([httpx.Response(429), _ok()])
+        with caplog.at_level(logging.DEBUG):
+            await _run_many([TOKEN, TOKEN], script)
+        keys = verifier_module._introspection_cache.keys()
+        assert keys == [hashlib.sha256(TOKEN.encode("utf-8")).hexdigest()]
+        assert all(TOKEN not in k and "arc_api_" not in k for k in keys)
+        assert all(TOKEN not in r.getMessage() for r in caplog.records)

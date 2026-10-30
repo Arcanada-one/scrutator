@@ -10,6 +10,9 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
+import pytest
+
+from scrutator.auth import verifier as _verifier
 from scrutator.auth.dependency import require_tenant_context
 from scrutator.auth.models import TenantContext
 
@@ -97,3 +100,11 @@ def override_tenant_context(app, ctx: TenantContext | None = None):
         yield ctx
     finally:
         app.dependency_overrides.pop(require_tenant_context, None)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_introspection_cache():
+    """KCP-0017: the positive introspection cache is per-process; no test may see another's entries."""
+    _verifier._introspection_cache.clear()
+    yield
+    _verifier._introspection_cache.clear()

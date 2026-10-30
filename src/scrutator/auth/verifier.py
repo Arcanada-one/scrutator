@@ -13,8 +13,10 @@ legacy unauthenticated behaviour.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import time
+from collections import OrderedDict
 
 import httpx
 import jwt
@@ -26,8 +28,23 @@ from scrutator.config import settings
 logger = logging.getLogger(__name__)
 
 
+# Failure classes carried by Unauthenticated and logged as one explicit field (KCP-0017).
+FAILURE_DENIED = "denied"  # a definitive answer about the credential (or a missing/invalid credential)
+FAILURE_RATE_LIMITED = "429"  # introspection rate-limited (e.g. the edge in front of Auth Arcana)
+FAILURE_SERVER = "5xx"  # introspection answered 500/502/503/504
+FAILURE_TRANSPORT = "transport"  # timeout, connection, read or protocol error reaching introspection
+
+
 class Unauthenticated(Exception):
-    """Raised when a bearer credential cannot be verified. Always fail-closed."""
+    """Raised when a bearer credential cannot be verified. Always fail-closed.
+
+    `failure_class` says WHY in one field, so a 401 caused by an unreachable or rate-limited
+    introspection endpoint is distinguishable in the log from a credential that was refused.
+    """
+
+    def __init__(self, message: str, failure_class: str = FAILURE_DENIED) -> None:
+        super().__init__(message)
+        self.failure_class = failure_class
 
 
 _jwks_client: PyJWKClient | None = None
@@ -89,6 +106,63 @@ _INTROSPECT_ATTEMPT_TIMEOUT_SECONDS = 5.0
 # Indirections so tests can drive the clock and the backoff without touching the global modules.
 _monotonic = time.monotonic
 _sleep = asyncio.sleep
+_INTROSPECT_CACHE_MAX_ENTRIES = 1024
+
+
+def _status_failure_class(status: int) -> str:
+    return FAILURE_RATE_LIMITED if status == 429 else FAILURE_SERVER
+
+
+def _token_cache_key(token: str) -> str:
+    """The only form in which a token is ever held by the cache: its sha256 hex digest."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+class _IntrospectionCache:
+    """Per-process POSITIVE cache of successful service-token verifications (KCP-0017).
+
+    Holds only principals that passed every check in `verify_service_token`; a failure, a
+    denial or an inactive token is never stored. Keyed by sha256(token). Bounded: expired
+    entries are dropped first, then the oldest insertion. The TTL is read at insertion time
+    and stored per entry; a TTL of 0 stores nothing.
+    """
+
+    def __init__(self, max_entries: int = _INTROSPECT_CACHE_MAX_ENTRIES) -> None:
+        self.max_entries = max_entries
+        self._entries: OrderedDict[str, tuple[float, VerifiedPrincipal]] = OrderedDict()
+
+    def get(self, key: str, now: float) -> VerifiedPrincipal | None:
+        entry = self._entries.get(key)
+        if entry is None:
+            return None
+        expires_at, principal = entry
+        if now >= expires_at:
+            del self._entries[key]
+            return None
+        return principal
+
+    def put(self, key: str, principal: VerifiedPrincipal, now: float, ttl: float) -> None:
+        if ttl <= 0 or self.max_entries <= 0:
+            return
+        self._entries.pop(key, None)
+        if len(self._entries) >= self.max_entries:
+            for stale in [k for k, (exp, _) in self._entries.items() if now >= exp]:
+                del self._entries[stale]
+        while len(self._entries) >= self.max_entries:
+            self._entries.popitem(last=False)
+        self._entries[key] = (now + ttl, principal)
+
+    def clear(self) -> None:
+        self._entries.clear()
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def keys(self) -> list[str]:
+        return list(self._entries)
+
+
+_introspection_cache = _IntrospectionCache()
 
 
 def _retry_delay(attempt_index: int, resp: httpx.Response | None) -> float:
@@ -131,25 +205,35 @@ async def _post_introspection(token: str) -> httpx.Response:
             except _TRANSIENT_HTTP_ERRORS as exc:
                 reason = f"introspection request failed: {type(exc).__name__}"
             except httpx.HTTPError as exc:
-                raise Unauthenticated(f"introspection request failed: {type(exc).__name__}") from exc
+                logger.warning(
+                    "service-token introspection attempt %d/%d failed (class=%s, %s); not retried",
+                    attempt,
+                    max_attempts,
+                    FAILURE_TRANSPORT,
+                    type(exc).__name__,
+                )
+                raise Unauthenticated(f"introspection request failed: {type(exc).__name__}", FAILURE_TRANSPORT) from exc
             else:
                 if resp.status_code not in _TRANSIENT_STATUSES:
                     return resp
                 reason = f"introspection returned status {resp.status_code}"
+            failure_class = FAILURE_TRANSPORT if resp is None else _status_failure_class(resp.status_code)
 
             delay = _retry_delay(attempt - 1, resp)
             if attempt >= max_attempts or _monotonic() + delay >= deadline:
                 logger.warning(
-                    "service-token introspection attempt %d/%d failed (%s); giving up",
+                    "service-token introspection attempt %d/%d failed (class=%s, %s); giving up",
                     attempt,
                     max_attempts,
+                    failure_class,
                     reason,
                 )
-                raise Unauthenticated(f"{reason} (attempt {attempt}/{max_attempts})")
+                raise Unauthenticated(f"{reason} (attempt {attempt}/{max_attempts})", failure_class)
             logger.warning(
-                "service-token introspection attempt %d/%d failed (%s); retrying in %.1fs",
+                "service-token introspection attempt %d/%d failed (class=%s, %s); retrying in %.1fs",
                 attempt,
                 max_attempts,
+                failure_class,
                 reason,
                 delay,
             )
@@ -160,12 +244,27 @@ async def verify_service_token(token: str) -> VerifiedPrincipal:
     """Verify an `arc_api_*` service token via Auth Arcana introspection.
 
     Raises Unauthenticated on any failure (network error, non-200, inactive token,
-    missing principal_id, unrecognized scope) — fail-closed. Transient introspection
-    failures are retried a bounded number of times first (KCP-0017); definitive answers
-    (401/403/other 4xx, invalid JSON, inactive token) are never retried.
+    missing principal_id, unrecognized scope) — fail-closed. A successful verification is
+    cached per process for `auth_introspect_cache_ttl_seconds` under sha256(token); nothing
+    else is cached. Transient introspection failures are retried a bounded number of times
+    first; definitive answers (401/403/other 4xx, invalid JSON, inactive token) are never
+    retried (KCP-0017).
     """
     if not settings.auth_arcana_introspect_url:
         raise Unauthenticated("Auth Arcana introspection endpoint not configured")
+    cache_key = _token_cache_key(token)
+    cached = _introspection_cache.get(cache_key, _monotonic())
+    if cached is not None:
+        return cached
+    principal = await _introspect_service_token(token)
+    # Only a principal that passed every check in _introspect_service_token reaches this line:
+    # failures, denials and inactive tokens raise before it and are never cached.
+    _introspection_cache.put(cache_key, principal, _monotonic(), settings.auth_introspect_cache_ttl_seconds)
+    return principal
+
+
+async def _introspect_service_token(token: str) -> VerifiedPrincipal:
+    """One uncached verification: introspect (with bounded transient retry) and check the answer."""
     resp = await _post_introspection(token)
     if resp.status_code != 200:
         raise Unauthenticated(f"introspection returned status {resp.status_code}")

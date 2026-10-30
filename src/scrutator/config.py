@@ -163,6 +163,10 @@ class Settings(BaseSettings):
     # Env: SCRUTATOR_AUTH_INTROSPECT_RETRIES / SCRUTATOR_AUTH_INTROSPECT_RETRY_DEADLINE_SECONDS.
     auth_introspect_retries: int = Field(default=2, ge=0, le=5)
     auth_introspect_retry_deadline_seconds: float = Field(default=6.0, gt=0, le=30.0)
+    # KCP-0017 (KCP-ROOT-REPLY-17): short per-process POSITIVE cache of successful introspections,
+    # keyed by sha256(token) — never the token. Failures, denials and inactive tokens are never
+    # cached. 0 disables. Env: SCRUTATOR_AUTH_INTROSPECT_CACHE_TTL_SECONDS.
+    auth_introspect_cache_ttl_seconds: float = Field(default=60.0, ge=0, le=300.0)
     auth_arcana_openfga_url: str = ""  # OpenFGA base URL; [to-be-confirmed] — empty = FK-cache fallback only
     auth_arcana_openfga_store_id: str = ""
 
