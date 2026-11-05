@@ -66,6 +66,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # `research` (169), `history-datarim` (619). `unreviewed` is the third verdict for a document no
 # rule reaches; it is empty today and declared anyway, because a document that acquires it later
 # would otherwise be refused at write time and disappear silently.
+# `collective`, `contract-place`, `conversion-arcana` and `prime-agent` (2026-11-05, Muneral 9701c9ab) are the
+# PROJECTED-CORPUS kind, like `governance`: Projects/<X>/ routes to kebab(<X>) and the projection already lists
+# each in .authoritative-namespaces, so the token lacked them (`missing_namespace_grants`, exit 4 on every run
+# since the live ingest was restored). No --runtime-only-namespace is needed; the arcanada-workspace mirror
+# dev-tools/kb-feeder/deploy/authoritative-namespaces.txt declares them in the paired change.
 FEEDER_APPENDED_SCOPES = (
     "self-improvement",
     "arcanada-design-system",
@@ -78,6 +83,10 @@ FEEDER_APPENDED_SCOPES = (
     "research",
     "history-datarim",
     "unreviewed",
+    "collective",
+    "contract-place",
+    "conversion-arcana",
+    "prime-agent",
 )
 
 
@@ -108,7 +117,8 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
 
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
         "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,"
-        "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed"
+        "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,"
+        "collective,contract-place,conversion-arcana,prime-agent"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment

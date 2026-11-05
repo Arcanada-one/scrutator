@@ -49,7 +49,16 @@ services:
       # arcanada-workspace declares --runtime-only-namespace for every one of these five in the
       # same change (PR #1221), so this append halts no batch. The 2026-08-02 incident was these
       # two halves landing separately.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed"
+      # Four PROJECTED-CORPUS scopes (2026-11-05, Muneral 9701c9ab): collective, contract-place,
+      # conversion-arcana, prime-agent. kb_feeder/taxonomy.py routes Projects/<X>/ to kebab(<X>), the
+      # projection lists each in /var/lib/kb-feeder/corpus/.authoritative-namespaces, and the token
+      # did not carry them, so every kb-reconcile run ended `missing_namespace_grants=` with exit 4
+      # (the shape of the 2026-08 agent-supervisor-arcana/prompt-assembly stop). Projected kind: no
+      # --runtime-only-namespace is needed. Content measured on the DEVS projection stage:
+      # collective 38 docs, conversion-arcana 5, contract-place 3 (project documentation only;
+      # the Knowledge Contract corpus itself stays in its own isolated instance, KCP-0017),
+      # prime-agent 1; gitleaks clean on all four.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
