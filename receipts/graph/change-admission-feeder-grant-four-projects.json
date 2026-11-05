@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted"
  },
- "captured_at_utc": "2026-11-05T09:28:56Z",
+ "captured_at_utc": "2026-11-05T09:35:19Z",
  "change_set": {
   "base": "cc1e9828a89444c752faefec8fa39236d181465d",
   "files": [
@@ -32,19 +32,19 @@
  "exemptions": [],
  "graph": {
   "builder_version": "1.0.6",
-  "built_at_utc": "2026-11-05T09:26:02Z",
-  "graph_digest": "sha256:5f34e80d02d6f991583093963b51641053f1ccbb9b23700296459407c5faa978",
-  "path": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand/base-graph.json",
+  "built_at_utc": "2026-11-05T09:34:52Z",
+  "graph_digest": "sha256:c7707b7439bbddb2393658049502786a61852d9147180486f31eb6723db27511",
+  "path": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand5/base-graph.json",
   "source_commit": "cc1e9828a89444c752faefec8fa39236d181465d"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:fc53accd0e79aa0074cb60a0a4910745f84108e4e76f759cca239d2f584cd598",
-  "path": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand4/vout/graph-head-b6afee15c386.json",
+  "graph_digest": "sha256:1bc95ce0e1f020d50b788c9c9563ff93e01f1a22b71b788b94b200d6a4ef23e2",
+  "path": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand5/vout/graph-head-b6afee15c386.json",
   "source_commit": "b6afee15c38600d5feea3cddafd91f29bf8f232e",
   "staleness": {
-   "checked_at_utc": "2026-11-05T09:29:21Z",
+   "checked_at_utc": "2026-11-05T09:35:47Z",
    "checked_nodes": 335,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -152,10 +152,10 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261105T092856Z-b6afee15",
+ "receipt_id": "car-verify-20261105T093519Z-b6afee15",
  "receipt_path": "receipts/graph/change-admission-feeder-grant-four-projects.json",
  "repo": {
-  "name": "../scrutator",
+  "name": "Arcanada-one/scrutator",
   "path": "/home/dev/aup/claude-work/kcp-pub-1/ed11/clean"
  },
  "revision_selection": {
@@ -178,7 +178,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-05T09:29:21Z",
+  "checked_at_utc": "2026-11-05T09:35:47Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -249,8 +249,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/kcp-pub-1/ed11/clean/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kcp-pub-1/ed11/clean/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/kcp-pub-1/ed11/cand4/vout/type-check-8h8w6vw6/check.tsbuildinfo --listFiles",
-   "duration_s": 1.39,
+   "command": "/home/dev/aup/claude-work/kcp-pub-1/ed11/clean/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kcp-pub-1/ed11/clean/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/kcp-pub-1/ed11/cand5/vout/type-check-0ri5i6mk/check.tsbuildinfo --listFiles",
+   "duration_s": 1.42,
    "entities": [
     "deployable_unit:."
    ],
@@ -260,8 +260,8 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand4/vout/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-05T09:29:25Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand5/vout/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-05T09:35:51Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
@@ -278,8 +278,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand4/vout/v-fitness.json",
-   "started_at_utc": "2026-11-05T09:29:27Z",
+   "output_ref": "/home/dev/aup/claude-work/kcp-pub-1/ed11/cand5/vout/v-fitness.json",
+   "started_at_utc": "2026-11-05T09:35:53Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   }
  ],
@@ -304,9 +304,9 @@
    "receipt:receipts/graph/change-admission-history-datarim-namespaces.json": []
   },
   "seconds": {
-   "prepare": 1.41,
-   "total": 30.17,
-   "verifiers": 1.4
+   "prepare": 1.74,
+   "total": 33.76,
+   "verifiers": 1.43
   }
  },
  "work_item": "9701c9ab"
