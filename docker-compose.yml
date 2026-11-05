@@ -58,7 +58,12 @@ services:
       # collective 38 docs, conversion-arcana 5, contract-place 3 (project documentation only;
       # the Knowledge Contract corpus itself stays in its own isolated instance, KCP-0017),
       # prime-agent 1; gitleaks clean on all four.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent"
+      # One more PROJECTED-CORPUS scope (2026-11-05, Muneral for KCP-ROOT-REPLY-110): doclab-arcana. PR 1797 of
+      # arcanada-workspace registered Projects/Doclab Arcana, so the core lane now routes it to kebab("Doclab Arcana")
+      # and every kb-reconcile run since ends `missing_namespace_grants=doclab-arcana` (seq 6328..6331 on prd).
+      # Projected kind, same as the four above: no --runtime-only-namespace; the repo mirror
+      # dev-tools/kb-feeder/deploy/authoritative-namespaces.txt declares it in the paired arcanada-workspace change.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:

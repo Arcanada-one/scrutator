@@ -71,6 +71,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # each in .authoritative-namespaces, so the token lacked them (`missing_namespace_grants`, exit 4 on every run
 # since the live ingest was restored). No --runtime-only-namespace is needed; the arcanada-workspace mirror
 # dev-tools/kb-feeder/deploy/authoritative-namespaces.txt declares them in the paired change.
+# `doclab-arcana` (2026-11-05, KCP-ROOT-REPLY-110) is the same PROJECTED-CORPUS kind: Projects/Doclab Arcana/ routes
+# to `doclab-arcana`, the projection lists it, the token lacked it (`missing_namespace_grants=doclab-arcana`, seq
+# 6328..6331 on prd). The arcanada-workspace mirror declares it in the paired change; no
+# --runtime-only-namespace is needed.
 FEEDER_APPENDED_SCOPES = (
     "self-improvement",
     "arcanada-design-system",
@@ -87,6 +91,7 @@ FEEDER_APPENDED_SCOPES = (
     "contract-place",
     "conversion-arcana",
     "prime-agent",
+    "doclab-arcana",
 )
 
 
@@ -118,7 +123,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
     assert environment["SCRUTATOR_FEEDER_NAMESPACES"] == (
         "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,"
         "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,"
-        "collective,contract-place,conversion-arcana,prime-agent"
+        "collective,contract-place,conversion-arcana,prime-agent,doclab-arcana"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
