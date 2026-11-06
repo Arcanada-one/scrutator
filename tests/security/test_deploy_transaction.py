@@ -123,22 +123,59 @@ if name == "systemctl":
 if name == "docker":
     if args and args[0] == "compose" and "ps" in args:
         print(state["container_id"])
+    elif args and args[0] == "ps":
+        # Support: docker ps -aq -a --filter ancestor=<image_id>
+        ancestor = None
+        for index, value in enumerate(args):
+            if value == "--filter" and index + 1 < len(args) and args[index + 1].startswith("ancestor="):
+                ancestor = args[index + 1].split("=", 1)[1]
+                break
+        if ancestor is None:
+            print("unsupported fake docker ps without ancestor filter", file=sys.stderr)
+            raise SystemExit(64)
+        for container in state.get("foreign_containers", []):
+            if container.get("image") == ancestor:
+                print(container["id"])
+        # Scrutator compose container also references current_image.
+        if state.get("current_image") == ancestor and state.get("container_id"):
+            print(state["container_id"])
     elif args[:2] == ["inspect", "--format"]:
         print(state["current_image"])
     elif args[:2] == ["image", "inspect"]:
+        fmt = "{{.Id}}"
+        if len(args) >= 4 and args[2] == "--format":
+            fmt = args[3]
         ref = args[-1]
         if ref in state["tags"]:
-            print(state["tags"][ref])
+            image_id = state["tags"][ref]
         elif ref.startswith("sha256:"):
-            print(ref)
+            image_id = ref
         else:
             raise SystemExit(1)
+        if fmt == "{{len .RepoTags}}":
+            print(sum(1 for value in state["tags"].values() if value == image_id))
+        else:
+            print(image_id)
     elif args[:2] == ["image", "tag"]:
         source, tag = args[2], args[3]
         state["tags"][tag] = state["tags"].get(source, source)
         save()
     elif args[:2] == ["image", "rm"]:
-        state["tags"].pop(args[2], None)
+        if "-f" in args or "--force" in args:
+            print("force image rm is forbidden in this fake", file=sys.stderr)
+            raise SystemExit(64)
+        tag = args[2]
+        image_id = state["tags"].get(tag)
+        if image_id is None:
+            raise SystemExit(1)
+        sole = sum(1 for value in state["tags"].values() if value == image_id) <= 1
+        holders = [c for c in state.get("foreign_containers", []) if c.get("image") == image_id]
+        if state.get("current_image") == image_id and state.get("container_id"):
+            holders.append({"id": state["container_id"], "image": image_id})
+        if sole and holders:
+            print("conflict: unable to delete " + tag + " (image is being used)", file=sys.stderr)
+            raise SystemExit(1)
+        state["tags"].pop(tag, None)
         save()
     elif args[0] == "compose" and "build" in args:
         state["built_image"] = state["new_image"]
@@ -240,6 +277,7 @@ def fake_host(tmp_path: Path) -> dict[str, object]:
         "built_image": "",
         "compose_images_id": OLD_IMAGE,
         "tags": {},
+        "foreign_containers": [],
         "health": [True],
         "calls": [],
     }
@@ -449,6 +487,56 @@ def test_success_prunes_candidate_and_rollback_tags_but_keeps_in_use_image(fake_
     assert len([tag for tag in final_tags if tag.startswith("scrutator-deploy:")]) == 2
     assert len([tag for tag in final_tags if tag.startswith("scrutator-rollback:")]) == 2
     assert current_tag in final_tags
+
+
+def test_success_keeps_sole_rollback_tag_held_by_foreign_container(fake_host: dict[str, object]) -> None:
+    """Retention must not FAIL deploy when a foreign compose container holds a sole rollback tag.
+
+    Reproduces arcana-prd Deploy 42233786991: knowledge-contract-scrutator-scrutator-1 held
+    scrutator-rollback:<sha> as the only tag of that image; non-force rm refused → exit 90.
+    """
+    current_tag = f"scrutator-rollback:{OLD_SHA}"
+    foreign_sha = "c" * 40
+    foreign_tag = f"scrutator-rollback:{foreign_sha}"
+    foreign_image = "sha256:" + "c" * 64
+    deploy_tags = [f"scrutator-deploy:{value * 40}" for value in ("3", "4", "5")]
+    # After success, ROLLBACK_TAG(OLD) is prepended and kept as rollback #1.
+    # filler is kept as rollback #2 (RETAIN_IMAGES=2); foreign_tag is beyond the window.
+    filler_rollback = f"scrutator-rollback:{'6' * 40}"
+    disposable_rollback = f"scrutator-rollback:{'7' * 40}"
+    state = load_state(fake_host)
+    state["tags"] = {
+        current_tag: OLD_IMAGE,
+        foreign_tag: foreign_image,
+        filler_rollback: "sha256:" + "1" * 64,
+        disposable_rollback: "sha256:" + "2" * 64,
+    }
+    for index, tag in enumerate(deploy_tags, start=3):
+        state["tags"][tag] = "sha256:" + f"{index:x}" * 64
+    state["foreign_containers"] = [
+        {
+            "id": "knowledge-contract-scrutator-scrutator-1",
+            "image": foreign_image,
+        }
+    ]
+    state_dir = Path(fake_host["state_dir"])
+    history = [*deploy_tags, filler_rollback, foreign_tag, disposable_rollback, current_tag]
+    (state_dir / "image-tags").write_text("\n".join(history) + "\n")
+    Path(fake_host["state_path"]).write_text(json.dumps(state))
+
+    result = run_deploy(fake_host)
+
+    assert result.returncode == 0, result.stderr
+    combined = result.stdout + result.stderr
+    final = load_state(fake_host)
+    assert foreign_tag in final["tags"]
+    assert final["tags"][foreign_tag] == foreign_image
+    history_after = (state_dir / "image-tags").read_text().splitlines()
+    assert foreign_tag in history_after
+    assert disposable_rollback not in final["tags"]
+    assert not any(" image rm -f " in call or " image rm --force " in call for call in final["calls"])
+    assert f"keeping {foreign_tag}" in combined
+    assert "foreign compose" in combined
 
 
 def test_success_bounds_aliases_sharing_running_image_and_keeps_designated_tag(
