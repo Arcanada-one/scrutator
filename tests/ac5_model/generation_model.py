@@ -292,6 +292,28 @@ class OverwriteStore(Store):
                 self._write(self.storage_key(m, mem), payload[mem.artifact_id])
 
 
+class NoManifestGuardStore(Store):
+    """UNSAFE (R1): byte pre-check kept, manifest-level identity guard removed. A same-ID manifest
+    whose payload does not collide with stored bytes silently replaces the registered manifest."""
+
+    def _stage_unchecked(self, m: Manifest, payload: dict[str, bytes]) -> None:
+        for mem in m.members:
+            if mem.artifact_id in payload:
+                have = self.blobs.get(self.storage_key(m, mem))
+                if have is not None and have != payload[mem.artifact_id]:
+                    raise NotServable("immutable-identity-conflict", f"bytes {m.generation_id}/{mem.artifact_id}")
+        self.manifests[m.generation_id] = m
+        if m.generation_id not in self.ever_selected:
+            self.candidates.add(m.generation_id)
+        self._writes = 0
+        for mem in m.members:
+            if mem.artifact_id in payload:
+                key = self.storage_key(m, mem)
+                if key in self.blobs:
+                    continue
+                self._write(key, payload[mem.artifact_id])
+
+
 class InPlaceStore(OverwriteStore):
     """UNSAFE (no immutability guard): reuses the active generation's source paths (77307111 counterexample)."""
 

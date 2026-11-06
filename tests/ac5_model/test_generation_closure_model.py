@@ -409,6 +409,54 @@ def test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members():
     record("r1d", "CheckAsYouGoStore", gm.check_state_unchanged(f, fsnap))
 
 
+def test_r1f_same_id_different_manifest_without_byte_collision_refused_alone():
+    """The manifest-level guard must refuse on its own: here every payload byte that exists under
+    the stored keys is identical, so the byte pre-check cannot be what refuses the call."""
+    store, g1, snap = _selected_g1_with_snapshot()
+    extra = dict(OLD, **{"doc-d": b"OLD-D synthetic bytes"})  # extra member, no stored blob under its key
+    dropped = {k: v for k, v in OLD.items() if k != "doc-c"}  # dropped member
+    redeps = manifest("g1", OLD, deps={"doc-a": ("doc-b",)})  # changed deps, identical bytes
+    cases = [(manifest("g1", extra), extra), (manifest("g1", dropped), dropped), (redeps, OLD)]
+    for m, payload in cases:
+        assert m != g1
+        with pytest.raises(NotServable) as e:
+            store.stage(m, payload)
+        assert e.value.boundary == "immutable-identity-conflict"
+        assert "manifest g1" in str(e.value)  # refused at the manifest guard, not the byte guard
+        assert gm.check_state_unchanged(store, snap).ok
+        assert gm.check_selected_identity_immutable(store, g1, OLD).ok
+    # mutant: manifest guard removed (byte check kept) lets the manifest be replaced
+    f, fg1, _ = _selected_g1_with_snapshot(gm.NoManifestGuardStore)
+    f.stage(manifest("g1", extra), extra)
+    assert f.manifests["g1"] != fg1
+    record("r1f", "NoManifestGuardStore", gm.check_state_unchanged(f, snap))
+
+
+def test_r3_validate_and_promote_guards_exercised_alone():
+    """Direct calls so each guard is the only thing that can refuse (found by the mutation sweep)."""
+    store, _ = build()
+    # validate: foreign namespace is refused on its own (stage() is not in the path)
+    with pytest.raises(NotServable) as e:
+        store.validate(manifest("gx", NEW, ns="other-ns"), READER, PROJ)
+    assert e.value.boundary == "foreign-namespace"
+    # validate: authorization is checked now, on an otherwise fully valid staged candidate
+    g2 = manifest("g2", NEW)
+    store.stage(g2, NEW)
+    store.authz.revoke(READER, NS)
+    with pytest.raises(NotServable) as e:
+        store.validate(g2, READER, PROJ)
+    assert e.value.boundary == "authorization"
+    store.authz.grant(READER, NS)
+    # validate reads every member through the scoped reader and logs it (namespace audit trail)
+    n = len(store.ns_log)
+    store.validate(g2, READER, PROJ)
+    assert store.ns_log[n:] == [("read", NS)] * len(g2.members)
+    # promote: the promoted generation leaves the candidate set and is recorded as ever selected
+    assert "g2" in store.candidates and "g2" not in store.ever_selected
+    store.promote("g2", store.ptr, store.version)
+    assert "g2" not in store.candidates and "g2" in store.ever_selected
+
+
 def test_r1e_exact_retry_only_observes_or_fills_missing():
     store, g1, snap = _selected_g1_with_snapshot()
     store.stage(g1, OLD)  # exact retry of the selected generation: no-op
@@ -512,6 +560,7 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_r1b_same_manifest_different_bytes_refused_before_any_state_change,
         test_r1c_interrupted_same_id_rewrite_changes_nothing,
         test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members,
+        test_r1f_same_id_different_manifest_without_byte_collision_refused_alone,
         test_r2a_aba_stale_observation_refused_by_version,
         test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled,
         test_r2c_transitive_dependency_chain_gap_refused,
