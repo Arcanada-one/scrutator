@@ -1,0 +1,49 @@
+# KB-CONS-02: dedicated private Scrutator instance for the `kc-corpus` namespace.
+# Own Compose project, container, loopback port, database and credentials. It does NOT inherit the
+# root docker-compose.yml (host network, broad feeder namespace list, fixed :8310 healthcheck) and it
+# never touches the shared (:8310) or Knowledge Contract public (:8311) instances.
+# Deployed only through the root compose broker (service `kc-corpus-scrutator`); the broker installs
+# the root-owned env file beside this file as `.env` (names only: SCRUTATOR_DATABASE_URL,
+# SCRUTATOR_FEEDER_TOKEN). The image is built from the broker-owned checkout, so BUILD_SHA is the
+# deployed Scrutator revision.
+name: kc-corpus-scrutator
+services:
+  scrutator:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: production
+      labels:
+        org.opencontainers.image.revision: ${BUILD_SHA:?BUILD_SHA is derived by the broker}
+    image: kc-corpus-scrutator:${BUILD_SHA:?BUILD_SHA is derived by the broker}
+    container_name: kc-corpus-scrutator-scrutator-1
+    labels:
+      org.opencontainers.image.revision: ${BUILD_SHA:?BUILD_SHA is derived by the broker}
+    env_file: .env
+    environment:
+      SCRUTATOR_HOST: "0.0.0.0"
+      SCRUTATOR_PORT: "8310"
+      SCRUTATOR_AUTH_ENFORCE: "true"
+      # Reader: the existing arcana-agent-kb-reader M2M profile (JWKS, audience urn:arcanada:scrutator:ltm,
+      # scope kb:ltm.read). Namespace visibility comes only from principal_namespace_grants in THIS database.
+      # No arc_api_* introspection URL is configured, so API keys are refused.
+      # Writer: POST /v1/index with the feeder capability; its namespace set is exactly kc-corpus.
+      SCRUTATOR_FEEDER_NAMESPACES: "kc-corpus"
+      # Fresh /v1/index stores the raw UTF-8 bytes with the chunk generation in one transaction.
+      SCRUTATOR_EVIDENCE_EXACT_BYTES: "true"
+      SCRUTATOR_EVIDENCE_EXACT_NAMESPACES: '["kc-corpus"]'
+      # A document without a current exact row is refused (409), never served as reassembled content.
+      SCRUTATOR_EVIDENCE_EXACT_REQUIRED_NAMESPACES: '["kc-corpus"]'
+      SCRUTATOR_EMBEDDING_API_URL: "http://100.90.7.20:8300"
+      SCRUTATOR_EMBEDDING_DENSE_SPARSE_ENABLED: "true"
+      SCRUTATOR_EMBEDDING_TIMEOUT: "300"
+      SCRUTATOR_DATABASE_URL: ${SCRUTATOR_DATABASE_URL:?dedicated database URL required}
+      SCRUTATOR_FEEDER_TOKEN: ${SCRUTATOR_FEEDER_TOKEN:?dedicated feeder capability required}
+    ports:
+      - "127.0.0.1:8312:8310"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8310/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

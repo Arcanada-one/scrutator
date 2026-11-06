@@ -95,11 +95,11 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
     # the exact document body. Never return lossy chunk reassembly under that whole-document hash.
     # Exact-body storage is separately flag-gated/populated, so until its row is available the
     # safe result is an explicit refusal rather than a 200 carrying bytes that cannot verify.
-    requires_exact_evidence = namespace == "kc2-store"
+    requires_exact_evidence = settings.evidence_exact_required_for(namespace)
     if requires_exact_evidence and not settings.evidence_exact_enabled_for(namespace):
         raise HTTPException(
             status_code=409,
-            detail="kc2-store exact source bytes are unavailable until exact evidence is enabled",
+            detail=f"{namespace} exact source bytes are unavailable until exact evidence is enabled",
         )
 
     # SRCH-0038 1b: skills-namespace documents return the EXACT stored source bytes from the
@@ -125,7 +125,8 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         # `evidence_exact_bytes` is ON and a row is present, return its exact `raw_content`
         # (`content_exact=True`, `sha256(content) == content_hash` by construction). Other evidence
         # namespaces retain the existing graceful fallback to lossy chunk reassembly when the flag
-        # is OFF or a row is ABSENT. `kc2-store` is the exception: its consumer verifies the
+        # is OFF or a row is ABSENT. Namespaces in `evidence_exact_required_namespaces` (default
+        # `kc2-store`) are the exception: the consumer verifies the
         # ingest-stamped whole-document hash, so disabled, missing or stale exact bytes fail closed
         # below instead of returning a body that cannot verify. The invariant remains that whenever
         # `content_exact=True`, `sha256(content) == content_hash`.
@@ -154,7 +155,7 @@ async def fetch(request: FetchRequest, allowed_namespace_ids: frozenset[int]) ->
         elif requires_exact_evidence:
             raise HTTPException(
                 status_code=409,
-                detail="kc2-store exact source bytes are unavailable; re-index required",
+                detail=f"{namespace} exact source bytes are unavailable; re-index required",
             )
         else:
             # rows are ordered by chunk_index — reassembly is the inverse of the header-split.

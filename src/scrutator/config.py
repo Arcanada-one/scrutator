@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     # None preserves legacy global-on compatibility; [] selects no evidence namespaces.
     # A target deployment must explicitly pin ["kc2-store"], independently of authorization.
     evidence_exact_namespaces: list[str] | None = None
+    # Namespaces whose fetch must return exact stored bytes or refuse (HTTP 409); lossy chunk
+    # reassembly is never served for them. The legacy default keeps kc2-store as it was. A
+    # dedicated private instance (kc-corpus) adds its own namespace so that a document whose
+    # exact row is missing, stale or disabled (an interrupted or partial projection) is refused
+    # instead of being served as accepted content.
+    evidence_exact_required_namespaces: list[str] = Field(default_factory=lambda: ["kc2-store"])
     # Dedicated raw-only operation bound; legacy ordinary ingest behavior stays separate.
     evidence_population_max_bytes: int = Field(default=262144, gt=0, le=1048576, strict=True)
 
@@ -59,6 +65,17 @@ class Settings(BaseSettings):
             return int(value)
         return value
 
+    @field_validator("evidence_exact_required_namespaces", mode="before")
+    @classmethod
+    def validate_required_evidence_namespaces(cls, value):
+        if not isinstance(value, list) or any(
+            type(item) is not str or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", item) for item in value
+        ):
+            raise ValueError("required exact evidence namespaces must be a list of explicit namespace names")
+        if len(set(value)) != len(value):
+            raise ValueError("required exact evidence namespaces must be unique")
+        return value
+
     @field_validator("evidence_exact_namespaces", mode="before")
     @classmethod
     def validate_evidence_namespaces(cls, value):
@@ -78,6 +95,9 @@ class Settings(BaseSettings):
             and namespace != self.skills_namespace
             and (self.evidence_exact_namespaces is None or namespace in self.evidence_exact_namespaces)
         )
+
+    def evidence_exact_required_for(self, namespace: str) -> bool:
+        return namespace in self.evidence_exact_required_namespaces
 
     embedding_dense_sparse_enabled: bool = False
 
