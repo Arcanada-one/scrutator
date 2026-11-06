@@ -439,6 +439,49 @@ def test_health_failure_rolls_back_then_proves_rollback_health(fake_host: dict[s
     assert "/raw/docker-compose.yml" not in rollback_up
 
 
+def test_health_failure_releases_failed_candidate_tag_for_same_sha_retry(
+    fake_host: dict[str, object],
+) -> None:
+    """Rollback must untag scrutator-deploy:<target> so a same-SHA retry is not blocked."""
+    candidate = f"scrutator-deploy:{TARGET_SHA}"
+    update_state(fake_host, health=[False, False, True])
+
+    result = run_deploy(fake_host)
+    state = load_state(fake_host)
+    combined = result.stdout + result.stderr
+
+    assert result.returncode != 0
+    assert_pre_state_restored(fake_host)
+    assert candidate not in state["tags"]
+    assert f"scrutator-rollback:{OLD_SHA}" in state["tags"]
+    assert state["tags"][f"scrutator-rollback:{OLD_SHA}"] == OLD_IMAGE
+    assert f"released failed candidate tag {candidate}" in combined
+    assert "immutable candidate tag already exists" not in combined
+    assert not any(" image rm -f " in call or " image rm --force " in call for call in state["calls"])
+
+
+def test_same_sha_retry_accepts_after_releasing_leftover_failed_candidate_tag(
+    fake_host: dict[str, object],
+) -> None:
+    """Leftover failed candidate tag from a prior attempt must not block same-SHA retry."""
+    candidate = f"scrutator-deploy:{TARGET_SHA}"
+    leftover_image = "sha256:" + "d" * 64
+    state = load_state(fake_host)
+    state["tags"][candidate] = leftover_image
+    Path(fake_host["state_path"]).write_text(json.dumps(state))
+
+    result = run_deploy(fake_host)
+    final = load_state(fake_host)
+    combined = result.stdout + result.stderr
+
+    assert result.returncode == 0, result.stderr
+    assert "immutable candidate tag already exists" not in combined
+    assert "released leftover failed candidate tag for same-SHA retry" in combined
+    assert final["tags"][candidate] == NEW_IMAGE
+    assert final["current_image"] == NEW_IMAGE
+    assert not any(" image rm -f " in call or " image rm --force " in call for call in final["calls"])
+
+
 def test_candidate_preflight_failure_rolls_back_before_container_recreate(fake_host: dict[str, object]) -> None:
     state = load_state(fake_host)
     state["tree_content"][TARGET_SHA]["deploy/ltm-reflect-state-preflight.sh"] = "#!/bin/sh\nexit 74\n"
