@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "admitted_with_exemptions"
+  "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-11-06T09:54:42Z",
+ "captured_at_utc": "2026-11-06T10:16:20Z",
  "change_set": {
   "base": "1b5ac1556531ebae6c471a54b4256cecbfe4fc53",
   "files": [
@@ -49,6 +49,15 @@
     "kind": "receipt",
     "new": true,
     "path": "receipts/canary/kb-cons-02-route-presence/result.source-evidence.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-kb-cons-02.json"
+    ],
+    "path": "receipts/graph/change-admission-kb-cons-02.json",
     "status": "A"
    },
    {
@@ -106,7 +115,7 @@
     "status": "A"
    }
   ],
-  "head": "4a51918d2871fa9be7d1e43d6ad6dbf774a4107f",
+  "head": "249f8b631d515f67c0bc20d4582a4dabef3f705a",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -207,18 +216,18 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:cb4c42480fd92ab7006567e88f178e3c3803242bc50118a8a33503459054f2a3",
-  "path": "/tmp/arcana-verify-_gjecas9/verifier-out/graph-1b5ac1556531.json",
+  "path": "/tmp/arcana-verify-6j6i184c/verifier-out/graph-1b5ac1556531.json",
   "source_commit": "1b5ac1556531ebae6c471a54b4256cecbfe4fc53"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:bf4e4bb9d35e64272c969186e603545ea5142111ee8e40ed7a8b367227797341",
-  "path": "/tmp/arcana-verify-_gjecas9/verifier-out/graph-head-4a51918d2871.json",
-  "source_commit": "4a51918d2871fa9be7d1e43d6ad6dbf774a4107f",
+  "graph_digest": "sha256:9c052ea968876f9c80557eaba3d184a1076d08675c1d84e7f67310394b6133e2",
+  "path": "/tmp/arcana-verify-6j6i184c/verifier-out/graph-head-249f8b631d51.json",
+  "source_commit": "249f8b631d515f67c0bc20d4582a4dabef3f705a",
   "staleness": {
-   "checked_at_utc": "2026-11-06T09:55:52Z",
-   "checked_nodes": 343,
+   "checked_at_utc": "2026-11-06T10:17:16Z",
+   "checked_nodes": 344,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -4558,7 +4567,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261106T095442Z-4a51918d",
+ "receipt_id": "car-verify-20261106T101620Z-249f8b63",
  "receipt_path": "receipts/graph/change-admission-kb-cons-02.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -4870,6 +4879,7 @@
    "receipt:receipts/graph/agents-md-migration.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json",
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+   "receipt:receipts/graph/change-admission-kb-cons-02.json",
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
    "receipt:receipts/graph/change-admission-kcp-0017-namespace-bootstrap.json",
@@ -4922,7 +4932,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-06T09:55:51Z",
+  "checked_at_utc": "2026-11-06T10:17:16Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -4996,6 +5006,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:7f431b1a47f1421293a3ab516b7f32423a4412934447907cb757edde8e529005"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kb-cons-02.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-kb-cons-02.json for work item 938fba4e-65bc-4d73-aa49-75086bade2cd",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-kb-cons-02.json",
+    "work_item": "938fba4e-65bc-4d73-aa49-75086bade2cd"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:07c1dcdfcbdcd1e9b861ad7aac3feb0a12f6758502d2154e40a35364b0895d32",
     "head": "sha256:07c1dcdfcbdcd1e9b861ad7aac3feb0a12f6758502d2154e40a35364b0895d32"
    },
@@ -5062,7 +5087,7 @@
   }
  ],
  "tree": {
-  "commit": "4a51918d2871fa9be7d1e43d6ad6dbf774a4107f",
+  "commit": "249f8b631d515f67c0bc20d4582a4dabef3f705a",
   "dirty": false
  },
  "verdicts": [
@@ -5095,7 +5120,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavaila",
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violati",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -5140,7 +5165,7 @@
   },
   {
    "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-canary",
@@ -5280,10 +5305,10 @@
   },
   {
    "entity": "code_unit:src/scrutator/health.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-fitness"
    ]
@@ -5314,10 +5339,10 @@
   },
   {
    "entity": "code_unit:src/scrutator/ltm/router.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-fitness"
    ]
@@ -5820,7 +5845,7 @@
   },
   {
    "entity": "code_unit:tests/test_kc_corpus_profile.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-canary",
@@ -6087,57 +6112,57 @@
   },
   {
    "entity": "route:DELETE /source",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-memories: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/project/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-project-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /__benchmark/fingerprint",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-canary",
@@ -6147,340 +6172,340 @@
   },
   {
    "entity": "route:GET /entities",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-entities: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /events",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-events: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /graph",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-graph: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /health",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-health: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /jobs/{job_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-jobs-job-id: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /meta_facts",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-meta-facts: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/chunks",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-chunks: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/edges/{chunk_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-edges-chunk-id: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/rollback-capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-rollback-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/memories/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-memories-stats: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-namespaces: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/outline",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-outline: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/section",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-section: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/project/write-preflight",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-project-write-preflight: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-stats: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /ingest",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-ingest: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-recall: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /reflect",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-reflect: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/chunk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-chunk: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/dream/analyze",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-dream-analyze: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges/by-path",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges-by-path: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/fetch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-fetch: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/batch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-batch: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/capability-projection",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-capability-projection: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/evidence-exact",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-evidence-exact: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/bulk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-bulk: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-recall: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-namespaces: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/project/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-project-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/search",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-search: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-canary: canary scrutator-route-presence (post) on kb-production: CANARY_EVIDENCE_UNVERIFIABLE: .github/workflows/deploy-kc-corpus.yml is not a record document: the delta between the measured subject and the candidate may only touch receipts/, governance/design/; in",
+   "verdict": "not_measured",
    "verifier_ids": [
-    "v-canary-1",
+    "v-canary",
     "v-contract-diff",
     "v-route-config"
    ]
@@ -6505,13 +6530,13 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=1b5ac1556531, head=4a51918d2871, graph=head graph)",
-   "duration_s": 0.08,
+   "command": "tools/graph/contract_diff.py.run_diff(base=1b5ac1556531, head=249f8b631d51, graph=head graph)",
+   "duration_s": 0.11,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
@@ -6605,8 +6630,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "81→81 contracts, breaking 0, edges {'verified': 80}"
   },
   {
@@ -6699,8 +6724,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "40 route(s), 0 failed"
   },
   {
@@ -6715,8 +6740,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6731,8 +6756,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6747,8 +6772,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6763,9 +6788,9 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
-   "summary": "workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
+   "summary": "workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -6779,8 +6804,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6795,8 +6820,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6811,8 +6836,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 18: command/process substitution closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 23: local action/checkout path scope unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 4: command/process substitution closure is unresolved; job graph-admission step 8: checkout root or source-affecting workflow environment unresolved; job graph-admission step 8: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 31 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -6827,13 +6852,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py config_schema: keys read at head ⊆ declared keys",
-   "duration_s": 1.28,
+   "duration_s": 1.41,
    "entities": [
     "code_unit:tests/test_kc_corpus_profile.py"
    ],
@@ -6843,8 +6868,8 @@
    "exit_code": 0,
    "id": "v-config-schema",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-config-schema.json",
-   "started_at_utc": "2026-11-06T09:55:57Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-11-06T10:17:21Z",
    "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 5 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
@@ -7099,8 +7124,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-06T09:55:58Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-06T10:17:22Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -7121,21 +7146,24 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-11-06T09:55:58Z",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-06T10:17:22Z",
    "summary": "4 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
    "duration_s": 0.02,
    "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/ltm/router.py",
+    "code_unit:tests/test_kc_corpus_profile.py",
     "route:DELETE /source",
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
     "route:DELETE /v1/project/index",
+    "route:GET /__benchmark/fingerprint",
     "route:GET /entities",
     "route:GET /events",
     "route:GET /graph",
@@ -7172,74 +7200,57 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
-    "code_unit:src/scrutator/health.py": "verified",
-    "code_unit:src/scrutator/ltm/router.py": "verified",
-    "route:DELETE /source": "verified",
-    "route:DELETE /v1/edges": "verified",
-    "route:DELETE /v1/index": "verified",
-    "route:DELETE /v1/memories": "verified",
-    "route:DELETE /v1/project/index": "verified",
-    "route:GET /entities": "verified",
-    "route:GET /events": "verified",
-    "route:GET /graph": "verified",
-    "route:GET /health": "verified",
-    "route:GET /jobs/{job_id}": "verified",
-    "route:GET /meta_facts": "verified",
-    "route:GET /v1/chunks": "verified",
-    "route:GET /v1/edges/{chunk_id}": "verified",
-    "route:GET /v1/index/capability": "verified",
-    "route:GET /v1/index/rollback-capability": "verified",
-    "route:GET /v1/memories/stats": "verified",
-    "route:GET /v1/namespaces": "verified",
-    "route:GET /v1/navigate/outline": "verified",
-    "route:GET /v1/navigate/section": "verified",
-    "route:GET /v1/project/write-preflight": "verified",
-    "route:GET /v1/stats": "verified",
-    "route:POST /ingest": "verified",
-    "route:POST /recall": "verified",
-    "route:POST /reflect": "verified",
-    "route:POST /v1/chunk": "verified",
-    "route:POST /v1/dream/analyze": "verified",
-    "route:POST /v1/edges": "verified",
-    "route:POST /v1/edges/by-path": "verified",
-    "route:POST /v1/fetch": "verified",
-    "route:POST /v1/index": "verified",
-    "route:POST /v1/index/batch": "verified",
-    "route:POST /v1/index/capability-projection": "verified",
-    "route:POST /v1/index/evidence-exact": "verified",
-    "route:POST /v1/memories": "verified",
-    "route:POST /v1/memories/bulk": "verified",
-    "route:POST /v1/memories/recall": "verified",
-    "route:POST /v1/namespaces": "verified",
-    "route:POST /v1/project/index": "verified",
-    "route:POST /v1/search": "verified"
-   },
-   "exit_code": 0,
-   "id": "v-canary-1",
-   "kind": "canary",
-   "output_ref": "receipts/canary/kb-cons-02-route-presence/result.json",
-   "started_at_utc": "2026-11-06T09:55:58Z",
-   "summary": "receipts/canary/kb-cons-02-route-presence/result.json: 41 verified / 0 failed / 0 not_measured"
-  },
-  {
-   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.02,
-   "entities": [
-    "code_unit:benchmark/scrutator/live/granted_context_app.py",
-    "code_unit:tests/test_kc_corpus_profile.py",
-    "route:GET /__benchmark/fingerprint"
-   ],
-   "entity_verdicts": {
     "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
+    "code_unit:src/scrutator/health.py": "not_measured",
+    "code_unit:src/scrutator/ltm/router.py": "not_measured",
     "code_unit:tests/test_kc_corpus_profile.py": "not_measured",
-    "route:GET /__benchmark/fingerprint": "not_measured"
+    "route:DELETE /source": "not_measured",
+    "route:DELETE /v1/edges": "not_measured",
+    "route:DELETE /v1/index": "not_measured",
+    "route:DELETE /v1/memories": "not_measured",
+    "route:DELETE /v1/project/index": "not_measured",
+    "route:GET /__benchmark/fingerprint": "not_measured",
+    "route:GET /entities": "not_measured",
+    "route:GET /events": "not_measured",
+    "route:GET /graph": "not_measured",
+    "route:GET /health": "not_measured",
+    "route:GET /jobs/{job_id}": "not_measured",
+    "route:GET /meta_facts": "not_measured",
+    "route:GET /v1/chunks": "not_measured",
+    "route:GET /v1/edges/{chunk_id}": "not_measured",
+    "route:GET /v1/index/capability": "not_measured",
+    "route:GET /v1/index/rollback-capability": "not_measured",
+    "route:GET /v1/memories/stats": "not_measured",
+    "route:GET /v1/namespaces": "not_measured",
+    "route:GET /v1/navigate/outline": "not_measured",
+    "route:GET /v1/navigate/section": "not_measured",
+    "route:GET /v1/project/write-preflight": "not_measured",
+    "route:GET /v1/stats": "not_measured",
+    "route:POST /ingest": "not_measured",
+    "route:POST /recall": "not_measured",
+    "route:POST /reflect": "not_measured",
+    "route:POST /v1/chunk": "not_measured",
+    "route:POST /v1/dream/analyze": "not_measured",
+    "route:POST /v1/edges": "not_measured",
+    "route:POST /v1/edges/by-path": "not_measured",
+    "route:POST /v1/fetch": "not_measured",
+    "route:POST /v1/index": "not_measured",
+    "route:POST /v1/index/batch": "not_measured",
+    "route:POST /v1/index/capability-projection": "not_measured",
+    "route:POST /v1/index/evidence-exact": "not_measured",
+    "route:POST /v1/memories": "not_measured",
+    "route:POST /v1/memories/bulk": "not_measured",
+    "route:POST /v1/memories/recall": "not_measured",
+    "route:POST /v1/namespaces": "not_measured",
+    "route:POST /v1/project/index": "not_measured",
+    "route:POST /v1/search": "not_measured"
    },
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-canary.json",
-   "started_at_utc": "2026-11-06T09:55:58Z",
-   "summary": "1 canary result(s), 1 committed at head; 41 verified / 0 failed / 3 not_measured of 44 entities"
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-canary.json",
+   "started_at_utc": "2026-11-06T10:17:22Z",
+   "summary": "1 canary result(s), 0 committed at head; 0 verified / 0 failed / 44 not_measured of 44 entities"
   },
   {
    "command": "bash -n + pinned ShellCheck on syntax projection; no caller/Bats execution",
@@ -7253,9 +7264,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T09:56:01Z",
+   "started_at_utc": "2026-11-06T10:17:25Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -7270,9 +7281,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-_gjecas9/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-6j6i184c/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T09:56:01Z",
+   "started_at_utc": "2026-11-06T10:17:25Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: directory transition has unresolved execution cwd; line 41: directory transition has unresolved execution cwd; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   }
  ],
@@ -7289,9 +7300,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-kb-cons-02.json is the previous version of the one this run is writing, for the same work item 938fba4e-65bc-4d73-aa49-75086bade2cd — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "12 affected entity(ies) owe no verdict (receipt: 12): unchanged at both revisions and given no verifier by the matrix"
+    "text": "13 affected entity(ies) owe no verdict (receipt: 13): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -7695,6 +7712,7 @@
    "receipt:receipts/graph/agents-md-migration.json": [],
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": [],
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json": [],
+   "receipt:receipts/graph/change-admission-kb-cons-02.json": [],
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json": [],
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
    "receipt:receipts/graph/change-admission-kcp-0017-namespace-bootstrap.json": [],
@@ -7903,9 +7921,9 @@
    ]
   },
   "seconds": {
-   "prepare": 2.14,
-   "total": 79.07,
-   "verifiers": 1.41
+   "prepare": 2.22,
+   "total": 65.29,
+   "verifiers": 1.55
   }
  },
  "work_item": "938fba4e-65bc-4d73-aa49-75086bade2cd"
