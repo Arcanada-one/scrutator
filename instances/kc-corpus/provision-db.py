@@ -243,12 +243,14 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '{DATABASE}') \\gexe
 
 def main() -> int:
     if len(sys.argv) != 1 or os.geteuid() != 0:
-        fail("run with no arguments as control root on arcana-dbs")
-    if os.environ.get("VAULT_ADDR") != VAULT_ADDR:
-        fail("VAULT_ADDR must be the reviewed arcana-dbs primary")
-    token = os.environ.get("VAULT_TOKEN", "")
-    if not token or "\n" in token or "\r" in token:
-        fail("a Vault operator token is required in the protected environment")
+        fail("run with no arguments as control root on arcana-dbs, Vault operator token on stdin")
+    # The Vault address is the reviewed constant above; the operator token arrives on stdin (never argv or
+    # the environment) from the protected operator file.
+    if sys.stdin.isatty():
+        fail("pipe the Vault operator token from its protected file on stdin")
+    token = sys.stdin.readline().strip()
+    if not token or len(token) > 512 or not token.isprintable() or " " in token:
+        fail("a Vault operator token is required on stdin")
     if psql("postgres", "SELECT current_user;\n") != "postgres":
         fail("unexpected PostgreSQL control identity")
     password = obtain_password(token)
