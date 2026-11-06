@@ -166,6 +166,9 @@ async def non_echoing_request_validation_error(_request, exc: RequestValidationE
 from scrutator.ltm.router import router as ltm_router  # noqa: E402
 
 app.include_router(ltm_router)
+from scrutator.kc_router import router as kc_private_router  # noqa: E402
+
+app.include_router(kc_private_router)
 
 
 @app.get("/health")
