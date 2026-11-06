@@ -20,8 +20,43 @@
 | C10b retry/recovery after interruption | PASS |
 | C11 repeated idempotent check | PASS |
 | C12 no cross-namespace reads/writes | PASS |
+| R1a same ID / different manifest refused, no state change | PASS |
+| R1b same manifest / different bytes refused, no state change | PASS |
+| R1c interrupted same-ID rewrite changes nothing | PASS |
+| R1d conflict pre-checked for all members (no partial write) | PASS |
+| R1e exact retry observes identical bytes / fills missing only | PASS |
+| R2a bounded ABA trace (g1->g2->g1) refused by version | PASS |
+| R2b served read refuses staged generation; diagnostic read labelled | PASS |
+| R2c transitive dependency chain gap refused | PASS |
 | AC4 incomplete candidate absent from accepted view | PASS |
 | META checker rejects every faulty variant | PASS |
+
+## Subcase table: MEASURED vs NOT_MEASURED (R2)
+
+MEASURED = a model test above passed AND a deliberately broken variant is rejected by its checker. NOT_MEASURED = no test exists in this PR; it must not be read as pass or fail.
+
+| Subcase | Status | Rejected mutant / reason NOT_MEASURED |
+|---|---|---|
+| Immutable generation ID: same ID, different manifest | PASS | OverwriteStore |
+| Immutable member bytes: same manifest, different bytes | PASS | OverwriteStore |
+| Interrupted same-ID rewrite | PASS | OverwriteStore |
+| Conflict detected before any write (no partial state) | PASS | CheckAsYouGoStore |
+| Exact retry: observe identical / fill missing only | PASS | (positive control; R1a-d mutants cover the negative side) |
+| Bounded ABA g1->g2->g1, stale (ptr, version) observation | PASS | PointerOnlyCasStore |
+| Served read of a staged generation | PASS | UnguardedReadStore |
+| Transitive dependency chain (a->b->c, c absent) | PASS | RootOnlyDepStore |
+| Pre-ranking search isolation (candidate chunks excluded BEFORE ranking, not filtered after) | NOT_MEASURED | model has no ranker; only the post-selection accepted view (AC4) is modelled |
+| Effect-time external revocation (grant revoked between check and effect) | NOT_MEASURED | revocation is checked at call time only; no check-then-use window modelled |
+| Durable lost-ack reconciliation (promotion committed, ack lost, caller retries) | NOT_MEASURED | only a stale-expectation retry is refused (C11); recognising one's own committed win is not modelled |
+| Search top-k isolation (candidate chunks cannot displace accepted chunks in the top-k) | NOT_MEASURED | no ranker / top-k in the model |
+| Revocation between authorization and disclosure (check-then-disclose window) | NOT_MEASURED | authorization and read are one synchronous step in the model |
+| External-authority outage / fence (Auth Arcana unreachable, fail-closed) | NOT_MEASURED | the authorization oracle never fails in the model |
+| Complete versioned closure (dependency pins a specific revision, not just an artifact id) | NOT_MEASURED | deps are artifact ids only; revision-pinned deps not modelled |
+| Cyclic dependency closure | NOT_MEASURED | not tested |
+| Multibyte / non-ASCII member content (byte length vs character length) | NOT_MEASURED | all fixtures are ASCII |
+| Shared member across generations (same artifact+revision in two generations) | NOT_MEASURED | revision is generation-qualified in all fixtures |
+
+Direct reads: `Store.read_member` is the SERVED path and refuses any never-selected (staged) generation (`not-selected-generation`); `Store.diagnostic_read_member` can read a staged generation and is **diagnostic-only**, never to be exposed by a served API (R2b).
 
 Extra rows not exercised by the model (never read as PASS):
 
@@ -52,18 +87,25 @@ Each faulty variant was run through the same checkers; `rejected=True` means the
 | c10/InPlaceStore | True | `I1:previous-accepted-member-readable-at-old-digest` | doc-a |
 | c10/LeakyViewStore | True | `I3:candidate-isolated-from-accepted-view` | g2:doc-a |
 | c12/CrossNsStore | True | `I6:no-cross-namespace-io` | ('write', 'shared-ns') |
+| r1a/OverwriteStore | True | `I8:selected-manifest-immutable` | g1 |
+| r1b/OverwriteStore | True | `I8:selected-member-bytes-immutable` | doc-a |
+| r1c/OverwriteStore | True | `I8:selected-manifest-immutable` | g1 |
+| r1d/CheckAsYouGoStore | True | `I8b:refused-call-leaves-no-state-change` |  |
+| r2a/PointerOnlyCasStore | True | `I9:aba-stale-version-promotion-refused` | promoted ga |
+| r2b/UnguardedReadStore | True | `I10:staged-generation-not-served` | g2/doc-a |
+| r2c/RootOnlyDepStore | True | `I7:dependency-closure-complete` | doc-b->doc-c |
 
 Mapping: `InPlaceStore` = overwrite-in-place of the active generation's source paths (AC2, 77307111 counterexample; `I1` previous accepted member no longer reads at its old digest). `LastWriterWinsStore` = promotion ignoring the expected pointer (AC3; `I5`). `LeakyViewStore` = candidate chunks visible in the accepted view (AC4; `I3`). `CachedViewStore` = old complete bytes served after revocation (AC4; `I4`). `NoValidationStore` = metadata-only promotion (`I2`/`I7`). `CrossNsStore` = write mirrored to another namespace (`I6`).
 
 ## Provenance
 
-- Scrutator base: `origin/main` = `0cb546a395008b501fd47c6b1037bcae8e7e664f` (required: at or after 0cb546a3). Branch head at run time: `0cb546a395008b501fd47c6b1037bcae8e7e664f` (working tree may carry uncommitted report).
-- Source sha256: `generation_model.py` = `45ed0fb1900ae40121edb3a9ffb7343c206d115157b75b9a9b023e11d351b598`
-- Fixture/test sha256: `test_generation_closure_model.py` = `ed51fca721f3811c724213d78e674df5769ff0078eb395338a072a6248ab063e`; `conftest.py` = `b98481ab527def4b3a199f6e262f744477f155d46d34195e37b236d496b4033d`; `run_and_report.py` = `8b6d2c1ae222144a5769defc3cabe20125e30dbc45dacc9ce64c137008da5174`
+- Scrutator base: `origin/main` = `0cb546a395008b501fd47c6b1037bcae8e7e664f` (required: at or after 0cb546a3). Branch head at run time: `b32630544e8496cd2cdfb6c43be52d0a77730ce4` (working tree may carry uncommitted report).
+- Source sha256: `generation_model.py` = `af6b591fb30179454dd2001fa63f24bfa7e7b0e45de288cd5cf1d1cac230f371`
+- Fixture/test sha256: `test_generation_closure_model.py` = `4e1936ec1cc36c2a0050d0c300569b1d5fc75cf1a16a738f7b77813b7f56f810`; `conftest.py` = `b98481ab527def4b3a199f6e262f744477f155d46d34195e37b236d496b4033d`; `run_and_report.py` = `17ca2d8868514de7082c5391af4e362c4d260335fdab4e47910e2f4da77e383f`
 - Fixtures are inline synthetic byte strings (`OLD-*`, `NEW-*`); no external fixture file exists.
 - Command: `cd scrutator && PYTHONPATH=src python -m pytest tests/ac5_model -q -p no:cacheprovider` (via `python tests/ac5_model/run_and_report.py REPORT.md`)
 - Exit code: **0**
-- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `16 passed in 0.85s`
+- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `24 passed in 1.44s`
 
 ## Model assumptions
 
@@ -73,7 +115,8 @@ Mapping: `InPlaceStore` = overwrite-in-place of the active generation's source p
 4. Failure is an injected Python exception after N writes; no process kill, partial page write, WAL, or restart is modelled.
 5. The competing-promotion case interleaves deterministically (both validate, then both promote) plus a 4-thread barrier stress; it does not explore all schedules.
 6. Digest domain is SHA-256 over raw bytes + length. Document-ID, revision, receipt and source-hash domains are reduced to (artifact_id, revision, source_pin); their distinctness is modelled only by separate fields.
-7. Dependency closure is a finite same-manifest check; transitive/cyclic closure is not modelled.
+7. Dependency closure is a finite same-manifest check; a transitive chain is exercised (R2c); cyclic closure is not modelled.
+8b. Immutable identity (R1) is enforced by the model's staging step; the real storage layer must provide the same guarantee (unique/immutable key per generation member). Not implemented here.
 8. Old-generation retention/cleanup is out of scope; the model never deletes a generation.
 
 ## What this model does NOT prove

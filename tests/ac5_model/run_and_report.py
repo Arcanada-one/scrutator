@@ -27,9 +27,99 @@ CASES = {
     "test_c10b_recovery_after_interruption_retry_completes": "C10b retry/recovery after interruption",
     "test_c11_repeated_check_is_idempotent_and_read_only": "C11 repeated idempotent check",
     "test_c12_no_cross_namespace_reads_or_writes": "C12 no cross-namespace reads/writes",
+    "test_r1a_same_id_different_manifest_refused_before_any_state_change": "R1a same ID / different manifest refused, no state change",
+    "test_r1b_same_manifest_different_bytes_refused_before_any_state_change": "R1b same manifest / different bytes refused, no state change",
+    "test_r1c_interrupted_same_id_rewrite_changes_nothing": "R1c interrupted same-ID rewrite changes nothing",
+    "test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members": "R1d conflict pre-checked for all members (no partial write)",
+    "test_r1e_exact_retry_only_observes_or_fills_missing": "R1e exact retry observes identical bytes / fills missing only",
+    "test_r2a_aba_stale_observation_refused_by_version": "R2a bounded ABA trace (g1->g2->g1) refused by version",
+    "test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled": "R2b served read refuses staged generation; diagnostic read labelled",
+    "test_r2c_transitive_dependency_chain_gap_refused": "R2c transitive dependency chain gap refused",
     "test_ac4_incomplete_candidate_never_visible_in_accepted_view": "AC4 incomplete candidate absent from accepted view",
     "test_checker_is_not_vacuous_every_faulty_variant_rejected": "META checker rejects every faulty variant",
 }
+
+
+SUBCASES = [
+    (
+        "Immutable generation ID: same ID, different manifest",
+        "test_r1a_same_id_different_manifest_refused_before_any_state_change",
+        "OverwriteStore",
+    ),
+    (
+        "Immutable member bytes: same manifest, different bytes",
+        "test_r1b_same_manifest_different_bytes_refused_before_any_state_change",
+        "OverwriteStore",
+    ),
+    ("Interrupted same-ID rewrite", "test_r1c_interrupted_same_id_rewrite_changes_nothing", "OverwriteStore"),
+    (
+        "Conflict detected before any write (no partial state)",
+        "test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members",
+        "CheckAsYouGoStore",
+    ),
+    (
+        "Exact retry: observe identical / fill missing only",
+        "test_r1e_exact_retry_only_observes_or_fills_missing",
+        "(positive control; R1a-d mutants cover the negative side)",
+    ),
+    (
+        "Bounded ABA g1->g2->g1, stale (ptr, version) observation",
+        "test_r2a_aba_stale_observation_refused_by_version",
+        "PointerOnlyCasStore",
+    ),
+    (
+        "Served read of a staged generation",
+        "test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled",
+        "UnguardedReadStore",
+    ),
+    (
+        "Transitive dependency chain (a->b->c, c absent)",
+        "test_r2c_transitive_dependency_chain_gap_refused",
+        "RootOnlyDepStore",
+    ),
+    (
+        "Pre-ranking search isolation (candidate chunks excluded BEFORE ranking, not filtered after)",
+        None,
+        "model has no ranker; only the post-selection accepted view (AC4) is modelled",
+    ),
+    (
+        "Effect-time external revocation (grant revoked between check and effect)",
+        None,
+        "revocation is checked at call time only; no check-then-use window modelled",
+    ),
+    (
+        "Durable lost-ack reconciliation (promotion committed, ack lost, caller retries)",
+        None,
+        "only a stale-expectation retry is refused (C11); recognising one's own committed win is not modelled",
+    ),
+    (
+        "Search top-k isolation (candidate chunks cannot displace accepted chunks in the top-k)",
+        None,
+        "no ranker / top-k in the model",
+    ),
+    (
+        "Revocation between authorization and disclosure (check-then-disclose window)",
+        None,
+        "authorization and read are one synchronous step in the model",
+    ),
+    (
+        "External-authority outage / fence (Auth Arcana unreachable, fail-closed)",
+        None,
+        "the authorization oracle never fails in the model",
+    ),
+    (
+        "Complete versioned closure (dependency pins a specific revision, not just an artifact id)",
+        None,
+        "deps are artifact ids only; revision-pinned deps not modelled",
+    ),
+    ("Cyclic dependency closure", None, "not tested"),
+    ("Multibyte / non-ASCII member content (byte length vs character length)", None, "all fixtures are ASCII"),
+    (
+        "Shared member across generations (same artifact+revision in two generations)",
+        None,
+        "revision is generation-qualified in all fixtures",
+    ),
+]
 
 
 def sha(p: Path) -> str:
@@ -68,6 +158,22 @@ def main(out: str) -> int:
     for k, label in CASES.items():
         L.append(f"| {label} | {rows.get(k, 'NOT_MEASURED')} |")
     L += [
+        "",
+        "## Subcase table: MEASURED vs NOT_MEASURED (R2)",
+        "",
+        "MEASURED = a model test above passed AND a deliberately broken variant is rejected by its checker. "
+        "NOT_MEASURED = no test exists in this PR; it must not be read as pass or fail.",
+        "",
+        "| Subcase | Status | Rejected mutant / reason NOT_MEASURED |",
+        "|---|---|---|",
+    ]
+    for label, test, mut in SUBCASES:
+        L.append(f"| {label} | {rows.get(test, 'NOT_MEASURED') if test else 'NOT_MEASURED'} | {mut} |")
+    L += [
+        "",
+        "Direct reads: `Store.read_member` is the SERVED path and refuses any never-selected (staged) generation "
+        "(`not-selected-generation`); `Store.diagnostic_read_member` can read a staged generation and is "
+        "**diagnostic-only**, never to be exposed by a served API (R2b).",
         "",
         "Extra rows not exercised by the model (never read as PASS):",
         "",
@@ -120,7 +226,8 @@ def main(out: str) -> int:
         "stress; it does not explore all schedules.",
         "6. Digest domain is SHA-256 over raw bytes + length. Document-ID, revision, receipt and source-hash domains are reduced to "
         "(artifact_id, revision, source_pin); their distinctness is modelled only by separate fields.",
-        "7. Dependency closure is a finite same-manifest check; transitive/cyclic closure is not modelled.",
+        "7. Dependency closure is a finite same-manifest check; a transitive chain is exercised (R2c); cyclic closure is not modelled.",
+        "8b. Immutable identity (R1) is enforced by the model's staging step; the real storage layer must provide the same guarantee (unique/immutable key per generation member). Not implemented here.",
         "8. Old-generation retention/cleanup is out of scope; the model never deletes a generation.",
         "",
         "## What this model does NOT prove",

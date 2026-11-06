@@ -334,6 +334,165 @@ def test_ac4_incomplete_candidate_never_visible_in_accepted_view():
     record("ac4", "LeakyViewStore", gm.check_view_has_only_accepted(lstore, READER))
 
 
+# --- R1: immutable generation identity ---------------------------------------------------------
+def _selected_g1_with_snapshot(cls=Store):
+    store, g1 = build(cls)
+    return store, g1, store.snapshot()
+
+
+def test_r1a_same_id_different_manifest_refused_before_any_state_change():
+    store, g1, snap = _selected_g1_with_snapshot()
+    with pytest.raises(NotServable) as e:
+        store.stage(manifest("g1", NEW), NEW)  # same ID "g1", different manifest + bytes
+    assert e.value.boundary == "immutable-identity-conflict"
+    assert gm.check_state_unchanged(store, snap).ok
+    assert gm.check_selected_identity_immutable(store, g1, OLD).ok
+    assert store.ptr == "g1" and store.read_member("g1", "doc-a", READER) == OLD["doc-a"]
+    # mutant: pre-correction staging overwrites the selected generation's manifest and bytes
+    f, fg1, _ = _selected_g1_with_snapshot(gm.OverwriteStore)
+    f.stage(manifest("g1", NEW), NEW)
+    assert f.ptr == "g1"  # pointer and version are untouched ...
+    record("r1a", "OverwriteStore", gm.check_selected_identity_immutable(f, fg1, OLD))  # ... identity is not
+
+
+def test_r1b_same_manifest_different_bytes_refused_before_any_state_change():
+    store, g1, snap = _selected_g1_with_snapshot()
+    with pytest.raises(NotServable) as e:
+        store.stage(g1, NEW)  # g1's own manifest, different bytes for every member
+    assert e.value.boundary == "immutable-identity-conflict"
+    assert gm.check_state_unchanged(store, snap).ok
+    assert gm.check_previous_generation_intact(store, g1, OLD).ok
+    # one conflicting member among otherwise identical ones is still refused, nothing written
+    mixed = dict(OLD, **{"doc-c": b"OLD-C synthetic BYTES"})
+    with pytest.raises(NotServable):
+        store.stage(g1, mixed)
+    assert gm.check_state_unchanged(store, snap).ok
+    f, fg1, _ = _selected_g1_with_snapshot(gm.OverwriteStore)
+    f.stage(fg1, NEW)
+    record("r1b", "OverwriteStore", gm.check_selected_identity_immutable(f, fg1, OLD))
+
+
+def test_r1c_interrupted_same_id_rewrite_changes_nothing():
+    store, g1, snap = _selected_g1_with_snapshot()
+    store.fail_after_writes = 1  # would crash after the first write, if a write were attempted
+    with pytest.raises(NotServable) as e:  # refused BEFORE the injected failure can matter
+        store.stage(manifest("g1", NEW), NEW)
+    assert e.value.boundary == "immutable-identity-conflict"
+    assert gm.check_state_unchanged(store, snap).ok
+    assert gm.check_selected_identity_immutable(store, g1, OLD).ok
+    f, fg1, _ = _selected_g1_with_snapshot(gm.OverwriteStore)
+    f.fail_after_writes = 1
+    with pytest.raises(InjectedFailure):
+        f.stage(manifest("g1", NEW), NEW)
+    assert f.ptr == "g1" and f.version == 1
+    record("r1c", "OverwriteStore", gm.check_selected_identity_immutable(f, fg1, OLD))
+
+
+def test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members():
+    store, _ = build()
+    store.stage(manifest("g2", NEW), {"doc-c": NEW["doc-c"]})  # partial candidate g2
+    snap = store.snapshot()
+    other = dict(NEW, **{"doc-c": b"DIFFERENT-C synthetic"})
+    with pytest.raises(NotServable):  # doc-a/doc-b are missing and would be written first
+        store.stage(manifest("g2", other), other)
+    # manifest also differs (digest of doc-c) -> refused at manifest level; use same manifest instead
+    m2 = manifest("g2", NEW)
+    with pytest.raises(NotServable) as e:
+        store.stage(m2, dict(NEW, **{"doc-c": b"DIFFERENT-C synthetic"}))
+    assert e.value.boundary == "immutable-identity-conflict"
+    assert gm.check_state_unchanged(store, snap).ok  # doc-a and doc-b were NOT written
+    f, _ = build(gm.CheckAsYouGoStore)
+    f.stage(manifest("g2", NEW), {"doc-c": NEW["doc-c"]})
+    fsnap = f.snapshot()
+    with pytest.raises(NotServable):
+        f.stage(m2, dict(NEW, **{"doc-c": b"DIFFERENT-C synthetic"}))
+    record("r1d", "CheckAsYouGoStore", gm.check_state_unchanged(f, fsnap))
+
+
+def test_r1e_exact_retry_only_observes_or_fills_missing():
+    store, g1, snap = _selected_g1_with_snapshot()
+    store.stage(g1, OLD)  # exact retry of the selected generation: no-op
+    assert gm.check_state_unchanged(store, snap).ok  # also not re-added to candidates
+    # partial candidate, then exact retry fills only the missing members
+    g2 = manifest("g2", NEW)
+    store.stage(g2, {"doc-a": NEW["doc-a"]})
+    before = dict(store.blobs)
+    store.stage(g2, NEW)
+    assert store.blobs[store.storage_key(g2, g2.members[0])] == before[store.storage_key(g2, g2.members[0])]
+    assert {k for k in store.blobs if k[1].startswith("g2/")} == {store.storage_key(g2, m) for m in g2.members}
+    assert sum(1 for k in store.ns_log if k[0] == "write") == 3 + 3  # g1 x3 + g2 x3: one write per member, no rewrite
+    ingest_and_promote(store, g2, NEW, READER, PROJ)
+    assert store.ptr == "g2" and gm.check_pointer_is_complete_generation(store).ok
+
+
+# --- R2: bounded ABA trace, pointer-only mutant ----------------------------------------------------
+def _aba(cls):
+    store, _ = build(cls)  # g1 selected, version 1
+    obs = (store.ptr, store.version)  # competitor A observed (g1, 1) and stages ga meanwhile
+    ga = manifest("ga", {k: v + b"-A" for k, v in NEW.items()})
+    store.stage(ga, {k: v + b"-A" for k, v in NEW.items()})
+    store.validate(ga, READER, PROJ)
+    g2 = manifest("g2", NEW)
+    ingest_and_promote(store, g2, NEW, READER, PROJ)  # B: g1 -> g2 (version 2)
+    store.promote("g1", "g2", 2)  # C: g2 -> g1 again (version 3): pointer VALUE is back to g1
+    assert (store.ptr, store.version) == ("g1", 3)
+    try:
+        store.promote("ga", *obs)  # A acts on its stale observation (g1, 1)
+        outcome: str | Exception = "ga"
+    except NotServable as e:
+        outcome = e
+    return store, outcome
+
+
+def test_r2a_aba_stale_observation_refused_by_version():
+    store, outcome = _aba(Store)
+    assert gm.check_stale_observation_refused(outcome).ok
+    assert isinstance(outcome, NotServable) and outcome.boundary == "cas-conflict"
+    assert (store.ptr, store.version) == ("g1", 3)  # ga never became the pointer
+    f, fout = _aba(gm.PointerOnlyCasStore)
+    assert f.ptr == "ga"  # the mutant silently accepts the stale observation
+    record("r2a", "PointerOnlyCasStore", gm.check_stale_observation_refused(fout))
+
+
+# --- R2: served read of a staged generation ---------------------------------------------------------
+def test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled():
+    store, _ = build()
+    store.stage(manifest("g2", NEW), NEW)  # staged, validated or not, never selected
+    assert gm.check_staged_not_served(store, "g2", "doc-a", READER).ok
+    with pytest.raises(NotServable) as e:
+        store.read_member("g2", "doc-a", READER)
+    assert e.value.boundary == "not-selected-generation"
+    # DIAGNOSTIC-ONLY path exists, is explicit by name, and is NOT the served path
+    assert store.diagnostic_read_member("g2", "doc-a", READER) == NEW["doc-a"]
+    store.authz.revoke(READER, NS)
+    with pytest.raises(Denied):
+        store.diagnostic_read_member("g2", "doc-a", READER)
+    f, _ = build(gm.UnguardedReadStore)
+    f.stage(manifest("g2", NEW), NEW)
+    record("r2b", "UnguardedReadStore", gm.check_staged_not_served(f, "g2", "doc-a", READER))
+
+
+# --- R2: transitive dependency chain (measured subcase) ----------------------------------------------
+def test_r2c_transitive_dependency_chain_gap_refused():
+    chain = {"doc-a": ("doc-b",), "doc-b": ("doc-c",)}
+    partial = {k: v for k, v in NEW.items() if k != "doc-c"}
+    m = Manifest(
+        "g2",
+        SRC1,
+        PROJ,
+        NS,
+        tuple(make_member(k, v, revision="g2", deps=chain.get(k, ())) for k, v in NEW.items() if k != "doc-c"),
+    )
+    # doc-a -> doc-b -> doc-c with doc-c absent from the manifest: the gap is two hops from the root
+    store, _ = build()
+    err = stage_and_try(store, m, partial)
+    assert err is not None and err.boundary == "missing-dependency" and "doc-b->doc-c" in str(err)
+    assert store.ptr == "g1"
+    f, _ = build(gm.RootOnlyDepStore)
+    stage_and_try(f, m, partial)
+    record("r2c", "RootOnlyDepStore", _scope_verdict(f, m, PROJ))
+
+
 def test_checker_is_not_vacuous_every_faulty_variant_rejected():
     """Meta: the faulty variants recorded above must all be rejected (checker disagrees with them)."""
     # Population is filled by the case tests (order-independent: re-run the minimal set here).
@@ -349,6 +508,13 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_c07_wrong_project,
         test_c02_one_member_missing,
         test_c03_stale_digest,
+        test_r1a_same_id_different_manifest_refused_before_any_state_change,
+        test_r1b_same_manifest_different_bytes_refused_before_any_state_change,
+        test_r1c_interrupted_same_id_rewrite_changes_nothing,
+        test_r1d_conflict_on_staged_candidate_is_prechecked_for_all_members,
+        test_r2a_aba_stale_observation_refused_by_version,
+        test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled,
+        test_r2c_transitive_dependency_chain_gap_refused,
     ):
         fn()
     assert FAULTY_RESULTS and all(v["rejected"] for v in FAULTY_RESULTS.values())

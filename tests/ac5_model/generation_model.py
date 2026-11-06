@@ -100,6 +100,7 @@ class Store:
         self.blobs: dict[tuple[str, str], bytes] = {}
         self.manifests: dict[str, Manifest] = {}
         self.candidates: set[str] = set()
+        self.ever_selected: set[str] = set()  # generations that were ever the selected pointer
         self.ptr: str | None = None  # accepted-generation pointer
         self.version = 0  # pointer version for CAS
         self._lock = threading.Lock()
@@ -125,13 +126,43 @@ class Store:
             raise NotServable("foreign-namespace", m.namespace)
         self._stage_unchecked(m, payload)
 
+    def snapshot(self) -> tuple:
+        """Full observable state, used by controls to prove a refused call changed nothing."""
+        return (
+            dict(self.manifests),
+            dict(self.blobs),
+            set(self.candidates),
+            set(self.ever_selected),
+            self.ptr,
+            self.version,
+            list(self.ns_log),
+        )
+
     def _stage_unchecked(self, m: Manifest, payload: dict[str, bytes]) -> None:
+        """Generation ID, manifest and member bytes are IMMUTABLE once first written.
+
+        R1: every identity conflict is detected BEFORE any state change (manifest registration,
+        candidate set, blob write, fault-injection counter). An exact retry may only observe
+        identical bytes or fill members that are still missing.
+        """
+        known = self.manifests.get(m.generation_id)
+        if known is not None and known != m:
+            raise NotServable("immutable-identity-conflict", f"manifest {m.generation_id}")
+        for mem in m.members:
+            if mem.artifact_id in payload:
+                have = self.blobs.get(self.storage_key(m, mem))
+                if have is not None and have != payload[mem.artifact_id]:
+                    raise NotServable("immutable-identity-conflict", f"bytes {m.generation_id}/{mem.artifact_id}")
         self.manifests[m.generation_id] = m
-        self.candidates.add(m.generation_id)
+        if m.generation_id not in self.ever_selected:
+            self.candidates.add(m.generation_id)
         self._writes = 0
         for mem in m.members:
             if mem.artifact_id in payload:
-                self._write(self.storage_key(m, mem), payload[mem.artifact_id])
+                key = self.storage_key(m, mem)
+                if key in self.blobs:  # identical bytes (checked above): observe, do not rewrite
+                    continue
+                self._write(key, payload[mem.artifact_id])
 
     # --- closure validation ------------------------------------------------------------
     def validate(self, m: Manifest, reader: str, project: str) -> None:
@@ -168,6 +199,7 @@ class Store:
                 raise NotServable("cas-conflict", f"ptr={self.ptr} v={self.version}")
             self.ptr = gen_id
             self.version += 1
+            self.ever_selected.add(gen_id)
             self.candidates.discard(gen_id)
 
     # --- accepted view (search/context) ---------------------------------------------------
@@ -186,9 +218,24 @@ class Store:
         return out
 
     def read_member(self, gen_id: str, artifact_id: str, reader: str) -> bytes:
+        """SERVED read: only a generation that was selected at some point may be read through it.
+        A staged/candidate generation is refused (``not-selected-generation``)."""
         m = self.manifests[gen_id]
         if not self.authz.allowed(reader, m.namespace):
             raise Denied(reader)
+        if gen_id not in self.ever_selected:
+            raise NotServable("not-selected-generation", gen_id)
+        return self._raw_member(m, artifact_id)
+
+    def diagnostic_read_member(self, gen_id: str, artifact_id: str, reader: str) -> bytes:
+        """DIAGNOSTIC-ONLY, never to be exposed by a served API: reads any staged generation
+        (used by validation-style inspection and by tests). Still authorization-checked."""
+        m = self.manifests[gen_id]
+        if not self.authz.allowed(reader, m.namespace):
+            raise Denied(reader)
+        return self._raw_member(m, artifact_id)
+
+    def _raw_member(self, m: Manifest, artifact_id: str) -> bytes:
         mem = m.member(artifact_id)
         assert mem is not None
         self.ns_log.append(("read", m.namespace))
@@ -196,13 +243,6 @@ class Store:
 
 
 # ----------------------------------------------------------------------------- unsafe variants
-
-
-class InPlaceStore(Store):
-    """UNSAFE: reuses the active generation's source paths (77307111 counterexample)."""
-
-    def storage_key(self, m: Manifest, mem: Member) -> tuple[str, str]:
-        return (m.namespace, f"{mem.artifact_id}")  # no generation qualifier
 
 
 class LeakyViewStore(Store):
@@ -237,6 +277,84 @@ class LastWriterWinsStore(Store):
             self.ptr = gen_id
             self.version += 1
             self.candidates.discard(gen_id)
+
+
+class OverwriteStore(Store):
+    """UNSAFE (R1): the pre-correction staging. Replaces the manifest under an existing generation
+    ID and overwrites populated keys, so a selected generation can change before validation."""
+
+    def _stage_unchecked(self, m: Manifest, payload: dict[str, bytes]) -> None:
+        self.manifests[m.generation_id] = m
+        self.candidates.add(m.generation_id)
+        self._writes = 0
+        for mem in m.members:
+            if mem.artifact_id in payload:
+                self._write(self.storage_key(m, mem), payload[mem.artifact_id])
+
+
+class InPlaceStore(OverwriteStore):
+    """UNSAFE (no immutability guard): reuses the active generation's source paths (77307111 counterexample)."""
+
+    def storage_key(self, m: Manifest, mem: Member) -> tuple[str, str]:
+        return (m.namespace, f"{mem.artifact_id}")  # no generation qualifier
+
+
+class CheckAsYouGoStore(Store):
+    """UNSAFE (R1): writes missing members first and only then trips over a conflicting one, so a
+    refused call still leaves partial state behind (no pre-check of ALL members)."""
+
+    def _stage_unchecked(self, m: Manifest, payload: dict[str, bytes]) -> None:
+        known = self.manifests.get(m.generation_id)
+        if known is not None and known != m:
+            raise NotServable("immutable-identity-conflict", f"manifest {m.generation_id}")
+        self.manifests[m.generation_id] = m
+        self._writes = 0
+        for mem in m.members:
+            if mem.artifact_id in payload:
+                key = self.storage_key(m, mem)
+                have = self.blobs.get(key)
+                if have is not None and have != payload[mem.artifact_id]:
+                    raise NotServable("immutable-identity-conflict", f"bytes {mem.artifact_id}")
+                if have is None:
+                    self._write(key, payload[mem.artifact_id])
+
+
+class PointerOnlyCasStore(Store):
+    """UNSAFE (R2): CAS compares the pointer VALUE only and ignores the version, so an A->B->A
+    sequence lets a stale observation win."""
+
+    def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
+        with self._lock:
+            if self.ptr != expected_ptr:
+                raise NotServable("cas-conflict", f"ptr={self.ptr}")
+            self.ptr = gen_id
+            self.version += 1
+            self.ever_selected.add(gen_id)
+            self.candidates.discard(gen_id)
+
+
+class UnguardedReadStore(Store):
+    """UNSAFE (R2): the served read_member exposes any staged generation."""
+
+    def read_member(self, gen_id: str, artifact_id: str, reader: str) -> bytes:
+        return self.diagnostic_read_member(gen_id, artifact_id, reader)
+
+
+class RootOnlyDepStore(Store):
+    """UNSAFE (R2 transitive): validates dependencies of the first (root) member only."""
+
+    def validate(self, m: Manifest, reader: str, project: str) -> None:
+        trimmed = Manifest(
+            m.generation_id,
+            m.source_pin,
+            m.project,
+            m.namespace,
+            tuple(
+                x if i == 0 else Member(x.artifact_id, x.revision, x.representation, x.length, x.digest)
+                for i, x in enumerate(m.members)
+            ),
+        )
+        super().validate(trimmed, reader, project)
 
 
 class NoValidationStore(Store):
@@ -329,3 +447,37 @@ def check_namespaces(store: Store) -> Verdict:
     if bad:
         return Verdict(False, "I6:no-cross-namespace-io", repr(bad[0]))
     return Verdict(True)
+
+
+def check_selected_identity_immutable(store: Store, sel: Manifest, payload: dict[str, bytes]) -> Verdict:
+    """I8: the manifest registered under a selected generation ID and every member's bytes are
+    exactly what was selected (identity is immutable after selection)."""
+    if store.manifests.get(sel.generation_id) != sel:
+        return Verdict(False, "I8:selected-manifest-immutable", sel.generation_id)
+    for mem in sel.members:
+        if store.blobs.get(store.storage_key(sel, mem)) != payload[mem.artifact_id]:
+            return Verdict(False, "I8:selected-member-bytes-immutable", mem.artifact_id)
+    return Verdict(True)
+
+
+def check_state_unchanged(store: Store, snap: tuple) -> Verdict:
+    """I8b: a refused call changed nothing observable (no partial write, no registration)."""
+    if store.snapshot() != snap:
+        return Verdict(False, "I8b:refused-call-leaves-no-state-change")
+    return Verdict(True)
+
+
+def check_stale_observation_refused(outcome: str | Exception) -> Verdict:
+    """I9: a promotion based on a stale (ptr, version) observation after A->B->A is refused."""
+    if isinstance(outcome, Exception):
+        return Verdict(True)
+    return Verdict(False, "I9:aba-stale-version-promotion-refused", f"promoted {outcome}")
+
+
+def check_staged_not_served(store: Store, gen_id: str, artifact_id: str, reader: str) -> Verdict:
+    """I10: the served read path never returns bytes of a never-selected (staged) generation."""
+    try:
+        store.read_member(gen_id, artifact_id, reader)
+    except (NotServable, Denied):
+        return Verdict(True)
+    return Verdict(False, "I10:staged-generation-not-served", f"{gen_id}/{artifact_id}")
