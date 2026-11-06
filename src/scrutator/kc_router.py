@@ -20,7 +20,9 @@ from scrutator.db.connection import get_pool
 from scrutator.db.models import SearchResponse
 from scrutator.search.searcher import search
 
-router = APIRouter(prefix="/v1/kc/read", tags=["kc-private-generation"])
+# Fully qualified decorator paths on purpose: the graph builder reads the decorator text and ignores
+# APIRouter(prefix=...), so a prefix would make these routes collide with same-named LTM routes.
+router = APIRouter(tags=["kc-private-generation"])
 
 _STATUS = {
     "CURRENT_AUTHORITY_UNAVAILABLE": 503,
@@ -69,7 +71,7 @@ class KcChunkRequest(LeaseRequest):
     chunk_id: str
 
 
-@router.post("/begin")
+@router.post("/v1/kc/read/begin")
 async def begin(request: BeginReadRequest, ctx: TenantContext = Depends(require_private_tenant_context)) -> dict:
     namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     pool = await get_pool()
@@ -99,7 +101,7 @@ async def _context(request: LeaseRequest, ctx: TenantContext) -> kc.GenerationRe
         raise _http(exc) from exc
 
 
-@router.post("/search", response_model=SearchResponse)
+@router.post("/v1/kc/read/search", response_model=SearchResponse)
 async def kc_search(
     request: KcSearchRequest, ctx: TenantContext = Depends(require_private_tenant_context)
 ) -> SearchResponse:
@@ -124,7 +126,7 @@ async def kc_search(
         raise _http(exc) from exc
 
 
-@router.post("/fetch")
+@router.post("/v1/kc/read/fetch")
 async def kc_fetch(request: KcFetchRequest, ctx: TenantContext = Depends(require_private_tenant_context)) -> dict:
     rc = await _context(request, ctx)
     try:
@@ -135,7 +137,7 @@ async def kc_fetch(request: KcFetchRequest, ctx: TenantContext = Depends(require
         raise _http(exc) from exc
 
 
-@router.post("/chunk")
+@router.post("/v1/kc/read/chunk")
 async def kc_chunk(request: KcChunkRequest, ctx: TenantContext = Depends(require_private_tenant_context)) -> dict:
     rc = await _context(request, ctx)
     try:
@@ -144,7 +146,7 @@ async def kc_chunk(request: KcChunkRequest, ctx: TenantContext = Depends(require
         raise _http(exc) from exc
 
 
-@router.post("/related")
+@router.post("/v1/kc/read/related")
 async def kc_related(request: KcChunkRequest, ctx: TenantContext = Depends(require_private_tenant_context)) -> list:
     rc = await _context(request, ctx)
     try:
@@ -153,7 +155,7 @@ async def kc_related(request: KcChunkRequest, ctx: TenantContext = Depends(requi
         raise _http(exc) from exc
 
 
-@router.post("/graph")
+@router.post("/v1/kc/read/graph")
 async def kc_graph(request: LeaseRequest, ctx: TenantContext = Depends(require_private_tenant_context)) -> dict:
     """Entity graph / LTM views merge sources; refused for private generations (no body leaked)."""
     try:
