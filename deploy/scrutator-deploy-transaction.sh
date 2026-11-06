@@ -221,6 +221,37 @@ ensure_immutable_tag() {
     docker image tag "$image" "$tag"
 }
 
+# After a failed candidate, release scrutator-deploy:<target> so same-SHA retry is not
+# blocked by "immutable candidate tag already exists". Never docker image rm -f.
+# Keep the tag when it still names the running image or the rollback target image.
+release_failed_candidate_tag() {
+    local candidate_image running_image="" container_id
+    [[ -n "${CANDIDATE_TAG:-}" ]] || return 0
+    if ! docker image inspect "$CANDIDATE_TAG" >/dev/null 2>&1; then
+        return 0
+    fi
+    candidate_image="$(canonical_image_id "$CANDIDATE_TAG")" || return 1
+    if container_id="$(current_container_id 2>/dev/null)"; then
+        running_image="$(docker inspect --format '{{.Image}}' "$container_id" 2>/dev/null || true)"
+        if [[ -n "$running_image" ]]; then
+            running_image="$(canonical_image_id "$running_image" 2>/dev/null || true)"
+        fi
+    fi
+    if [[ -n "$running_image" && "$candidate_image" == "$running_image" ]]; then
+        log "keeping candidate tag ${CANDIDATE_TAG}: still the running image"
+        return 0
+    fi
+    if [[ -n "${PREVIOUS_IMAGE:-}" && "$candidate_image" == "$PREVIOUS_IMAGE" ]]; then
+        return 0
+    fi
+    if docker image rm "$CANDIDATE_TAG"; then
+        log "released failed candidate tag ${CANDIDATE_TAG}"
+        return 0
+    fi
+    printf 'scrutator-deploy: ERROR: could not release failed candidate tag %s\n' "$CANDIDATE_TAG" >&2
+    return 1
+}
+
 capture_raw_artifacts() {
     local path destination
     local -a paths=()
@@ -370,16 +401,25 @@ verify_raw_artifacts() {
 }
 
 deploy_candidate() {
-    local candidate_image
+    local candidate_image existing=""
     MUTATION_STARTED=1
     git reset --hard "$TARGET_SHA"
     deploy/ltm-reflect-state-preflight.sh
     write_override "$CHECKPOINT/candidate.override.yml" "$CANDIDATE_TAG"
     if docker image inspect "$CANDIDATE_TAG" >/dev/null 2>&1; then
-        die "immutable candidate tag already exists"
+        existing="$(canonical_image_id "$CANDIDATE_TAG")" || die "candidate tag inspect failed"
+        # True conflict: candidate tag already aliases the live/previous image.
+        if [[ "$existing" == "$PREVIOUS_IMAGE" ]]; then
+            die "immutable candidate tag already exists"
+        fi
+        # Leftover from a prior failed candidate that was not released: drop it so
+        # this attempt can create a fresh immutable tag (same-SHA retry).
+        docker image rm "$CANDIDATE_TAG" || die "could not release leftover failed candidate tag"
+        log "released leftover failed candidate tag for same-SHA retry"
     fi
     compose_project -f "$CHECKPOINT/candidate.override.yml" build scrutator
     candidate_image="$(canonical_image_id "$CANDIDATE_TAG")"
+    # Accept only the freshly built image under the immutable candidate tag.
     record_image_tag "$CANDIDATE_TAG" || die "could not record candidate image tag"
     compose_project -f "$CHECKPOINT/candidate.override.yml" up -d --no-build scrutator
     wait_for_health || die "candidate failed bounded health checks"
@@ -540,7 +580,10 @@ handle_exit() {
         TIMERS_RESTORED=1
     fi
     if [[ -d "$STATE_DIR" ]]; then
-        if docker image inspect "$CANDIDATE_TAG" >/dev/null 2>&1; then
+        if ((original_status != 0 && MUTATION_STARTED)); then
+            # Failed candidate must not retain scrutator-deploy:<sha>; that blocks retry.
+            release_failed_candidate_tag || cleanup_status=1
+        elif docker image inspect "$CANDIDATE_TAG" >/dev/null 2>&1; then
             record_image_tag "$CANDIDATE_TAG" || cleanup_status=1
         fi
         record_image_tag "$ROLLBACK_TAG" || cleanup_status=1
