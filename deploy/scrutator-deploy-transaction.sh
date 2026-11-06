@@ -179,6 +179,28 @@ canonical_image_id() {
     printf '%s\n' "$image_id"
 }
 
+# True when any container (any compose project, running or stopped) references image_id.
+# Non-force `docker image rm` of the sole remaining tag fails in that case; deploy must not.
+image_referenced_by_any_container() {
+    local image_id="$1"
+    local users
+    # -a: stopped containers also block non-force image deletion.
+    users="$(docker ps -aq -a --filter "ancestor=${image_id}")" || return 1
+    [[ -n "$users" ]]
+}
+
+# True when removing this tag would delete an image that a container still holds.
+# Multi-tag images may still be untagged; sole-tag + in-use must be skipped (kept in history).
+tag_removal_would_delete_in_use_image() {
+    local tag="$1"
+    local image_id="$2"
+    local tag_count
+    tag_count="$(docker image inspect --format '{{len .RepoTags}}' "$tag")" || return 1
+    [[ "$tag_count" =~ ^[0-9]+$ ]] || return 1
+    ((tag_count <= 1)) || return 1
+    image_referenced_by_any_container "$image_id"
+}
+
 capture_running_image() {
     local container_id
     container_id="$(current_container_id)"
@@ -476,9 +498,20 @@ prune_image_tags() {
         elif [[ "$tag" == scrutator-rollback:* ]] && ((rollback_count < RETAIN_IMAGES)); then
             printf '%s\n' "$tag" >>"$temporary"
             ((rollback_count += 1))
-        elif ! docker image rm "$tag"; then
-            printf '%s\n' "$tag" >>"$temporary"
-            failed=1
+        elif tag_removal_would_delete_in_use_image "$tag" "$image_id"; then
+            # Keep history entry; do not fail deploy. Prefer non-force: never `docker image rm -f`.
+            log "keeping ${tag}: sole tag of image in use by a container (including foreign compose); skip prune"
+            printf '%s\n' "$tag" >>"$temporary" || return 1
+        elif docker image rm "$tag"; then
+            :
+        else
+            printf '%s\n' "$tag" >>"$temporary" || return 1
+            # Safety net: Docker refused (e.g. race / stopped container not matched by filter).
+            if image_referenced_by_any_container "$image_id"; then
+                log "keeping ${tag}: image still referenced by a container after non-force rm refusal; skip prune"
+            else
+                failed=1
+            fi
         fi
     done <"$history"
     chmod 0600 "$temporary" || return 1
