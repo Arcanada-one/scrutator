@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "paused_safe"
+  "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-11-06T22:35:40Z",
+ "captured_at_utc": "2026-11-06T23:43:19Z",
  "change_set": {
   "base": "0cb546a395008b501fd47c6b1037bcae8e7e664f",
   "files": [
@@ -130,6 +130,15 @@
      "document:documentation/reference/kc-generation-selection.md"
     ],
     "path": "documentation/reference/kc-generation-selection.md",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-kb-cons-01-n.json"
+    ],
+    "path": "receipts/graph/change-admission-kb-cons-01-n.json",
     "status": "A"
    },
    {
@@ -316,33 +325,505 @@
     "status": "A"
    }
   ],
-  "head": "f276fc9a761cdf1c17188109f776ffe4eb62ea50",
+  "head": "7edc6c9e34c9e1135447e8bb6456342db6c27a99",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
- "exemptions": [],
+ "exemptions": [
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unre"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/ci.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validati"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3:"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/deploy.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job dep"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/graph-admission-call.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in "
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/graph-admission.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-dc49cc771602c92b: workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expans"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/recall-regression.yml",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Workflow file is not changed by this PR (KB-CONS-01-N); the bounded checker cannot resolve its shell/reusable context (checker limitation, same state on origin/main). Reason: v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdi"
+  },
+  {
+   "code": "BENCHMARK_APP_NOT_IN_ROUTE_CANARY",
+   "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Benchmark-only app/route, not served by production contour; unchanged by this PR (KB-CONS-01-N); no canary plan covers it."
+  },
+  {
+   "code": "TSC_UNAVAILABLE_ON_HOST",
+   "entity": "code_unit:contracts/http/scrutator-http.contract.ts",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "TypeScript compiler unavailable in the author verify environment on arcana-devs; contract typecheck remains not_measured locally. Hosted lint-and-test covers TS contract generation separately. Reason: v-type-check-tsconfig: tsc unavailable on this host"
+  },
+  {
+   "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:deploy/scrutator-deploy-transaction.sh",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Shell script dynamic closure outside the bounded checker; unchanged by this PR (KB-CONS-01-N). Reason: v-shell-syntax-353478d40e08b4d8: shell syntax/closure: not_measured; v-shell-behavior-353478d40e08b4d8: SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: d"
+  },
+  {
+   "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:scripts/a2-308-scope-mutation.sh",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Shell script dynamic closure outside the bounded checker; unchanged by this PR (KB-CONS-01-N). Reason: v-shell-syntax-061e7873be95708f: shell syntax/closure: not_measured; v-shell-behavior-061e7873be95708f: SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell stateme"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:src/scrutator/health.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:src/scrutator/kc_router.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:src/scrutator/ltm/router.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "TEST_FILE_NOT_IN_ROUTE_CANARY",
+   "entity": "code_unit:tests/kc_generations/conftest.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Test file is not a live-contour entity a canary can name (A2-353 pattern); touched by this PR (KB-CONS-01-N)."
+  },
+  {
+   "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:tests/kc_generations/run_with_temp_pg.sh",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Shell script dynamic closure outside the bounded checker; touched by this PR (KB-CONS-01-N). Reason: v-shell-syntax-42dd40559cdd3dfa: shell syntax/closure: not_measured; v-shell-behavior-42dd40559cdd3dfa: SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 11: directory transition has unresolved execution cwd; line 14: dynamic command/alias/eval; lin"
+  },
+  {
+   "code": "TEST_FILE_NOT_IN_ROUTE_CANARY",
+   "entity": "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Test file is not a live-contour entity a canary can name (A2-353 pattern); touched by this PR (KB-CONS-01-N)."
+  },
+  {
+   "code": "TEST_FILE_NOT_IN_ROUTE_CANARY",
+   "entity": "code_unit:tests/kc_generations/test_records_and_staging.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "Test file is not a live-contour entity a canary can name (A2-353 pattern); touched by this PR (KB-CONS-01-N)."
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "code_unit:tools/kc_generation_mutation_check.py",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "TSC_UNAVAILABLE_ON_HOST",
+   "entity": "deployable_unit:.",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "TypeScript compiler unavailable in the author verify environment on arcana-devs; contract typecheck remains not_measured locally. Hosted lint-and-test covers TS contract generation separately. Reason: v-type-check-tsconfig: tsc unavailable on this host; v-global-fallback-test-root: complete fallback suite: not_measured"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /source",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/edges",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/index",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/memories",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:DELETE /v1/project/index",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /__benchmark/fingerprint",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /entities",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /events",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /graph",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /health",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /jobs/{job_id}",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /meta_facts",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/chunks",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/edges/{chunk_id}",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/index/capability",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/index/rollback-capability",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/memories/stats",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/namespaces",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/navigate/outline",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/navigate/section",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/project/write-preflight",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:GET /v1/stats",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /ingest",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /recall",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /reflect",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/chunk",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/dream/analyze",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/edges",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/edges/by-path",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/fetch",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/batch",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/capability-projection",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/index/evidence-exact",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/begin",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/chunk",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/fetch",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/graph",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/related",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/kc/read/search",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories/bulk",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/memories/recall",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/namespaces",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/project/index",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  },
+  {
+   "code": "INFERRED_BOUNDARY_WITHOUT_CANARY",
+   "entity": "route:POST /v1/search",
+   "expires_at_utc": "2026-11-20T00:00:00Z",
+   "owner": "Arcanada (KB-CONS-01-N Scrutator author, Muneral 0d93458a-152b-4c0c-b001-35d57f960340)",
+   "reason": "No cashed CanaryResult/v1 lists this entity on the author host (synthetic disposable preparation; no deployed Scrutator). Entity is not in the KB-CONS-01-N change set. Verifier: v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)"
+  }
+ ],
  "graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:bcd9ac9d7bf169118816b4abe2a8382eb66fc31fadd1807d13368cf7d54be924",
-  "path": "/home/dev/aup/claude-work/kbcons01n/gv/graph-0cb546a39500.json",
+  "path": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/graph-0cb546a39500.json",
   "source_commit": "0cb546a395008b501fd47c6b1037bcae8e7e664f"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:c11223d7b7f9eae7786e5a279da7ed8e8ba624f358b15a09b837475226f98a6d",
-  "path": "/home/dev/aup/claude-work/kbcons01n/gv/graph-head-f276fc9a761c.json",
-  "source_commit": "f276fc9a761cdf1c17188109f776ffe4eb62ea50",
+  "graph_digest": "sha256:d073990c47080c9f18561420f25caad90ba755309a5faa749b99506b4a809623",
+  "path": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/graph-head-7edc6c9e34c9.json",
+  "source_commit": "7edc6c9e34c9e1135447e8bb6456342db6c27a99",
   "staleness": {
-   "checked_at_utc": "2026-11-06T22:41:35Z",
-   "checked_nodes": 355,
+   "checked_at_utc": "2026-11-06T23:48:32Z",
+   "checked_nodes": 356,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "arcana-devs",
+ "host": "kb-cons-01n-author",
+ "host_redacted": true,
+ "host_sha256": "17166fdb1d85ddce9217ec55e35cada130b8c7085224dd5b384dc73290da7875",
  "impact_set": {
   "deterministic_core": [
    {
@@ -9983,17 +10464,18 @@
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
-  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none"
+  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 67 attached from /home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/exemptions-kb-cons-01-n.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261106T223540Z-f276fc9a",
+ "receipt_id": "car-verify-20261106T234319Z-7edc6c9e",
  "receipt_path": "receipts/graph/change-admission-kb-cons-01-n.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/kbcons01n/scrutator"
+  "path": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/repo"
  },
  "revision_selection": {
   "base": [
@@ -10427,6 +10909,7 @@
    "receipt:receipts/graph/change-admission-deploy-broker.json",
    "receipt:receipts/graph/change-admission-deploy-through-broker.json",
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json",
+   "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
    "receipt:receipts/graph/change-admission-kb-cons-02.json",
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
@@ -10490,7 +10973,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-06T22:41:34Z",
+  "checked_at_utc": "2026-11-06T23:48:31Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -10729,6 +11212,21 @@
   },
   {
    "content_hash": {
+    "base": null,
+    "head": "sha256:07061d66432c2e9ff1091196485e29acb82f91c70197ac8b61d1b4ce17133c2c"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kb-cons-01-n.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-kb-cons-01-n.json for work item 0d93458a-152b-4c0c-b001-35d57f960340",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-kb-cons-01-n.json",
+    "work_item": "0d93458a-152b-4c0c-b001-35d57f960340"
+   }
+  },
+  {
+   "content_hash": {
     "base": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a",
     "head": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a"
    },
@@ -10850,7 +11348,7 @@
   }
  ],
  "tree": {
-  "commit": "f276fc9a761cdf1c17188109f776ffe4eb62ea50",
+  "commit": "7edc6c9e34c9e1135447e8bb6456342db6c27a99",
   "dirty": false
  },
  "verdicts": [
@@ -12853,7 +13351,7 @@
  },
  "verifiers": [
   {
-   "command": "tsc -p /home/dev/aup/claude-work/kbcons01n/scrutator/contracts/http/tsconfig.json (tsc not found)",
+   "command": "tsc -p /home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/repo/contracts/http/tsconfig.json (tsc not found)",
    "duration_s": 0.0,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -12866,13 +13364,13 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-06T22:42:09Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-06T23:48:48Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=0cb546a39500, head=f276fc9a761c, graph=head graph)",
-   "duration_s": 1.13,
+   "command": "tools/graph/contract_diff.py.run_diff(base=0cb546a39500, head=7edc6c9e34c9, graph=head graph)",
+   "duration_s": 0.42,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -13152,8 +13650,8 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-contract-diff.json",
-   "started_at_utc": "2026-11-06T22:42:09Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-11-06T23:48:48Z",
    "summary": "81→86 contracts, breaking 0, edges {'verified': 85}"
   },
   {
@@ -13258,8 +13756,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-route-config.txt",
-   "started_at_utc": "2026-11-06T22:42:10Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "46 route(s), 0 failed"
   },
   {
@@ -13274,8 +13772,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-06T22:42:10Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13290,8 +13788,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-06T22:42:10Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13306,8 +13804,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-06T22:42:11Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13322,8 +13820,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-06T22:42:11Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13338,8 +13836,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-06T22:42:11Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13354,8 +13852,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-06T22:42:11Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13370,8 +13868,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-06T22:42:14Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 18: command/process substitution closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 23: local action/checkout path scope unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 4: command/process substitution closure is unresolved; job graph-admission step 8: checkout root or source-affecting workflow environment unresolved; job graph-admission step 8: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 31 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13386,13 +13884,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-06T22:42:14Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py config_schema: keys read at head ⊆ declared keys",
-   "duration_s": 9.15,
+   "duration_s": 3.47,
    "entities": [
     "code_unit:tests/kc_generations/conftest.py",
     "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
@@ -13408,8 +13906,8 @@
    "exit_code": 0,
    "id": "v-config-schema",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-config-schema.json",
-   "started_at_utc": "2026-11-06T22:42:14Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-11-06T23:48:49Z",
    "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 5 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
@@ -13614,8 +14112,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-fitness.json",
-   "started_at_utc": "2026-11-06T22:42:23Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-06T23:48:52Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -13640,8 +14138,8 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-doc-reference.txt",
-   "started_at_utc": "2026-11-06T22:42:23Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-06T23:48:53Z",
    "summary": "6 document(s), 0 failed"
   },
   {
@@ -13762,8 +14260,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-canary.json",
-   "started_at_utc": "2026-11-06T22:42:23Z",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-canary.json",
+   "started_at_utc": "2026-11-06T23:48:53Z",
    "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 54 not_measured of 54 entities"
   },
   {
@@ -13778,9 +14276,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T22:42:50Z",
+   "started_at_utc": "2026-11-06T23:48:59Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13795,9 +14293,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T22:43:11Z",
+   "started_at_utc": "2026-11-06T23:49:06Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13812,9 +14310,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-42dd40559cdd3dfa",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-syntax-42dd40559cdd3dfa.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-syntax-42dd40559cdd3dfa.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T22:43:15Z",
+   "started_at_utc": "2026-11-06T23:49:12Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13829,9 +14327,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T22:43:15Z",
+   "started_at_utc": "2026-11-06T23:49:12Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
@@ -13846,9 +14344,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T22:43:15Z",
+   "started_at_utc": "2026-11-06T23:49:12Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: directory transition has unresolved execution cwd; line 41: directory transition has unresolved execution cwd; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   },
   {
@@ -13863,9 +14361,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-42dd40559cdd3dfa",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-shell-behavior-42dd40559cdd3dfa.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-shell-behavior-42dd40559cdd3dfa.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T22:43:15Z",
+   "started_at_utc": "2026-11-06T23:49:12Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 11: directory transition has unresolved execution cwd; line 14: dynamic command/alias/eval; line 16: dynamic command/alias/eval; line 17: multiline/opaque shell statement; line 18: wrapper options/child command unresolved; line 20: directory transition has unresolved execution cwd"
   },
   {
@@ -13880,9 +14378,9 @@
    "exit_code": 127,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/home/dev/aup/claude-work/kbcons01n/gv/v-global-fallback-test-root.txt",
+   "output_ref": "/home/dev/aup/claude-work/kc-cursor-takeover-20261106/kb-cons-01n-graph-admission-fix/evidence/verifier-out/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-06T22:43:15Z",
+   "started_at_utc": "2026-11-06T23:49:12Z",
    "summary": "complete fallback suite: not_measured",
    "timeout_seconds": 900
   }
@@ -13900,9 +14398,15 @@
     "verifier": "route_config_consistency"
    },
    {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-kb-cons-01-n.json is the previous version of the one this run is writing, for the same work item 0d93458a-152b-4c0c-b001-35d57f960340 — superseded by construction, so it owes this change no verdict"
+   },
+   {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "32 affected entity(ies) owe no verdict (receipt: 32): unchanged at both revisions and given no verifier by the matrix"
+    "text": "33 affected entity(ies) owe no verdict (receipt: 33): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -14522,6 +15026,7 @@
    "receipt:receipts/graph/change-admission-deploy-broker.json": [],
    "receipt:receipts/graph/change-admission-deploy-through-broker.json": [],
    "receipt:receipts/graph/change-admission-evidence-exact-auth-controls.json": [],
+   "receipt:receipts/graph/change-admission-kb-cons-01-n.json": [],
    "receipt:receipts/graph/change-admission-kb-cons-02.json": [],
    "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json": [],
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
@@ -14765,9 +15270,9 @@
    ]
   },
   "seconds": {
-   "prepare": 12.15,
-   "total": 454.7,
-   "verifiers": 10.31
+   "prepare": 6.39,
+   "total": 352.3,
+   "verifiers": 3.92
   }
  },
  "work_item": "0d93458a-152b-4c0c-b001-35d57f960340"
