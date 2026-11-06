@@ -155,6 +155,20 @@
       ]
     },
     {
+      "id": "get-v1-kc-retrieve",
+      "method": "GET",
+      "path": "/v1/kc/retrieve",
+      "route": "/v1/kc/retrieve",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:GET /v1/kc/retrieve",
+        "code_unit:src/scrutator/kc_retrieval/router.py"
+      ]
+    },
+    {
       "id": "get-v1-ltm-entities",
       "method": "GET",
       "path": "/v1/ltm/entities",
