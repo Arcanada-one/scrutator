@@ -3,6 +3,12 @@
 
 Mirrors the reviewed KCP-0017 provisioner (contract-place-api deploy/knowledge-contract-scrutator).
 
+KNOWN ORDER DEPENDENCY (independent review A1): this script inserts its HBA block directly after the KCP-0017
+block. The KCP-0017 provisioner verifies its own backup as `original.removeprefix(KC_BLOCK)`, so re-running
+THAT script after this one is installed refuses ("backup mismatch"). The KCP-0017 database is already
+provisioned and must not be re-provisioned; if it ever has to be, roll this block back first from
+/root/kbcons02-pg-hba-before-kc-corpus.conf. The reject rules only ever add denials; no existing rule moves.
+
 Control runs this from a reviewed resulting-main checkout. It never accepts a
 database name, role, SQL, host, Vault path or password from its caller.
 """
