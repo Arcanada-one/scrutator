@@ -762,3 +762,132 @@ async def test_R_CTX_07_exact_fetch_rehashes_stored_bytes_at_read_time(pool):
         )
     code = await err_code(kc.read_member_exact(pool, iso.ctx, principal_id="p1", member_id="doc", backend=iso.auth))
     assert code == "CONTENT_MISMATCH"  # never repaired from another generation, never returned
+
+
+# ── round 2: the sealed-state condition is enforced at READ time, not only by authorize_use ──────
+#
+# Why the condition `g.state = 'sealed'` in the eligibility relation / exact fetch is necessary:
+#  * the search arms take only a `GenerationEligibility` (no lease), so for them the SQL predicate is the only
+#    check at query time; a caller (or a stale/forged context) can name a generation that is staged, rejected or
+#    gc_pending (the schema allows exactly staging|sealed|rejected|gc_pending|collected, and the trigger permits
+#    staging->sealed|rejected and sealed->gc_pending);
+#  * authorize_use checks the state BEFORE the query transaction opens; a lease that expires (database time)
+#    after that check no longer protects the generation, `mark_gc_pending` then succeeds, and the query runs
+#    against a no-longer-sealed generation. The SQL predicate closes that window.
+# `authorize_use` is replaced by a no-op below to model exactly that window; a mutant that drops the predicate
+# from `eligibility_cte` or `read_member_exact` turns these tests red.
+
+
+async def _noop_authorize(*_a, **_k):
+    return None
+
+
+async def _make_non_sealed(pool, iso, state: str) -> tuple[str, str, str]:
+    """Return (generation_id, member_id, a chunk id) for a generation of the given non-sealed state."""
+    if state in ("staging", "rejected"):
+        gid, member = "g2", "staged"
+        if state == "rejected":
+            await pool.execute(
+                "UPDATE kc_generations SET state='rejected' WHERE scope_id=$1::uuid AND generation_id='g2'",
+                iso.w.scope_id,
+            )
+    else:  # gc_pending: g0 was superseded and holds no lease
+        gid, member = "g0", "old"
+        assert await kc.mark_gc_pending(pool, iso.w.scope_id, "g0") == "gc_pending"
+    got = await pool.fetchval(
+        "SELECT state FROM kc_generations WHERE scope_id=$1::uuid AND generation_id=$2", iso.w.scope_id, gid
+    )
+    assert got == state
+    key = {"g2": "staged", "g0": "superseded"}[gid]
+    return gid, member, iso.canaries[key][0]
+
+
+_ARM_KW = {
+    "semantic": lambda: dict(query_embedding=embed(CANARY), query_text="zzzznomatchzzzz", query_sparse=None),
+    "fulltext": lambda: dict(
+        query_embedding=embed("unrelated words entirely"), query_text="canaryonlytoken", query_sparse=None
+    ),
+    "sparse": lambda: dict(
+        query_embedding=embed("unrelated words entirely"),
+        query_text="zzzznomatchzzzz",
+        query_sparse={"canaryonlytoken": 1.0},
+    ),
+}
+
+
+@pytest.mark.parametrize("arm", ["semantic", "fulltext", "sparse"])
+@pytest.mark.parametrize("state", ["staging", "rejected", "gc_pending"])
+async def test_R2_search_arms_return_nothing_for_a_generation_that_is_not_sealed(pool, arm, state):
+    iso = await isolation_world(pool)
+    elig = dataclasses.replace(iso.ctx.eligibility, generation_id="g0" if state == "gc_pending" else "g2")
+    kwargs = _ARM_KW[arm]()
+    if state == "gc_pending":  # control first: while g0 is still sealed the very same query surfaces its chunk
+        control = await repository.hybrid_search(namespace_id=iso.w.namespace_id, limit=10, generation=elig, **kwargs)
+        assert _ids(control) == set(iso.canaries["superseded"]), "control failed: sealed g0 must be searchable"
+    gid, _member, _cid = await _make_non_sealed(pool, iso, state)
+    assert gid == elig.generation_id
+    got = await repository.hybrid_search(namespace_id=iso.w.namespace_id, limit=10, generation=elig, **kwargs)
+    assert got == [], f"{arm} arm served a {state} generation"
+
+
+@pytest.mark.parametrize("state", ["staging", "rejected", "gc_pending"])
+async def test_R2_direct_paths_refuse_a_generation_that_is_not_sealed_even_if_authorize_use_is_bypassed(pool, state):
+    iso = await isolation_world(pool)
+    ctx0 = iso.ctx
+    gid = "g0" if state == "gc_pending" else "g2"
+    member = "old" if gid == "g0" else "staged"
+    forged = dataclasses.replace(ctx0, generation_id=gid)
+    if gid == "g0":  # control while still sealed: every direct path answers (authorize_use bypassed)
+        cid = iso.canaries["superseded"][0]
+        with patch.object(kc, "authorize_use", _noop_authorize):
+            assert (await kc.read_chunk(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth))[
+                "chunk_id"
+            ] == cid
+            assert await kc.read_siblings(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth)
+            await kc.read_related(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth)
+            assert (await kc.read_member_exact(pool, forged, principal_id="p1", member_id=member, backend=iso.auth))[
+                "text"
+            ]
+    _gid, _m, cid = await _make_non_sealed(pool, iso, state)
+    with patch.object(kc, "authorize_use", _noop_authorize):
+        for call in (
+            kc.read_chunk(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth),
+            kc.read_related(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth),
+            kc.read_siblings(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth),
+            kc.read_member_exact(pool, forged, principal_id="p1", member_id=member, backend=iso.auth),
+        ):
+            assert await err_code(call) == "NOT_FOUND", state
+
+
+async def test_R2_real_authorize_use_also_refuses_a_forged_context_for_a_non_sealed_generation(pool):
+    """Layer 1 (lease binding + state) still holds: without the bypass the forged context is refused earlier."""
+    iso = await isolation_world(pool)
+    gid, member, cid = await _make_non_sealed(pool, iso, "gc_pending")
+    forged = dataclasses.replace(iso.ctx, generation_id=gid)
+    assert (
+        await err_code(kc.read_chunk(pool, forged, principal_id="p1", chunk_id=cid, backend=iso.auth))
+        == "LEASE_NOT_FOUND"
+    )
+
+
+async def test_R2_generation_leaving_sealed_between_authorize_use_and_the_query_is_not_served(pool):
+    """The lease expires by database time after the first authorize_use; GC marks the generation; the query that
+    follows must not serve it (the sealed predicate is the only guard left in that window)."""
+    w, auth = await _two_generations(pool, ttl=1)
+    ctx = await kc.begin_read(pool, w.scope_id, principal_id="p1", operation_id="op-win", backend=auth)
+    await promote_simple(w, "gb", "op-gb", auth)  # ga is now superseded, held only by the soon-to-expire lease
+    calls = {"n": 0}
+    real = kc.authorize_use
+
+    async def first_passes_then_gc(pool_, ctx_, **kw):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            out = await real(pool_, ctx_, **kw)  # passes: lease active, generation sealed
+            await asyncio.sleep(1.4)  # lease now expired by database time
+            assert await kc.mark_gc_pending(pool, w.scope_id, "ga") == "gc_pending"
+            return out
+        return None  # later checks bypassed: isolates the SQL predicate
+
+    with patch.object(kc, "authorize_use", first_passes_then_gc):
+        code = await err_code(kc.read_member_exact(pool, ctx, principal_id="p1", member_id="doc", backend=auth))
+    assert code == "NOT_FOUND"
