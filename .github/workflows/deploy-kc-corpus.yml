@@ -1,0 +1,38 @@
+name: Deploy kc-corpus Scrutator
+
+# KB-CONS-02: dedicated private Scrutator instance for the `kc-corpus` namespace. Manual dispatch only;
+# it never runs on push, so merging Scrutator changes cannot restart this instance by itself and this
+# workflow never touches the shared (:8310) or Knowledge Contract (:8311) instances. All privileged work
+# goes through the fixed root compose broker row `kc-corpus-scrutator` (reviewed in model-connector).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, arcana-prod, arcana-prd-host]
+    concurrency:
+      group: deploy-kc-corpus-scrutator
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Sync reviewed main through the root broker
+        run: sudo -n /usr/local/sbin/arcanada-compose-broker kc-corpus-scrutator sync "$GITHUB_SHA"
+      - name: Build from the broker-owned checkout
+        run: sudo -n /usr/local/sbin/arcanada-compose-broker kc-corpus-scrutator build
+      - name: Start the project (broker validates the rendered config first)
+        run: sudo -n /usr/local/sbin/arcanada-compose-broker kc-corpus-scrutator up
+      - name: Freshness
+        run: sudo -n /usr/local/sbin/arcanada-compose-broker kc-corpus-scrutator freshness
+      - name: Read back loopback health of all three instances
+        run: |
+          set -euo pipefail
+          for port in 8312 8311 8310; do
+            curl --fail --silent --max-time 10 "http://127.0.0.1:${port}/health" >/dev/null
+            echo "health port=${port} ok"
+          done
