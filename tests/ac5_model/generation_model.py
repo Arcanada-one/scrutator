@@ -45,6 +45,22 @@ class Manifest:
         return next((m for m in self.members if m.artifact_id == artifact_id), None)
 
 
+@dataclass(frozen=True)
+class AdmissionWitness:
+    """Immutable candidate-complete validation witness, issued ONLY by a successful ``validate``.
+
+    Bound to (generation_id, manifest identity, project, namespace, source pin, actual member bytes).
+    It carries no authorization: current-use grants are re-checked at every use, never frozen here.
+    """
+
+    generation_id: str
+    manifest: Manifest
+    project: str
+    namespace: str
+    source_pin: str
+    bytes_digest: str  # digest over the (artifact_id, sha256) pairs of the bytes actually read
+
+
 def make_member(artifact_id: str, data: bytes, revision: str = "r1", deps: tuple[str, ...] = ()) -> Member:
     return Member(artifact_id, revision, "utf8-text", len(data), sha256(data), deps)
 
@@ -101,6 +117,7 @@ class Store:
         self.manifests: dict[str, Manifest] = {}
         self.candidates: set[str] = set()
         self.ever_selected: set[str] = set()  # generations that were ever the selected pointer
+        self.witnesses: dict[str, AdmissionWitness] = {}  # generation_id -> issued-by-validate witness
         self.ptr: str | None = None  # accepted-generation pointer
         self.version = 0  # pointer version for CAS
         self._lock = threading.Lock()
@@ -130,6 +147,7 @@ class Store:
         """Full observable state, used by controls to prove a refused call changed nothing."""
         return (
             dict(self.manifests),
+            dict(self.witnesses),
             dict(self.blobs),
             set(self.candidates),
             set(self.ever_selected),
@@ -170,17 +188,16 @@ class Store:
         Raises NotServable naming the first failing boundary."""
         if m.namespace != self.namespace:
             raise NotServable("foreign-namespace", m.namespace)
+        registered = self.manifests.get(m.generation_id)
+        if registered is not None and registered != m:
+            raise NotServable("immutable-identity-conflict", f"validate manifest {m.generation_id}")
         if project != m.project:
             raise NotServable("wrong-project", f"{project}!={m.project}")
         if m.source_pin not in self.accepted_sources:
             raise NotServable("non-current-source", m.source_pin)
         if not self.authz.allowed(reader, m.namespace):
             raise NotServable("authorization", reader)
-        ids = {x.artifact_id for x in m.members}
-        for mem in m.members:
-            for d in mem.deps:
-                if d not in ids:
-                    raise NotServable("missing-dependency", f"{mem.artifact_id}->{d}")
+        self._check_dependencies(m)
         for mem in m.members:
             data = self.blobs.get(self.storage_key(m, mem))
             self.ns_log.append(("read", m.namespace))
@@ -190,11 +207,51 @@ class Store:
                 raise NotServable("length-mismatch", mem.artifact_id)
             if sha256(data) != mem.digest:
                 raise NotServable("digest-mismatch", mem.artifact_id)
+        if registered is not None:  # only a REGISTERED, fully verified candidate earns a witness
+            self.witnesses[m.generation_id] = self._witness_for(m)
+
+    def _check_dependencies(self, m: Manifest) -> None:
+        ids = {x.artifact_id for x in m.members}
+        for mem in m.members:
+            for d in mem.deps:
+                if d not in ids:
+                    raise NotServable("missing-dependency", f"{mem.artifact_id}->{d}")
 
     # --- selection ----------------------------------------------------------------------
+    def _witness_for(self, m: Manifest) -> AdmissionWitness:
+        parts = []
+        for mem in m.members:
+            data = self.blobs.get(self.storage_key(m, mem))
+            parts.append(f"{mem.artifact_id}={sha256(data) if data is not None else 'ABSENT'}")
+        return AdmissionWitness(
+            m.generation_id, m, m.project, m.namespace, m.source_pin, sha256("\n".join(parts).encode())
+        )
+
+    def _admission_fence(self, gen_id: str) -> None:
+        """Selection precondition, evaluated BEFORE any pointer/version change: the generation must be
+        registered, hold an issued witness for exactly the registered manifest, and the stored member
+        bytes must still be the bytes the witness covers. Current-use authorization is NOT checked here
+        (re-checked at every use in accepted_view/read_member)."""
+        m = self.manifests.get(gen_id)
+        if m is None:
+            raise NotServable("unregistered-generation", gen_id)
+        w = self.witnesses.get(gen_id)
+        if w is None:
+            raise NotServable("unvalidated-candidate", gen_id)
+        if w.generation_id != gen_id or w.manifest != m:
+            raise NotServable("witness-manifest-mismatch", gen_id)
+        if (w.project, w.namespace, w.source_pin) != (m.project, m.namespace, m.source_pin):
+            raise NotServable("witness-binding-mismatch", gen_id)
+        if w.namespace != self.namespace:
+            raise NotServable("foreign-namespace", w.namespace)
+        if w.bytes_digest != self._witness_for(m).bytes_digest:
+            raise NotServable("witness-bytes-mismatch", gen_id)
+
     def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
-        """Native-CAS model: switch only if pointer+version still equal expectation."""
+        """Native-CAS model: switch only if the candidate is witnessed AND pointer+version still equal
+        expectation. The fence runs first so a refused call changes nothing."""
         with self._lock:
+            self._admission_fence(gen_id)
             if self.ptr != expected_ptr or self.version != expected_version:
                 raise NotServable("cas-conflict", f"ptr={self.ptr} v={self.version}")
             self.ptr = gen_id
@@ -341,6 +398,14 @@ class CheckAsYouGoStore(Store):
                     self._write(key, payload[mem.artifact_id])
 
 
+class NoValidationFenceStore(Store):
+    """UNSAFE (R3): public promote checks only pointer+version (the pre-correction behaviour); it
+    selects unregistered, partial, unvalidated or witness-mismatched candidates."""
+
+    def _admission_fence(self, gen_id: str) -> None:
+        return None
+
+
 class PointerOnlyCasStore(Store):
     """UNSAFE (R2): CAS compares the pointer VALUE only and ignores the version, so an A->B->A
     sequence lets a stale observation win."""
@@ -365,18 +430,11 @@ class UnguardedReadStore(Store):
 class RootOnlyDepStore(Store):
     """UNSAFE (R2 transitive): validates dependencies of the first (root) member only."""
 
-    def validate(self, m: Manifest, reader: str, project: str) -> None:
-        trimmed = Manifest(
-            m.generation_id,
-            m.source_pin,
-            m.project,
-            m.namespace,
-            tuple(
-                x if i == 0 else Member(x.artifact_id, x.revision, x.representation, x.length, x.digest)
-                for i, x in enumerate(m.members)
-            ),
-        )
-        super().validate(trimmed, reader, project)
+    def _check_dependencies(self, m: Manifest) -> None:
+        ids = {x.artifact_id for x in m.members}
+        for d in m.members[0].deps if m.members else ():
+            if d not in ids:
+                raise NotServable("missing-dependency", f"{m.members[0].artifact_id}->{d}")
 
 
 class NoValidationStore(Store):
@@ -386,6 +444,9 @@ class NoValidationStore(Store):
         self._stage_unchecked(m, payload)
 
     def validate(self, m: Manifest, reader: str, project: str) -> None:
+        return None
+
+    def _admission_fence(self, gen_id: str) -> None:  # no validation => no witness => no fence
         return None
 
 
@@ -503,3 +564,13 @@ def check_staged_not_served(store: Store, gen_id: str, artifact_id: str, reader:
     except (NotServable, Denied):
         return Verdict(True)
     return Verdict(False, "I10:staged-generation-not-served", f"{gen_id}/{artifact_id}")
+
+
+def check_promote_refused_unchanged(store: Store, snap: tuple, outcome: str | Exception) -> Verdict:
+    """I11: a direct promote of a missing / partial / unvalidated / mismatched candidate is refused
+    and changes no pointer, version, candidate set or registry state."""
+    if not isinstance(outcome, Exception):
+        return Verdict(False, "I11:direct-promote-requires-validation-witness", f"promoted {outcome}")
+    if store.snapshot() != snap:
+        return Verdict(False, "I11:refused-promote-leaves-no-state-change")
+    return Verdict(True)

@@ -227,6 +227,7 @@ def test_c09b_threaded_race_has_exactly_one_winner():
         gens = [manifest(f"t{i}", {k: v + bytes([65 + i]) for k, v in NEW.items()}) for i in range(4)]
         for i, m in enumerate(gens):
             store.stage(m, {k: v + bytes([65 + i]) for k, v in NEW.items()})
+            store.validate(m, READER, PROJ)  # R3: selection requires a validation witness
         out: list = [None] * 4
         bar = threading.Barrier(4)
 
@@ -541,6 +542,166 @@ def test_r2c_transitive_dependency_chain_gap_refused():
     record("r2c", "RootOnlyDepStore", _scope_verdict(f, m, PROJ))
 
 
+# --- R3 (round 4): direct promote requires an immutable validation witness --------------------------
+def _direct_promote(store: Store, gen: str, ptr=None, ver=None):
+    ptr = store.ptr if ptr is None else ptr
+    ver = store.version if ver is None else ver
+    try:
+        store.promote(gen, ptr, ver)
+        return gen
+    except NotServable as e:
+        return e
+
+
+def test_r4a_direct_promote_of_missing_generation_refused():
+    store, _ = build()
+    snap = store.snapshot()
+    out = _direct_promote(store, "not-registered")
+    assert isinstance(out, NotServable) and out.boundary == "unregistered-generation"
+    assert gm.check_promote_refused_unchanged(store, snap, out).ok
+    assert (store.ptr, store.version) == ("g1", 1)
+    f, _ = build(gm.NoValidationFenceStore)
+    fsnap = f.snapshot()
+    record("r4a", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, fsnap, _direct_promote(f, "not-registered")))
+    assert f.ptr == "not-registered"  # the mutant really moved the pointer to a missing manifest
+
+
+def test_r4b_direct_promote_of_incomplete_staged_generation_refused():
+    store, _ = build()
+    g2 = manifest("g2", NEW)
+    store.stage(g2, {"doc-a": NEW["doc-a"]})  # partial: doc-b, doc-c never staged
+    snap = store.snapshot()
+    out = _direct_promote(store, "g2")
+    assert isinstance(out, NotServable) and out.boundary == "unvalidated-candidate"
+    assert gm.check_promote_refused_unchanged(store, snap, out).ok
+    # validate cannot rescue it: still incomplete, so no witness is ever issued
+    with pytest.raises(NotServable) as e:
+        store.validate(g2, READER, PROJ)
+    assert e.value.boundary == "missing-member" and "g2" not in store.witnesses
+    snap = store.snapshot()  # validate logs its reads; compare promote against the post-validate state
+    assert gm.check_promote_refused_unchanged(store, snap, _direct_promote(store, "g2")).ok
+    f, _ = build(gm.NoValidationFenceStore)
+    f.stage(g2, {"doc-a": NEW["doc-a"]})
+    fsnap = f.snapshot()
+    record("r4b", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, fsnap, _direct_promote(f, "g2")))
+    assert f.ptr == "g2"
+    assert not gm.check_pointer_is_complete_generation(f).ok  # pointer now names a partial candidate
+
+
+def test_r4c_staged_complete_but_unvalidated_refused_then_ready_promotes():
+    store, _ = build()
+    g2 = manifest("g2", NEW)
+    store.stage(g2, NEW)  # complete bytes, but nobody validated
+    snap = store.snapshot()
+    out = _direct_promote(store, "g2")
+    assert isinstance(out, NotServable) and out.boundary == "unvalidated-candidate"
+    assert gm.check_promote_refused_unchanged(store, snap, out).ok
+    store.validate(g2, READER, PROJ)  # issues the witness
+    w = store.witnesses["g2"]
+    assert (w.generation_id, w.manifest, w.project, w.namespace, w.source_pin) == ("g2", g2, PROJ, NS, SRC1)
+    # positive: ready candidate promotes directly, CAS version still advances by exactly one
+    store.promote("g2", "g1", 1)
+    assert (store.ptr, store.version) == ("g2", 2)
+    assert gm.check_pointer_is_complete_generation(store).ok
+    assert store.accepted_view(READER) == NEW
+
+
+def test_r4d_witness_is_bound_to_manifest_and_actual_bytes():
+    # (a) witness of a different manifest/bytes under the same generation_id is not accepted
+    store, _ = build()
+    g2 = manifest("g2", NEW)
+    store.stage(g2, NEW)
+    other, _ = build()
+    alt = {k: v + b"-ALT" for k, v in NEW.items()}
+    g2_alt = manifest("g2", alt)
+    other.stage(g2_alt, alt)
+    other.validate(g2_alt, READER, PROJ)
+    store.witnesses["g2"] = other.witnesses["g2"]  # forged/transplanted witness, same generation_id
+    snap = store.snapshot()
+    out = _direct_promote(store, "g2")
+    assert isinstance(out, NotServable) and out.boundary == "witness-manifest-mismatch"
+    assert gm.check_promote_refused_unchanged(store, snap, out).ok
+    # (b) same manifest, but the stored bytes no longer match what was validated
+    store2, _ = build()
+    store2.stage(g2, NEW)
+    store2.validate(g2, READER, PROJ)
+    key = store2.storage_key(g2, g2.members[1])
+    store2.blobs[key] = b"X" * len(store2.blobs[key])  # same length, different bytes after validation
+    snap2 = store2.snapshot()
+    out2 = _direct_promote(store2, "g2")
+    assert isinstance(out2, NotServable) and out2.boundary == "witness-bytes-mismatch"
+    assert gm.check_promote_refused_unchanged(store2, snap2, out2).ok
+    # (c) validate itself refuses a manifest that differs from the registered one: no witness issued
+    store3, _ = build()
+    store3.stage(g2, NEW)
+    with pytest.raises(NotServable) as e:
+        store3.validate(g2_alt, READER, PROJ)
+    assert e.value.boundary == "immutable-identity-conflict" and "g2" not in store3.witnesses
+    # (d) a witness bound to another project/namespace/source pin is not accepted either
+    for forged in (
+        gm.AdmissionWitness("g2", g2, "other-proj", NS, SRC1, store2.witnesses["g2"].bytes_digest),
+        gm.AdmissionWitness("g2", g2, PROJ, "other-ns", SRC1, store2.witnesses["g2"].bytes_digest),
+        gm.AdmissionWitness("g2", g2, PROJ, NS, SRC2, store2.witnesses["g2"].bytes_digest),
+    ):
+        store4, _ = build()
+        store4.stage(g2, NEW)
+        store4.witnesses["g2"] = forged
+        out4 = _direct_promote(store4, "g2")
+        assert isinstance(out4, NotServable) and out4.boundary in {"witness-binding-mismatch"}
+        assert (store4.ptr, store4.version) == ("g1", 1)
+    f, _ = build(gm.NoValidationFenceStore)
+    f.stage(g2, NEW)
+    f.witnesses["g2"] = other.witnesses["g2"]
+    record("r4d", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, f.snapshot(), _direct_promote(f, "g2")))
+
+
+def test_r4e_fence_is_separate_from_current_use_authorization_and_cas():
+    store, _ = build()
+    g2 = manifest("g2", NEW)
+    store.stage(g2, NEW)
+    store.validate(g2, READER, PROJ)
+    store.authz.revoke(READER, NS)
+    store.promote("g2", "g1", 1)  # selection does not consult grants...
+    with pytest.raises(Denied):
+        store.accepted_view(READER)  # ...every use does
+    # a witnessed candidate with a stale observation is still refused by CAS (ABA semantics intact)
+    store2, _ = build()
+    store2.stage(g2, NEW)
+    store2.validate(g2, READER, PROJ)
+    out = _direct_promote(store2, "g2", "g1", 0)
+    assert isinstance(out, NotServable) and out.boundary == "cas-conflict" and store2.ptr == "g1"
+    # a promoted-then-retried candidate keeps its witness; stale retry is refused by CAS, not duplicated
+    store2.promote("g2", "g1", 1)
+    out2 = _direct_promote(store2, "g2", "g1", 1)
+    assert isinstance(out2, NotServable) and out2.boundary == "cas-conflict" and store2.version == 2
+
+
+def test_r4f_fence_corner_guards_exercised_alone():
+    # (a) validate of an UNREGISTERED manifest whose bytes happen to exist issues no witness
+    store, _ = build()
+    g9 = manifest("g9", NEW)
+    for mem in g9.members:
+        store.blobs[store.storage_key(g9, mem)] = NEW[mem.artifact_id]  # bypasses stage on purpose
+    store.validate(g9, READER, PROJ)
+    assert "g9" not in store.witnesses
+    out = _direct_promote(store, "g9")
+    assert isinstance(out, NotServable) and out.boundary == "unregistered-generation"
+    # (b) a registered foreign-namespace manifest with a self-consistent witness is still refused
+    store2, _ = build()
+    gx = manifest("gx", NEW, ns="other-ns")
+    store2.manifests["gx"] = gx
+    store2.witnesses["gx"] = store2._witness_for(gx)
+    out2 = _direct_promote(store2, "gx")
+    assert isinstance(out2, NotServable) and out2.boundary == "foreign-namespace"
+    assert (store2.ptr, store2.version) == ("g1", 1)
+    # (c) the fence runs BEFORE the CAS comparison: an unvalidated candidate with a stale observation
+    # is reported as unvalidated, not as a CAS conflict
+    store3, _ = build()
+    store3.stage(manifest("g2", NEW), NEW)
+    out3 = _direct_promote(store3, "g2", "g1", 0)
+    assert isinstance(out3, NotServable) and out3.boundary == "unvalidated-candidate"
+
+
 def test_checker_is_not_vacuous_every_faulty_variant_rejected():
     """Meta: the faulty variants recorded above must all be rejected (checker disagrees with them)."""
     # Population is filled by the case tests (order-independent: re-run the minimal set here).
@@ -564,6 +725,9 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_r2a_aba_stale_observation_refused_by_version,
         test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled,
         test_r2c_transitive_dependency_chain_gap_refused,
+        test_r4a_direct_promote_of_missing_generation_refused,
+        test_r4b_direct_promote_of_incomplete_staged_generation_refused,
+        test_r4d_witness_is_bound_to_manifest_and_actual_bytes,
     ):
         fn()
     assert FAULTY_RESULTS and all(v["rejected"] for v in FAULTY_RESULTS.values())

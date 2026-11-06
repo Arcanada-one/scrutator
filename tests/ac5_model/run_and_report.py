@@ -35,6 +35,12 @@ CASES = {
     "test_r2a_aba_stale_observation_refused_by_version": "R2a bounded ABA trace (g1->g2->g1) refused by version",
     "test_r2b_served_read_refuses_staged_generation_diagnostic_read_is_labelled": "R2b served read refuses staged generation; diagnostic read labelled",
     "test_r2c_transitive_dependency_chain_gap_refused": "R2c transitive dependency chain gap refused",
+    "test_r4a_direct_promote_of_missing_generation_refused": "R4a direct promote of a missing generation refused, no state change",
+    "test_r4b_direct_promote_of_incomplete_staged_generation_refused": "R4b direct promote of an incomplete staged generation refused, no state change",
+    "test_r4c_staged_complete_but_unvalidated_refused_then_ready_promotes": "R4c complete-but-unvalidated refused; validated ready candidate promotes",
+    "test_r4d_witness_is_bound_to_manifest_and_actual_bytes": "R4d witness bound to manifest / project / namespace / pin / actual bytes",
+    "test_r4e_fence_is_separate_from_current_use_authorization_and_cas": "R4e fence separate from use-time authorization; CAS/ABA intact",
+    "test_r4f_fence_corner_guards_exercised_alone": "R4f fence corner guards (unregistered witness, foreign ns, fence-before-CAS order)",
     "test_ac4_incomplete_candidate_never_visible_in_accepted_view": "AC4 incomplete candidate absent from accepted view",
     "test_checker_is_not_vacuous_every_faulty_variant_rejected": "META checker rejects every faulty variant",
 }
@@ -76,6 +82,11 @@ SUBCASES = [
         "Transitive dependency chain (a->b->c, c absent)",
         "test_r2c_transitive_dependency_chain_gap_refused",
         "RootOnlyDepStore",
+    ),
+    (
+        "Direct promote needs an immutable validation witness (missing / partial / unvalidated / foreign witness)",
+        "test_r4d_witness_is_bound_to_manifest_and_actual_bytes",
+        "NoValidationFenceStore",
     ),
     (
         "Pre-ranking search isolation (candidate chunks excluded BEFORE ranking, not filtered after)",
@@ -239,6 +250,13 @@ def main(out: str) -> int:
         "7. Dependency closure is a finite same-manifest check; a transitive chain is exercised (R2c); cyclic closure is not modelled.",
         "8b. Immutable identity (R1) is enforced by the model's staging step; the real storage layer must provide the same guarantee (unique/immutable key per generation member). Not implemented here.",
         "8. Old-generation retention/cleanup is out of scope; the model never deletes a generation.",
+        "9. (R3, round 4) Selection is fenced: `Store.promote` first runs `_admission_fence`, which requires a registered generation, an "
+        "`AdmissionWitness` issued only by a successful `Store.validate` of exactly the registered manifest, bound to "
+        "(generation_id, manifest, project, namespace, source pin, digest of the member bytes actually read), and re-derives the bytes digest "
+        "from the stored bytes at promote time. The fence runs before the CAS comparison and before any pointer/version change. It carries no "
+        "authorization; grants are re-checked at every use (`accepted_view`, `read_member`). The witness is a model object: a native "
+        "implementation would need an equivalent durable, transactionally bound admission record. Whether the source pin is still current "
+        "at promote time is NOT re-checked (NOT_MEASURED).",
         "",
         "## What this model does NOT prove",
         "",
