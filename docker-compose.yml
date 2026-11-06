@@ -63,13 +63,17 @@ services:
       # and every kb-reconcile run since ends `missing_namespace_grants=doclab-arcana` (seq 6328..6331 on prd).
       # Projected kind, same as the four above: no --runtime-only-namespace; the repo mirror
       # dev-tools/kb-feeder/deploy/authoritative-namespaces.txt declares it in the paired arcanada-workspace change.
+      # One more PROJECTED-CORPUS scope (2026-11-06, KC-PIPE-T3 Muneral 875b6035): knowledge-contract.
+      # Workspace folder rename Projects/Contract Place -> Projects/Knowledge Contract routes the new path to
+      # kebab("Knowledge Contract"); keep contract-place for historical corpus. Paired arcanada-workspace
+      # mirror declares knowledge-contract in authoritative-namespaces.txt.
       # Three PROGRAM-LANE runtime-only scopes (2026-11-06, Muneral b435): contracts, integrations,
       # universal-program. After PR1830 the program runner expects them via --runtime-only-namespace;
       # natural tick run-20261106T114010Z cleared BatchHalt then failed missing_namespace_grants for
       # these three (governance already granted). Runtime-only kind like kc2-store: every reconcile
       # runner in the paired arcanada-workspace change must declare --runtime-only-namespace for each,
       # or unexpected_runtime_grants halts all lanes. Do NOT widen authoritative-namespaces.txt.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program"
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,knowledge-contract,contracts,integrations,universal-program"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
