@@ -12,6 +12,7 @@ route forces the author to state which of the three classes it belongs to.
 from fastapi.routing import APIRoute
 
 from scrutator.health import app
+from scrutator.kc_retrieval.router import router as kc_retrieval_router
 from scrutator.ltm.router import router as ltm_router
 
 # Routes gated by a dedicated machine credential (a header token), not by a bearer scope.
@@ -64,6 +65,7 @@ READ_ROUTES = {
     ("GET", "/v1/ltm/graph"),
     ("GET", "/v1/ltm/meta_facts"),
     ("GET", "/v1/ltm/events"),
+    ("GET", "/v1/kc/retrieve"),
 }
 
 
@@ -87,7 +89,7 @@ def _inventory():
     seen = {}
     # This FastAPI version retains included routers as a nested route object,
     # so inventory both the app routes and the included LTM router explicitly.
-    for route in [*app.routes, *ltm_router.routes]:
+    for route in [*app.routes, *ltm_router.routes, *kc_retrieval_router.routes]:
         if not isinstance(route, APIRoute) or not route.path.startswith("/v1/"):
             continue
         for method in route.methods:

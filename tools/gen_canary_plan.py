@@ -82,10 +82,11 @@ def decorator_paths() -> dict:
     recovered from each router's own routes. Only routers declared here are translated; anything
     else keeps its served path, which is also what `build_graph` recorded for it.
     """
+    from scrutator.kc_retrieval.router import router as kc_retrieval_router
     from scrutator.ltm.router import router as ltm_router
 
     out = {}
-    for router in (ltm_router,):
+    for router in (ltm_router, kc_retrieval_router):
         prefix = router.prefix
         for route in router.routes:
             # FastAPI stores the FULL path on the route when the prefix is set on the APIRouter

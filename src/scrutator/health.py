@@ -167,6 +167,11 @@ from scrutator.ltm.router import router as ltm_router  # noqa: E402
 
 app.include_router(ltm_router)
 
+# Knowledge Contract verified-byte retrieval (KC-PIPE-S3) — read-only
+from scrutator.kc_retrieval.router import router as kc_retrieval_router  # noqa: E402
+
+app.include_router(kc_retrieval_router)
+
 
 @app.get("/health")
 async def health() -> dict:
