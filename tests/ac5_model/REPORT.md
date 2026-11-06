@@ -99,13 +99,13 @@ Mapping: `InPlaceStore` = overwrite-in-place of the active generation's source p
 
 ## Provenance
 
-- Scrutator base: `origin/main` = `0cb546a395008b501fd47c6b1037bcae8e7e664f` (required: at or after 0cb546a3). Branch head at run time: `b32630544e8496cd2cdfb6c43be52d0a77730ce4` (working tree may carry uncommitted report).
+- Scrutator base: `origin/main` = `0cb546a395008b501fd47c6b1037bcae8e7e664f` (required: at or after 0cb546a3). Branch head at run time: `12e43f145afa337f893e66a19ae21223f0161f34` (working tree may carry uncommitted report).
 - Source sha256: `generation_model.py` = `af6b591fb30179454dd2001fa63f24bfa7e7b0e45de288cd5cf1d1cac230f371`
-- Fixture/test sha256: `test_generation_closure_model.py` = `4e1936ec1cc36c2a0050d0c300569b1d5fc75cf1a16a738f7b77813b7f56f810`; `conftest.py` = `b98481ab527def4b3a199f6e262f744477f155d46d34195e37b236d496b4033d`; `run_and_report.py` = `17ca2d8868514de7082c5391af4e362c4d260335fdab4e47910e2f4da77e383f`
+- Fixture/test sha256: `test_generation_closure_model.py` = `4e1936ec1cc36c2a0050d0c300569b1d5fc75cf1a16a738f7b77813b7f56f810`; `conftest.py` = `49cb4acdbd89b7f10d9cc7089acc738fd0a21172422578d5bd6e7ca53b440225`; `run_and_report.py` = `9b7c8f28d1b46acc82d5f498871bef528acce653b66eb21e02b6c1b493d87b2a`
 - Fixtures are inline synthetic byte strings (`OLD-*`, `NEW-*`); no external fixture file exists.
 - Command: `cd scrutator && PYTHONPATH=src python -m pytest tests/ac5_model -q -p no:cacheprovider` (via `python tests/ac5_model/run_and_report.py REPORT.md`)
 - Exit code: **0**
-- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `24 passed in 1.44s`
+- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `24 passed in 0.77s`
 
 ## Model assumptions
 

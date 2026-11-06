@@ -129,8 +129,18 @@ def sha(p: Path) -> str:
 def main(out: str) -> int:
     tmp = Path(tempfile.mkdtemp(prefix="ac5-"))
     junit, fj = tmp / "j.xml", tmp / "f.json"
-    cmd = [sys.executable, "-m", "pytest", "tests/ac5_model", "-q", "-p", "no:cacheprovider", f"--junitxml={junit}"]
-    env = dict(os.environ, PYTHONPATH="src", AC5_FAULTY_JSON=str(fj))
+    cmd = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/ac5_model",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        f"--junitxml={junit}",
+        f"--ac5-faulty-json={fj}",
+    ]
+    env = dict(os.environ, PYTHONPATH="src")
     r = subprocess.run(cmd, cwd=REPO, env=env, capture_output=True, text=True)
     rows = {}
     for tc in ET.parse(junit).getroot().iter("testcase"):
