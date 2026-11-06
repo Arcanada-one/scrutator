@@ -106,7 +106,11 @@ def test_every_controller_is_named_too():
     """verify.py holds the CONTROLLER on an inferred boundary as well as the route: a canary that
     names only routes leaves src/scrutator/ltm/router.py not_measured while all nine of its routes
     are verified."""
-    assert _plan_controllers() == {"code_unit:src/scrutator/health.py", "code_unit:src/scrutator/ltm/router.py"}
+    assert _plan_controllers() == {
+        "code_unit:src/scrutator/health.py",
+        "code_unit:src/scrutator/kc_retrieval/router.py",
+        "code_unit:src/scrutator/ltm/router.py",
+    }
 
 
 def test_the_two_plans_do_not_contradict_each_other():

@@ -164,7 +164,7 @@
         "route_present": true
       },
       "entities": [
-        "route:GET /v1/kc/retrieve",
+        "route:GET /retrieve",
         "code_unit:src/scrutator/kc_retrieval/router.py"
       ]
     },
