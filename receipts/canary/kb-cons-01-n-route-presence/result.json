@@ -1,6 +1,6 @@
 {
- "base_url": "http://127.0.0.1:42919",
- "captured_at_utc": "2026-11-07T00:35:04Z",
+ "base_url": "http://127.0.0.1:51977",
+ "captured_at_utc": "2026-11-07T03:41:52Z",
  "card": "A2-311",
  "counters": {
   "failed": 0,
@@ -449,7 +449,7 @@
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 75,
+   "elapsed_ms": 69,
    "executed": true,
    "id": "delete-v1-edges",
    "kind": "http",
@@ -458,13 +458,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/edges",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/edges"
+   "url": "http://127.0.0.1:51977/v1/edges"
   },
   {
    "body_bytes": 41,
    "body_sha256": "203ef3361aea968471f84718a3a9684f6ab96a2699a8a4520803fdca3d607de1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "delete-v1-index",
    "kind": "http",
@@ -473,7 +473,7 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index"
+   "url": "http://127.0.0.1:51977/v1/index"
   },
   {
    "body_bytes": 43,
@@ -488,7 +488,7 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/source",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/ltm/source"
+   "url": "http://127.0.0.1:51977/v1/ltm/source"
   },
   {
    "body_bytes": 61,
@@ -503,13 +503,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/memories",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/memories"
+   "url": "http://127.0.0.1:51977/v1/memories"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "delete-v1-project-index",
    "kind": "http",
@@ -518,13 +518,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/project/index",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/project/index"
+   "url": "http://127.0.0.1:51977/v1/project/index"
   },
   {
    "body_bytes": 55,
    "body_sha256": "b62a141314dbab95de485e7fd83b81baf7f35987c03c39d2ecfb592c0462c71a",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 5,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "get-health",
    "kind": "http",
@@ -533,13 +533,13 @@
    "reason": "status 200 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/health",
    "status": 200,
-   "url": "http://127.0.0.1:42919/health"
+   "url": "http://127.0.0.1:51977/health"
   },
   {
    "body_bytes": 84,
    "body_sha256": "33bb340f3b28ae18bebd3ab71db748fcc7f32d86c8d40657ddc374a0bca49f68",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "get-v1-chunks",
    "kind": "http",
@@ -548,13 +548,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/chunks",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/chunks"
+   "url": "http://127.0.0.1:51977/v1/chunks"
   },
   {
    "body_bytes": 2,
    "body_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 59,
+   "elapsed_ms": 24,
    "executed": true,
    "id": "get-v1-edges-chunk-id",
    "kind": "http",
@@ -563,13 +563,13 @@
    "reason": "status 200 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/edges/{chunk_id}",
    "status": 200,
-   "url": "http://127.0.0.1:42919/v1/edges/00000000-0000-0000-0000-000000000000"
+   "url": "http://127.0.0.1:51977/v1/edges/00000000-0000-0000-0000-000000000000"
   },
   {
    "body_bytes": 39,
    "body_sha256": "d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 4,
    "executed": true,
    "id": "get-v1-index-capability",
    "kind": "http",
@@ -578,7 +578,7 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index/capability",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index/capability"
+   "url": "http://127.0.0.1:51977/v1/index/capability"
   },
   {
    "body_bytes": 41,
@@ -593,13 +593,13 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index/rollback-capability",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index/rollback-capability"
+   "url": "http://127.0.0.1:51977/v1/index/rollback-capability"
   },
   {
    "body_bytes": 61,
    "body_sha256": "ccb15afaa3a73cdbad4c1ac86fc40e38bcf56b03e17d1a3734e2dd63e5092a2b",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 3,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "get-v1-ltm-entities",
    "kind": "http",
@@ -608,7 +608,7 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/entities",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/ltm/entities"
+   "url": "http://127.0.0.1:51977/v1/ltm/entities"
   },
   {
    "body_bytes": 79,
@@ -623,13 +623,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/events",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/ltm/events"
+   "url": "http://127.0.0.1:51977/v1/ltm/events"
   },
   {
    "body_bytes": 61,
    "body_sha256": "ccb15afaa3a73cdbad4c1ac86fc40e38bcf56b03e17d1a3734e2dd63e5092a2b",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "get-v1-ltm-graph",
    "kind": "http",
@@ -638,13 +638,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/graph",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/ltm/graph"
+   "url": "http://127.0.0.1:51977/v1/ltm/graph"
   },
   {
    "body_bytes": 26,
    "body_sha256": "e9794a033abd00210494bc52e577ad41bbb61195ddfa8384fb291039b56ec082",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 8,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "get-v1-ltm-jobs-job-id",
    "kind": "http",
@@ -654,7 +654,7 @@
    "route": "/v1/ltm/jobs/{job_id}",
    "status": 404,
    "unrouted_404_sha256": "37ec4665a8102d115ffd1ac20dae94c98b4dac64b0c1a68228aa2a531caeb35d",
-   "url": "http://127.0.0.1:42919/v1/ltm/jobs/00000000-0000-0000-0000-000000000000"
+   "url": "http://127.0.0.1:51977/v1/ltm/jobs/00000000-0000-0000-0000-000000000000"
   },
   {
    "body_bytes": 61,
@@ -669,7 +669,7 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/meta_facts",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/ltm/meta_facts"
+   "url": "http://127.0.0.1:51977/v1/ltm/meta_facts"
   },
   {
    "body_bytes": 65,
@@ -684,13 +684,13 @@
    "reason": "status 200 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/memories/stats",
    "status": 200,
-   "url": "http://127.0.0.1:42919/v1/memories/stats"
+   "url": "http://127.0.0.1:51977/v1/memories/stats"
   },
   {
    "body_bytes": 2,
    "body_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 6,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "get-v1-namespaces",
    "kind": "http",
@@ -699,13 +699,13 @@
    "reason": "status 200 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/namespaces",
    "status": 200,
-   "url": "http://127.0.0.1:42919/v1/namespaces"
+   "url": "http://127.0.0.1:51977/v1/namespaces"
   },
   {
    "body_bytes": 154,
    "body_sha256": "d3a7e0b1e3d1cb4817a1e1c4e4bf75c9d9892a4a0baaa2d273ab556dfd49e250",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "get-v1-navigate-outline",
    "kind": "http",
@@ -714,13 +714,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/navigate/outline",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/navigate/outline"
+   "url": "http://127.0.0.1:51977/v1/navigate/outline"
   },
   {
    "body_bytes": 81,
    "body_sha256": "558d7ec418a8034e1a67e859107c23a0dd29be74b49c44121761d467d2228b3e",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 5,
    "executed": true,
    "id": "get-v1-navigate-section",
    "kind": "http",
@@ -729,13 +729,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/navigate/section",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/navigate/section"
+   "url": "http://127.0.0.1:51977/v1/navigate/section"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 1,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "get-v1-project-write-preflight",
    "kind": "http",
@@ -744,7 +744,7 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/project/write-preflight",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/project/write-preflight"
+   "url": "http://127.0.0.1:51977/v1/project/write-preflight"
   },
   {
    "body_bytes": 74,
@@ -759,13 +759,13 @@
    "reason": "status 200 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/stats",
    "status": 200,
-   "url": "http://127.0.0.1:42919/v1/stats"
+   "url": "http://127.0.0.1:51977/v1/stats"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "post-v1-chunk",
    "kind": "http",
@@ -774,13 +774,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/chunk",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/chunk"
+   "url": "http://127.0.0.1:51977/v1/chunk"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 2,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "post-v1-dream-analyze",
    "kind": "http",
@@ -789,7 +789,7 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/dream/analyze",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/dream/analyze"
+   "url": "http://127.0.0.1:51977/v1/dream/analyze"
   },
   {
    "body_bytes": 61,
@@ -804,13 +804,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/edges",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/edges"
+   "url": "http://127.0.0.1:51977/v1/edges"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 8,
+   "elapsed_ms": 5,
    "executed": true,
    "id": "post-v1-edges-by-path",
    "kind": "http",
@@ -819,13 +819,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/edges/by-path",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/edges/by-path"
+   "url": "http://127.0.0.1:51977/v1/edges/by-path"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 3,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "post-v1-fetch",
    "kind": "http",
@@ -834,7 +834,7 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/fetch",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/fetch"
+   "url": "http://127.0.0.1:51977/v1/fetch"
   },
   {
    "body_bytes": 39,
@@ -849,7 +849,7 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index"
+   "url": "http://127.0.0.1:51977/v1/index"
   },
   {
    "body_bytes": 39,
@@ -864,13 +864,13 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index/batch",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index/batch"
+   "url": "http://127.0.0.1:51977/v1/index/batch"
   },
   {
    "body_bytes": 54,
    "body_sha256": "6e911f4e990c361c321d21968fcf6f3fe0e9daba5dff6ee7f719d221921d11a4",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 9,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "post-v1-index-capability-projection",
    "kind": "http",
@@ -879,13 +879,13 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index/capability-projection",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index/capability-projection"
+   "url": "http://127.0.0.1:51977/v1/index/capability-projection"
   },
   {
    "body_bytes": 39,
    "body_sha256": "d1d46f60cf63ac447d746154051f1a86a967af549dc99e99e9e8419c30d61f4e",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 8,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "post-v1-index-evidence-exact",
    "kind": "http",
@@ -894,13 +894,13 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/index/evidence-exact",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/index/evidence-exact"
+   "url": "http://127.0.0.1:51977/v1/index/evidence-exact"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 5,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "post-v1-kc-read-begin",
    "kind": "http",
@@ -909,7 +909,7 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/begin",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/begin"
+   "url": "http://127.0.0.1:51977/v1/kc/read/begin"
   },
   {
    "body_bytes": 69,
@@ -924,13 +924,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/chunk",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/chunk"
+   "url": "http://127.0.0.1:51977/v1/kc/read/chunk"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 4,
+   "elapsed_ms": 3,
    "executed": true,
    "id": "post-v1-kc-read-fetch",
    "kind": "http",
@@ -939,13 +939,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/fetch",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/fetch"
+   "url": "http://127.0.0.1:51977/v1/kc/read/fetch"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 5,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "post-v1-kc-read-graph",
    "kind": "http",
@@ -954,13 +954,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/graph",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/graph"
+   "url": "http://127.0.0.1:51977/v1/kc/read/graph"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 5,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "post-v1-kc-read-related",
    "kind": "http",
@@ -969,13 +969,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/related",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/related"
+   "url": "http://127.0.0.1:51977/v1/kc/read/related"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 5,
+   "elapsed_ms": 1,
    "executed": true,
    "id": "post-v1-kc-read-search",
    "kind": "http",
@@ -984,13 +984,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/kc/read/search",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/kc/read/search"
+   "url": "http://127.0.0.1:51977/v1/kc/read/search"
   },
   {
    "body_bytes": 43,
    "body_sha256": "d3870e0b3f984e4612aaa8f1aa18d6f05a3c75a3741a40a8236ef3bc8e056d72",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 15,
+   "elapsed_ms": 6,
    "executed": true,
    "id": "post-v1-ltm-ingest",
    "kind": "http",
@@ -999,13 +999,13 @@
    "reason": "status 401 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/ingest",
    "status": 401,
-   "url": "http://127.0.0.1:42919/v1/ltm/ingest"
+   "url": "http://127.0.0.1:51977/v1/ltm/ingest"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 13,
+   "elapsed_ms": 5,
    "executed": true,
    "id": "post-v1-ltm-recall",
    "kind": "http",
@@ -1014,13 +1014,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/recall",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/ltm/recall"
+   "url": "http://127.0.0.1:51977/v1/ltm/recall"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 9,
+   "elapsed_ms": 5,
    "executed": true,
    "id": "post-v1-ltm-reflect",
    "kind": "http",
@@ -1029,13 +1029,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/ltm/reflect",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/ltm/reflect"
+   "url": "http://127.0.0.1:51977/v1/ltm/reflect"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 6,
+   "elapsed_ms": 7,
    "executed": true,
    "id": "post-v1-memories",
    "kind": "http",
@@ -1044,7 +1044,7 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/memories",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/memories"
+   "url": "http://127.0.0.1:51977/v1/memories"
   },
   {
    "body_bytes": 61,
@@ -1059,7 +1059,7 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/memories/bulk",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/memories/bulk"
+   "url": "http://127.0.0.1:51977/v1/memories/bulk"
   },
   {
    "body_bytes": 69,
@@ -1074,13 +1074,13 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/memories/recall",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/memories/recall"
+   "url": "http://127.0.0.1:51977/v1/memories/recall"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 4,
+   "elapsed_ms": 5,
    "executed": true,
    "id": "post-v1-namespaces",
    "kind": "http",
@@ -1089,13 +1089,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/namespaces",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/namespaces"
+   "url": "http://127.0.0.1:51977/v1/namespaces"
   },
   {
    "body_bytes": 61,
    "body_sha256": "40136f79b90f236921c8783842ae2ed6f1c08a8d65df9f87eecc8ab4bd444bec",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 4,
+   "elapsed_ms": 11,
    "executed": true,
    "id": "post-v1-project-index",
    "kind": "http",
@@ -1104,13 +1104,13 @@
    "reason": "status 403 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/project/index",
    "status": 403,
-   "url": "http://127.0.0.1:42919/v1/project/index"
+   "url": "http://127.0.0.1:51977/v1/project/index"
   },
   {
    "body_bytes": 69,
    "body_sha256": "232af1ebe8cbe859cc2fb63b8178111ed72037c23d11e879fb073e395b13b0f1",
    "declared_by_resident_openapi": true,
-   "elapsed_ms": 7,
+   "elapsed_ms": 2,
    "executed": true,
    "id": "post-v1-search",
    "kind": "http",
@@ -1119,7 +1119,7 @@
    "reason": "status 422 != 404: the route is served; declared in the resident OpenAPI",
    "route": "/v1/search",
    "status": 422,
-   "url": "http://127.0.0.1:42919/v1/search"
+   "url": "http://127.0.0.1:51977/v1/search"
   }
  ],
  "producer": {
@@ -1131,7 +1131,7 @@
   "paths": 40,
   "sha256": "9444c329544e011c8e515328b4538524feb6a7649b3217afc0ad881c52a45769",
   "status": 200,
-  "url": "http://127.0.0.1:42919/openapi.json"
+  "url": "http://127.0.0.1:51977/openapi.json"
  },
  "resident_version": null,
  "rules": [
@@ -1140,13 +1140,13 @@
  ],
  "schema": "CanaryResult/v1",
  "subject": {
-  "commit": "65b87fab1b6f1679fbbea8f16ec2baf270b0d675",
+  "commit": "50bf947aa6d5234e09b143973ec8e4eb0516b01b",
   "evidence": {
    "path": "result.source-evidence.json",
-   "sha256": "ed08659f4fe667fb8514ad8fb2c4b6ebebdfc8a7301895140d2fe0a54dbfa69a",
+   "sha256": "f2b81d77815949ec33a61170ffc8f2e2c2ef290426475468842d41355de7f747",
    "source_field": "commit"
   },
   "schema": "GitCanarySubject/v1",
-  "tree": "43029e555318d7b216c637295227f9f77d37c588"
+  "tree": "4db0a2531d4567e372e73cd9ecb11a9035a51652"
  }
 }
