@@ -112,7 +112,11 @@ class Store:
     def __init__(self, authz: Authz, namespace: str, accepted_sources: set[str]) -> None:
         self.authz = authz
         self.namespace = namespace
-        self.accepted_sources = accepted_sources  # source pins considered current/accepted
+        # Source pins considered current/accepted. PRIVATE: the set is copied, never exposed mutably, and changed only
+        # by ``accept_source`` / ``withdraw_source``, which take the SAME lock as ``promote`` and bump
+        # ``source_revision``. (Round 6: a plain mutable set could change between the currency check and the switch.)
+        self._accepted_sources: set[str] = set(accepted_sources)
+        self.source_revision = 0  # bumped on every source acceptance/withdrawal (committed under the lock)
         self.blobs: dict[tuple[str, str], bytes] = {}
         self.manifests: dict[str, Manifest] = {}
         self.candidates: set[str] = set()
@@ -124,6 +128,33 @@ class Store:
         self.ns_log: list[tuple[str, str]] = []  # (op, namespace)
         self.fail_after_writes: int | None = None  # fault injection
         self._writes = 0
+
+    # --- source registry (serialized with selection) -----------------------------------------
+    @property
+    def accepted_sources(self) -> frozenset[str]:
+        """Read-only snapshot of the accepted source pins (a frozenset: cannot be mutated from outside)."""
+        return frozenset(self._accepted_sources)
+
+    def accept_source(self, pin: str) -> None:
+        """(Re-)accept a source pin. Same lock as ``promote``; bumps ``source_revision``."""
+        with self._lock:
+            self._in_source_mutation()
+            self._accepted_sources.add(pin)
+            self.source_revision += 1
+
+    def withdraw_source(self, pin: str) -> None:
+        """Withdraw a source pin. Same lock as ``promote``: it either completes strictly before a selection
+        (the selection then refuses) or strictly after the switch (the switch stays valid). Bumps ``source_revision``."""
+        with self._lock:
+            self._in_source_mutation()
+            self._accepted_sources.discard(pin)
+            self.source_revision += 1
+
+    def _in_source_mutation(self) -> None:
+        """Test seam (no-op): runs while the mutation holds the lock, before it is applied."""
+
+    def _before_switch(self) -> None:
+        """Test seam (no-op): runs inside ``promote`` after every fence, immediately before the pointer write."""
 
     # --- addressing -----------------------------------------------------------------
     def storage_key(self, m: Manifest, mem: Member) -> tuple[str, str]:
@@ -193,7 +224,9 @@ class Store:
             raise NotServable("immutable-identity-conflict", f"validate manifest {m.generation_id}")
         if project != m.project:
             raise NotServable("wrong-project", f"{project}!={m.project}")
-        if m.source_pin not in self.accepted_sources:
+        with self._lock:  # read the registry coherently with source mutation (validate never moves the pointer)
+            current = m.source_pin in self._accepted_sources
+        if not current:
             raise NotServable("non-current-source", m.source_pin)
         if not self.authz.allowed(reader, m.namespace):
             raise NotServable("authorization", reader)
@@ -257,18 +290,30 @@ class Store:
         attempt; a later re-acceptance of the same pin needs NO fresh validate (the witness binds the
         pin and bytes, both unchanged), but it is never cached: removing the pin again refuses again."""
         m = self.manifests.get(gen_id)
-        if m is not None and m.source_pin not in self.accepted_sources:
+        if m is not None and m.source_pin not in self._accepted_sources:  # caller holds self._lock
             raise NotServable("non-current-source", m.source_pin)
+
+    def _source_revision_fence(self, revision_at_check: int) -> None:
+        """Last selection precondition, immediately before the pointer/version change and under the same lock:
+        the source registry revision must still be the one the currency check saw. With every source mutation
+        taking the lock this cannot differ; it is the atomic compare that makes the check and the switch one
+        linearization point even against a writer that did not honour the lock (fail-closed, conservative: an
+        accept+withdraw pair in between also refuses). Separate from the witness, CAS and use-time grants."""
+        if self.source_revision != revision_at_check:
+            raise NotServable("source-changed-during-selection", f"rev {revision_at_check}->{self.source_revision}")
 
     def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
         """Native-CAS model: switch only if the candidate is witnessed AND pointer+version still equal
         expectation AND its source is still current. The fences run first so a refused call changes
-        nothing. The native service must implement the same rule in the real selection transaction."""
+        nothing. Source mutation takes the same lock (round 6), so currency holds at the switch itself. The native service must implement the same rule in the real selection transaction."""
         with self._lock:
             self._admission_fence(gen_id)
             if self.ptr != expected_ptr or self.version != expected_version:
                 raise NotServable("cas-conflict", f"ptr={self.ptr} v={self.version}")
+            revision_at_check = self.source_revision
             self._source_currency_fence(gen_id)
+            self._before_switch()
+            self._source_revision_fence(revision_at_check)
             self.ptr = gen_id
             self.version += 1
             self.ever_selected.add(gen_id)
@@ -429,6 +474,54 @@ class NoSourceCurrencyFenceStore(Store):
         return None
 
 
+class UnlockedSourceMutationStore(Store):
+    """UNSAFE (round 6, mutant i): source withdrawal/acceptance bypasses the selection lock (it still bumps
+    the revision). A withdrawal can land between the currency check and the switch."""
+
+    def accept_source(self, pin: str) -> None:
+        self._in_source_mutation()
+        self._accepted_sources.add(pin)
+        self.source_revision += 1
+
+    def withdraw_source(self, pin: str) -> None:
+        self._in_source_mutation()
+        self._accepted_sources.discard(pin)
+        self.source_revision += 1
+
+
+class SnapshotBeforeLockStore(Store):
+    """UNSAFE (round 6, mutant ii): the currency fence reads a snapshot of the accepted sources taken BEFORE the
+    selection lock is acquired, so a mutation that completes while promote waits for the lock is not seen."""
+
+    def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
+        snapshot = frozenset(self._accepted_sources)
+        with self._lock:
+            self._admission_fence(gen_id)
+            if self.ptr != expected_ptr or self.version != expected_version:
+                raise NotServable("cas-conflict", f"ptr={self.ptr} v={self.version}")
+            m = self.manifests.get(gen_id)
+            if m is not None and m.source_pin not in snapshot:
+                raise NotServable("non-current-source", m.source_pin)
+            revision_at_check = self.source_revision
+            self._before_switch()
+            self._source_revision_fence(revision_at_check)
+            self.ptr = gen_id
+            self.version += 1
+            self.ever_selected.add(gen_id)
+            self.candidates.discard(gen_id)
+
+
+class NoRevisionFenceStore(Store):
+    """UNSAFE (round 6, mutant iii): the source revision is never compared at the switch."""
+
+    def _source_revision_fence(self, revision_at_check: int) -> None:
+        return None
+
+
+class UnlockedNoRevisionStore(UnlockedSourceMutationStore, NoRevisionFenceStore):
+    """UNSAFE (round 6): lock bypass AND no revision compare (the full round-5 behaviour under concurrency)."""
+
+
 class PointerOnlyCasStore(Store):
     """UNSAFE (R2): CAS compares the pointer VALUE only and ignores the version, so an A->B->A
     sequence lets a stale observation win."""
@@ -473,6 +566,9 @@ class NoValidationStore(Store):
         return None
 
     def _source_currency_fence(self, gen_id: str) -> None:  # "no validation at all" includes no source check
+        return None
+
+    def _source_revision_fence(self, revision_at_check: int) -> None:
         return None
 
 

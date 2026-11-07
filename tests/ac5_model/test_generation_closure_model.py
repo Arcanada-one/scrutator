@@ -719,7 +719,7 @@ def _validated_g2(cls=Store):
 def test_r5a_withdrawn_source_refused_at_promote_nothing_changes():
     # reviewer's trace: validate g2 with SRC1, withdraw SRC1, promote with the correct observation
     store, g2 = _validated_g2()
-    store.accepted_sources.discard(SRC1)
+    store.withdraw_source(SRC1)
     snap = store.snapshot()
     out = _direct_promote(store, "g2", "g1", 1)
     assert isinstance(out, NotServable) and out.boundary == "non-current-source"
@@ -729,7 +729,7 @@ def test_r5a_withdrawn_source_refused_at_promote_nothing_changes():
     assert gm.check_pointer_is_complete_generation(store).ok
     # mutant: the round-4 model moves the pointer to a generation whose source is no longer accepted
     f, _ = _validated_g2(gm.NoSourceCurrencyFenceStore)
-    f.accepted_sources.discard(SRC1)
+    f.withdraw_source(SRC1)
     fsnap = f.snapshot()
     record(
         "r5a",
@@ -742,23 +742,23 @@ def test_r5a_withdrawn_source_refused_at_promote_nothing_changes():
 def test_r5b_currency_is_reevaluated_each_attempt_reacceptance_needs_no_fresh_validate():
     # Rule chosen: live check per promote attempt; the witness is not revoked by a temporary withdrawal.
     store, _ = _validated_g2()
-    store.accepted_sources.discard(SRC1)
+    store.withdraw_source(SRC1)
     assert _direct_promote(store, "g2", "g1", 1).boundary == "non-current-source"
-    store.accepted_sources.add(SRC1)  # re-accepted: same pin, same bytes, same witness
+    store.accept_source(SRC1)  # re-accepted: same pin, same bytes, same witness
     assert store.witnesses["g2"] is not None
-    store.accepted_sources.discard(SRC1)  # not cached: withdrawn again -> refused again
+    store.withdraw_source(SRC1)  # not cached: withdrawn again -> refused again
     assert _direct_promote(store, "g2", "g1", 1).boundary == "non-current-source"
-    store.accepted_sources.add(SRC1)
+    store.accept_source(SRC1)
     store.promote("g2", "g1", 1)
     assert (store.ptr, store.version) == ("g2", 2)
     # and a withdrawal AFTER selection does not unselect; every use is governed by its own checks
-    store.accepted_sources.discard(SRC1)
+    store.withdraw_source(SRC1)
     assert store.ptr == "g2"
 
 
 def test_r5c_positive_promote_with_current_source_and_other_pin_withdrawn():
     store, _ = _validated_g2()
-    store.accepted_sources.discard(SRC2)  # an unrelated pin leaving the set does not matter
+    store.withdraw_source(SRC2)  # an unrelated pin leaving the set does not matter
     store.promote("g2", "g1", 1)
     assert (store.ptr, store.version) == ("g2", 2)
     assert gm.check_pointer_is_complete_generation(store).ok
@@ -767,12 +767,12 @@ def test_r5c_positive_promote_with_current_source_and_other_pin_withdrawn():
 def test_r5d_currency_is_separate_from_witness_cas_and_use_grant():
     # stale CAS + withdrawn source: CAS reported first (currency is the last check before the change)
     store, _ = _validated_g2()
-    store.accepted_sources.discard(SRC1)
+    store.withdraw_source(SRC1)
     assert _direct_promote(store, "g2", "g1", 0).boundary == "cas-conflict"
     # unvalidated + withdrawn source: the admission witness is reported, not currency
     s2, _ = build()
     s2.stage(manifest("g2", NEW), NEW)
-    s2.accepted_sources.discard(SRC1)
+    s2.withdraw_source(SRC1)
     assert _direct_promote(s2, "g2", "g1", 1).boundary == "unvalidated-candidate"
     # grant revoked but source current: selection still works (grant is a use-time check)
     s3, _ = _validated_g2()
@@ -794,6 +794,252 @@ def test_r5e_validate_source_guard_exercised_alone():
     assert ei.value.boundary == "non-current-source"
     assert "g2" not in store.witnesses
     assert gm.check_state_unchanged(store, snap).ok
+
+
+# --- round 6: source currency at the promotion linearization point ----------------------------------------
+class _Probe:
+    """Deterministic interleaving seams. ``switch_hook`` runs inside promote after every fence, right before the
+    pointer write; ``mutation_hook`` runs inside a source mutation while it holds (or bypasses) the lock, before
+    it is applied."""
+
+    switch_hook = None
+    mutation_hook = None
+    fence_hook = None
+
+    def _source_currency_fence(self, gen_id):
+        super()._source_currency_fence(gen_id)
+        if self.fence_hook:  # runs right after the currency check passed, before the revision compare
+            self.fence_hook()
+
+    def _before_switch(self):
+        if self.switch_hook:
+            self.switch_hook()
+
+    def _in_source_mutation(self):
+        if self.mutation_hook:
+            self.mutation_hook()
+
+
+def _probed(cls):
+    return type(f"Probed{cls.__name__}", (_Probe, cls), {})
+
+
+def _validated_g2_probed(cls):
+    store, _ = _validated_g2(_probed(cls))
+    return store
+
+
+def _withdraw_during_switch(store, pin=SRC1):
+    """Hook body: start a competing withdrawal while promote sits between its last fence and the pointer write.
+    Records whether the withdrawal could COMPLETE inside that window (it must not: it needs the same lock)."""
+    box = {}
+    t = threading.Thread(target=lambda: store.withdraw_source(pin))
+
+    def hook():
+        t.start()
+        t.join(timeout=0.4)
+        box["completed_inside_window"] = not t.is_alive()
+
+    store.switch_hook = hook
+    box["thread"] = t
+    return box
+
+
+def test_r6a_withdrawal_inside_the_switch_window_cannot_complete_before_the_switch():
+    store = _validated_g2_probed(Store)
+    box = _withdraw_during_switch(store)
+    store.promote("g2", "g1", 1)  # selection linearizes first: the competing withdrawal waited for the lock
+    box["thread"].join(timeout=5)
+    assert box["completed_inside_window"] is False
+    assert not box["thread"].is_alive()
+    assert (store.ptr, store.version) == ("g2", 2)  # the switch stays valid
+    assert SRC1 not in store.accepted_sources  # the withdrawal completed strictly AFTER the switch
+    assert gm.check_pointer_is_complete_generation(store).ok
+    # later behaviour as in round 5: the withdrawal after selection does not unselect, grants stay use-time,
+    # but nothing from the withdrawn source can be selected or validated any more
+    assert store.accepted_view(READER) == NEW
+    g3 = manifest("g3", NEW, src=SRC1)
+    store.stage(g3, NEW)
+    with pytest.raises(NotServable) as ei:
+        store.validate(g3, READER, PROJ)
+    assert ei.value.boundary == "non-current-source"
+    # mutant (i): withdrawal bypasses the lock -> it completes inside the window, between check and switch
+    f = _validated_g2_probed(gm.UnlockedNoRevisionStore)
+    fbox = _withdraw_during_switch(f)
+    f.promote("g2", "g1", 1)
+    fbox["thread"].join(timeout=5)
+    ok = not fbox["completed_inside_window"] and not (f.ptr == "g2" and SRC1 not in f.accepted_sources)
+    record(
+        "r6a",
+        "UnlockedNoRevisionStore",
+        gm.Verdict(
+            ok,
+            "I12:source-mutation-serialized-with-selection",
+            f"ptr={f.ptr} src1_accepted={SRC1 in f.accepted_sources}",
+        ),
+    )
+    assert (f.ptr, f.version) == ("g2", 2) and SRC1 not in f.accepted_sources  # the defect really happened
+
+
+def _withdrawal_holding_the_lock_first(store, pin=SRC1, op="withdraw_source"):
+    """A source mutation (default: withdrawal) enters its critical section (lock held, not yet applied); promote is
+    then started and must queue behind it. Returns the outcome box."""
+    inside, release = threading.Event(), threading.Event()
+    store.mutation_hook = lambda: (inside.set(), release.wait(timeout=5))
+    w = threading.Thread(target=lambda: getattr(store, op)(pin))
+    w.start()
+    assert inside.wait(timeout=5)
+    out: dict = {}
+
+    def run_promote():
+        try:
+            store.promote("g2", "g1", 1)
+            out["result"] = "promoted"
+        except NotServable as e:
+            out["result"] = e
+
+    p = threading.Thread(target=run_promote)
+    p.start()
+    p.join(timeout=0.4)
+    out["promote_blocked"] = p.is_alive()
+    release.set()
+    w.join(timeout=5)
+    p.join(timeout=5)
+    return out
+
+
+def test_r6b_promote_queued_behind_a_withdrawal_sees_it_and_refuses_unchanged():
+    store = _validated_g2_probed(Store)
+    snap = store.snapshot()
+    out = _withdrawal_holding_the_lock_first(store)
+    assert out["promote_blocked"] is True  # selection waits for the source mutation: one lock
+    assert isinstance(out["result"], NotServable) and out["result"].boundary == "non-current-source"
+    assert gm.check_promote_refused_unchanged(store, snap, out["result"]).ok  # ptr, version, witnesses, bytes, logs
+    assert (store.ptr, store.version) == ("g1", 1)
+    assert store.witnesses["g2"] is snap[1]["g2"] and store.blobs == snap[2]
+    # mutant (i): withdrawal bypasses the lock -> promote does not queue behind it
+    f = _validated_g2_probed(gm.UnlockedSourceMutationStore)
+    fout = _withdrawal_holding_the_lock_first(f)
+    record(
+        "r6b",
+        "UnlockedSourceMutationStore",
+        gm.Verdict(
+            fout["promote_blocked"] and isinstance(fout["result"], NotServable),
+            "I12:source-mutation-serialized-with-selection",
+            f"promote_blocked={fout['promote_blocked']} result={fout['result']!r}",
+        ),
+    )
+    # mutant (ii): currency read from a snapshot taken before the lock was acquired -> stale "current" at the switch
+    s2 = _validated_g2_probed(gm.SnapshotBeforeLockStore)
+    s2snap = s2.snapshot()
+    s2out = _withdrawal_holding_the_lock_first(s2)
+    record(
+        "r6b",
+        "SnapshotBeforeLockStore",
+        gm.check_promote_refused_unchanged(s2, s2snap, s2out["result"]),
+    )
+    assert (s2.ptr, s2.version) == ("g2", 2)  # the stale snapshot really moved the pointer
+
+
+def test_r6b2_promote_queued_behind_a_re_acceptance_sees_it_and_succeeds():
+    # the acceptance side of the registry is serialized with selection as well (not only withdrawal)
+    store = _validated_g2_probed(Store)
+    store.withdraw_source(SRC1)
+    out = _withdrawal_holding_the_lock_first(store, op="accept_source")
+    assert out["promote_blocked"] is True
+    assert out["result"] == "promoted" and (store.ptr, store.version) == ("g2", 2)
+    f = _validated_g2_probed(gm.UnlockedSourceMutationStore)
+    f.withdraw_source(SRC1)
+    fout = _withdrawal_holding_the_lock_first(f, op="accept_source")
+    record(
+        "r6b2",
+        "UnlockedSourceMutationStore",
+        gm.Verdict(
+            fout["promote_blocked"] and fout["result"] == "promoted",
+            "I12:source-mutation-serialized-with-selection",
+            f"promote_blocked={fout['promote_blocked']} result={fout['result']!r}",
+        ),
+    )
+
+
+def test_r6c2_revision_is_read_before_the_currency_check_not_after():
+    # a lock-ignoring writer lands right after the currency check passed: the revision recorded BEFORE the check
+    # must differ from the one at the switch
+    store = _validated_g2_probed(gm.UnlockedSourceMutationStore)
+    store.fence_hook = lambda: store.withdraw_source(SRC1)
+    snap = store.snapshot()
+    with pytest.raises(NotServable) as ei:
+        store.promote("g2", "g1", 1)
+    assert ei.value.boundary == "source-changed-during-selection"
+    assert store.snapshot() == snap
+    assert (store.ptr, store.version) == ("g1", 1)
+
+
+def test_r6c_revision_is_the_atomic_compare_even_against_a_writer_that_ignores_the_lock():
+    # a source writer that bypasses the lock still bumps the revision: the switch refuses, nothing changes
+    store = _validated_g2_probed(gm.UnlockedSourceMutationStore)
+    snap = store.snapshot()
+    box = _withdraw_during_switch(store)
+    with pytest.raises(NotServable) as ei:
+        store.promote("g2", "g1", 1)
+    box["thread"].join(timeout=5)
+    assert box["completed_inside_window"] is True  # the bypassing writer did land in the window...
+    assert ei.value.boundary == "source-changed-during-selection"  # ...and the revision compare caught it
+    assert (store.ptr, store.version) == ("g1", 1)
+    assert store.witnesses["g2"] is snap[1]["g2"] and store.blobs == snap[2]
+    assert gm.check_pointer_is_complete_generation(store).ok
+    # mutant (iii): revision not compared -> the pointer advances to the withdrawn source
+    f = _validated_g2_probed(gm.UnlockedNoRevisionStore)
+    fsnap = f.snapshot()
+    fbox = _withdraw_during_switch(f)
+    try:
+        f.promote("g2", "g1", 1)
+        fout: str | Exception = "g2"
+    except NotServable as e:
+        fout = e
+    fbox["thread"].join(timeout=5)
+    record("r6c", "UnlockedNoRevisionStore", gm.check_promote_refused_unchanged(f, fsnap, fout))
+    assert (f.ptr, f.version) == ("g2", 2)
+
+
+def test_r6d_positive_and_independent_checks_unchanged_by_the_lock():
+    # positive promote, no concurrent mutation: revision unchanged by promote, switch happens
+    store = _validated_g2_probed(Store)
+    rev = store.source_revision
+    store.promote("g2", "g1", 1)
+    assert (store.ptr, store.version, store.source_revision) == ("g2", 2, rev)
+    # acceptance/withdrawal are the only revision movers
+    store.withdraw_source(SRC2)
+    store.accept_source(SRC2)
+    assert store.source_revision == rev + 2
+    # round-5 re-acceptance rule still holds through the Store operations (no fresh validate needed)
+    s2 = _validated_g2_probed(Store)
+    s2.withdraw_source(SRC1)
+    assert _direct_promote(s2, "g2", "g1", 1).boundary == "non-current-source"
+    s2.accept_source(SRC1)
+    s2.promote("g2", "g1", 1)
+    assert (s2.ptr, s2.version) == ("g2", 2)
+    # witness, CAS and use-time grant stay separate: stale CAS first, grant revocation does not block selection
+    s3 = _validated_g2_probed(Store)
+    s3.withdraw_source(SRC1)
+    assert _direct_promote(s3, "g2", "g1", 0).boundary == "cas-conflict"
+    s4 = _validated_g2_probed(Store)
+    s4.authz.revoke(READER, NS)
+    s4.promote("g2", "g1", 1)
+    with pytest.raises(Denied):
+        s4.accepted_view(READER)
+
+
+def test_r6e_source_set_is_not_mutable_from_outside():
+    store, _ = build()
+    with pytest.raises(AttributeError):
+        store.accepted_sources.discard(SRC1)  # frozenset snapshot
+    with pytest.raises(AttributeError):
+        store.accepted_sources = {SRC1}  # no setter
+    seed = {SRC1}
+    s2 = Store(Authz(), NS, seed)
+    seed.add("pin-injected")  # the caller's set is copied, not shared
+    assert s2.accepted_sources == frozenset({SRC1})
 
 
 def test_checker_is_not_vacuous_every_faulty_variant_rejected():
@@ -823,6 +1069,10 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_r4b_direct_promote_of_incomplete_staged_generation_refused,
         test_r4d_witness_is_bound_to_manifest_and_actual_bytes,
         test_r5a_withdrawn_source_refused_at_promote_nothing_changes,
+        test_r6a_withdrawal_inside_the_switch_window_cannot_complete_before_the_switch,
+        test_r6b_promote_queued_behind_a_withdrawal_sees_it_and_refuses_unchanged,
+        test_r6b2_promote_queued_behind_a_re_acceptance_sees_it_and_succeeds,
+        test_r6c_revision_is_the_atomic_compare_even_against_a_writer_that_ignores_the_lock,
     ):
         fn()
     assert FAULTY_RESULTS and all(v["rejected"] for v in FAULTY_RESULTS.values())

@@ -112,18 +112,23 @@ Each faulty variant was run through the same checkers; `rejected=True` means the
 | r4b/NoValidationFenceStore | True | `I11:direct-promote-requires-validation-witness` | promoted g2 |
 | r4d/NoValidationFenceStore | True | `I11:direct-promote-requires-validation-witness` | promoted g2 |
 | r5a/NoSourceCurrencyFenceStore | True | `I11:direct-promote-requires-validation-witness` | promoted g2 |
+| r6a/UnlockedNoRevisionStore | True | `I12:source-mutation-serialized-with-selection` | ptr=g2 src1_accepted=False |
+| r6b/SnapshotBeforeLockStore | True | `I11:direct-promote-requires-validation-witness` | promoted promoted |
+| r6b/UnlockedSourceMutationStore | True | `I12:source-mutation-serialized-with-selection` | promote_blocked=False result='promoted' |
+| r6b2/UnlockedSourceMutationStore | True | `I12:source-mutation-serialized-with-selection` | promote_blocked=False result=NotServable('non-current-source: pin-0001') |
+| r6c/UnlockedNoRevisionStore | True | `I11:direct-promote-requires-validation-witness` | promoted g2 |
 
 Mapping: `InPlaceStore` = overwrite-in-place of the active generation's source paths (AC2, 77307111 counterexample; `I1` previous accepted member no longer reads at its old digest). `LastWriterWinsStore` = promotion ignoring the expected pointer (AC3; `I5`). `LeakyViewStore` = candidate chunks visible in the accepted view (AC4; `I3`). `CachedViewStore` = old complete bytes served after revocation (AC4; `I4`). `NoValidationStore` = metadata-only promotion (`I2`/`I7`). `CrossNsStore` = write mirrored to another namespace (`I6`).
 
 ## Provenance
 
-- Scrutator base: `origin/main` = `0cb546a395008b501fd47c6b1037bcae8e7e664f` (required: at or after 0cb546a3). Branch head at run time: `518766c31000ffebbd20c3504777452a21ea3ea1` (working tree may carry uncommitted report).
-- Source sha256: `generation_model.py` = `ff2e84dcf817d2da6a1c72dcaddab3bbc6ac6956d9b5f48ba2440c4b68574e50`
-- Fixture/test sha256: `test_generation_closure_model.py` = `7a69c564af21f61eebf13c2c8edcc39c3ea29550115b642fd3e882375f6149df`; `conftest.py` = `49cb4acdbd89b7f10d9cc7089acc738fd0a21172422578d5bd6e7ca53b440225`; `run_and_report.py` = `e74280dfdf3aaecbac7580bfc52d0b5aefa54d409e221a71fd18028c123b5cbe`
+- Scrutator base: `origin/main` = `` (required: at or after 0cb546a3). Branch head at run time: `` (working tree may carry uncommitted report).
+- Source sha256: `generation_model.py` = `d5ce603c0dffc94eb8482e30d5ae30fb3fe8cd3ade4f55c8bcfe41bdad7a0f9c`
+- Fixture/test sha256: `test_generation_closure_model.py` = `0b1fb629c4c1ab51a1f365691aa32423b1d90638426b7cc5a62fe2aa56614246`; `conftest.py` = `49cb4acdbd89b7f10d9cc7089acc738fd0a21172422578d5bd6e7ca53b440225`; `run_and_report.py` = `1f107e2788f2c1e0f1b1dc259954e18c4b1b5059174f58da6bcccacdd686c5ba`
 - Fixtures are inline synthetic byte strings (`OLD-*`, `NEW-*`); no external fixture file exists.
 - Command: `cd scrutator && PYTHONPATH=src python -m pytest tests/ac5_model -q -p no:cacheprovider` (via `python tests/ac5_model/run_and_report.py REPORT.md`)
 - Exit code: **0**
-- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `37 passed in 0.69s`
+- Environment: Python 3.12.3, Linux-6.8.0-147-generic-x86_64-with-glibc2.39, host `arcana-devs`; pytest summary: `44 passed in 6.09s`
 
 ## Model assumptions
 
@@ -137,7 +142,8 @@ Mapping: `InPlaceStore` = overwrite-in-place of the active generation's source p
 8b. Immutable identity (R1) is enforced by the model's staging step; the real storage layer must provide the same guarantee (unique/immutable key per generation member). Not implemented here.
 8. Old-generation retention/cleanup is out of scope; the model never deletes a generation.
 9. (R3, round 4) Selection is fenced: `Store.promote` first runs `_admission_fence`, which requires a registered generation, an `AdmissionWitness` issued only by a successful `Store.validate` of exactly the registered manifest, bound to (generation_id, manifest, project, namespace, source pin, digest of the member bytes actually read), and re-derives the bytes digest from the stored bytes at promote time. The fence runs before the CAS comparison and before any pointer/version change. It carries no authorization; grants are re-checked at every use (`accepted_view`, `read_member`). The witness is a model object: a native implementation would need an equivalent durable, transactionally bound admission record. 
-10. (round 5) Source currency is a separate selection check: `Store._source_currency_fence` runs under the same lock, after the admission fence and the CAS comparison and immediately before the pointer/version change, and refuses a registered generation whose source pin is not in `accepted_sources` NOW. Rule chosen: the live set is read at every promote attempt (the set is mutable, so it is NOT modelled as frozen for the transaction); a later re-acceptance of the same pin needs no fresh validate (witness binds the pin and bytes, unchanged) and nothing is cached; a withdrawal after selection does not unselect. Grants stay use-time. The native service must implement the same rule in the real selection transaction.
+10. (round 5) Source currency is a separate selection check: `Store._source_currency_fence` runs under the same lock, after the admission fence and the CAS comparison and immediately before the pointer/version change, and refuses a registered generation whose source pin is not in `accepted_sources` NOW. Rule chosen: the live set is read at every promote attempt (it is NOT modelled as frozen for the transaction); a later re-acceptance of the same pin needs no fresh validate (witness binds the pin and bytes, unchanged) and nothing is cached; a withdrawal after selection does not unselect. Grants stay use-time. The native service must implement the same rule in the real selection transaction.
+11. (round 6) Source currency is atomic at the promotion linearization point. `accepted_sources` is no longer an externally mutable set: it is a private copy exposed as a read-only frozenset, changed only by `Store.accept_source` / `Store.withdraw_source`, which take the SAME lock as `promote` and bump `source_revision`. `promote` reads the revision, runs the currency fence, and `_source_revision_fence` compares the revision again immediately before the pointer/version change (defence in depth against a writer that ignores the lock). So a withdrawal either completes strictly before the selection (the selection refuses, nothing changes) or strictly after the switch (the switch stays valid; later validate/promote of that source refuse; no unselect). Adversarial interleavings are pinned with two deterministic seams (`_before_switch`, `_in_source_mutation`) and threads. This is a model contract with an in-process lock, not a native race measurement. The native service must implement the same rule in the real selection transaction (atomic current-source compare inside the switch).
 
 ## What this model does NOT prove
 

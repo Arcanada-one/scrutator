@@ -268,10 +268,19 @@ def main(out: str) -> int:
         "implementation would need an equivalent durable, transactionally bound admission record. ",
         "10. (round 5) Source currency is a separate selection check: `Store._source_currency_fence` runs under the same lock, after the "
         "admission fence and the CAS comparison and immediately before the pointer/version change, and refuses a registered generation whose "
-        "source pin is not in `accepted_sources` NOW. Rule chosen: the live set is read at every promote attempt (the set is mutable, so it is "
-        "NOT modelled as frozen for the transaction); a later re-acceptance of the same pin needs no fresh validate (witness binds the pin and "
+        "source pin is not in `accepted_sources` NOW. Rule chosen: the live set is read at every promote attempt (it is NOT modelled as "
+        "frozen for the transaction); a later re-acceptance of the same pin needs no fresh validate (witness binds the pin and "
         "bytes, unchanged) and nothing is cached; a withdrawal after selection does not unselect. Grants stay use-time. The native service "
         "must implement the same rule in the real selection transaction.",
+        "11. (round 6) Source currency is atomic at the promotion linearization point. `accepted_sources` is no longer an externally "
+        "mutable set: it is a private copy exposed as a read-only frozenset, changed only by `Store.accept_source` / `Store.withdraw_source`, "
+        "which take the SAME lock as `promote` and bump `source_revision`. `promote` reads the revision, runs the currency fence, and "
+        "`_source_revision_fence` compares the revision again immediately before the pointer/version change (defence in depth against a "
+        "writer that ignores the lock). So a withdrawal either completes strictly before the selection (the selection refuses, nothing "
+        "changes) or strictly after the switch (the switch stays valid; later validate/promote of that source refuse; no unselect). "
+        "Adversarial interleavings are pinned with two deterministic seams (`_before_switch`, `_in_source_mutation`) and threads. This is a "
+        "model contract with an in-process lock, not a native race measurement. The native service must implement the same rule in the "
+        "real selection transaction (atomic current-source compare inside the switch).",
         "",
         "## What this model does NOT prove",
         "",
