@@ -708,6 +708,94 @@ def test_r4f_fence_corner_guards_exercised_alone():
     assert isinstance(out3, NotServable) and out3.boundary == "unvalidated-candidate"
 
 
+def _validated_g2(cls=Store):
+    store, _ = build(cls)
+    g2 = manifest("g2", NEW)
+    store.stage(g2, NEW)
+    store.validate(g2, READER, PROJ)
+    return store, g2
+
+
+def test_r5a_withdrawn_source_refused_at_promote_nothing_changes():
+    # reviewer's trace: validate g2 with SRC1, withdraw SRC1, promote with the correct observation
+    store, g2 = _validated_g2()
+    store.accepted_sources.discard(SRC1)
+    snap = store.snapshot()
+    out = _direct_promote(store, "g2", "g1", 1)
+    assert isinstance(out, NotServable) and out.boundary == "non-current-source"
+    assert gm.check_promote_refused_unchanged(store, snap, out).ok
+    assert (store.ptr, store.version) == ("g1", 1)
+    assert store.witnesses["g2"] is snap[1]["g2"] and store.blobs == snap[2]  # witnesses + member bytes
+    assert gm.check_pointer_is_complete_generation(store).ok
+    # mutant: the round-4 model moves the pointer to a generation whose source is no longer accepted
+    f, _ = _validated_g2(gm.NoSourceCurrencyFenceStore)
+    f.accepted_sources.discard(SRC1)
+    fsnap = f.snapshot()
+    record(
+        "r5a",
+        "NoSourceCurrencyFenceStore",
+        gm.check_promote_refused_unchanged(f, fsnap, _direct_promote(f, "g2", "g1", 1)),
+    )
+    assert (f.ptr, f.version) == ("g2", 2)
+
+
+def test_r5b_currency_is_reevaluated_each_attempt_reacceptance_needs_no_fresh_validate():
+    # Rule chosen: live check per promote attempt; the witness is not revoked by a temporary withdrawal.
+    store, _ = _validated_g2()
+    store.accepted_sources.discard(SRC1)
+    assert _direct_promote(store, "g2", "g1", 1).boundary == "non-current-source"
+    store.accepted_sources.add(SRC1)  # re-accepted: same pin, same bytes, same witness
+    assert store.witnesses["g2"] is not None
+    store.accepted_sources.discard(SRC1)  # not cached: withdrawn again -> refused again
+    assert _direct_promote(store, "g2", "g1", 1).boundary == "non-current-source"
+    store.accepted_sources.add(SRC1)
+    store.promote("g2", "g1", 1)
+    assert (store.ptr, store.version) == ("g2", 2)
+    # and a withdrawal AFTER selection does not unselect; every use is governed by its own checks
+    store.accepted_sources.discard(SRC1)
+    assert store.ptr == "g2"
+
+
+def test_r5c_positive_promote_with_current_source_and_other_pin_withdrawn():
+    store, _ = _validated_g2()
+    store.accepted_sources.discard(SRC2)  # an unrelated pin leaving the set does not matter
+    store.promote("g2", "g1", 1)
+    assert (store.ptr, store.version) == ("g2", 2)
+    assert gm.check_pointer_is_complete_generation(store).ok
+
+
+def test_r5d_currency_is_separate_from_witness_cas_and_use_grant():
+    # stale CAS + withdrawn source: CAS reported first (currency is the last check before the change)
+    store, _ = _validated_g2()
+    store.accepted_sources.discard(SRC1)
+    assert _direct_promote(store, "g2", "g1", 0).boundary == "cas-conflict"
+    # unvalidated + withdrawn source: the admission witness is reported, not currency
+    s2, _ = build()
+    s2.stage(manifest("g2", NEW), NEW)
+    s2.accepted_sources.discard(SRC1)
+    assert _direct_promote(s2, "g2", "g1", 1).boundary == "unvalidated-candidate"
+    # grant revoked but source current: selection still works (grant is a use-time check)
+    s3, _ = _validated_g2()
+    s3.authz.revoke(READER, NS)
+    s3.promote("g2", "g1", 1)
+    with pytest.raises(Denied):
+        s3.accepted_view(READER)
+
+
+def test_r5e_validate_source_guard_exercised_alone():
+    # validate's own current-source check must refuse BEFORE a witness is issued; the promote-time currency
+    # fence must not be able to mask its removal (surfaced by the round-5 sweep: mutant survived without this)
+    store, _ = build()
+    m = manifest("g2", NEW, src="pin-unaccepted")
+    store.stage(m, NEW)
+    snap = store.snapshot()
+    with pytest.raises(NotServable) as ei:
+        store.validate(m, READER, PROJ)
+    assert ei.value.boundary == "non-current-source"
+    assert "g2" not in store.witnesses
+    assert gm.check_state_unchanged(store, snap).ok
+
+
 def test_checker_is_not_vacuous_every_faulty_variant_rejected():
     """Meta: the faulty variants recorded above must all be rejected (checker disagrees with them)."""
     # Population is filled by the case tests (order-independent: re-run the minimal set here).
@@ -734,6 +822,7 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_r4a_direct_promote_of_missing_generation_refused,
         test_r4b_direct_promote_of_incomplete_staged_generation_refused,
         test_r4d_witness_is_bound_to_manifest_and_actual_bytes,
+        test_r5a_withdrawn_source_refused_at_promote_nothing_changes,
     ):
         fn()
     assert FAULTY_RESULTS and all(v["rejected"] for v in FAULTY_RESULTS.values())

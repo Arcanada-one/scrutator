@@ -40,6 +40,11 @@ CASES = {
     "test_r4c_staged_complete_but_unvalidated_refused_then_ready_promotes": "R4c complete-but-unvalidated refused; validated ready candidate promotes",
     "test_r4d_witness_is_bound_to_manifest_and_actual_bytes": "R4d witness bound to manifest / project / namespace / pin / actual bytes",
     "test_r4e_fence_is_separate_from_current_use_authorization_and_cas": "R4e fence separate from use-time authorization; CAS/ABA intact",
+    "test_r5a_withdrawn_source_refused_at_promote_nothing_changes": "R5a withdrawn source refused at promote, nothing changes",
+    "test_r5b_currency_is_reevaluated_each_attempt_reacceptance_needs_no_fresh_validate": "R5b currency re-evaluated per attempt; re-acceptance needs no fresh validate",
+    "test_r5c_positive_promote_with_current_source_and_other_pin_withdrawn": "R5c positive promote with a current source",
+    "test_r5d_currency_is_separate_from_witness_cas_and_use_grant": "R5d currency separate from witness, CAS and use-time grant",
+    "test_r5e_validate_source_guard_exercised_alone": "R5e validate current-source guard alone (no witness issued)",
     "test_r4f_fence_corner_guards_exercised_alone": "R4f fence corner guards (unregistered witness, foreign ns, fence-before-CAS order)",
     "test_ac4_incomplete_candidate_never_visible_in_accepted_view": "AC4 incomplete candidate absent from accepted view",
     "test_checker_is_not_vacuous_every_faulty_variant_rejected": "META checker rejects every faulty variant",
@@ -87,6 +92,11 @@ SUBCASES = [
         "Direct promote needs an immutable validation witness (missing / partial / unvalidated / foreign witness)",
         "test_r4d_witness_is_bound_to_manifest_and_actual_bytes",
         "NoValidationFenceStore",
+    ),
+    (
+        "Source pin still current at promote (re-checked under the selection lock, separate from witness / CAS / use grant)",
+        "test_r5a_withdrawn_source_refused_at_promote_nothing_changes",
+        "NoSourceCurrencyFenceStore",
     ),
     (
         "Pre-ranking search isolation (candidate chunks excluded BEFORE ranking, not filtered after)",
@@ -255,8 +265,13 @@ def main(out: str) -> int:
         "(generation_id, manifest, project, namespace, source pin, digest of the member bytes actually read), and re-derives the bytes digest "
         "from the stored bytes at promote time. The fence runs before the CAS comparison and before any pointer/version change. It carries no "
         "authorization; grants are re-checked at every use (`accepted_view`, `read_member`). The witness is a model object: a native "
-        "implementation would need an equivalent durable, transactionally bound admission record. Whether the source pin is still current "
-        "at promote time is NOT re-checked (NOT_MEASURED).",
+        "implementation would need an equivalent durable, transactionally bound admission record. ",
+        "10. (round 5) Source currency is a separate selection check: `Store._source_currency_fence` runs under the same lock, after the "
+        "admission fence and the CAS comparison and immediately before the pointer/version change, and refuses a registered generation whose "
+        "source pin is not in `accepted_sources` NOW. Rule chosen: the live set is read at every promote attempt (the set is mutable, so it is "
+        "NOT modelled as frozen for the transaction); a later re-acceptance of the same pin needs no fresh validate (witness binds the pin and "
+        "bytes, unchanged) and nothing is cached; a withdrawal after selection does not unselect. Grants stay use-time. The native service "
+        "must implement the same rule in the real selection transaction.",
         "",
         "## What this model does NOT prove",
         "",

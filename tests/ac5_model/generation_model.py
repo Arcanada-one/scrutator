@@ -247,13 +247,28 @@ class Store:
         if w.bytes_digest != self._witness_for(m).bytes_digest:
             raise NotServable("witness-bytes-mismatch", gen_id)
 
+    def _source_currency_fence(self, gen_id: str) -> None:
+        """Selection precondition, evaluated under the selection lock IMMEDIATELY before the pointer/version
+        change: the source pin of the registered manifest must be accepted/current NOW. Distinct from
+        (a) the admission witness (generation identity, bytes; it also owns the unregistered case, so an
+        unregistered id never reaches this check), (b) the CAS comparison, and (c) current reader grant /
+        use-time revocation, which stays at use. Fail-closed: a pin not in ``accepted_sources`` is refused.
+        Rule chosen (not 'frozen set'): currency is re-evaluated against the live set at every promote
+        attempt; a later re-acceptance of the same pin needs NO fresh validate (the witness binds the
+        pin and bytes, both unchanged), but it is never cached: removing the pin again refuses again."""
+        m = self.manifests.get(gen_id)
+        if m is not None and m.source_pin not in self.accepted_sources:
+            raise NotServable("non-current-source", m.source_pin)
+
     def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
         """Native-CAS model: switch only if the candidate is witnessed AND pointer+version still equal
-        expectation. The fence runs first so a refused call changes nothing."""
+        expectation AND its source is still current. The fences run first so a refused call changes
+        nothing. The native service must implement the same rule in the real selection transaction."""
         with self._lock:
             self._admission_fence(gen_id)
             if self.ptr != expected_ptr or self.version != expected_version:
                 raise NotServable("cas-conflict", f"ptr={self.ptr} v={self.version}")
+            self._source_currency_fence(gen_id)
             self.ptr = gen_id
             self.version += 1
             self.ever_selected.add(gen_id)
@@ -406,6 +421,14 @@ class NoValidationFenceStore(Store):
         return None
 
 
+class NoSourceCurrencyFenceStore(Store):
+    """UNSAFE (round 5): the round-4 model. Witness and CAS are checked but source currency is not
+    re-checked at promote, so a generation whose pin was withdrawn after validate can still be selected."""
+
+    def _source_currency_fence(self, gen_id: str) -> None:
+        return None
+
+
 class PointerOnlyCasStore(Store):
     """UNSAFE (R2): CAS compares the pointer VALUE only and ignores the version, so an A->B->A
     sequence lets a stale observation win."""
@@ -447,6 +470,9 @@ class NoValidationStore(Store):
         return None
 
     def _admission_fence(self, gen_id: str) -> None:  # no validation => no witness => no fence
+        return None
+
+    def _source_currency_fence(self, gen_id: str) -> None:  # "no validation at all" includes no source check
         return None
 
 
