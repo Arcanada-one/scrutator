@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "paused_safe"
+  "verdict": "refused"
  },
- "captured_at_utc": "2026-11-06T23:10:26Z",
+ "captured_at_utc": "2026-11-07T00:42:01Z",
  "change_set": {
   "base": "0cb546a395008b501fd47c6b1037bcae8e7e664f",
   "files": [
@@ -130,6 +130,24 @@
      "document:documentation/reference/kc-generation-selection.md"
     ],
     "path": "documentation/reference/kc-generation-selection.md",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/kb-cons-01-n-route-presence/plan.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/kb-cons-01-n-route-presence/result.json",
+    "status": "A"
+   },
+   {
+    "kind": "receipt",
+    "new": true,
+    "path": "receipts/canary/kb-cons-01-n-route-presence/result.source-evidence.json",
     "status": "A"
    },
    {
@@ -325,7 +343,7 @@
     "status": "A"
    }
   ],
-  "head": "bfe2a1ad42a139f8213088e2b6e7411531b611a9",
+  "head": "7d556f8529619f35007ba57a9ae06540f8002bcc",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -334,17 +352,17 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:bcd9ac9d7bf169118816b4abe2a8382eb66fc31fadd1807d13368cf7d54be924",
-  "path": "/home/dev/aup/claude-work/kbcons01n/gv/graph-0cb546a39500.json",
+  "path": "/tmp/arcana-verify-ibg2a84a/verifier-out/graph-0cb546a39500.json",
   "source_commit": "0cb546a395008b501fd47c6b1037bcae8e7e664f"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:7bf15de94245b806124fc9d11ef2fb6267477e2de382ef872cbf2c42f52f5807",
-  "path": "/tmp/arcana-verify-zi15c2us/verifier-out/graph-head-bfe2a1ad42a1.json",
-  "source_commit": "bfe2a1ad42a139f8213088e2b6e7411531b611a9",
+  "graph_digest": "sha256:e6538446cfd56c59803d38b2eab72822bb01118424bb6714f6dbd24a48480b09",
+  "path": "/tmp/arcana-verify-ibg2a84a/verifier-out/graph-head-7d556f852961.json",
+  "source_commit": "7d556f8529619f35007ba57a9ae06540f8002bcc",
   "staleness": {
-   "checked_at_utc": "2026-11-06T23:11:52Z",
+   "checked_at_utc": "2026-11-07T00:44:55Z",
    "checked_nodes": 356,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -9998,11 +10016,11 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261106T231026Z-bfe2a1ad",
+ "receipt_id": "car-verify-20261107T004201Z-7d556f85",
  "receipt_path": "receipts/graph/change-admission-kb-cons-01-n.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/kbcons01n2/scrutator"
+  "path": "/home/dev/aup/claude-work/kbcons01n3/scrutator"
  },
  "revision_selection": {
   "base": [
@@ -10500,7 +10518,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-06T23:11:52Z",
+  "checked_at_utc": "2026-11-07T00:44:54Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -10740,7 +10758,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:07061d66432c2e9ff1091196485e29acb82f91c70197ac8b61d1b4ce17133c2c"
+    "head": "sha256:4271fc2adc6f2dab131bc621f80f1541a811fe54a73cd6b3a1e713c0c44e65eb"
    },
    "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
    "node_type": "receipt",
@@ -10875,14 +10893,14 @@
   }
  ],
  "tree": {
-  "commit": "bfe2a1ad42a139f8213088e2b6e7411531b611a9",
+  "commit": "7d556f8529619f35007ba57a9ae06540f8002bcc",
   "dirty": false
  },
  "verdicts": [
   {
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT",
-   "verdict": "not_measured",
+   "reason": "v-fitness: actionlint rejected workflow",
+   "verdict": "failed",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-2b43e97319f91478"
@@ -10890,7 +10908,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/ci.yml",
-   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -10899,7 +10917,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
-   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -10908,8 +10926,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violati",
-   "verdict": "not_measured",
+   "reason": "v-fitness: actionlint rejected workflow",
+   "verdict": "failed",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-eea5ff169848609b"
@@ -10917,8 +10935,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy.yml",
-   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation ",
-   "verdict": "not_measured",
+   "reason": "v-fitness: actionlint rejected workflow",
+   "verdict": "failed",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-28802fbf11c83a2e"
@@ -10926,7 +10944,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
-   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -10944,8 +10962,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/recall-regression.yml",
-   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
-   "verdict": "not_measured",
+   "reason": "v-fitness: actionlint rejected workflow",
+   "verdict": "failed",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-251cde5034c907f0"
@@ -10963,8 +10981,8 @@
   },
   {
    "entity": "code_unit:contracts/http/scrutator-http.contract.ts",
-   "reason": "v-type-check-tsconfig: tsc unavailable on this host",
-   "verdict": "not_measured",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: project compiles, 0 errors; v-contract-diff: 85 contract edge(s) verified (consumer ⊆ provider); v-fitness: no new fitness violation",
+   "verdict": "verified",
    "verifier_ids": [
     "v-contract-diff",
     "v-fitness",
@@ -11025,30 +11043,30 @@
   },
   {
    "entity": "code_unit:src/scrutator/health.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-fitness"
    ]
   },
   {
    "entity": "code_unit:src/scrutator/kc_router.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-begin: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-fitness"
    ]
   },
   {
    "entity": "code_unit:src/scrutator/ltm/router.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-fitness"
    ]
@@ -12353,7 +12371,7 @@
   },
   {
    "entity": "deployable_unit:.",
-   "reason": "v-type-check-tsconfig: tsc unavailable on this host; v-global-fallback-test-root: complete fallback suite: not_measured",
+   "reason": "v-global-fallback-test-root: complete fallback suite: not_measured",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12411,50 +12429,50 @@
   },
   {
    "entity": "route:DELETE /source",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/edges",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/memories",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:DELETE /v1/project/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-project-index: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
@@ -12471,400 +12489,400 @@
   },
   {
    "entity": "route:GET /entities",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-entities: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /events",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-events: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /graph",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-graph: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /health",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-health: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /jobs/{job_id}",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-jobs-job-id: 404 from the handler (body differs from the router's no-match answer) on a route the resident OpenAPI declares: the resource is absent, the route is served",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /meta_facts",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-meta-facts: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/chunks",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-chunks: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/edges/{chunk_id}",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-edges-chunk-id: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/capability",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/index/rollback-capability",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-rollback-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/memories/stats",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-memories-stats: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/namespaces",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-namespaces: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/outline",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-outline: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/navigate/section",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-section: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/project/write-preflight",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-project-write-preflight: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:GET /v1/stats",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-stats: status 200 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /ingest",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-ingest: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /recall",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-recall: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /reflect",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-reflect: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/chunk",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-chunk: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/dream/analyze",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-dream-analyze: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/edges/by-path",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges-by-path: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/fetch",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-fetch: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/batch",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-batch: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/capability-projection",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-capability-projection: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/index/evidence-exact",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-evidence-exact: status 401 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/begin",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-begin: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/chunk",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-chunk: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/fetch",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-fetch: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/graph",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-graph: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/related",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-related: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/kc/read/search",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-search: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/bulk",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-bulk: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/memories/recall",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-recall: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/namespaces",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-namespaces: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/project/index",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-project-index: status 403 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
   },
   {
    "entity": "route:POST /v1/search",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
-   "verdict": "not_measured",
+   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-search: status 422 != 404: the route is served; declared in the resident OpenAPI",
+   "verdict": "verified",
    "verifier_ids": [
-    "v-canary",
+    "v-canary-1",
     "v-contract-diff",
     "v-route-config"
    ]
@@ -12878,26 +12896,26 @@
  },
  "verifiers": [
   {
-   "command": "tsc -p /home/dev/aup/claude-work/kbcons01n2/scrutator/contracts/http/tsconfig.json (tsc not found)",
-   "duration_s": 0.0,
+   "command": "/home/dev/aup/claude-work/kbcons01n3/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kbcons01n3/scrutator/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify-ibg2a84a/verifier-out/type-check-sll2jtfs/check.tsbuildinfo --listFiles",
+   "duration_s": 9.23,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "code_unit:contracts/http/scrutator-http.contract.ts": "not_measured",
-    "deployable_unit:.": "not_measured"
+    "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
+    "deployable_unit:.": "verified"
    },
-   "exit_code": 127,
+   "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
-   "summary": "not_measured: tsc unavailable"
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-07T00:45:16Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=0cb546a39500, head=bfe2a1ad42a1, graph=head graph)",
-   "duration_s": 0.17,
+   "command": "tools/graph/contract_diff.py.run_diff(base=0cb546a39500, head=7d556f852961, graph=head graph)",
+   "duration_s": 0.57,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -13177,13 +13195,13 @@
    "exit_code": 0,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-contract-diff.json",
+   "started_at_utc": "2026-11-07T00:45:25Z",
    "summary": "81→86 contracts, breaking 0, edges {'verified': 85}"
   },
   {
    "command": "verify.py route_config_consistency RC-01 prefix / RC-02 registration / RC-03 served",
-   "duration_s": 0.0,
+   "duration_s": 0.01,
    "entities": [
     "route:DELETE /source",
     "route:DELETE /v1/edges",
@@ -13283,8 +13301,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "46 route(s), 0 failed"
   },
   {
@@ -13299,8 +13317,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13315,8 +13333,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13331,8 +13349,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13347,8 +13365,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13363,8 +13381,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13379,8 +13397,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-06T23:12:03Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-07T00:45:26Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13395,8 +13413,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-06T23:12:04Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-07T00:45:27Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 18: command/process substitution closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 23: local action/checkout path scope unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 4: command/process substitution closure is unresolved; job graph-admission step 8: checkout root or source-affecting workflow environment unresolved; job graph-admission step 8: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 31 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13411,13 +13429,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-06T23:12:04Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-07T00:45:27Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py config_schema: keys read at head ⊆ declared keys",
-   "duration_s": 4.53,
+   "duration_s": 4.59,
    "entities": [
     "code_unit:tests/kc_generations/conftest.py",
     "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
@@ -13433,13 +13451,13 @@
    "exit_code": 0,
    "id": "v-config-schema",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-config-schema.json",
-   "started_at_utc": "2026-11-06T23:12:04Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-11-07T00:45:27Z",
    "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 5 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 0.01,
+   "duration_s": 17.49,
    "entities": [
     "code_unit:.github/workflows/benchmark-scrutator.yml",
     "code_unit:.github/workflows/ci.yml",
@@ -13539,14 +13557,14 @@
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured",
-    "code_unit:.github/workflows/ci.yml": "not_measured",
-    "code_unit:.github/workflows/dependabot-auto-merge.yml": "not_measured",
-    "code_unit:.github/workflows/deploy-kc-corpus.yml": "not_measured",
-    "code_unit:.github/workflows/deploy.yml": "not_measured",
-    "code_unit:.github/workflows/graph-admission-call.yml": "not_measured",
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "failed",
+    "code_unit:.github/workflows/ci.yml": "verified",
+    "code_unit:.github/workflows/dependabot-auto-merge.yml": "verified",
+    "code_unit:.github/workflows/deploy-kc-corpus.yml": "failed",
+    "code_unit:.github/workflows/deploy.yml": "failed",
+    "code_unit:.github/workflows/graph-admission-call.yml": "verified",
     "code_unit:.github/workflows/graph-admission.yml": "not_measured",
-    "code_unit:.github/workflows/recall-regression.yml": "not_measured",
+    "code_unit:.github/workflows/recall-regression.yml": "failed",
     "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
     "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
     "code_unit:deploy/scrutator-deploy-transaction.sh": "verified",
@@ -13636,16 +13654,16 @@
     "code_unit:tools/kc_generation_mutation_check.py": "verified",
     "deployable_unit:.": "verified"
    },
-   "exit_code": 0,
+   "exit_code": 1,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-06T23:12:08Z",
-   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-07T00:45:31Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 4 entity(ies) failed"
   },
   {
    "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
-   "duration_s": 0.01,
+   "duration_s": 0.21,
    "entities": [
     "document:AGENTS.md",
     "document:README.md",
@@ -13665,28 +13683,22 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-11-06T23:12:08Z",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-07T00:45:49Z",
    "summary": "6 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.0,
+   "duration_s": 0.6,
    "entities": [
-    "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/kc_router.py",
     "code_unit:src/scrutator/ltm/router.py",
-    "code_unit:tests/kc_generations/conftest.py",
-    "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
-    "code_unit:tests/kc_generations/test_records_and_staging.py",
-    "code_unit:tools/kc_generation_mutation_check.py",
     "route:DELETE /source",
     "route:DELETE /v1/edges",
     "route:DELETE /v1/index",
     "route:DELETE /v1/memories",
     "route:DELETE /v1/project/index",
-    "route:GET /__benchmark/fingerprint",
     "route:GET /entities",
     "route:GET /events",
     "route:GET /graph",
@@ -13729,67 +13741,87 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
+    "code_unit:src/scrutator/health.py": "verified",
+    "code_unit:src/scrutator/kc_router.py": "verified",
+    "code_unit:src/scrutator/ltm/router.py": "verified",
+    "route:DELETE /source": "verified",
+    "route:DELETE /v1/edges": "verified",
+    "route:DELETE /v1/index": "verified",
+    "route:DELETE /v1/memories": "verified",
+    "route:DELETE /v1/project/index": "verified",
+    "route:GET /entities": "verified",
+    "route:GET /events": "verified",
+    "route:GET /graph": "verified",
+    "route:GET /health": "verified",
+    "route:GET /jobs/{job_id}": "verified",
+    "route:GET /meta_facts": "verified",
+    "route:GET /v1/chunks": "verified",
+    "route:GET /v1/edges/{chunk_id}": "verified",
+    "route:GET /v1/index/capability": "verified",
+    "route:GET /v1/index/rollback-capability": "verified",
+    "route:GET /v1/memories/stats": "verified",
+    "route:GET /v1/namespaces": "verified",
+    "route:GET /v1/navigate/outline": "verified",
+    "route:GET /v1/navigate/section": "verified",
+    "route:GET /v1/project/write-preflight": "verified",
+    "route:GET /v1/stats": "verified",
+    "route:POST /ingest": "verified",
+    "route:POST /recall": "verified",
+    "route:POST /reflect": "verified",
+    "route:POST /v1/chunk": "verified",
+    "route:POST /v1/dream/analyze": "verified",
+    "route:POST /v1/edges": "verified",
+    "route:POST /v1/edges/by-path": "verified",
+    "route:POST /v1/fetch": "verified",
+    "route:POST /v1/index": "verified",
+    "route:POST /v1/index/batch": "verified",
+    "route:POST /v1/index/capability-projection": "verified",
+    "route:POST /v1/index/evidence-exact": "verified",
+    "route:POST /v1/kc/read/begin": "verified",
+    "route:POST /v1/kc/read/chunk": "verified",
+    "route:POST /v1/kc/read/fetch": "verified",
+    "route:POST /v1/kc/read/graph": "verified",
+    "route:POST /v1/kc/read/related": "verified",
+    "route:POST /v1/kc/read/search": "verified",
+    "route:POST /v1/memories": "verified",
+    "route:POST /v1/memories/bulk": "verified",
+    "route:POST /v1/memories/recall": "verified",
+    "route:POST /v1/namespaces": "verified",
+    "route:POST /v1/project/index": "verified",
+    "route:POST /v1/search": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-canary-1",
+   "kind": "canary",
+   "output_ref": "receipts/canary/kb-cons-01-n-route-presence/result.json",
+   "started_at_utc": "2026-11-07T00:45:49Z",
+   "summary": "receipts/canary/kb-cons-01-n-route-presence/result.json: 48 verified / 0 failed / 0 not_measured"
+  },
+  {
+   "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
+   "duration_s": 0.6,
+   "entities": [
+    "code_unit:benchmark/scrutator/live/granted_context_app.py",
+    "code_unit:tests/kc_generations/conftest.py",
+    "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
+    "code_unit:tests/kc_generations/test_records_and_staging.py",
+    "code_unit:tools/kc_generation_mutation_check.py",
+    "route:GET /__benchmark/fingerprint"
+   ],
+   "entity_verdicts": {
     "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
-    "code_unit:src/scrutator/health.py": "not_measured",
-    "code_unit:src/scrutator/kc_router.py": "not_measured",
-    "code_unit:src/scrutator/ltm/router.py": "not_measured",
     "code_unit:tests/kc_generations/conftest.py": "not_measured",
     "code_unit:tests/kc_generations/test_read_isolation_and_retention.py": "not_measured",
     "code_unit:tests/kc_generations/test_records_and_staging.py": "not_measured",
     "code_unit:tools/kc_generation_mutation_check.py": "not_measured",
-    "route:DELETE /source": "not_measured",
-    "route:DELETE /v1/edges": "not_measured",
-    "route:DELETE /v1/index": "not_measured",
-    "route:DELETE /v1/memories": "not_measured",
-    "route:DELETE /v1/project/index": "not_measured",
-    "route:GET /__benchmark/fingerprint": "not_measured",
-    "route:GET /entities": "not_measured",
-    "route:GET /events": "not_measured",
-    "route:GET /graph": "not_measured",
-    "route:GET /health": "not_measured",
-    "route:GET /jobs/{job_id}": "not_measured",
-    "route:GET /meta_facts": "not_measured",
-    "route:GET /v1/chunks": "not_measured",
-    "route:GET /v1/edges/{chunk_id}": "not_measured",
-    "route:GET /v1/index/capability": "not_measured",
-    "route:GET /v1/index/rollback-capability": "not_measured",
-    "route:GET /v1/memories/stats": "not_measured",
-    "route:GET /v1/namespaces": "not_measured",
-    "route:GET /v1/navigate/outline": "not_measured",
-    "route:GET /v1/navigate/section": "not_measured",
-    "route:GET /v1/project/write-preflight": "not_measured",
-    "route:GET /v1/stats": "not_measured",
-    "route:POST /ingest": "not_measured",
-    "route:POST /recall": "not_measured",
-    "route:POST /reflect": "not_measured",
-    "route:POST /v1/chunk": "not_measured",
-    "route:POST /v1/dream/analyze": "not_measured",
-    "route:POST /v1/edges": "not_measured",
-    "route:POST /v1/edges/by-path": "not_measured",
-    "route:POST /v1/fetch": "not_measured",
-    "route:POST /v1/index": "not_measured",
-    "route:POST /v1/index/batch": "not_measured",
-    "route:POST /v1/index/capability-projection": "not_measured",
-    "route:POST /v1/index/evidence-exact": "not_measured",
-    "route:POST /v1/kc/read/begin": "not_measured",
-    "route:POST /v1/kc/read/chunk": "not_measured",
-    "route:POST /v1/kc/read/fetch": "not_measured",
-    "route:POST /v1/kc/read/graph": "not_measured",
-    "route:POST /v1/kc/read/related": "not_measured",
-    "route:POST /v1/kc/read/search": "not_measured",
-    "route:POST /v1/memories": "not_measured",
-    "route:POST /v1/memories/bulk": "not_measured",
-    "route:POST /v1/memories/recall": "not_measured",
-    "route:POST /v1/namespaces": "not_measured",
-    "route:POST /v1/project/index": "not_measured",
-    "route:POST /v1/search": "not_measured"
+    "route:GET /__benchmark/fingerprint": "not_measured"
    },
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-canary.json",
-   "started_at_utc": "2026-11-06T23:12:08Z",
-   "summary": "0 canary result(s), 0 committed at head; 0 verified / 0 failed / 54 not_measured of 54 entities"
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-canary.json",
+   "started_at_utc": "2026-11-07T00:45:49Z",
+   "summary": "1 canary result(s), 1 committed at head; 48 verified / 0 failed / 6 not_measured of 54 entities"
   },
   {
    "command": "bash -n + pinned ShellCheck on syntax projection; no caller/Bats execution",
@@ -13803,9 +13835,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T23:12:14Z",
+   "started_at_utc": "2026-11-07T00:46:17Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13820,9 +13852,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T23:12:19Z",
+   "started_at_utc": "2026-11-07T00:46:27Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13837,9 +13869,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-42dd40559cdd3dfa",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-syntax-42dd40559cdd3dfa.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-42dd40559cdd3dfa.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-06T23:12:22Z",
+   "started_at_utc": "2026-11-07T00:46:32Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13854,9 +13886,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T23:12:22Z",
+   "started_at_utc": "2026-11-07T00:46:32Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
@@ -13871,9 +13903,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T23:12:22Z",
+   "started_at_utc": "2026-11-07T00:46:33Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: directory transition has unresolved execution cwd; line 41: directory transition has unresolved execution cwd; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   },
   {
@@ -13888,9 +13920,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-42dd40559cdd3dfa",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-shell-behavior-42dd40559cdd3dfa.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-42dd40559cdd3dfa.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-06T23:12:22Z",
+   "started_at_utc": "2026-11-07T00:46:33Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 11: directory transition has unresolved execution cwd; line 14: dynamic command/alias/eval; line 16: dynamic command/alias/eval; line 17: multiline/opaque shell statement; line 18: wrapper options/child command unresolved; line 20: directory transition has unresolved execution cwd"
   },
   {
@@ -13905,9 +13937,9 @@
    "exit_code": 127,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/tmp/arcana-verify-zi15c2us/verifier-out/v-global-fallback-test-root.txt",
+   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-06T23:12:22Z",
+   "started_at_utc": "2026-11-07T00:46:33Z",
    "summary": "complete fallback suite: not_measured",
    "timeout_seconds": 900
   }
@@ -14797,9 +14829,9 @@
    ]
   },
   "seconds": {
-   "prepare": 3.72,
-   "total": 116.3,
-   "verifiers": 4.72
+   "prepare": 10.24,
+   "total": 273.45,
+   "verifiers": 33.3
   }
  },
  "work_item": "0d93458a-152b-4c0c-b001-35d57f960340"
