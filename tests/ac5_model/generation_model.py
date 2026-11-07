@@ -295,17 +295,21 @@ class Store:
 
     def _source_revision_fence(self, revision_at_check: int) -> None:
         """Last selection precondition, immediately before the pointer/version change and under the same lock:
-        the source registry revision must still be the one the currency check saw. With every source mutation
-        taking the lock this cannot differ; it is the atomic compare that makes the check and the switch one
-        linearization point even against a writer that did not honour the lock (fail-closed, conservative: an
-        accept+withdraw pair in between also refuses). Separate from the witness, CAS and use-time grants."""
+        the source registry revision must still be the one the currency check saw. SCOPE OF THE GUARANTEE: the
+        model proves the property only for writers that take ``_lock`` (every native source mutation and the
+        selection must run under the shared lock/transaction; that is a mandatory precondition, not an option).
+        For a writer that skips the lock but still bumps ``source_revision`` this compare refuses a bump that
+        lands before it runs (tested, conservative: an accept+withdraw pair in between also refuses); it is a
+        best-effort tripwire, NOT an atomic primitive, because the compare and the pointer assignment are two
+        separate steps and a lock-bypassing writer can land after the compare. Defence against writers that
+        bypass the lock/transaction is NOT_MEASURED. Separate from the witness, CAS and use-time grants."""
         if self.source_revision != revision_at_check:
             raise NotServable("source-changed-during-selection", f"rev {revision_at_check}->{self.source_revision}")
 
     def promote(self, gen_id: str, expected_ptr: str | None, expected_version: int) -> None:
         """Native-CAS model: switch only if the candidate is witnessed AND pointer+version still equal
         expectation AND its source is still current. The fences run first so a refused call changes
-        nothing. Source mutation takes the same lock (round 6), so currency holds at the switch itself. The native service must implement the same rule in the real selection transaction."""
+        nothing. Source mutation takes the same lock (round 6), so for cooperating writers (all that take ``_lock``) currency holds at the switch itself. Non-cooperating writers that bypass the lock are NOT_MEASURED. The native service must implement the same rule in the real selection transaction, with every source mutation inside it."""
         with self._lock:
             self._admission_fence(gen_id)
             if self.ptr != expected_ptr or self.version != expected_version:
@@ -476,7 +480,8 @@ class NoSourceCurrencyFenceStore(Store):
 
 class UnlockedSourceMutationStore(Store):
     """UNSAFE (round 6, mutant i): source withdrawal/acceptance bypasses the selection lock (it still bumps
-    the revision). A withdrawal can land between the currency check and the switch."""
+    the revision). A withdrawal can land between the currency check and the switch. Models the hazard only; the
+    model's guarantee does not extend to writers that bypass the lock (NOT_MEASURED)."""
 
     def accept_source(self, pin: str) -> None:
         self._in_source_mutation()

@@ -275,12 +275,17 @@ def main(out: str) -> int:
         "11. (round 6) Source currency is atomic at the promotion linearization point. `accepted_sources` is no longer an externally "
         "mutable set: it is a private copy exposed as a read-only frozenset, changed only by `Store.accept_source` / `Store.withdraw_source`, "
         "which take the SAME lock as `promote` and bump `source_revision`. `promote` reads the revision, runs the currency fence, and "
-        "`_source_revision_fence` compares the revision again immediately before the pointer/version change (defence in depth against a "
-        "writer that ignores the lock). So a withdrawal either completes strictly before the selection (the selection refuses, nothing "
+        "`_source_revision_fence` compares the revision again immediately before the pointer/version change (a best-effort tripwire, not "
+        "an atomic primitive: the compare and the pointer assignment are separate steps). So, for writers that take the shared lock, a withdrawal either completes strictly before the selection (the selection refuses, nothing "
         "changes) or strictly after the switch (the switch stays valid; later validate/promote of that source refuse; no unselect). "
-        "Adversarial interleavings are pinned with two deterministic seams (`_before_switch`, `_in_source_mutation`) and threads. This is a "
-        "model contract with an in-process lock, not a native race measurement. The native service must implement the same rule in the "
-        "real selection transaction (atomic current-source compare inside the switch).",
+        "Adversarial interleavings are pinned with two deterministic seams (`_before_switch`, `_in_source_mutation`) and threads. SCOPE: the "
+        "guarantee holds only for cooperating writers, i.e. writers that take the shared lock/transaction; that lock/transaction is "
+        "mandatory for ALL native source mutations (accept, withdraw) and for selection (promote). Defence against a non-cooperating writer "
+        "that bypasses the lock is NOT_MEASURED: the tests pin only that a lock-skipping writer that still bumps the revision before the "
+        "compare is refused (mutant i/iii), not an atomic fence-and-swap, and a bypassing writer landing after the compare is not "
+        "modelled. This is a model contract with an in-process lock, not a native race measurement. The native service must implement the "
+        "same rule in the real selection transaction (current-source compare and pointer swap inside one database transaction, every source "
+        "mutation inside it); native/database behaviour is NOT_MEASURED here.",
         "",
         "## What this model does NOT prove",
         "",

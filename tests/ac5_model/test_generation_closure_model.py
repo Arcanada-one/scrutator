@@ -975,8 +975,10 @@ def test_r6c2_revision_is_read_before_the_currency_check_not_after():
     assert (store.ptr, store.version) == ("g1", 1)
 
 
-def test_r6c_revision_is_the_atomic_compare_even_against_a_writer_that_ignores_the_lock():
-    # a source writer that bypasses the lock still bumps the revision: the switch refuses, nothing changes
+def test_r6c_revision_compare_refuses_a_lock_skipping_writer_that_bumps_the_revision_before_the_compare():
+    # a source writer that skips the lock but still bumps the revision before the compare: the switch refuses.
+    # Narrow scope: the guarantee is for lock-taking writers; the compare and the pointer assignment are separate
+    # steps, so a bypassing writer landing after the compare is NOT_MEASURED (not claimed, not tested).
     store = _validated_g2_probed(gm.UnlockedSourceMutationStore)
     snap = store.snapshot()
     box = _withdraw_during_switch(store)
@@ -1072,7 +1074,7 @@ def test_checker_is_not_vacuous_every_faulty_variant_rejected():
         test_r6a_withdrawal_inside_the_switch_window_cannot_complete_before_the_switch,
         test_r6b_promote_queued_behind_a_withdrawal_sees_it_and_refuses_unchanged,
         test_r6b2_promote_queued_behind_a_re_acceptance_sees_it_and_succeeds,
-        test_r6c_revision_is_the_atomic_compare_even_against_a_writer_that_ignores_the_lock,
+        test_r6c_revision_compare_refuses_a_lock_skipping_writer_that_bumps_the_revision_before_the_compare,
     ):
         fn()
     assert FAULTY_RESULTS and all(v["rejected"] for v in FAULTY_RESULTS.values())
