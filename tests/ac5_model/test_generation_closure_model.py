@@ -562,7 +562,11 @@ def test_r4a_direct_promote_of_missing_generation_refused():
     assert (store.ptr, store.version) == ("g1", 1)
     f, _ = build(gm.NoValidationFenceStore)
     fsnap = f.snapshot()
-    record("r4a", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, fsnap, _direct_promote(f, "not-registered")))
+    record(
+        "r4a",
+        "NoValidationFenceStore",
+        gm.check_promote_refused_unchanged(f, fsnap, _direct_promote(f, "not-registered")),
+    )
     assert f.ptr == "not-registered"  # the mutant really moved the pointer to a missing manifest
 
 
@@ -652,7 +656,9 @@ def test_r4d_witness_is_bound_to_manifest_and_actual_bytes():
     f, _ = build(gm.NoValidationFenceStore)
     f.stage(g2, NEW)
     f.witnesses["g2"] = other.witnesses["g2"]
-    record("r4d", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, f.snapshot(), _direct_promote(f, "g2")))
+    record(
+        "r4d", "NoValidationFenceStore", gm.check_promote_refused_unchanged(f, f.snapshot(), _direct_promote(f, "g2"))
+    )
 
 
 def test_r4e_fence_is_separate_from_current_use_authorization_and_cas():
