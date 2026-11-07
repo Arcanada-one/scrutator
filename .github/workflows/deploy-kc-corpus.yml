@@ -21,6 +21,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Runner broker preflight (A2-457)
+        env: { BROKER_PREFLIGHT_BIN: /usr/local/sbin/arcanada-compose-broker }
+        run: scripts/ci/runner-broker-preflight.sh
       - name: Sync reviewed main through the root broker
         run: sudo -n /usr/local/sbin/arcanada-compose-broker kc-corpus-scrutator sync "$GITHUB_SHA"
       - name: Build from the broker-owned checkout
