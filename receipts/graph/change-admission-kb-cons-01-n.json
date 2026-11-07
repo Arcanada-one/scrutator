@@ -3,11 +3,11 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "refused"
+  "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-11-07T00:42:01Z",
+ "captured_at_utc": "2026-11-07T04:07:13Z",
  "change_set": {
-  "base": "0cb546a395008b501fd47c6b1037bcae8e7e664f",
+  "base": "1b697e97c6842ea92a86de0cc8933c18bd24cb14",
   "files": [
    {
     "kind": "global_config",
@@ -343,7 +343,7 @@
     "status": "A"
    }
   ],
-  "head": "7d556f8529619f35007ba57a9ae06540f8002bcc",
+  "head": "5c5dff76bdad9f0aa50b42ba53d0ada81a718b3f",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -351,19 +351,19 @@
  "graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:bcd9ac9d7bf169118816b4abe2a8382eb66fc31fadd1807d13368cf7d54be924",
-  "path": "/tmp/arcana-verify-ibg2a84a/verifier-out/graph-0cb546a39500.json",
-  "source_commit": "0cb546a395008b501fd47c6b1037bcae8e7e664f"
+  "graph_digest": "sha256:c1921ef8092378c4ddd87b438d06c4bd882aafd0b4a2d9357e1a223939b7cdf6",
+  "path": "/tmp/arcana-verify-zq5wslpb/verifier-out/graph-1b697e97c684.json",
+  "source_commit": "1b697e97c6842ea92a86de0cc8933c18bd24cb14"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:e6538446cfd56c59803d38b2eab72822bb01118424bb6714f6dbd24a48480b09",
-  "path": "/tmp/arcana-verify-ibg2a84a/verifier-out/graph-head-7d556f852961.json",
-  "source_commit": "7d556f8529619f35007ba57a9ae06540f8002bcc",
+  "graph_digest": "sha256:ab03f75a3ea5a4d4c2acb3ff5da2cb5e321866335ab49bacfa4f56bce1660421",
+  "path": "/tmp/arcana-verify-zq5wslpb/verifier-out/graph-head-5c5dff76bdad.json",
+  "source_commit": "5c5dff76bdad9f0aa50b42ba53d0ada81a718b3f",
   "staleness": {
-   "checked_at_utc": "2026-11-07T00:44:55Z",
-   "checked_nodes": 356,
+   "checked_at_utc": "2026-11-07T04:10:20Z",
+   "checked_nodes": 358,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -743,6 +743,26 @@
       "from": "code_unit:.env.example",
       "provenance": "deterministic",
       "to": "code_unit:.github/graph-admission/tools/graph/process_observation.py",
+      "via": "global-fallback"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 0,
+    "entity": "code_unit:.github/graph-admission/tools/graph/python_contracts.py",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:.env.example",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/graph-admission/tools/graph/python_contracts.py",
       "via": "global-fallback"
      }
     ],
@@ -9796,6 +9816,76 @@
    {
     "boundary": "intra_unit",
     "depth": 2,
+    "entity": "receipt:receipts/graph/change-admission-pr161.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:tests/kc_generations/run_with_temp_pg.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-pr161.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revision_paths": [
+     {
+      "boundary": "intra_unit",
+      "depth": 0,
+      "entity": "receipt:receipts/graph/change-admission-pr161.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "deploys_to",
+        "from": "code_unit:.env.example",
+        "provenance": "deterministic",
+        "to": "receipt:receipts/graph/change-admission-pr161.json",
+        "via": "global-fallback"
+       }
+      ],
+      "revision": "base",
+      "section": "deterministic_core",
+      "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+     },
+     {
+      "boundary": "intra_unit",
+      "depth": 2,
+      "entity": "receipt:receipts/graph/change-admission-pr161.json",
+      "node_type": "receipt",
+      "path": [
+       {
+        "edge_type": "calls",
+        "from": "code_unit:.github/workflows/benchmark-scrutator.yml",
+        "inferred_by": "bounded-workflow-unknown-shell-candidate",
+        "provenance": "inferred",
+        "to": "code_unit:tests/kc_generations/run_with_temp_pg.sh",
+        "via": "unresolved-workflow-shell-closure"
+       },
+       {
+        "edge_type": "verifies",
+        "from": "receipt:receipts/graph/change-admission-pr161.json",
+        "provenance": "deterministic",
+        "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+        "via": "explicit-path"
+       }
+      ],
+      "revision": "head",
+      "section": "inferred_tail",
+      "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+     }
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 2,
     "entity": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
     "node_type": "receipt",
     "path": [
@@ -10006,7 +10096,7 @@
   ],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; global fallback: every node of the graph is affected (depth 0, synthetic containment hop); reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 384
+  "total": 386
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
@@ -10016,11 +10106,11 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261107T004201Z-7d556f85",
+ "receipt_id": "car-verify-20261107T040713Z-5c5dff76",
  "receipt_path": "receipts/graph/change-admission-kb-cons-01-n.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/kbcons01n3/scrutator"
+  "path": "/home/dev/aup/claude-work/kbcons01n4/scrutator"
  },
  "revision_selection": {
   "base": [
@@ -10461,6 +10551,7 @@
    "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
    "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
    "receipt:receipts/graph/change-admission-kcp-0025.json",
+   "receipt:receipts/graph/change-admission-pr161.json",
    "receipt:receipts/graph/change-admission-rate-limit-9060.json",
    "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
    "receipt:receipts/graph/exact-evidence-receiving.json",
@@ -10518,7 +10609,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-07T00:44:54Z",
+  "checked_at_utc": "2026-11-07T04:10:19Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -10758,7 +10849,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:4271fc2adc6f2dab131bc621f80f1541a811fe54a73cd6b3a1e713c0c44e65eb"
+    "head": "sha256:31886f6b89e34e68ee921bc5c10cf10dc591733db5876288cc05c4083fcf388b"
    },
    "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
    "node_type": "receipt",
@@ -10838,6 +10929,17 @@
   },
   {
    "content_hash": {
+    "base": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d",
+    "head": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d"
+   },
+   "entity": "receipt:receipts/graph/change-admission-pr161.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-pr161.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
     "base": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db",
     "head": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db"
    },
@@ -10893,14 +10995,14 @@
   }
  ],
  "tree": {
-  "commit": "7d556f8529619f35007ba57a9ae06540f8002bcc",
+  "commit": "5c5dff76bdad9f0aa50b42ba53d0ada81a718b3f",
   "dirty": false
  },
  "verdicts": [
   {
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-   "reason": "v-fitness: actionlint rejected workflow",
-   "verdict": "failed",
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-2b43e97319f91478"
@@ -10926,8 +11028,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "reason": "v-fitness: actionlint rejected workflow",
-   "verdict": "failed",
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-eea5ff169848609b"
@@ -10935,8 +11037,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy.yml",
-   "reason": "v-fitness: actionlint rejected workflow",
-   "verdict": "failed",
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-28802fbf11c83a2e"
@@ -10962,8 +11064,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/recall-regression.yml",
-   "reason": "v-fitness: actionlint rejected workflow",
-   "verdict": "failed",
+   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-251cde5034c907f0"
@@ -10971,7 +11073,7 @@
   },
   {
    "entity": "code_unit:benchmark/scrutator/live/granted_context_app.py",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED; v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-canary",
@@ -10981,8 +11083,8 @@
   },
   {
    "entity": "code_unit:contracts/http/scrutator-http.contract.ts",
-   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: project compiles, 0 errors; v-contract-diff: 85 contract edge(s) verified (consumer ⊆ provider); v-fitness: no new fitness violation",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff",
     "v-fitness",
@@ -11043,8 +11145,8 @@
   },
   {
    "entity": "code_unit:src/scrutator/health.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -11053,8 +11155,8 @@
   },
   {
    "entity": "code_unit:src/scrutator/kc_router.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-begin: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -11063,8 +11165,8 @@
   },
   {
    "entity": "code_unit:src/scrutator/ltm/router.py",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-fitness: no new fitness violation; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -11691,680 +11793,680 @@
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BeginReadRequestSchema",
-   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#KcChunkRequestSchema",
-   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#KcFetchRequestSchema",
-   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#KcSearchRequestSchema",
-   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#LeaseRequestSchema",
-   "reason": "v-contract-diff: added: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ProjectWritePreflightResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
-   "reason": "v-contract-diff: changed: no breaking change (1 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
   },
   {
    "entity": "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema",
-   "reason": "v-contract-diff: unchanged: no breaking change (0 change(s))",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-contract-diff"
    ]
@@ -12429,8 +12531,8 @@
   },
   {
    "entity": "route:DELETE /source",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-ltm-source: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12439,8 +12541,8 @@
   },
   {
    "entity": "route:DELETE /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12449,8 +12551,8 @@
   },
   {
    "entity": "route:DELETE /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12459,8 +12561,8 @@
   },
   {
    "entity": "route:DELETE /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12469,8 +12571,8 @@
   },
   {
    "entity": "route:DELETE /v1/project/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: delete-v1-project-index: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12479,7 +12581,7 @@
   },
   {
    "entity": "route:GET /__benchmark/fingerprint",
-   "reason": "v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED; v-canary: INFERRED_BOUNDARY_WITHOUT_CANARY: no canary result lists this entity (matrix P6, observed-edges-and-deploy-gate.v1 rule C1)",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-canary",
@@ -12489,8 +12591,8 @@
   },
   {
    "entity": "route:GET /entities",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-entities: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12499,8 +12601,8 @@
   },
   {
    "entity": "route:GET /events",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-events: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12509,8 +12611,8 @@
   },
   {
    "entity": "route:GET /graph",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-graph: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12519,8 +12621,8 @@
   },
   {
    "entity": "route:GET /health",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-health: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12529,8 +12631,8 @@
   },
   {
    "entity": "route:GET /jobs/{job_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-jobs-job-id: 404 from the handler (body differs from the router's no-match answer) on a route the resident OpenAPI declares: the resource is absent, the route is served",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12539,8 +12641,8 @@
   },
   {
    "entity": "route:GET /meta_facts",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-ltm-meta-facts: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12549,8 +12651,8 @@
   },
   {
    "entity": "route:GET /v1/chunks",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-chunks: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12559,8 +12661,8 @@
   },
   {
    "entity": "route:GET /v1/edges/{chunk_id}",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-edges-chunk-id: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12569,8 +12671,8 @@
   },
   {
    "entity": "route:GET /v1/index/capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12579,8 +12681,8 @@
   },
   {
    "entity": "route:GET /v1/index/rollback-capability",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-index-rollback-capability: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12589,8 +12691,8 @@
   },
   {
    "entity": "route:GET /v1/memories/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-memories-stats: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12599,8 +12701,8 @@
   },
   {
    "entity": "route:GET /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-namespaces: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12609,8 +12711,8 @@
   },
   {
    "entity": "route:GET /v1/navigate/outline",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-outline: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12619,8 +12721,8 @@
   },
   {
    "entity": "route:GET /v1/navigate/section",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-navigate-section: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12629,8 +12731,8 @@
   },
   {
    "entity": "route:GET /v1/project/write-preflight",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-project-write-preflight: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12639,8 +12741,8 @@
   },
   {
    "entity": "route:GET /v1/stats",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: get-v1-stats: status 200 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12649,8 +12751,8 @@
   },
   {
    "entity": "route:POST /ingest",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-ingest: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12659,8 +12761,8 @@
   },
   {
    "entity": "route:POST /recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-recall: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12669,8 +12771,8 @@
   },
   {
    "entity": "route:POST /reflect",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-ltm-reflect: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12679,8 +12781,8 @@
   },
   {
    "entity": "route:POST /v1/chunk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-chunk: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12689,8 +12791,8 @@
   },
   {
    "entity": "route:POST /v1/dream/analyze",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-dream-analyze: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12699,8 +12801,8 @@
   },
   {
    "entity": "route:POST /v1/edges",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12709,8 +12811,8 @@
   },
   {
    "entity": "route:POST /v1/edges/by-path",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-edges-by-path: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12719,8 +12821,8 @@
   },
   {
    "entity": "route:POST /v1/fetch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-fetch: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12729,8 +12831,8 @@
   },
   {
    "entity": "route:POST /v1/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12739,8 +12841,8 @@
   },
   {
    "entity": "route:POST /v1/index/batch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-batch: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12749,8 +12851,8 @@
   },
   {
    "entity": "route:POST /v1/index/capability-projection",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-capability-projection: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12759,8 +12861,8 @@
   },
   {
    "entity": "route:POST /v1/index/evidence-exact",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-index-evidence-exact: status 401 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12769,8 +12871,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/begin",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-begin: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12779,8 +12881,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/chunk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-chunk: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12789,8 +12891,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/fetch",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-fetch: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12799,8 +12901,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/graph",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-graph: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12809,8 +12911,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/related",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-related: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12819,8 +12921,8 @@
   },
   {
    "entity": "route:POST /v1/kc/read/search",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-kc-read-search: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12829,8 +12931,8 @@
   },
   {
    "entity": "route:POST /v1/memories",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12839,8 +12941,8 @@
   },
   {
    "entity": "route:POST /v1/memories/bulk",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-bulk: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12849,8 +12951,8 @@
   },
   {
    "entity": "route:POST /v1/memories/recall",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-memories-recall: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12859,8 +12961,8 @@
   },
   {
    "entity": "route:POST /v1/namespaces",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-namespaces: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12869,8 +12971,8 @@
   },
   {
    "entity": "route:POST /v1/project/index",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-project-index: status 403 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12879,8 +12981,8 @@
   },
   {
    "entity": "route:POST /v1/search",
-   "reason": "v-contract-diff: no contract edge from this entity at head; nothing to project; v-route-config: RC-03 only: served at head and no consumer left dangling. RC-01/RC-02 INAPPLICABLE_FRAMEWORK — this tree declares no @nestjs/ package, so there is no bootstrap prefix and no @Module graph to check; v-canary-1: canary scrutator-route-presence (post) on kb-production: post-v1-search: status 422 != 404: the route is served; declared in the resident OpenAPI",
-   "verdict": "verified",
+   "reason": "v-contract-diff: contract_diff refused: PYDANTIC_NOT_MEASURED",
+   "verdict": "not_measured",
    "verifier_ids": [
     "v-canary-1",
     "v-contract-diff",
@@ -12896,8 +12998,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/kbcons01n3/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kbcons01n3/scrutator/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify-ibg2a84a/verifier-out/type-check-sll2jtfs/check.tsbuildinfo --listFiles",
-   "duration_s": 9.23,
+   "command": "/home/dev/aup/claude-work/kbcons01n4/scrutator/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/kbcons01n4/scrutator/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify-zq5wslpb/verifier-out/type-check-s54z4oew/check.tsbuildinfo --listFiles",
+   "duration_s": 7.83,
    "entities": [
     "code_unit:contracts/http/scrutator-http.contract.ts",
     "deployable_unit:."
@@ -12909,13 +13011,13 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-07T00:45:16Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-07T04:10:38Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
-   "command": "tools/graph/contract_diff.py.run_diff(base=0cb546a39500, head=7d556f852961, graph=head graph)",
-   "duration_s": 0.57,
+   "command": "tools/graph/contract_diff.py.run_diff(base=1b697e97c684, head=5c5dff76bdad, graph=head graph)",
+   "duration_s": 8.97,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:contracts/http/scrutator-http.contract.ts",
@@ -13055,153 +13157,153 @@
     "route:POST /v1/search"
    ],
    "entity_verdicts": {
-    "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
-    "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
-    "code_unit:src/scrutator/health.py": "verified",
-    "code_unit:src/scrutator/kc_router.py": "verified",
-    "code_unit:src/scrutator/ltm/router.py": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BeginReadRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#CitationSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#EntitySchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#KcChunkRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#KcFetchRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#KcSearchRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#LeaseRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ProjectWritePreflightResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema": "verified",
-    "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema": "verified",
-    "route:DELETE /source": "verified",
-    "route:DELETE /v1/edges": "verified",
-    "route:DELETE /v1/index": "verified",
-    "route:DELETE /v1/memories": "verified",
-    "route:DELETE /v1/project/index": "verified",
-    "route:GET /__benchmark/fingerprint": "verified",
-    "route:GET /entities": "verified",
-    "route:GET /events": "verified",
-    "route:GET /graph": "verified",
-    "route:GET /health": "verified",
-    "route:GET /jobs/{job_id}": "verified",
-    "route:GET /meta_facts": "verified",
-    "route:GET /v1/chunks": "verified",
-    "route:GET /v1/edges/{chunk_id}": "verified",
-    "route:GET /v1/index/capability": "verified",
-    "route:GET /v1/index/rollback-capability": "verified",
-    "route:GET /v1/memories/stats": "verified",
-    "route:GET /v1/namespaces": "verified",
-    "route:GET /v1/navigate/outline": "verified",
-    "route:GET /v1/navigate/section": "verified",
-    "route:GET /v1/project/write-preflight": "verified",
-    "route:GET /v1/stats": "verified",
-    "route:POST /ingest": "verified",
-    "route:POST /recall": "verified",
-    "route:POST /reflect": "verified",
-    "route:POST /v1/chunk": "verified",
-    "route:POST /v1/dream/analyze": "verified",
-    "route:POST /v1/edges": "verified",
-    "route:POST /v1/edges/by-path": "verified",
-    "route:POST /v1/fetch": "verified",
-    "route:POST /v1/index": "verified",
-    "route:POST /v1/index/batch": "verified",
-    "route:POST /v1/index/capability-projection": "verified",
-    "route:POST /v1/index/evidence-exact": "verified",
-    "route:POST /v1/kc/read/begin": "verified",
-    "route:POST /v1/kc/read/chunk": "verified",
-    "route:POST /v1/kc/read/fetch": "verified",
-    "route:POST /v1/kc/read/graph": "verified",
-    "route:POST /v1/kc/read/related": "verified",
-    "route:POST /v1/kc/read/search": "verified",
-    "route:POST /v1/memories": "verified",
-    "route:POST /v1/memories/bulk": "verified",
-    "route:POST /v1/memories/recall": "verified",
-    "route:POST /v1/namespaces": "verified",
-    "route:POST /v1/project/index": "verified",
-    "route:POST /v1/search": "verified"
+    "code_unit:benchmark/scrutator/live/granted_context_app.py": "not_measured",
+    "code_unit:contracts/http/scrutator-http.contract.ts": "not_measured",
+    "code_unit:src/scrutator/health.py": "not_measured",
+    "code_unit:src/scrutator/kc_router.py": "not_measured",
+    "code_unit:src/scrutator/ltm/router.py": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BatchIndexSucceededSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BeginReadRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#BoostScoreSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkManifestEntrySchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ChunkSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#CitationSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#CrossReferenceSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EntityEdgeSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#EntitySchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#FactTypeSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#GroupedSearchResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#IndexStatsSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#IngestResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#JobStatusSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#KcChunkRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#KcFetchRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#KcSearchRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#LeaseRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryIndexResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryRecordSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#MetaFactSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceInfoSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#OffsetRangeSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#OutlineResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ProjectWritePreflightResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#RecallResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#RollbackCapabilityResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SearchResultSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionContextSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SectionSelfSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteResponseSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEdgeSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphSchema": "not_measured",
+    "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema": "not_measured",
+    "route:DELETE /source": "not_measured",
+    "route:DELETE /v1/edges": "not_measured",
+    "route:DELETE /v1/index": "not_measured",
+    "route:DELETE /v1/memories": "not_measured",
+    "route:DELETE /v1/project/index": "not_measured",
+    "route:GET /__benchmark/fingerprint": "not_measured",
+    "route:GET /entities": "not_measured",
+    "route:GET /events": "not_measured",
+    "route:GET /graph": "not_measured",
+    "route:GET /health": "not_measured",
+    "route:GET /jobs/{job_id}": "not_measured",
+    "route:GET /meta_facts": "not_measured",
+    "route:GET /v1/chunks": "not_measured",
+    "route:GET /v1/edges/{chunk_id}": "not_measured",
+    "route:GET /v1/index/capability": "not_measured",
+    "route:GET /v1/index/rollback-capability": "not_measured",
+    "route:GET /v1/memories/stats": "not_measured",
+    "route:GET /v1/namespaces": "not_measured",
+    "route:GET /v1/navigate/outline": "not_measured",
+    "route:GET /v1/navigate/section": "not_measured",
+    "route:GET /v1/project/write-preflight": "not_measured",
+    "route:GET /v1/stats": "not_measured",
+    "route:POST /ingest": "not_measured",
+    "route:POST /recall": "not_measured",
+    "route:POST /reflect": "not_measured",
+    "route:POST /v1/chunk": "not_measured",
+    "route:POST /v1/dream/analyze": "not_measured",
+    "route:POST /v1/edges": "not_measured",
+    "route:POST /v1/edges/by-path": "not_measured",
+    "route:POST /v1/fetch": "not_measured",
+    "route:POST /v1/index": "not_measured",
+    "route:POST /v1/index/batch": "not_measured",
+    "route:POST /v1/index/capability-projection": "not_measured",
+    "route:POST /v1/index/evidence-exact": "not_measured",
+    "route:POST /v1/kc/read/begin": "not_measured",
+    "route:POST /v1/kc/read/chunk": "not_measured",
+    "route:POST /v1/kc/read/fetch": "not_measured",
+    "route:POST /v1/kc/read/graph": "not_measured",
+    "route:POST /v1/kc/read/related": "not_measured",
+    "route:POST /v1/kc/read/search": "not_measured",
+    "route:POST /v1/memories": "not_measured",
+    "route:POST /v1/memories/bulk": "not_measured",
+    "route:POST /v1/memories/recall": "not_measured",
+    "route:POST /v1/namespaces": "not_measured",
+    "route:POST /v1/project/index": "not_measured",
+    "route:POST /v1/search": "not_measured"
    },
-   "exit_code": 0,
+   "exit_code": 2,
    "id": "v-contract-diff",
    "kind": "contract_diff",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-contract-diff.json",
-   "started_at_utc": "2026-11-07T00:45:25Z",
-   "summary": "81→86 contracts, breaking 0, edges {'verified': 85}"
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-contract-diff.txt",
+   "started_at_utc": "2026-11-07T04:10:46Z",
+   "summary": "refusal PYDANTIC_NOT_MEASURED"
   },
   {
    "command": "verify.py route_config_consistency RC-01 prefix / RC-02 registration / RC-03 served",
-   "duration_s": 0.01,
+   "duration_s": 0.0,
    "entities": [
     "route:DELETE /source",
     "route:DELETE /v1/edges",
@@ -13301,8 +13403,8 @@
    "exit_code": 0,
    "id": "v-route-config",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-route-config.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-route-config.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
    "summary": "46 route(s), 0 failed"
   },
   {
@@ -13317,9 +13419,9 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
-   "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 5: local action/checkout path scope unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 4 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
+   "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -13333,8 +13435,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13349,8 +13451,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13365,8 +13467,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
    "summary": "workflow shell caller closure not measured: job deploy step 1: line 1: wrapper execution scope/options unresolved; job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13381,9 +13483,9 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
-   "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 5: local action/checkout path scope unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 6 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
+   "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -13397,8 +13499,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-07T00:45:26Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-07T04:10:55Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13413,9 +13515,9 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-07T00:45:27Z",
-   "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 18: command/process substitution closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 23: local action/checkout path scope unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 4: command/process substitution closure is unresolved; job graph-admission step 8: checkout root or source-affecting workflow environment unresolved; job graph-admission step 8: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 31 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-07T04:10:56Z",
+   "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: line 8: dynamic command/alias/eval/function scope; job graph-admission step 19: line 9: dynamic command/alias/eval/function scope; job graph-admission step 1: command/process substitution closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: command/process substitution closure is unresolved; job graph-admission step 23: checkout root or source-affecting workflow environment unresolved; job graph-admission step 23: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 24: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 25: checkout root or source-affecting workflow environment unresolved; job graph-admission step 25: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 26: checkout root or source-affecting workflow environment unresolved; job graph-admission step 26: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 28: checkout root or source-affecting workflow environment unresolved; job graph-admission step 2: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 5: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 34 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -13429,13 +13531,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-07T00:45:27Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-07T04:10:56Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py config_schema: keys read at head ⊆ declared keys",
-   "duration_s": 4.59,
+   "duration_s": 5.12,
    "entities": [
     "code_unit:tests/kc_generations/conftest.py",
     "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
@@ -13451,13 +13553,13 @@
    "exit_code": 0,
    "id": "v-config-schema",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-config-schema.json",
-   "started_at_utc": "2026-11-07T00:45:27Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-config-schema.json",
+   "started_at_utc": "2026-11-07T04:10:56Z",
    "summary": "3 source(s), 0 new / 25 frozen undeclared reads, 0 failed; 5 vendored file(s) not attributed to this repository (Arcanada-one/arcanada-universal-program)"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 17.49,
+   "duration_s": 19.62,
    "entities": [
     "code_unit:.github/workflows/benchmark-scrutator.yml",
     "code_unit:.github/workflows/ci.yml",
@@ -13557,14 +13659,14 @@
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "code_unit:.github/workflows/benchmark-scrutator.yml": "failed",
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "verified",
     "code_unit:.github/workflows/ci.yml": "verified",
     "code_unit:.github/workflows/dependabot-auto-merge.yml": "verified",
-    "code_unit:.github/workflows/deploy-kc-corpus.yml": "failed",
-    "code_unit:.github/workflows/deploy.yml": "failed",
+    "code_unit:.github/workflows/deploy-kc-corpus.yml": "verified",
+    "code_unit:.github/workflows/deploy.yml": "verified",
     "code_unit:.github/workflows/graph-admission-call.yml": "verified",
     "code_unit:.github/workflows/graph-admission.yml": "not_measured",
-    "code_unit:.github/workflows/recall-regression.yml": "failed",
+    "code_unit:.github/workflows/recall-regression.yml": "verified",
     "code_unit:benchmark/scrutator/live/granted_context_app.py": "verified",
     "code_unit:contracts/http/scrutator-http.contract.ts": "verified",
     "code_unit:deploy/scrutator-deploy-transaction.sh": "verified",
@@ -13654,16 +13756,16 @@
     "code_unit:tools/kc_generation_mutation_check.py": "verified",
     "deployable_unit:.": "verified"
    },
-   "exit_code": 1,
+   "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-07T00:45:31Z",
-   "summary": "0 finding(s): 0 new / 0 frozen; 4 entity(ies) failed"
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-07T04:11:02Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
    "command": "verify.py doc_reference: path / route / model references of affected documents resolve at head",
-   "duration_s": 0.21,
+   "duration_s": 0.06,
    "entities": [
     "document:AGENTS.md",
     "document:README.md",
@@ -13683,13 +13785,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-11-07T00:45:49Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-07T04:11:21Z",
    "summary": "6 document(s), 0 failed"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.6,
+   "duration_s": 0.09,
    "entities": [
     "code_unit:src/scrutator/health.py",
     "code_unit:src/scrutator/kc_router.py",
@@ -13794,12 +13896,12 @@
    "id": "v-canary-1",
    "kind": "canary",
    "output_ref": "receipts/canary/kb-cons-01-n-route-presence/result.json",
-   "started_at_utc": "2026-11-07T00:45:49Z",
+   "started_at_utc": "2026-11-07T04:11:21Z",
    "summary": "receipts/canary/kb-cons-01-n-route-presence/result.json: 48 verified / 0 failed / 0 not_measured"
   },
   {
    "command": "tools/graph/deploy_gate.py canary --plan <plan> --phase pre|post (results supplied with --canary)",
-   "duration_s": 0.6,
+   "duration_s": 0.09,
    "entities": [
     "code_unit:benchmark/scrutator/live/granted_context_app.py",
     "code_unit:tests/kc_generations/conftest.py",
@@ -13819,8 +13921,8 @@
    "exit_code": 0,
    "id": "v-canary",
    "kind": "canary",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-canary.json",
-   "started_at_utc": "2026-11-07T00:45:49Z",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-canary.json",
+   "started_at_utc": "2026-11-07T04:11:21Z",
    "summary": "1 canary result(s), 1 committed at head; 48 verified / 0 failed / 6 not_measured of 54 entities"
   },
   {
@@ -13835,9 +13937,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-07T00:46:17Z",
+   "started_at_utc": "2026-11-07T04:11:26Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13852,9 +13954,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-061e7873be95708f",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-syntax-061e7873be95708f.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-07T00:46:27Z",
+   "started_at_utc": "2026-11-07T04:11:31Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13869,9 +13971,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-42dd40559cdd3dfa",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-syntax-42dd40559cdd3dfa.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-syntax-42dd40559cdd3dfa.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-07T00:46:32Z",
+   "started_at_utc": "2026-11-07T04:11:33Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13886,9 +13988,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-07T00:46:32Z",
+   "started_at_utc": "2026-11-07T04:11:33Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
@@ -13903,9 +14005,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-061e7873be95708f",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-061e7873be95708f.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-behavior-061e7873be95708f.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-07T00:46:33Z",
+   "started_at_utc": "2026-11-07T04:11:33Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 10: directory transition has unresolved execution cwd; line 111: multiline/opaque shell statement; line 112: multiline/opaque shell statement; line 113: multiline/opaque shell statement; line 16: relative execution cwd is not declared; line 17: relative execution cwd is not declared; line 18: relative execution cwd is not declared; line 27: dynamic load/substitution; line 30: dynamic load/substitution; line 34: directory transition has unresolved execution cwd; line 41: directory transition has unresolved execution cwd; line 45: dynamic load/substitution; line 53: multiline/opaque shell statement; line 54: multiline/opaque shell statement; line 55: multiline/opaque shell statement; line 64: multiline/opaque shell statement; line 65: multiline/opaque shell statement; line 66: multiline/opaque shell statement; line 75: multiline/opaque shell statement; line 76: multiline/opaque shell statement; line 77: multiline/opaque shell statement; line 86: multiline/opaque shell statement; line 87: multiline/opaque shell statement; line 88: multiline/opaque shell statement; line 97: multiline/opaque shell statement; line 98: multiline/opaque shell statement; line 99: multiline/opaque shell statement"
   },
   {
@@ -13920,9 +14022,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-42dd40559cdd3dfa",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-shell-behavior-42dd40559cdd3dfa.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-shell-behavior-42dd40559cdd3dfa.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-07T00:46:33Z",
+   "started_at_utc": "2026-11-07T04:11:33Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 11: directory transition has unresolved execution cwd; line 14: dynamic command/alias/eval; line 16: dynamic command/alias/eval; line 17: multiline/opaque shell statement; line 18: wrapper options/child command unresolved; line 20: directory transition has unresolved execution cwd"
   },
   {
@@ -13937,9 +14039,9 @@
    "exit_code": 127,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/tmp/arcana-verify-ibg2a84a/verifier-out/v-global-fallback-test-root.txt",
+   "output_ref": "/tmp/arcana-verify-zq5wslpb/verifier-out/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-07T00:46:33Z",
+   "started_at_utc": "2026-11-07T04:11:33Z",
    "summary": "complete fallback suite: not_measured",
    "timeout_seconds": 900
   }
@@ -13965,7 +14067,7 @@
    {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "33 affected entity(ies) owe no verdict (receipt: 33): unchanged at both revisions and given no verifier by the matrix"
+    "text": "34 affected entity(ies) owe no verdict (receipt: 34): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -14592,6 +14694,7 @@
    "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json": [],
    "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json": [],
    "receipt:receipts/graph/change-admission-kcp-0025.json": [],
+   "receipt:receipts/graph/change-admission-pr161.json": [],
    "receipt:receipts/graph/change-admission-rate-limit-9060.json": [],
    "receipt:receipts/graph/ctl-bundle-refresh-20260925.json": [],
    "receipt:receipts/graph/exact-evidence-receiving.json": [],
@@ -14829,9 +14932,9 @@
    ]
   },
   "seconds": {
-   "prepare": 10.24,
-   "total": 273.45,
-   "verifiers": 33.3
+   "prepare": 7.48,
+   "total": 260.09,
+   "verifiers": 41.78
   }
  },
  "work_item": "0d93458a-152b-4c0c-b001-35d57f960340"
