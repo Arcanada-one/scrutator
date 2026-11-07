@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Awaitable, Callable
 from typing import Literal
 
 from scrutator.config import settings
+from scrutator.db.kc_generations import GenerationEligibility
 from scrutator.db.models import (
     Citation,
     GroupedSearchResult,
@@ -93,6 +95,8 @@ async def search(
     include_content: bool = True,
     group_by: Literal["document", "section"] | None = None,
     maturity: Literal["draft", "validated", "production"] | None = None,
+    generation: GenerationEligibility | None = None,
+    pre_disclosure_check: Callable[[], Awaitable[None]] | None = None,
 ) -> SearchResponse:
     """Execute hybrid search: embed query → dense+FTS → RRF → optional ColBERT rerank → results.
 
@@ -107,6 +111,11 @@ async def search(
 
     SRCH-0021 (D-REQ-05/06): group_by is opt-in and post-fusion only — absent (None, the
     default) leaves every prior code path byte-identical (V-AC-6).
+
+    KB-CONS-01-N: ``generation`` (a server-built ``GenerationEligibility``) constrains EVERY ranking arm
+    to the captured private generation + authorized project; the ``project`` argument is never trusted for
+    it. ``pre_disclosure_check`` is awaited before any reranker receives candidate bodies and again before
+    the response is returned (the response/use commit point); it raises to refuse.
     """
     start = time.monotonic()
 
@@ -118,6 +127,7 @@ async def search(
             source_type=source_type,
             limit=limit,
             maturity=maturity,
+            generation=generation,
         )
         results = []
         for r in raw:
@@ -161,7 +171,10 @@ async def search(
                 fetch_multiplier=settings.rerank_pool_multiplier,
                 return_pool=True,
                 maturity=maturity,
+                generation=generation,
             )
+            if pre_disclosure_check is not None:
+                await pre_disclosure_check()  # no external model sees bodies before the use boundary
             # Rerank via ColBERT MaxSim (sets .score and .citation on returned results)
             results = await rerank(query=query, candidates=results, top_k=limit)
         else:
@@ -173,6 +186,7 @@ async def search(
                 limit=limit,
                 query_sparse=query_sparse,
                 maturity=maturity,
+                generation=generation,
             )
             # M1: populate citation on hybrid results (score_kind=rrf)
             for r in results:
@@ -188,6 +202,9 @@ async def search(
     if not include_content:
         for r in results:
             r.content = ""
+
+    if pre_disclosure_check is not None:
+        await pre_disclosure_check()  # response/use commit point
 
     elapsed_ms = (time.monotonic() - start) * 1000
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 
+import asyncpg
 from fastapi import Depends, HTTPException, Request
 
 from scrutator.auth.models import TenantContext
@@ -35,8 +36,40 @@ async def _namespace_ids_to_names(namespace_ids: frozenset[int]) -> frozenset[st
     return frozenset(row["name"] for row in rows)
 
 
+async def _hide_private_namespaces(namespace_ids: frozenset[int]) -> frozenset[int]:
+    """KB-CONS-01-N: legacy namespace-only routes must never serve a namespace that hosts a private
+    generation scope (their candidate relation has no generation predicate). Removing it from the
+    legacy context closes /v1/search, /v1/fetch, /v1/chunks, navigation, edges, memories and LTM at one
+    choke point. A database without the scope table has no private scopes."""
+    if not namespace_ids:
+        return namespace_ids
+    pool = await get_pool()
+    try:
+        async with pool.acquire() as conn:
+            hidden = await conn.fetchval(
+                "SELECT COALESCE(array_agg(DISTINCT namespace_id), '{}') FROM kc_corpus_scopes "
+                "WHERE namespace_id = ANY($1::int[])",
+                list(namespace_ids),
+            )
+    except asyncpg.UndefinedTableError:
+        return namespace_ids
+    return namespace_ids - frozenset(hidden or ())
+
+
 async def require_tenant_context(request: Request) -> TenantContext:
-    """FastAPI dependency: verify the bearer credential, resolve the allowed-namespace set."""
+    """FastAPI dependency: verify the bearer credential, resolve the allowed-namespace set.
+
+    Legacy routes: namespaces hosting a private generation scope are removed from the context."""
+    return await _tenant_context(request, include_private=False)
+
+
+async def require_private_tenant_context(request: Request) -> TenantContext:
+    """Same verification, but private-scope namespaces stay visible. ONLY the dedicated private
+    generation routes may depend on this; they still bind every operation to a lease + authority."""
+    return await _tenant_context(request, include_private=True)
+
+
+async def _tenant_context(request: Request, *, include_private: bool) -> TenantContext:
     authorization = request.headers.get("authorization")
     try:
         principal = await verify_bearer_token(authorization)
@@ -72,6 +105,8 @@ async def require_tenant_context(request: Request) -> TenantContext:
         )
 
     allowed_ids = await resolve_allowed_namespaces(principal.principal_id)
+    if not include_private:
+        allowed_ids = await _hide_private_namespaces(allowed_ids)
     allowed_names = await _namespace_ids_to_names(allowed_ids)
     return TenantContext(
         principal_id=principal.principal_id,
