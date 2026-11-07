@@ -34,26 +34,40 @@ start_docker_cluster() {
     echo "docker is required when KC_PG_DOCKER_IMAGE is set" >&2
     exit 1
   fi
-  NAME="kc-temp-pg-$$-$RANDOM"
-  cleanup() { docker rm -f "$NAME" >/dev/null 2>&1 || true; }
+  NAME="kc-temp-pg-$$-${RANDOM:-0}"
+  PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+  cleanup() {
+    docker rm -f "$NAME" >/dev/null 2>&1 || true
+  }
   trap cleanup EXIT
-  docker run -d --rm --name "$NAME" \
-    -e POSTGRES_HOST_AUTH_METHOD=trust \
-    -p 127.0.0.1::5432 \
-    "$KC_PG_DOCKER_IMAGE" >/dev/null
-  for _ in $(seq 1 100); do
+  echo "run_with_temp_pg: pulling $KC_PG_DOCKER_IMAGE" >&2
+  docker pull "$KC_PG_DOCKER_IMAGE"
+  echo "run_with_temp_pg: starting disposable container $NAME on 127.0.0.1:$PORT" >&2
+  # Explicit host port (not docker's empty :: ephemeral form): clearer errors on shared runners.
+  # POSTGRES_PASSWORD is set even with trust so entrypoint variants that require it still boot.
+  if ! docker run -d --name "$NAME" \
+      -e POSTGRES_HOST_AUTH_METHOD=trust \
+      -e POSTGRES_PASSWORD=postgres \
+      -p "127.0.0.1:${PORT}:5432" \
+      "$KC_PG_DOCKER_IMAGE"; then
+    echo "run_with_temp_pg: docker run failed" >&2
+    exit 1
+  fi
+  ready=0
+  for _ in $(seq 1 150); do
     if docker exec "$NAME" pg_isready -U postgres >/dev/null 2>&1; then
+      ready=1
       break
     fi
     sleep 0.1
   done
-  docker exec "$NAME" pg_isready -U postgres >/dev/null
-  PORT="$(docker port "$NAME" 5432/tcp | sed 's/.*://' | head -n1)"
-  if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
-    echo "invalid allocated PostgreSQL port from docker" >&2
+  if [[ "$ready" -ne 1 ]]; then
+    echo "run_with_temp_pg: PostgreSQL container did not become ready" >&2
+    docker logs "$NAME" >&2 || true
     exit 1
   fi
-  export KC_TEST_PG_ADMIN_DSN="postgresql://postgres@127.0.0.1:$PORT/postgres"
+  export KC_TEST_PG_ADMIN_DSN="postgresql://postgres@127.0.0.1:${PORT}/postgres"
+  echo "run_with_temp_pg: disposable DSN ready (port $PORT)" >&2
 }
 
 if [[ -n "${KC_PG_BIN:-}" ]]; then
@@ -66,4 +80,5 @@ else
 fi
 
 cd "$REPO"
+echo "run_with_temp_pg: executing native pytest suite" >&2
 PYTHONPATH="$REPO/src:$REPO" python3 -m pytest tests/kc_generations tests/test_kc_router.py -p no:cacheprovider "$@"
