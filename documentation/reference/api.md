@@ -23,6 +23,12 @@ route addition or removal must update this page in the same pull request.
 | `POST /v1/index/batch` | Index a bounded same-namespace batch |
 | `POST /v1/search` | Run hybrid retrieval |
 | `POST /v1/fetch` | Fetch a document or bounded range by opaque ID |
+| `POST /v1/kc/read/begin` | Capture one private-generation selection and open its retention lease; refuses `CURRENT_AUTHORITY_UNAVAILABLE` unless an explicit authority backend is configured |
+| `POST /v1/kc/read/search` | Hybrid retrieval inside the captured private generation (lease-bound; request project/generation fields are not inputs) |
+| `POST /v1/kc/read/fetch` | Exact fetch of one member of the captured private generation |
+| `POST /v1/kc/read/chunk` | Read one chunk of the captured private generation |
+| `POST /v1/kc/read/related` | Related view inside the captured private generation (both edge endpoints must belong to it) |
+| `POST /v1/kc/read/graph` | Always `UNSUPPORTED_PRIVATE_OPERATION` for a private generation |
 | `GET /v1/navigate/outline` | Build a source outline |
 | `GET /v1/navigate/section` | Read section context for one chunk |
 | `GET /v1/chunks` | Look up chunks |
