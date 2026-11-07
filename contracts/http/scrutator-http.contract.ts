@@ -44,6 +44,12 @@ export type ScrutatorRouteRequest =
   | "POST /v1/index/batch"
   | "POST /v1/index/capability-projection"
   | "POST /v1/index/evidence-exact"
+  | "POST /v1/kc/read/begin"
+  | "POST /v1/kc/read/chunk"
+  | "POST /v1/kc/read/fetch"
+  | "POST /v1/kc/read/graph"
+  | "POST /v1/kc/read/related"
+  | "POST /v1/kc/read/search"
   | "POST /v1/ltm/ingest"
   | "POST /v1/ltm/recall"
   | "POST /v1/ltm/reflect"
@@ -84,6 +90,13 @@ export const BatchIndexSucceededSchema = z.object({
 
 export const BatchIndexResponseSchema = z.object({
     results: z.array(z.union([BatchIndexSucceededSchema, BatchIndexFailedSchema])),
+  });
+
+export const BeginReadRequestSchema = z.object({
+    namespace: z.string(),
+    project: z.string(),
+    purpose: z.string(),
+    operation_id: z.string(),
   });
 
 export const BoostScoreSchema = z.object({
@@ -458,6 +471,28 @@ export const IngestResponseSchema = z.object({
     total_chunks: z.number().int().optional(),
     enrichment: z.enum(["complete", "failed", "not_applicable"]).optional(),
     enrichment_error: z.string().nullable().optional(),
+  });
+
+export const KcChunkRequestSchema = z.object({
+    lease_id: z.string(),
+    chunk_id: z.string(),
+  });
+
+export const KcFetchRequestSchema = z.object({
+    lease_id: z.string(),
+    member_id: z.string(),
+  });
+
+export const KcSearchRequestSchema = z.object({
+    lease_id: z.string(),
+    query: z.string(),
+    limit: z.number().int().optional(),
+    include_content: z.boolean().optional(),
+    group_by: z.enum(["document", "section"]).nullable().optional(),
+  });
+
+export const LeaseRequestSchema = z.object({
+    lease_id: z.string(),
   });
 
 export const LtmJobSchema = z.object({

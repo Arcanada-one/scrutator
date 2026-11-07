@@ -12,6 +12,7 @@ import numpy as np
 
 from scrutator.db.connection import acquire_search_connection, get_pool
 from scrutator.db.exact_generation import matches_generation
+from scrutator.db.kc_generations import GenerationEligibility, eligibility_cte
 from scrutator.db.models import (
     ChunkLookupResult,
     NamespaceInfo,
@@ -761,6 +762,13 @@ def _maturity_clause_and_param(maturity: str | None, param_idx: int) -> tuple[st
     )
 
 
+def _generation_cte(generation: GenerationEligibility | None, start_index: int) -> tuple[str, list[Any]]:
+    """KB-CONS-01-N: ``("", [])`` for ordinary namespaces, else the ``eligible`` CTE fragment + its params."""
+    if generation is None:
+        return "", []
+    return eligibility_cte(generation, start_index)
+
+
 async def hybrid_search(
     query_embedding: list[float],
     query_text: str,
@@ -770,6 +778,7 @@ async def hybrid_search(
     fetch_multiplier: int = 3,
     return_pool: bool = False,
     maturity: str | None = None,
+    generation: GenerationEligibility | None = None,
 ) -> list[SearchResult]:
     """Hybrid search: dense cosine + sparse lexical + FTS with RRF ranking.
 
@@ -784,7 +793,13 @@ async def hybrid_search(
 
     ARAS-0057: ``maturity`` sets a pre-ranking floor inside every candidate CTE
     before its LIMIT. Only one bound ``text[]`` parameter is added for all arms.
+
+    KB-CONS-01-N: ``generation`` (private profile) swaps the relation read by EVERY candidate arm from
+    ``chunks`` to the materialized ``eligible`` relation (authorized namespace + project + captured sealed
+    generation membership), so eligibility is applied before any rank/window/LIMIT and before rerank.
+    ``None`` leaves the SQL text of every ordinary namespace byte-identical.
     """
+    arm_rel = "chunks" if generation is None else "eligible"
     pool = await get_pool()
     vector = np.array(query_embedding, dtype=np.float32)
     fetch_limit = limit * fetch_multiplier
@@ -810,14 +825,16 @@ async def hybrid_search(
         ]
         if maturity_values is not None:
             params.append(maturity_values)
+        gen_cte, gen_params = _generation_cte(generation, len(params) + 1)
+        params.extend(gen_params)
         async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
                 f"""
-                WITH semantic AS (
+                WITH {gen_cte}semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY c.embedding_dense <=> $1, c.id ASC
                     ) AS rank
-                    FROM chunks c
+                    FROM {arm_rel} c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
                       {maturity_clause}
@@ -830,7 +847,7 @@ async def hybrid_search(
                                + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
                                  c.id ASC
                     ) AS rank
-                    FROM chunks c
+                    FROM {arm_rel} c
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
@@ -852,7 +869,7 @@ async def hybrid_search(
                             FROM jsonb_each_text($6::jsonb) AS q(key, value)
                         ) AS sparse_score
                         FROM sparse_vectors sv
-                        JOIN chunks c ON c.id = sv.chunk_id
+                        JOIN {arm_rel} c ON c.id = sv.chunk_id
                         WHERE c.namespace_id = $2
                           {maturity_clause}
                     ) AS scored
@@ -895,14 +912,16 @@ async def hybrid_search(
         ]
         if maturity_values is not None:
             params.append(maturity_values)
+        gen_cte, gen_params = _generation_cte(generation, len(params) + 1)
+        params.extend(gen_params)
         async with acquire_search_connection(pool) as conn:
             rows = await conn.fetch(
                 f"""
-                WITH semantic AS (
+                WITH {gen_cte}semantic AS (
                     SELECT c.id, ROW_NUMBER() OVER (
                         ORDER BY c.embedding_dense <=> $1, c.id ASC
                     ) AS rank
-                    FROM chunks c
+                    FROM {arm_rel} c
                     WHERE c.namespace_id = $2
                       AND c.embedding_dense IS NOT NULL
                       {maturity_clause}
@@ -915,7 +934,7 @@ async def hybrid_search(
                                + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
                                  c.id ASC
                     ) AS rank
-                    FROM chunks c
+                    FROM {arm_rel} c
                     WHERE c.namespace_id = $2
                       AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                            OR c.textsearch_en @@ plainto_tsquery('english', $4))
@@ -1676,8 +1695,11 @@ async def search_with_filters(
     importance_boost: bool = False,
     limit: int = 10,
     maturity: str | None = None,
+    generation: GenerationEligibility | None = None,
 ) -> list[dict[str, Any]]:
-    """Hybrid search with additional metadata filters for memory recall."""
+    """Hybrid search with additional metadata filters for memory recall.
+
+    KB-CONS-01-N: ``generation`` routes both arms through the materialized ``eligible`` relation."""
     from scrutator.search.embedder import embed_single
 
     query_embedding = await embed_single(query_text)
@@ -1713,6 +1735,9 @@ async def search_with_filters(
         params.append(_maturity_values_for_floor(maturity))
         param_idx += 1
 
+    gen_cte, gen_params = _generation_cte(generation, param_idx)
+    params.extend(gen_params)
+    arm_rel = "chunks" if generation is None else "eligible"
     extra_where = ""
     if conditions:
         extra_where = " AND " + " AND ".join(conditions)
@@ -1725,11 +1750,11 @@ async def search_with_filters(
     async with acquire_search_connection(pool) as conn:
         rows = await conn.fetch(
             f"""
-            WITH semantic AS (
+            WITH {gen_cte}semantic AS (
                 SELECT c.id, ROW_NUMBER() OVER (
                     ORDER BY c.embedding_dense <=> $1, c.id ASC
                 ) AS rank
-                FROM chunks c
+                FROM {arm_rel} c
                 WHERE c.namespace_id = $2
                   AND c.embedding_dense IS NOT NULL
                   {extra_where}
@@ -1742,7 +1767,7 @@ async def search_with_filters(
                            + ts_rank_cd(c.textsearch_en, plainto_tsquery('english', $4)) DESC,
                              c.id ASC
                 ) AS rank
-                FROM chunks c
+                FROM {arm_rel} c
                 WHERE c.namespace_id = $2
                   AND (c.textsearch_ru @@ plainto_tsquery('russian', $4)
                        OR c.textsearch_en @@ plainto_tsquery('english', $4))

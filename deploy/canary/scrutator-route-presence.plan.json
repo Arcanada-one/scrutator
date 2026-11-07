@@ -444,6 +444,96 @@
       "mutating": true
     },
     {
+      "id": "post-v1-kc-read-begin",
+      "method": "POST",
+      "path": "/v1/kc/read/begin",
+      "route": "/v1/kc/read/begin",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/begin",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-kc-read-chunk",
+      "method": "POST",
+      "path": "/v1/kc/read/chunk",
+      "route": "/v1/kc/read/chunk",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/chunk",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-kc-read-fetch",
+      "method": "POST",
+      "path": "/v1/kc/read/fetch",
+      "route": "/v1/kc/read/fetch",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/fetch",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-kc-read-graph",
+      "method": "POST",
+      "path": "/v1/kc/read/graph",
+      "route": "/v1/kc/read/graph",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/graph",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-kc-read-related",
+      "method": "POST",
+      "path": "/v1/kc/read/related",
+      "route": "/v1/kc/read/related",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/related",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
+      "id": "post-v1-kc-read-search",
+      "method": "POST",
+      "path": "/v1/kc/read/search",
+      "route": "/v1/kc/read/search",
+      "auth": "none",
+      "expect": {
+        "route_present": true
+      },
+      "entities": [
+        "route:POST /v1/kc/read/search",
+        "code_unit:src/scrutator/kc_router.py"
+      ],
+      "mutating": true
+    },
+    {
       "id": "post-v1-ltm-ingest",
       "method": "POST",
       "path": "/v1/ltm/ingest",
