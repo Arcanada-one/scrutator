@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted"
  },
- "captured_at_utc": "2026-11-07T01:58:42Z",
+ "captured_at_utc": "2026-11-07T03:28:33Z",
  "change_set": {
   "base": "0cb546a395008b501fd47c6b1037bcae8e7e664f",
   "files": [
@@ -79,7 +79,7 @@
     "status": "A"
    }
   ],
-  "head": "e6c161fb49ff4370256981ed31767ed63a3bcdb0",
+  "head": "b344b07a9def69c52ad0d27571c8f5453d9a277b",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -88,17 +88,17 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:bcd9ac9d7bf169118816b4abe2a8382eb66fc31fadd1807d13368cf7d54be924",
-  "path": "/tmp/arcana-verify-ey8j4b_8/verifier-out/graph-0cb546a39500.json",
+  "path": "/tmp/arcana-verify-xege3mkb/verifier-out/graph-0cb546a39500.json",
   "source_commit": "0cb546a395008b501fd47c6b1037bcae8e7e664f"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:d8b6e161f0f2345f7216defa0db7fbe45ed45707f39f0fdc031994c39008dce0",
-  "path": "/tmp/arcana-verify-ey8j4b_8/verifier-out/graph-head-e6c161fb49ff.json",
-  "source_commit": "e6c161fb49ff4370256981ed31767ed63a3bcdb0",
+  "graph_digest": "sha256:91f3dc03aad1327e1ea0f98d3357adf78faa6c7575a1c562451a387e11097318",
+  "path": "/tmp/arcana-verify-xege3mkb/verifier-out/graph-head-b344b07a9def.json",
+  "source_commit": "b344b07a9def69c52ad0d27571c8f5453d9a277b",
   "staleness": {
-   "checked_at_utc": "2026-11-07T02:02:38Z",
+   "checked_at_utc": "2026-11-07T03:32:24Z",
    "checked_nodes": 351,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -145,11 +145,11 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261107T015842Z-e6c161fb",
+ "receipt_id": "car-verify-20261107T032833Z-b344b07a",
  "receipt_path": "receipts/graph/change-admission-kb-cons-01-m.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/ac5fix5/src"
+  "path": "/home/dev/aup/claude-work/ac5fix6/repo"
  },
  "revision_selection": {
   "base": [],
@@ -168,7 +168,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-07T02:02:37Z",
+  "checked_at_utc": "2026-11-07T03:32:23Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -177,7 +177,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:3c8239eb1aa055d582055630321f208c1ac3f234379b591ae9aae6317649c22d"
+    "head": "sha256:60e32a323336fc7978efa5c0362f7467b9da7f255d479935d606ad6b6443bff6"
    },
    "entity": "receipt:receipts/graph/change-admission-kb-cons-01-m.json",
    "node_type": "receipt",
@@ -191,7 +191,7 @@
   }
  ],
  "tree": {
-  "commit": "e6c161fb49ff4370256981ed31767ed63a3bcdb0",
+  "commit": "b344b07a9def69c52ad0d27571c8f5453d9a277b",
   "dirty": false
  },
  "verdicts": [
@@ -261,8 +261,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/ac5fix5/src/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/ac5fix5/src/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify-ey8j4b_8/verifier-out/type-check-o_gp9zru/check.tsbuildinfo --listFiles",
-   "duration_s": 17.61,
+   "command": "/home/dev/aup/claude-work/ac5fix6/repo/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/ac5fix6/repo/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /tmp/arcana-verify-xege3mkb/verifier-out/type-check-ttpbth1y/check.tsbuildinfo --listFiles",
+   "duration_s": 8.92,
    "entities": [
     "deployable_unit:."
    ],
@@ -272,13 +272,13 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-ey8j4b_8/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-07T02:03:05Z",
+   "output_ref": "/tmp/arcana-verify-xege3mkb/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-07T03:32:43Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 0.01,
+   "duration_s": 0.02,
    "entities": [
     "code_unit:tests/ac5_model/__init__.py",
     "code_unit:tests/ac5_model/conftest.py",
@@ -298,8 +298,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-ey8j4b_8/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-07T02:03:23Z",
+   "output_ref": "/tmp/arcana-verify-xege3mkb/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-07T03:32:52Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -314,8 +314,8 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/tmp/arcana-verify-ey8j4b_8/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-11-07T02:03:23Z",
+   "output_ref": "/tmp/arcana-verify-xege3mkb/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-07T03:32:52Z",
    "summary": "1 document(s), 0 failed"
   }
  ],
@@ -359,9 +359,9 @@
    "receipt:receipts/graph/change-admission-kb-cons-01-m.json": []
   },
   "seconds": {
-   "prepare": 7.28,
-   "total": 280.74,
-   "verifiers": 17.62
+   "prepare": 10.08,
+   "total": 258.71,
+   "verifiers": 8.94
   }
  },
  "work_item": "955de789-2cf6-48c8-960a-a9004dba3897"
