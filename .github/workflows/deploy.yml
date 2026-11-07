@@ -288,4 +288,4 @@ jobs:
           esac
           message="target=${GITHUB_SHA} transaction=${DEPLOYED:-skipped} canary=${CANARY:-none}"
           echo "::${level} title=${title}::${message}"
-          printf '### %s\n\n`%s`\n' "$title" "$message" >>"$GITHUB_STEP_SUMMARY"
+          printf '### %s\n\n\140%s\140\n' "$title" "$message" >>"$GITHUB_STEP_SUMMARY"
