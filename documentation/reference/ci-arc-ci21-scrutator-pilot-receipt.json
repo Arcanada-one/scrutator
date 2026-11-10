@@ -1,0 +1,68 @@
+{
+  "schema": "CiRunnerLoadPilotReceipt/v1",
+  "task": "8e6ea808-f1f0-4255-b032-b59944c07e95",
+  "card": "ARC-CI-21",
+  "repo": "Arcanada-one/scrutator",
+  "measured_at": "2026-11-10T13:10:05Z",
+  "source_pilot": {
+    "repo": "Arcanada-one/datarim",
+    "pr": 610,
+    "merged_tip": "af59b07f23cb14d272eddb7e455070aeb831914a",
+    "delta": "ARC-CI-09 setup-python cache:pip + cache-dependency-path"
+  },
+  "prior_rollouts": {
+    "opsbot_pr": 147,
+    "opsbot_merged_tip": "ce758031adaec38d2eb584a8d8f6bfaab6f1d531",
+    "argana_pr": 66,
+    "argana_merged_tip": "a9d278be9f7200ef9ba36eedc7a9103b99abc661",
+    "email_agent_pr": 43,
+    "email_agent_merged_tip": "00b887bc857b27f4d774a9a5407fd57aeffc49be",
+    "doclab_pr": 39,
+    "doclab_merged_tip": "2cac0f3a29f2b88067591dfd44c1887c6f460bb5",
+    "doclab_after_speedup": "NOT_MEASURED"
+  },
+  "before_receipt": "documentation/reference/ci-arc-ci21-scrutator-before-receipt.json",
+  "before": {
+    "sample_size": 10,
+    "min_sample": 10,
+    "lint_and_test_s_p50": 551.0,
+    "lint_and_test_s_p95": 645.7,
+    "workflow_feedback_s_p50_all": 569.0,
+    "workflow_feedback_s_p50_pull_request_only": 519.5,
+    "sample_sufficiency": "PASS"
+  },
+  "change": {
+    "files": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/deploy.yml",
+      ".github/workflows/benchmark-scrutator.yml"
+    ],
+    "jobs": [
+      "lint-and-test",
+      "verify-exact-target",
+      "benchmark unit"
+    ],
+    "added": [
+      "cache: pip",
+      "cache-dependency-path: requirements-dev.txt + requirements.txt + pyproject.toml"
+    ],
+    "unchanged": [
+      "job names lint-and-test / network-exposure / verify-exact-target / deploy",
+      "pip install -r requirements-dev.txt and pip install -e .[dev] commands",
+      "deploy concurrency cancel-in-progress:false",
+      "workflow-level PR cancel-in-progress expression",
+      "pinned setup-python + checkout SHAs",
+      "graph-admission.yml and recall-regression.yml left untouched"
+    ]
+  },
+  "after": {
+    "sample_size": 0,
+    "verdict": "NOT_MEASURED",
+    "reason": "Requires >=10 successful hosted CI runs on tip that includes this head, measured with the same method."
+  },
+  "claims": {
+    "percentage_speedup_from_single_run": false,
+    "runtime_authorized": false,
+    "KC2": "NOT_MEASURED"
+  }
+}

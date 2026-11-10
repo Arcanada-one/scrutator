@@ -39,10 +39,21 @@ jobs:
         with:
           persist-credentials: false
 
+      # ARC-CI-09 rollout from datarim PR#610 / opsbot PR#147 / argana PR#66 /
+      # email-agent PR#43 / doclab-arcana PR#39: pip cache keyed by requirements
+      # and pyproject. Trust scope remains Actions branch/PR cache isolation; no
+      # restore-keys that pull default-branch caches into fork PRs. Required job
+      # names unchanged; deploy cancel-in-progress:false retained in deploy.yml;
+      # workflow PR cancel-in-progress expression unchanged.
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            requirements.txt
+            pyproject.toml
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt

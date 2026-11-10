@@ -1,0 +1,65 @@
+{
+  "schema": "ChangeAdmissionReceipt/v1",
+  "task": "8e6ea808-f1f0-4255-b032-b59944c07e95",
+  "repo": "Arcanada-one/scrutator",
+  "recorded_at": "2026-11-10T13:10:05Z",
+  "base_tip": "5c9a2df9e9de4e57d778bd5569b29d79c4b60f73",
+  "impact_set": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "edge": "ci-workflow",
+      "change": "enable setup-python pip cache for lint-and-test"
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "edge": "ci-workflow",
+      "change": "enable setup-python pip cache for verify-exact-target; deploy cancel-in-progress:false unchanged"
+    },
+    {
+      "path": ".github/workflows/benchmark-scrutator.yml",
+      "edge": "ci-workflow",
+      "change": "enable setup-python pip cache for benchmark unit install job"
+    },
+    {
+      "path": "documentation/reference/ci-arc-ci21-scrutator-before-receipt.json",
+      "edge": "evidence",
+      "change": "before baseline receipt"
+    },
+    {
+      "path": "documentation/reference/ci-arc-ci21-scrutator-pilot-receipt.json",
+      "edge": "evidence",
+      "change": "pilot receipt with after NOT_MEASURED"
+    },
+    {
+      "path": "documentation/reference/ci-arc-ci21-scrutator-change-admission-receipt.json",
+      "edge": "evidence",
+      "change": "this receipt"
+    }
+  ],
+  "local_verifications": [
+    {
+      "name": "workflow_block_present",
+      "verdict": "PASS",
+      "detail": "ci/deploy retain pip install -r requirements-dev.txt; benchmark unit retains pip install -e .[dev]; cache keyed by requirements-dev.txt + requirements.txt + pyproject.toml"
+    },
+    {
+      "name": "deploy_cancel_in_progress_false",
+      "verdict": "PASS",
+      "detail": "deploy job concurrency cancel-in-progress:false unchanged"
+    },
+    {
+      "name": "required_check_names",
+      "verdict": "PASS",
+      "detail": "branch-protection required contexts remain lint-and-test and network-exposure / network-exposure-lint; no job renamed/removed"
+    },
+    {
+      "name": "automated_graph_admit",
+      "verdict": "NOT_MEASURED",
+      "detail": "no admit_change binary run in this lane"
+    }
+  ],
+  "claims": {
+    "runtime_authorized": false,
+    "KC2": "NOT_MEASURED"
+  }
+}

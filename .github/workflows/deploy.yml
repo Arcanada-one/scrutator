@@ -28,10 +28,17 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
 
+      # ARC-CI-09 rollout (same lineage as ci.yml): pip cache for verify-exact-target.
+      # Deploy job concurrency cancel-in-progress:false is unchanged.
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            requirements.txt
+            pyproject.toml
 
       - name: Install test dependencies
         run: pip install -r requirements-dev.txt
