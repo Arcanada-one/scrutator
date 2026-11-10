@@ -21,17 +21,17 @@
       "change": "enable setup-python pip cache for benchmark unit install job"
     },
     {
-      "path": "docs/ci-arc-ci21-scrutator-before-receipt.json",
+      "path": "documentation/reference/ci-arc-ci21-scrutator-before-receipt.json",
       "edge": "evidence",
       "change": "before baseline receipt"
     },
     {
-      "path": "docs/ci-arc-ci21-scrutator-pilot-receipt.json",
+      "path": "documentation/reference/ci-arc-ci21-scrutator-pilot-receipt.json",
       "edge": "evidence",
       "change": "pilot receipt with after NOT_MEASURED"
     },
     {
-      "path": "docs/ci-arc-ci21-scrutator-change-admission-receipt.json",
+      "path": "documentation/reference/ci-arc-ci21-scrutator-change-admission-receipt.json",
       "edge": "evidence",
       "change": "this receipt"
     }

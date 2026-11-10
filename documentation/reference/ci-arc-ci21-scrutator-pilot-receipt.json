@@ -21,7 +21,7 @@
     "doclab_merged_tip": "2cac0f3a29f2b88067591dfd44c1887c6f460bb5",
     "doclab_after_speedup": "NOT_MEASURED"
   },
-  "before_receipt": "docs/ci-arc-ci21-scrutator-before-receipt.json",
+  "before_receipt": "documentation/reference/ci-arc-ci21-scrutator-before-receipt.json",
   "before": {
     "sample_size": 10,
     "min_sample": 10,
