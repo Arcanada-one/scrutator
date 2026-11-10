@@ -1,0 +1,28 @@
+{
+  "schema": "SyntheticFi10GenerationFixture/v1",
+  "label": "synthetic",
+  "generation_id": "fi10-public-2026-11-10-1-synthetic",
+  "namespaces": ["fi10-public", "fi10-private"],
+  "records": [
+    {
+      "record_id": "syn-public-occupation-1",
+      "namespace": "fi10-public",
+      "disclosure_class": "public",
+      "note": "positive control for public readback"
+    },
+    {
+      "record_id": "syn-public-withdraw-1",
+      "namespace": "fi10-public",
+      "disclosure_class": "public",
+      "note": "withdrawal purge target"
+    },
+    {
+      "record_id": "syn-private-actor-1",
+      "namespace": "fi10-private",
+      "disclosure_class": "private",
+      "note": "must never appear in fi10-public"
+    }
+  ],
+  "runtime_authorized": false,
+  "knowledge_admitted": false
+}
