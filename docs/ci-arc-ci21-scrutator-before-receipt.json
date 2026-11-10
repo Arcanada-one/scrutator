@@ -1,0 +1,109 @@
+{
+  "schema": "CiFeedbackReceipt/v1",
+  "task": "8e6ea808-f1f0-4255-b032-b59944c07e95",
+  "card": "ARC-CI-21",
+  "repo": "Arcanada-one/scrutator",
+  "measured_at": "2026-11-10T13:10:05Z",
+  "tip": "5c9a2df9e9de4e57d778bd5569b29d79c4b60f73",
+  "measurement_method": "gh run list + gh run view job timestamps for workflow 'CI' job lint-and-test",
+  "sample_size": 10,
+  "min_sample": 10,
+  "sample_sufficiency": "PASS",
+  "run_ids": [
+    42425635200,
+    42425437941,
+    42423965605,
+    42421770259,
+    42361065838,
+    42357245253,
+    42357075304,
+    42356098380,
+    42350386758,
+    42347919946
+  ],
+  "workflow_feedback_time_s": {
+    "note": "createdAt->updatedAt on successful CI runs from latest listed",
+    "n": 10,
+    "values_s": [
+      579.0,
+      682.0,
+      466.0,
+      559.0,
+      608.0,
+      753.0,
+      783.0,
+      459.0,
+      450.0,
+      480.0
+    ],
+    "p50": 569.0,
+    "p95": 769.5,
+    "pull_request_only": {
+      "n": 8,
+      "values_s": [
+        579.0,
+        466.0,
+        559.0,
+        608.0,
+        753.0,
+        459.0,
+        450.0,
+        480.0
+      ],
+      "p50": 519.5,
+      "p95": 702.25
+    }
+  },
+  "lint_and_test_job_s": {
+    "n": 10,
+    "values_s": [
+      575.0,
+      679.0,
+      464.0,
+      556.0,
+      605.0,
+      546.0,
+      569.0,
+      456.0,
+      446.0,
+      477.0
+    ],
+    "p50": 551.0,
+    "p95": 645.7,
+    "setup_python_cache": "absent_before",
+    "pull_request_only": {
+      "n": 8,
+      "values_s": [
+        575.0,
+        464.0,
+        556.0,
+        605.0,
+        546.0,
+        456.0,
+        446.0,
+        477.0
+      ],
+      "p50": 511.5,
+      "p95": 594.5
+    }
+  },
+  "required_check_contract": {
+    "branch_protection_api": "PASS",
+    "required_status_checks": [
+      "lint-and-test",
+      "network-exposure / network-exposure-lint"
+    ],
+    "strict": true,
+    "observed_ci_jobs_unchanged_by_this_change": [
+      "lint-and-test",
+      "network-exposure / network-exposure-lint"
+    ],
+    "deploy_concurrency_cancel_in_progress": "already_false_unchanged",
+    "workflow_pr_cancel_in_progress": "already_present_unchanged"
+  },
+  "claims": {
+    "percentage_speedup_from_single_run": false,
+    "runtime_authorized": false,
+    "KC2": "NOT_MEASURED"
+  }
+}
