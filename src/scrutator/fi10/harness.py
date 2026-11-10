@@ -82,7 +82,8 @@ def run_harness() -> dict[str, Any]:
     ac1 = (
         readback_before.positive_control_found
         and readback_before.private_records_in_public == 0
-        and PUBLIC_RECORD_ID in scoped_query(
+        and PUBLIC_RECORD_ID
+        in scoped_query(
             store,
             principal_id=PUBLIC_PRINCIPAL,
             granted_namespaces=public_grants,
