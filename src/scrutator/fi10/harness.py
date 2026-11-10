@@ -144,7 +144,9 @@ def run_harness() -> dict[str, Any]:
 
     criteria = {
         "AC1_zero_private_in_public_with_positive_control": ac1,
-        "AC2_vector_graph_same_generation_and_purge": same_generation_projections and withdrawn_absent and lkg.verdict == "serve",
+        "AC2_vector_graph_same_generation_and_purge": (
+            same_generation_projections and withdrawn_absent and lkg.verdict == "serve"
+        ),
         "AC3_positive_control_generation_parity": readback_before.positive_control_found and generation_parity,
         "AC4_negatives_private_acl_withdrawn_forbidden_fallback": (
             PRIVATE_RECORD_ID not in private_in_public

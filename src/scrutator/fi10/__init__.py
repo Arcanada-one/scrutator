@@ -6,9 +6,9 @@ namespace enablement remains HELD (paired with T5.4 + an accepted generation).
 """
 
 from scrutator.fi10.namespaces import (
+    FI10_NAMESPACES,
     FI10_PRIVATE,
     FI10_PUBLIC,
-    FI10_NAMESPACES,
     AclDecision,
     decide_read,
 )

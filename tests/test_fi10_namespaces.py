@@ -6,8 +6,6 @@ import importlib.util
 import json
 from pathlib import Path
 
-import pytest
-
 from scrutator.fi10.harness import (
     PRIVATE_RECORD_ID,
     PUBLIC_RECORD_ID,
