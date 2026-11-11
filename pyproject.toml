@@ -45,6 +45,8 @@ known-first-party = ["scrutator"]
 # mutable-default footgun — ruff's B008 has this exact escape hatch.
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Header"]
 [tool.ruff.lint.per-file-ignores]
+# KB-CONS-01-M MODEL-ONLY harness: long report prose; per-round closures in the thread race are intentional.
+"tests/ac5_model/*" = ["E501", "B023"]
 # Kept as the pre-harness.py reference implementation, not reformatted or
 # relinted in place.
 "benchmark/scrutator/measure.py" = ["E401", "E501", "E741", "F401", "I001", "SIM115"]
