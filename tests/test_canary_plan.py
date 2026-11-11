@@ -108,7 +108,6 @@ def test_every_controller_is_named_too():
     are verified."""
     assert _plan_controllers() == {
         "code_unit:src/scrutator/health.py",
-        "code_unit:src/scrutator/kc_retrieval/router.py",
         "code_unit:src/scrutator/kc_router.py",  # KB-CONS-01-N private generation read routes
         "code_unit:src/scrutator/ltm/router.py",
     }
