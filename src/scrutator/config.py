@@ -230,6 +230,28 @@ class Settings(BaseSettings):
     # Postgres RLS defense-in-depth (Phase 6, operator-gated) — inert until the migration lands.
     rls_enabled: bool = False
 
+    # KC-PIPE-S3: verified-byte retrieval via LocationRegistry/v1 (S2) + Source Library ids (S1).
+    # Default-off: no behaviour change until an instance pins a registry path and flips enabled.
+    kc_retrieval_enabled: bool = False
+    kc_retrieval_registry_path: str = ""
+    kc_retrieval_namespace: str = "knowledge-contract"
+    # Comma-separated source/package ids that the public surface (no KC namespace grant) may see.
+    kc_retrieval_public_object_ids: str = ""
+    kc_retrieval_max_bytes: int = Field(default=32 * 1024 * 1024, gt=0, le=512 * 1024 * 1024, strict=True)
+    kc_retrieval_rate_limit: int = Field(default=60, ge=1, le=10_000, strict=True)
+    kc_retrieval_rate_window_seconds: float = Field(default=60.0, gt=0, le=3600.0)
+
+    @field_validator(
+        "kc_retrieval_max_bytes",
+        "kc_retrieval_rate_limit",
+        mode="before",
+    )
+    @classmethod
+    def parse_kc_retrieval_int_bounds(cls, value):
+        if isinstance(value, str) and re.fullmatch(r"[0-9]+", value):
+            return int(value)
+        return value
+
     # A2-308: DSN for the live-Postgres tests (tests/test_graph_edges_integration.py). Empty
     # in every deployment — the service never reads it; it is declared here because the key
     # exists and an undeclared key is exactly what config_schema is meant to catch.
