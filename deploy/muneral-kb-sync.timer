@@ -3,8 +3,8 @@ Description=Run Muneral to Scrutator graph sync every five minutes
 
 [Timer]
 Unit=muneral-kb-sync.service
-# Wall-clock schedule, not monotonic-only: OnBootSec + OnUnitInactiveSec leave the timer `elapsed` with no next run after a
-# reboot or a start-limit hit, and nothing fires it again (arcana-prd, since 2026-11-10; Muneral fd0e1fe2).
+# Wall-clock schedule, not monotonic-only: a boot-relative timer can stay `elapsed` with no next run after a reboot or a
+# start-limit hit, and nothing fires it again (arcana-prd, since 2026-11-10; Muneral fd0e1fe2).
 OnCalendar=*:0/5
 RandomizedDelaySec=30s
 AccuracySec=15s
