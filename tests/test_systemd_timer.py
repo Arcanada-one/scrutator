@@ -89,7 +89,11 @@ def test_service_hardening_and_retry_are_bounded():
 def test_timer_is_bounded_persistent_and_not_self_enabling():
     body = TIMER.read_text()
     assert "Unit=muneral-kb-sync.service" in body
-    assert "OnUnitInactiveSec=5min" in body
+    assert "OnCalendar=*:0/5" in body
+    # A monotonic-only timer is never re-armed after a reboot (fd0e1fe2): the schedule must be wall-clock.
+    assert "OnBootSec" not in body
+    assert "OnUnitInactiveSec" not in body
+    assert "OnUnitActiveSec" not in body
     assert "RandomizedDelaySec=30s" in body
     assert "Persistent=true" in body
     assert "WantedBy=timers.target" in body
