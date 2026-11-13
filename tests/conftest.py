@@ -8,13 +8,19 @@ matching the endpoints' new `Depends(require_tenant_context)` requirement.
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 
 import pytest
 
-from scrutator.auth import verifier as _verifier
-from scrutator.auth.dependency import require_tenant_context
-from scrutator.auth.models import TenantContext
+# The durable access log (Muneral 4e0054f0) is OFF in the suite unless a test builds its own middleware:
+# a test run must never create the production log directory on a runner. Set before `scrutator.config`
+# is imported by the lines below.
+os.environ.setdefault("SCRUTATOR_ACCESS_LOG_DIR", "")
+
+from scrutator.auth import verifier as _verifier  # noqa: E402
+from scrutator.auth.dependency import require_tenant_context  # noqa: E402
+from scrutator.auth.models import TenantContext  # noqa: E402
 
 # ── SRCH-0038: fetch-endpoint test helper ────────────────────────────
 #

@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from scrutator import __version__
+from scrutator import __version__, access_log
 from scrutator.auth.capabilities import (
     CapabilityProjectionCapability,
     FeederCapabilityResponse,
@@ -148,6 +148,15 @@ app.add_middleware(
 )
 
 
+# Durable access log (Muneral 4e0054f0). Added LAST so that it is the OUTERMOST middleware and also records
+# the requests the body-size guards above refuse. It never reads credentials or bodies; see access_log.py.
+app.add_middleware(
+    access_log.AccessLogMiddleware,
+    directory=settings.access_log_dir or None,
+    backups=settings.access_log_backups,
+)
+
+
 @app.exception_handler(RequestValidationError)
 async def non_echoing_request_validation_error(_request, exc: RequestValidationError) -> JSONResponse:
     """Return typed validation details without echoing unencodable request values."""
@@ -208,6 +217,7 @@ async def exact_evidence_endpoint(
     if not settings.evidence_exact_bytes or scope is None or len(scope) != 1:
         raise HTTPException(status_code=409, detail="explicit singleton exact evidence scope required")
     namespace = scope[0]
+    access_log.note_namespace(namespace)
     if namespace not in capability.namespaces or not settings.evidence_exact_enabled_for(namespace):
         raise HTTPException(status_code=403, detail="exact evidence namespace outside feeder scope")
     try:
@@ -240,6 +250,7 @@ async def index_endpoint(
     # Reader namespace grants never imply mutation authority. Indexing is
     # intentionally restricted to the dedicated, namespace-scoped Feeder
     # credential even when the bearer principal may read this namespace.
+    access_log.note_namespace(request.namespace)
     if request.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside feeder scope")
     try:
@@ -341,6 +352,8 @@ async def batch_index_endpoint(
     request: BatchIndexRequest,
     capability: NamespaceCapability = Depends(require_feeder_capability),
 ) -> BatchIndexResponse:
+    for document in request.documents:
+        access_log.note_namespace(document.namespace)
     if request.documents[0].namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside feeder scope")
     try:
@@ -357,6 +370,7 @@ async def delete_source_endpoint(
     """Tombstone one source inside a namespace granted to the caller."""
     # Read-capable bearer principals cannot delete. Only the two dedicated
     # rollback credentials carry mutation authority.
+    access_log.note_namespace(request.namespace)
     if not capability.operator and request.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside rollback scope")
     pool = await get_pool()
@@ -449,6 +463,7 @@ async def search_endpoint(
             status_code=422,
             detail="maturity floor requires the configured skills namespace",
         )
+    access_log.note_query(request.query)
     namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
         return await search(
@@ -655,6 +670,7 @@ async def create_memories_bulk(
 async def recall_memories(
     request: MemoryRecallRequest, ctx: TenantContext = Depends(require_tenant_context)
 ) -> MemoryRecallResponse:
+    access_log.note_query(request.query)
     namespace_id = await resolve_namespace_selector(ctx, request.namespace)
     try:
         return await memory_recall(request, namespace_id)

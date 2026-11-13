@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from scrutator import access_log
 from scrutator.auth.capabilities import NamespaceCapability, require_ltm_writer_capability
 from scrutator.auth.dependency import (
     require_ltm_write_scope,
@@ -83,6 +84,7 @@ async def ingest(
     """
     # Reader grants never imply mutation authority. Both generic and
     # structured LTM ingest require this dedicated writer credential.
+    access_log.note_namespace(req.namespace)
     if req.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
 
@@ -236,6 +238,7 @@ async def delete_source(
     capability: NamespaceCapability = Depends(require_ltm_writer_capability),
 ) -> SourceDeleteResponse:
     """Remove one configured source without disturbing shared graph provenance."""
+    access_log.note_namespace(req.namespace)
     if req.namespace not in capability.namespaces:
         raise HTTPException(status_code=403, detail="namespace outside LTM writer scope")
     prefixes = _source_prefixes_for(req.namespace)
@@ -314,6 +317,7 @@ def _dicts_to_recall_results(dicts: list[dict]) -> list[RecallResult]:
 async def recall(req: RecallRequest, ctx: TenantContext = Depends(require_tenant_context)) -> RecallResponse:
     """Recall memories with entity enrichment + optional temporal filter."""
     start = time.monotonic()
+    access_log.note_query(req.query)
     namespace_id = await resolve_namespace_selector(ctx, req.namespace)
 
     # Fetch a wider candidate pool when temporal filter is active to keep `limit` results

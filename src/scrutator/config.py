@@ -235,6 +235,12 @@ class Settings(BaseSettings):
     # exists and an undeclared key is exactly what config_schema is meant to catch.
     test_dsn: str = ""
 
+    # Durable access log (Muneral 4e0054f0): one JSON line per request under this directory, which lies on
+    # the `scrutator-logs` named volume (survives a container recreate and a Deploy). Empty disables it.
+    # Daily files, `access_log_backups` kept (35 = more than 30 days).
+    access_log_dir: str = "/app/logs/access"
+    access_log_backups: int = 35
+
     model_config = {"env_prefix": "SCRUTATOR_"}
 
 

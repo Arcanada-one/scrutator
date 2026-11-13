@@ -16,6 +16,7 @@ import logging
 import asyncpg
 from fastapi import Depends, HTTPException, Request
 
+from scrutator import access_log
 from scrutator.auth.models import TenantContext
 from scrutator.auth.rebac_client import resolve_allowed_namespaces
 from scrutator.auth.verifier import Unauthenticated, verify_bearer_token
@@ -74,6 +75,8 @@ async def _tenant_context(request: Request, *, include_private: bool) -> TenantC
     try:
         principal = await verify_bearer_token(authorization)
     except Unauthenticated as exc:
+        # Access log: the principal is unknown; only whether a credential was presented is recorded.
+        access_log.note_identity("unverified", auth="denied" if authorization else "none", mode="read")
         if settings.auth_enforce:
             # KCP-0017: a 401 must explain itself in the server log: the failure class
             # (429 / 5xx / transport / denied) in one field, then the reason. Every
@@ -108,6 +111,9 @@ async def _tenant_context(request: Request, *, include_private: bool) -> TenantC
     if not include_private:
         allowed_ids = await _hide_private_namespaces(allowed_ids)
     allowed_names = await _namespace_ids_to_names(allowed_ids)
+    # Access log: the verified PRINCIPAL ID (never the credential) and how many namespaces it could reach.
+    access_log.note_identity(f"reader:{principal.principal_id}", auth="ok", mode="read")
+    access_log.note_allowed(len(allowed_ids))
     return TenantContext(
         principal_id=principal.principal_id,
         principal_type=principal.principal_type,
@@ -126,6 +132,12 @@ async def resolve_namespace_selector(ctx: TenantContext, requested: str | None) 
     - requested outside the allowed-set -> 403, never silently re-scoped.
     - requested inside the allowed-set -> resolved id.
     """
+    # Access log: the namespace the caller asked for (or, when omitted, the single one it has),
+    # recorded before the decision so that a refused attempt is visible too.
+    if requested is not None:
+        access_log.note_namespace(requested)
+    elif len(ctx.allowed_namespace_names) == 1:
+        access_log.note_namespace(next(iter(ctx.allowed_namespace_names)))
     if requested is None:
         if len(ctx.allowed_namespace_ids) == 1:
             return next(iter(ctx.allowed_namespace_ids))
@@ -153,6 +165,7 @@ async def require_ltm_write_scope(ctx: TenantContext = Depends(require_tenant_co
     start a billed reflect run. 403 (not 401): the caller is authenticated, the credential
     simply does not carry the authority for this verb.
     """
+    access_log.note_mode("write")
     if settings.auth_ltm_write_scope not in ctx.scopes:
         raise HTTPException(
             status_code=403,
