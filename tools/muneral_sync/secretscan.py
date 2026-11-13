@@ -10,7 +10,8 @@ import re
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 SEV_CRITICAL = "CRITICAL"
 SEV_INFO = "INFO"
@@ -34,6 +35,96 @@ _CRITICAL_RULES = [
 ]
 _ENTROPY_ASSIGN = re.compile(r"(?P<key>[\w.\-]{2,})[\"']?\s*[:=]\s*[\"'](?P<val>[A-Za-z0-9+/=_\-]{20,})[\"']")
 _ENTROPY_THRESHOLD = 4.0
+
+# Muneral c5b5df36: the entropy rule was written for `key = "value"` assignments but runs over the serialized
+# graph JSON, where it also reads the entity names (`muneral_id`, `display_name`, `description`). A long
+# human-readable kebab slug such as `word-word-word-word-2026-11-12` has Shannon entropy above 4.0 simply
+# because it is long and mixes many letters, so every such task title blocked its own sync and made the unit
+# fail on every run (13 of the first 200 tasks). A slug of real words is not a credential; a random token
+# (mixed case, hex, base64, a letters-and-digits part) is not a slug and is still reported.
+_SLUG_SHAPE = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+){2,}")
+# The slug exemption does not apply under a credential-named key: a passphrase of words under "password" or
+# "api_key" is exactly what the entropy rule must still read as a secret (control review of #175).
+_CREDENTIAL_KEY = re.compile(
+    r"password|passwd|secret|token|api[_\-.]?key|apikey|credential|private|auth", re.IGNORECASE
+)
+_SLUG_TIMESTAMP = re.compile(r"\d{8}t\d{4,6}z")
+ALLOWLIST_PATH = Path(__file__).with_name("secret_allowlist.json")
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+
+def is_identifier_slug(value: str) -> bool:
+    """True for a lowercase kebab/snake slug of real words (at most one leading capital).
+
+    Every word part (3+ letters) must look like a word: a vowel and no run of five consonants, so a
+    random lowercase license-key shape such as ``xqzmk-dpvrw-tbnhj`` is not a slug. At least three
+    word parts and 60% of the non-numeric parts must be words; numeric parts and a ``20261029t0518z``
+    timestamp are allowed; a part that mixes letters and digits is not (that is what a token looks like).
+    This is a heuristic without a dictionary: a random lowercase key whose every group happens to hold
+    a vowel would pass here, and is still caught by gitleaks and the named rules.
+    """
+    candidate = value[:1].lower() + value[1:] if value[:1].isupper() else value
+    if not _SLUG_SHAPE.fullmatch(candidate):
+        return False
+    parts = re.split(r"[-_]", candidate)
+    if any(len(part) > 20 for part in parts):
+        return False
+    words = 0
+    non_numeric = 0
+    for part in parts:
+        if part.isdigit() or _SLUG_TIMESTAMP.fullmatch(part):
+            continue
+        non_numeric += 1
+        if re.fullmatch(r"[a-z]{1,2}", part):
+            continue
+        if not re.fullmatch(r"[a-z]{3,}", part):
+            return False
+        if not re.search(r"[aeiouy]", part) or re.search(r"[^aeiouy]{5}", part):
+            return False
+        words += 1
+    return words >= 3 and words * 5 >= non_numeric * 3
+
+
+def load_allowlist(path: Path | None = None) -> dict[tuple[str, str], str]:
+    """Reviewed false positives, keyed by (rule, sha256 of the matched span); the value is the recorded reason.
+
+    A missing file means no entries. A malformed file fails CLOSED (ScanError): the allowlist can only
+    relax the scan, so an unreadable one must never be read as an empty or a complete one.
+    """
+    target = path or ALLOWLIST_PATH
+    try:
+        raw = target.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}
+    except OSError:
+        raise ScanError("secret allowlist unreadable") from None
+    try:
+        entries = json.loads(raw)["entries"]
+        allowed: dict[tuple[str, str], str] = {}
+        for entry in entries:
+            rule, span_hash, reason = entry["rule"], entry["span_hash"], entry["reason"]
+            if not (
+                isinstance(rule, str)
+                and rule
+                and _SHA256_HEX.fullmatch(str(span_hash))
+                and isinstance(reason, str)
+                and reason.strip()
+            ):
+                raise ValueError("bad entry")
+            allowed[(rule, span_hash)] = reason
+    except (ValueError, KeyError, TypeError):
+        raise ScanError("secret allowlist malformed") from None
+    return allowed
+
+
+def apply_allowlist(findings: list[Finding], allowed: dict[tuple[str, str], str]) -> list[Finding]:
+    """Downgrade a CRITICAL finding to INFO when its (rule, span hash) is a recorded false positive."""
+    return [
+        replace(finding, severity=SEV_INFO)
+        if finding.severity == SEV_CRITICAL and (finding.rule, finding.span_hash) in allowed
+        else finding
+        for finding in findings
+    ]
 
 
 class ScanError(RuntimeError):
@@ -121,8 +212,10 @@ def scan_text(text: str, *, info_patterns: list[str] | None = None) -> ScanResul
                 findings.append(Finding(rule_id, severity, line_number, _sha256(span)))
         for match in _ENTROPY_ASSIGN.finditer(line):
             value = match.group("val")
-            if shannon_entropy(value) > _ENTROPY_THRESHOLD and not any(
-                pattern.search(value) for pattern in compiled_info
+            if (
+                shannon_entropy(value) > _ENTROPY_THRESHOLD
+                and not (is_identifier_slug(value) and not _CREDENTIAL_KEY.search(match.group("key")))
+                and not any(pattern.search(value) for pattern in compiled_info)
             ):
                 findings.append(Finding("generic-entropy", SEV_CRITICAL, line_number, _sha256(value)))
         for pattern in compiled_info:
@@ -197,5 +290,6 @@ def scan_serialized(text: str, *, info_patterns: list[str] | None = None) -> Sca
     """Apply the always-on Python scan plus optional gitleaks to exact wire text."""
     result = scan_text(text, info_patterns=info_patterns)
     result.findings.extend(_run_gitleaks(text))
+    result.findings = apply_allowlist(result.findings, load_allowlist())
     _set_verdict(result)
     return result
