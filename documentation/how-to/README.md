@@ -8,3 +8,5 @@ How-to guides are task-oriented operating procedures.
   `/dr-do` Step 7.4 recall seam to the KB, with quarantine and untrusted-data handling.
 - [Rotate the feeder write token and the LTM writer token](rotate-capability-tokens.md) — single-value tokens,
   no overlap, the deploy route and the checks that prove the old value is dead.
+- [Read the access log](access-log.md) — who uses the knowledge base, which namespaces, how; retention,
+  the report command and the limits.

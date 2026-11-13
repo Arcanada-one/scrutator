@@ -9,6 +9,7 @@ from typing import Literal
 from fastapi import Header, HTTPException
 from pydantic import BaseModel
 
+from scrutator import access_log
 from scrutator.config import settings
 
 
@@ -34,6 +35,15 @@ class RollbackCapabilityResponse(BaseModel):
     operator: bool
 
 
+def _record(kind: str, presented: str | None, accepted: bool) -> None:
+    """Access log: the capability KIND, never the presented value. A credential that was sent and
+    refused is `denied`; no credential at all is `none`."""
+    if accepted:
+        access_log.note_identity(kind, auth="ok", mode="write")
+    else:
+        access_log.note_identity(kind, auth="denied" if presented else "none", mode="write")
+
+
 def _namespaces(value: str) -> frozenset[str]:
     return frozenset(name.strip() for name in value.split(",") if name.strip())
 
@@ -52,7 +62,9 @@ def _matches(configured: str, presented: str | None) -> bool:
 async def require_feeder_capability(
     x_kb_feeder_token: str | None = Header(default=None),
 ) -> NamespaceCapability:
-    if not _matches(settings.feeder_token, x_kb_feeder_token):
+    accepted = _matches(settings.feeder_token, x_kb_feeder_token)
+    _record("capability:feeder", x_kb_feeder_token, accepted)
+    if not accepted:
         raise HTTPException(status_code=401, detail="feeder credential required")
     return NamespaceCapability(namespaces=_namespaces(settings.feeder_namespaces))
 
@@ -60,7 +72,9 @@ async def require_feeder_capability(
 async def require_capability_projection_capability(
     x_capability_projection_token: str | None = Header(default=None),
 ) -> CapabilityProjectionCapability:
-    if not _matches(settings.capability_projection_token, x_capability_projection_token):
+    accepted = _matches(settings.capability_projection_token, x_capability_projection_token)
+    _record("capability:capability-projection", x_capability_projection_token, accepted)
+    if not accepted:
         raise HTTPException(status_code=401, detail="capability projection credential required")
     return CapabilityProjectionCapability(tenants=_namespaces(settings.capability_projection_tenants))
 
@@ -70,6 +84,11 @@ async def require_rollback_capability(
 ) -> NamespaceCapability:
     scheduled = _matches(settings.rollback_token, x_kb_rollback_token)
     operator = _matches(settings.operator_rollback_token, x_kb_rollback_token)
+    _record(
+        "capability:operator-rollback" if operator else "capability:rollback",
+        x_kb_rollback_token,
+        scheduled or operator,
+    )
     if not scheduled and not operator:
         raise HTTPException(status_code=401, detail="rollback credential required")
     return NamespaceCapability(
@@ -81,6 +100,8 @@ async def require_rollback_capability(
 async def require_ltm_writer_capability(
     x_ltm_writer_token: str | None = Header(default=None),
 ) -> NamespaceCapability:
-    if not _matches(settings.ltm_writer_token, x_ltm_writer_token):
+    accepted = _matches(settings.ltm_writer_token, x_ltm_writer_token)
+    _record("capability:ltm-writer", x_ltm_writer_token, accepted)
+    if not accepted:
         raise HTTPException(status_code=401, detail="LTM writer credential required")
     return NamespaceCapability(namespaces=_namespaces(settings.ltm_writer_namespaces))
