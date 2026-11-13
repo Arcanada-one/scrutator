@@ -263,7 +263,11 @@ class AccessLogMiddleware:
                 record["route"] = getattr(route, "path", None) or "unmatched"
                 record["status"] = status["value"]
                 record["ms"] = int((time.monotonic() - started) * 1000)
-                if record["mode"] == "unknown" and record["method"] in {"GET", "HEAD", "OPTIONS"}:
+                # `mode` is stamped by the dependency that authorised the request: a machine capability stamps
+                # "write" (it is a write credential), but a GET/HEAD/OPTIONS made with it changes nothing, and a
+                # report that counted it as a write would overstate the writers. Only the LOGGED field follows the
+                # verb here; what the capability may do is untouched.
+                if record["method"] in {"GET", "HEAD", "OPTIONS"} and record["mode"] in {"unknown", "write"}:
                     record["mode"] = "read"
                 self._writer.write(record)
             except Exception as exc:
