@@ -72,7 +72,11 @@ services:
       # One more PROJECTED-CORPUS scope (2026-11-12, Muneral fd0e1fe2): knowledge-contract. Projects/Knowledge Contract/ routes to it
       # (taxonomy since 2026-11-06, KC-PIPE-T3 875b6035; the paired grant promised in authoritative-namespaces.txt never landed) and
       # every kb-reconcile run on prd ends `missing_namespace_grants=knowledge-contract`. The isolated KC corpus stays in its own instance.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program,knowledge-contract"
+      # One more PROJECTED-CORPUS scope (2026-11-13, Muneral fd0e1fe2): road-mapmd. It is in the durable authority history
+      # (kb_feeder.projection --history only ever grows) since Projects/ROAD MAP.md was once routed to it by the taxonomy; the
+      # routing was fixed (workspace #2004) but the name stays expected forever, so every lane ends `missing_namespace_grants=road-mapmd`
+      # until the feeder may write it (an authoritative run then drains the stale chunks). Same shape as knowledge-contract above.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program,knowledge-contract,road-mapmd"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:

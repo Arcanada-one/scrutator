@@ -101,6 +101,7 @@ FEEDER_APPENDED_SCOPES = (
     "integrations",
     "universal-program",
     "knowledge-contract",
+    "road-mapmd",
 )
 
 
@@ -133,7 +134,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
         "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,"
         "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,"
         "collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,"
-        "contracts,integrations,universal-program,knowledge-contract"
+        "contracts,integrations,universal-program,knowledge-contract,road-mapmd"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
