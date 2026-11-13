@@ -81,7 +81,8 @@ def test_service_hardening_and_retry_are_bounded():
         "TimeoutStartSec=10min",
         "Restart=on-failure",
         "RestartSec=30s",
-        "StartLimitBurst=3",
+        "StartLimitIntervalSec=10min",
+        "StartLimitBurst=4",
     ):
         assert directive in body
 
@@ -522,3 +523,28 @@ def test_installer_restores_units_and_timer_state_after_enable_failure(tmp_path,
     assert (unit_dir / TIMER.name).read_bytes() == legacy_timer
     assert (state / "timer-enabled").exists()
     assert (state / "timer-active").exists()
+
+
+def _minutes(value: str) -> int:
+    assert value.endswith("min"), value
+    return int(value[: -len("min")])
+
+
+def test_the_start_limit_admits_every_timer_start_and_still_stops_a_failing_run():
+    """Every start counts against StartLimit*, successful ones too (seen 2026-11-13 15:15 CET: three green runs,
+    then `start-limit-hit` on the fourth). The limit must leave room for all timer starts that can fall in the
+    window, counted generously (the boundary included), plus at least one retry."""
+    service = SERVICE.read_text()
+    timer = TIMER.read_text()
+    interval = _minutes(
+        next(line.split("=", 1)[1] for line in service.splitlines() if line.startswith("StartLimitIntervalSec="))
+    )
+    burst = int(next(line.split("=", 1)[1] for line in service.splitlines() if line.startswith("StartLimitBurst=")))
+    calendar = next(line.split("=", 1)[1] for line in timer.splitlines() if line.startswith("OnCalendar="))
+    assert calendar.startswith("*:0/"), calendar
+    period = int(calendar.split("/", 1)[1])
+    timer_starts_in_window = interval // period + 1  # boundary included
+    assert burst >= timer_starts_in_window + 1, (interval, period, burst)
+    # and it still ends a failing run: a bounded number of retries, not an unbounded loop
+    assert burst <= 6
+    assert "Restart=on-failure" in service and "RestartSec=30s" in service

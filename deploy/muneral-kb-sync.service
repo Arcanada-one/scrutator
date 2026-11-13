@@ -3,8 +3,13 @@ Description=Muneral to Scrutator incremental graph sync
 Documentation=https://github.com/Arcanada-one/scrutator
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=15min
-StartLimitBurst=3
+# Every START counts against the limit, not only failures. The timer fires every 5 minutes (OnCalendar=*:0/5), so a
+# 15-minute window held three timer starts and the fourth was refused with `start-limit-hit` (seen 2026-11-13 15:15 CET,
+# after three green runs). 10 minutes admit at most three timer starts even at the window boundary; the burst of 4 leaves
+# at least one start for a retry (Restart=on-failure, RestartSec=30s), so a run that keeps failing still stops after
+# a few attempts. tests/test_systemd_timer.py pins the relation between this limit and the timer period.
+StartLimitIntervalSec=10min
+StartLimitBurst=4
 ConditionPathExists=/etc/muneral-kb-sync/muneral-db-dsn
 ConditionPathExists=/etc/muneral-kb-sync/ltm-writer-token
 
