@@ -21,6 +21,9 @@ from tools.muneral_sync.secretscan import (
 
 # Shapes measured on the blocked tasks of 2026-11-13 (a kebab slug of 4-7 words plus a date; one has a leading capital).
 SLUGS = [
+    "release-notes-20261113",  # two words and an 8-digit date: the most common blocked shape (11 of 12)
+    "DEUS-arcana-weekly-review-2026-11-13",  # a leading acronym
+    "ADR-stage-bounded-review-2026-11-02",
     "prime-short-ui-stage-2026-11-12",
     "Prime-short-ui-stage-bounded-review-2026-11-02",
     "one-more-readable-task-title-for-an-ops-review",
@@ -161,3 +164,11 @@ def test_the_same_slug_is_blocked_under_a_credential_named_key(key):
 @pytest.mark.parametrize("key", ["display_name", "muneral_id", "description", "title", "name", "source_path"])
 def test_the_same_slug_passes_under_a_name_field(key):
     assert scan_text(json.dumps({key: HIGH_ENTROPY_SLUG})).findings == []
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["word-12345678-99", "ab-cd-ef", "release-12345678-notes-x7q", "xqzmk-dpvrw-20261113", "Qx-Zz-Kv-98"],
+)
+def test_the_two_word_rule_does_not_exempt_things_without_real_words(value):
+    assert not is_identifier_slug(value)
