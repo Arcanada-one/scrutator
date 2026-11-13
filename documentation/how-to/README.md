@@ -10,3 +10,5 @@ How-to guides are task-oriented operating procedures.
   no overlap, the deploy route and the checks that prove the old value is dead.
 - [Read the access log](access-log.md) — who uses the knowledge base, which namespaces, how; retention,
   the report command and the limits.
+- [Install and roll back a muneral-kb-sync release](muneral-kb-sync-release.md) — the sealed-release installer, what it refuses,
+  the rollback target and the start-limit relation.
