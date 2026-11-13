@@ -7,10 +7,19 @@ Design (Muneral 4e0054f0):
   ``TimedRotatingFileHandler`` (midnight UTC, ``backups`` daily files kept, so at least 30 days).
   The default directory lies on the ``scrutator-logs`` named volume, which survives a container
   recreate and a Deploy.
-* The middleware NEVER reads the ``Authorization`` header, any capability token header or the body.
+* The middleware reads exactly THREE request headers and no others: ``User-Agent`` (``ua``, 80
+  characters, control characters and non-ASCII replaced), and ``CF-Connecting-IP`` / ``X-Forwarded-For``
+  (``fwd``). It NEVER reads ``Authorization``, any capability token header (``X-*-Token``) or the body.
   The identity in a record is the PRINCIPAL ID that the verifier returned or a fixed capability kind
   (``capability:feeder`` ...), reported by the dependency that authorised the request through
   ``note_identity``. A credential value therefore cannot reach the file by construction.
+* ``fwd`` is the client address a proxy REPORTS, not a verified one: it is recorded only when the direct
+  peer (``src``) is a loopback or private address (the proxy), validated with ``ipaddress``, otherwise null.
+  ``src`` alone is 127.0.0.1 or the proxy for almost every request, so ``ua`` and ``fwd`` are what tells one
+  agent or host from another when they share a token.
+* SINGLE-PROCESS ASSUMPTION: the service runs one uvicorn process. ``TimedRotatingFileHandler`` rotation is
+  not safe across processes, so the middleware logs this assumption at start and warns when
+  ``WEB_CONCURRENCY`` / ``UVICORN_WORKERS`` is above 1.
 * Handlers and dependencies add what only they know (identity, mode, namespace, query) through the
   ``note_*`` helpers, which write into a ``ContextVar`` holding the current record and are no-ops
   outside a request.
@@ -27,9 +36,12 @@ from __future__ import annotations
 
 import contextvars
 import hashlib
+import ipaddress
 import json
 import logging
 import logging.handlers
+import os
+import re
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -41,6 +53,8 @@ ACCESS_FILE = "access.jsonl"
 DEFAULT_BACKUPS = 35  # daily files; stated retention is at least 30 days
 SKIPPED_PATHS = frozenset({"/health"})
 _WARN_EVERY_SECONDS = 60.0
+UA_MAX = 80
+_NOT_PRINTABLE_ASCII = re.compile(r"[^\x20-\x7e]")
 
 #: Fixed machine-capability identities (the header decides which one; the value is never recorded).
 CAPABILITY_KINDS = (
@@ -104,6 +118,49 @@ def note_query(text: str | None) -> None:
 # --- writer ----------------------------------------------------------------------------------------
 
 
+def _header(scope: dict[str, Any], name: bytes) -> str | None:
+    """One named request header, decoded leniently. Only ``user-agent``, ``cf-connecting-ip`` and
+    ``x-forwarded-for`` are ever requested (see the module docstring); never a credential header."""
+    for key, value in scope.get("headers") or ():
+        if key.lower() == name:
+            return value.decode("latin-1")
+    return None
+
+
+def client_agent(scope: dict[str, Any]) -> str | None:
+    """User-Agent, first 80 characters, anything but printable ASCII replaced; None when absent or empty."""
+    raw = _header(scope, b"user-agent")
+    if not raw:
+        return None
+    return _NOT_PRINTABLE_ASCII.sub("?", raw)[:UA_MAX]
+
+
+def reported_client(scope: dict[str, Any]) -> str | None:
+    """The client address the proxy reports (CF-Connecting-IP, else the first hop of X-Forwarded-For).
+
+    Recorded ONLY when the direct peer is loopback or a private address, i.e. the proxy itself, so that a
+    remote caller cannot forge it from outside; validated with ``ipaddress``, otherwise None. Reported by
+    the proxy, not verified.
+    """
+    client = scope.get("client")
+    try:
+        peer = ipaddress.ip_address(client[0]) if client else None
+    except ValueError:
+        return None
+    if peer is None or not (peer.is_loopback or peer.is_private):
+        return None
+    candidate = _header(scope, b"cf-connecting-ip")
+    if not candidate:
+        forwarded = _header(scope, b"x-forwarded-for")
+        candidate = forwarded.split(",")[0] if forwarded else None
+    if not candidate:
+        return None
+    try:
+        return str(ipaddress.ip_address(candidate.strip()))
+    except ValueError:
+        return None
+
+
 class _Writer:
     def __init__(self, directory: str, backups: int) -> None:
         self._logger: logging.Logger | None = None
@@ -143,6 +200,23 @@ class AccessLogMiddleware:
     def __init__(self, app: Any, *, directory: str | None, backups: int = DEFAULT_BACKUPS) -> None:
         self.app = app
         self._writer = _Writer(directory, backups) if directory else None
+        if self._writer is not None:
+            workers = max(
+                (
+                    int(os.environ.get(name, "1"))
+                    for name in ("WEB_CONCURRENCY", "UVICORN_WORKERS")
+                    if os.environ.get(name, "").isdigit()
+                ),
+                default=1,
+            )
+            logger.info(
+                "access log on: %s, single-process assumption (daily rotation is not multi-process safe)", directory
+            )
+            if workers > 1:
+                logger.warning(
+                    "access log: %d workers configured, rotation assumes ONE process; records may be lost",
+                    workers,
+                )
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         # A nested instance (an outer one already owns the record) passes through, so one request is one record.
@@ -161,6 +235,8 @@ class AccessLogMiddleware:
             "auth": "none",
             "mode": "unknown",
             "src": client[0] if client else None,
+            "fwd": reported_client(scope),
+            "ua": client_agent(scope),
             "method": scope.get("method"),
             "route": None,
             "namespaces": [],

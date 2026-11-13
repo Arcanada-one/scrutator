@@ -1,16 +1,21 @@
 """Read-only report over the durable access log (Muneral 4e0054f0).
 
-Answers: which identities used which namespaces in the last N days, reads versus writes, last seen,
-and which KNOWN identities had zero use. It reads the access-log files only; the optional list of
-known reader principals comes from one read-only SELECT on ``principal_namespace_grants`` and is
-skipped, with a note, when the database cannot be reached or ``--no-db`` is given.
+Answers the operator's question "who uses the knowledge base, which namespaces, how": one row per
+(identity, User-Agent, proxy-reported client address) with requests, read/write split, namespaces touched,
+denied count and first/last seen; then the known identities with zero use, the namespaces nobody read in
+the window and the namespaces that have no reader grant at all.
+
+It reads the access-log files only. The known reader principals and the namespace list come from read-only
+SELECTs (``principal_namespace_grants``, ``namespaces``) and are skipped, with a note, when the database
+cannot be reached or ``--no-db`` is given.
 
 Usage (inside the service container):
     python -m scrutator.tools.access_report --days 1
     python -m scrutator.tools.access_report --days 30 --json
 
-Limits that the report repeats in its header: a shared secret is one identity, and routes that act on
-the whole allowed set name no namespace (they are listed as ``(unscoped)``).
+Limits repeated in the report: a shared secret is one identity (``ua`` and ``fwd`` separate agents and hosts
+only as far as they differ; ``fwd`` is reported by the proxy, not verified); routes that act on the whole
+allowed set name no namespace (``(unscoped)``).
 """
 
 from __future__ import annotations
@@ -28,10 +33,11 @@ from typing import Any
 from scrutator.access_log import ACCESS_FILE, CAPABILITY_KINDS
 
 UNSCOPED = "(unscoped)"
+NONE_LABEL = "-"
 
 
 @dataclass
-class IdentityStats:
+class GroupStats:
     requests: int = 0
     reads: int = 0
     writes: int = 0
@@ -68,58 +74,74 @@ def iter_records(directory: Path, since: datetime):
                     yield record
 
 
-def aggregate(records) -> tuple[dict[str, IdentityStats], int]:
-    stats: dict[str, IdentityStats] = defaultdict(IdentityStats)
+def aggregate(records) -> tuple[dict[tuple[str, str, str], GroupStats], int, set[str]]:
+    """Group by (identity, ua, fwd). Also return the namespaces that an authenticated READ named."""
+    groups: dict[tuple[str, str, str], GroupStats] = defaultdict(GroupStats)
+    read_namespaces: set[str] = set()
     total = 0
     for record in records:
         total += 1
-        key = record.get("identity") or "none"
-        item = stats[key]
+        key = (record.get("identity") or "none", record.get("ua") or NONE_LABEL, record.get("fwd") or NONE_LABEL)
+        item = groups[key]
         item.requests += 1
         mode = record.get("mode")
         if mode == "write":
             item.writes += 1
         elif mode == "read":
             item.reads += 1
-        if record.get("auth") == "denied" or record.get("status") in {401, 403}:
+        denied = record.get("auth") == "denied" or record.get("status") in {401, 403}
+        if denied:
             item.denied += 1
         ts = record.get("ts", "")
         item.first_seen = min(item.first_seen or ts, ts)
         item.last_seen = max(item.last_seen, ts)
-        namespaces = record.get("namespaces") or [UNSCOPED]
-        for name in namespaces:
+        for name in record.get("namespaces") or [UNSCOPED]:
             item.namespaces[name] += 1
+            if mode == "read" and record.get("auth") == "ok" and not denied and name != UNSCOPED:
+                read_namespaces.add(name)
         if record.get("src"):
             item.sources[record["src"]] += 1
         item.statuses[str(record.get("status"))] += 1
-    return dict(stats), total
+    return dict(groups), total, read_namespaces
 
 
-async def _known_principals() -> list[str]:
+async def _database_lists() -> tuple[list[str], list[tuple[str, bool]]]:
     from scrutator.db.connection import get_pool
 
     pool = await get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch("SELECT DISTINCT principal_id FROM principal_namespace_grants ORDER BY 1")
-    return [f"reader:{row['principal_id']}" for row in rows]
+        principals = await conn.fetch("SELECT DISTINCT principal_id FROM principal_namespace_grants ORDER BY 1")
+        namespaces = await conn.fetch(
+            "SELECT n.name, EXISTS (SELECT 1 FROM principal_namespace_grants g WHERE g.namespace_id = n.id) AS granted "
+            "FROM namespaces n ORDER BY n.name"
+        )
+    return (
+        [f"reader:{row['principal_id']}" for row in principals],
+        [(row["name"], bool(row["granted"])) for row in namespaces],
+    )
 
 
-def known_identities(use_db: bool) -> tuple[list[str], str]:
-    known = list(CAPABILITY_KINDS)
+def database_lists(use_db: bool) -> tuple[list[str] | None, list[tuple[str, bool]] | None, str]:
     if not use_db:
-        return known, "reader principals not listed (--no-db)"
+        return None, None, "not read (--no-db)"
     try:
-        known = list(CAPABILITY_KINDS) + asyncio.run(_known_principals())
-        return known, "reader principals from principal_namespace_grants"
+        principals, namespaces = asyncio.run(_database_lists())
+        return principals, namespaces, "from principal_namespace_grants and namespaces"
     except Exception as exc:  # report without them rather than fail
-        return known, f"reader principals NOT listed: database unreachable ({exc.__class__.__name__})"
+        return None, None, f"NOT read: database unreachable ({exc.__class__.__name__})"
 
 
 def build_report(directory: Path, days: float, use_db: bool, now: datetime | None = None) -> dict[str, Any]:
     now = now or datetime.now(UTC)
     since = now - timedelta(days=days)
-    stats, total = aggregate(iter_records(directory, since))
-    known, known_note = known_identities(use_db)
+    groups, total, read_namespaces = aggregate(iter_records(directory, since))
+    principals, namespaces, db_note = database_lists(use_db)
+    seen_identities = {identity for identity, _ua, _fwd in groups}
+    known = list(CAPABILITY_KINDS) + (principals or [])
+    ordered = sorted(groups.items(), key=lambda kv: (-kv[1].requests, kv[0]))
+    identity_totals: dict[str, int] = defaultdict(int)
+    for (identity, _ua, _fwd), stats in groups.items():
+        identity_totals[identity] += stats.requests
     return {
         "window": {
             "from": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -128,8 +150,11 @@ def build_report(directory: Path, days: float, use_db: bool, now: datetime | Non
         },
         "directory": str(directory),
         "records": total,
-        "identities": {
-            name: {
+        "groups": [
+            {
+                "identity": identity,
+                "ua": ua,
+                "fwd": fwd,
                 "requests": s.requests,
                 "reads": s.reads,
                 "writes": s.writes,
@@ -140,39 +165,69 @@ def build_report(directory: Path, days: float, use_db: bool, now: datetime | Non
                 "sources": dict(s.sources.most_common()),
                 "statuses": dict(s.statuses.most_common()),
             }
-            for name, s in sorted(stats.items(), key=lambda kv: -kv[1].requests)
-        },
-        "known_identities_note": known_note,
-        "zero_use": sorted(set(known) - set(stats)),
+            for (identity, ua, fwd), s in ordered
+        ],
+        "identity_totals": dict(sorted(identity_totals.items(), key=lambda kv: -kv[1])),
+        "database": db_note,
+        "zero_use_identities": sorted(set(known) - seen_identities),
+        "namespaces_without_reads_in_window": (
+            sorted(name for name, _granted in namespaces if name not in read_namespaces)
+            if namespaces is not None
+            else None
+        ),
+        "namespaces_without_any_reader_grant": (
+            sorted(name for name, granted in namespaces if not granted) if namespaces is not None else None
+        ),
         "limits": [
-            "A shared secret is one identity: all feeder lanes share capability:feeder, "
-            "all agents on one reader principal share it.",
+            "A shared secret is one identity: all feeder lanes share capability:feeder, all agents on one reader "
+            "principal share it; ua and fwd separate them only as far as they differ.",
+            "fwd is the client address the proxy reports (CF-Connecting-IP / X-Forwarded-For), recorded only when "
+            "the direct peer is loopback or private; reported by the proxy, not verified.",
             f"{UNSCOPED} = the route acts on the whole allowed set (fetch by id, stats, namespace list, edges) "
-            "or names no namespace.",
+            "or names no namespace; such reads do not count towards 'read in the window'.",
             "No history before the first record; /health is not recorded.",
         ],
     }
 
 
 def render_text(report: dict[str, Any]) -> str:
+    w = report["window"]
     out = [
-        "Scrutator access report  "
-        f"{report['window']['from']} .. {report['window']['to']}  ({report['window']['days']} d)",
-        f"directory: {report['directory']}   records: {report['records']}",
+        f"Scrutator access report  {w['from']} .. {w['to']}  ({w['days']} d)",
+        f"directory: {report['directory']}   records: {report['records']}   database lists: {report['database']}",
         "",
+        "identity x user-agent x proxy-reported client",
     ]
-    for name, s in report["identities"].items():
+    for g in report["groups"]:
+        out.append(f"{g['identity']}  ua={g['ua']}  fwd={g['fwd']}")
         out.append(
-            f"{name}\n  requests {s['requests']}  reads {s['reads']}  writes {s['writes']}  denied {s['denied']}"
-            f"  first {s['first_seen']}  last {s['last_seen']}"
+            f"  requests {g['requests']}  reads {g['reads']}  writes {g['writes']}  denied {g['denied']}"
+            f"  first {g['first_seen']}  last {g['last_seen']}"
         )
-        out.append("  namespaces: " + ", ".join(f"{k}={v}" for k, v in s["namespaces"].items()))
-        out.append("  sources:    " + ", ".join(f"{k}={v}" for k, v in s["sources"].items()))
-        out.append("  statuses:   " + ", ".join(f"{k}={v}" for k, v in s["statuses"].items()))
-        out.append("")
-    out.append(f"Known identities with ZERO use in the window ({report['known_identities_note']}):")
-    out.extend(f"  {name}" for name in report["zero_use"]) if report["zero_use"] else out.append("  (none)")
+        out.append("  namespaces: " + ", ".join(f"{k}={v}" for k, v in g["namespaces"].items()))
+        out.append(
+            "  src: "
+            + ", ".join(f"{k}={v}" for k, v in g["sources"].items())
+            + "   status: "
+            + ", ".join(f"{k}={v}" for k, v in g["statuses"].items())
+        )
     out.append("")
+
+    def block(title: str, values: list[str] | None) -> None:
+        out.append(title)
+        if values is None:
+            out.append("  (not available: database lists " + report["database"] + ")")
+        elif values:
+            out.extend(f"  {v}" for v in values)
+        else:
+            out.append("  (none)")
+        out.append("")
+
+    block("Known identities with ZERO use in the window:", report["zero_use_identities"])
+    block("Namespaces nobody READ in the window (named reads only):", report["namespaces_without_reads_in_window"])
+    block(
+        "Namespaces with NO reader grant at all (nobody can read them):", report["namespaces_without_any_reader_grant"]
+    )
     out.append("Limits:")
     out.extend(f"  - {line}" for line in report["limits"])
     return "\n".join(out)
@@ -183,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--days", type=float, default=1.0, help="window length in days (default 1)")
     parser.add_argument("--dir", default=None, help="access-log directory (default: SCRUTATOR_ACCESS_LOG_DIR)")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
-    parser.add_argument("--no-db", action="store_true", help="do not read reader principals from the database")
+    parser.add_argument("--no-db", action="store_true", help="do not read principals and namespaces from the database")
     args = parser.parse_args(argv)
 
     directory = args.dir

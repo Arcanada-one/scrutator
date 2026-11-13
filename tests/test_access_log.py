@@ -26,6 +26,9 @@ def _records(directory: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+PROXY_PEER = ("172.23.0.4", 50000)
+
+
 @pytest.fixture
 def client_and_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "feeder_token", SECRET)
@@ -175,13 +178,17 @@ def _write(directory: Path, lines: list[dict]) -> None:
     (directory / access_log.ACCESS_FILE).write_text("".join(json.dumps(r) + "\n" for r in lines), encoding="utf-8")
 
 
-def _rec(ts: datetime, identity: str, *, mode="read", ns=(), status=200, src="127.0.0.1", auth="ok") -> dict:
+def _rec(
+    ts: datetime, identity: str, *, mode="read", ns=(), status=200, src="127.0.0.1", auth="ok", ua=None, fwd=None
+) -> dict:
     return {
         "ts": ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         "identity": identity,
         "auth": auth,
         "mode": mode,
         "src": src,
+        "fwd": fwd,
+        "ua": ua,
         "method": "POST",
         "route": "/v1/x",
         "namespaces": list(ns),
@@ -192,15 +199,23 @@ def _rec(ts: datetime, identity: str, *, mode="read", ns=(), status=200, src="12
     }
 
 
-def test_the_report_groups_by_identity_and_lists_zero_use(tmp_path):
+def _groups(report, identity):
+    return [g for g in report["groups"] if g["identity"] == identity]
+
+
+def test_the_report_groups_by_identity_ua_and_proxy_reported_client(tmp_path, monkeypatch):
     now = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
     _write(
         tmp_path,
         [
-            _rec(now - timedelta(hours=2), "reader:agent-a", ns=["alpha"]),
-            _rec(now - timedelta(hours=1), "reader:agent-a", ns=["alpha", "beta"]),
-            _rec(now - timedelta(hours=1), "reader:agent-a"),
-            _rec(now - timedelta(minutes=30), "capability:feeder", mode="write", ns=["alpha"], src="100.64.0.9"),
+            _rec(now - timedelta(hours=2), "reader:agent-a", ns=["alpha"], ua="claude-code/2.1", fwd="100.64.0.7"),
+            _rec(
+                now - timedelta(hours=1), "reader:agent-a", ns=["alpha", "beta"], ua="claude-code/2.1", fwd="100.64.0.7"
+            ),
+            _rec(
+                now - timedelta(hours=1), "reader:agent-a", ua="codex/0.9", fwd="100.64.0.8"
+            ),  # same principal, other agent
+            _rec(now - timedelta(minutes=30), "capability:feeder", mode="write", ns=["alpha"], ua="python-httpx/0.27"),
             _rec(
                 now - timedelta(minutes=5), "capability:feeder", mode="write", ns=["alpha"], status=401, auth="denied"
             ),
@@ -210,18 +225,65 @@ def test_the_report_groups_by_identity_and_lists_zero_use(tmp_path):
             _rec(now - timedelta(minutes=1), "none", auth="none", status=401),
         ],
     )
-    report = access_report.build_report(tmp_path, 1, use_db=False, now=now)
+    monkeypatch.setattr(
+        access_report,
+        "database_lists",
+        lambda use_db: (
+            ["reader:agent-a", "reader:idle-agent"],
+            [("alpha", True), ("beta", True), ("gamma", False), ("delta", True)],
+            "test",
+        ),
+    )
+    report = access_report.build_report(tmp_path, 1, use_db=True, now=now)
     assert report["records"] == 6
-    a = report["identities"]["reader:agent-a"]
-    assert (a["requests"], a["reads"], a["writes"]) == (3, 3, 0)
-    assert a["namespaces"] == {"alpha": 2, "beta": 1, "(unscoped)": 1}
-    f = report["identities"]["capability:feeder"]
-    assert (f["writes"], f["denied"]) == (2, 1) and f["sources"] == {"100.64.0.9": 1, "127.0.0.1": 1}
-    assert f["first_seen"] < f["last_seen"]
-    assert report["identities"]["none"]["denied"] == 1
-    assert "capability:ltm-writer" in report["zero_use"] and "capability:feeder" not in report["zero_use"]
+    a_groups = _groups(report, "reader:agent-a")
+    assert {(g["ua"], g["fwd"]) for g in a_groups} == {("claude-code/2.1", "100.64.0.7"), ("codex/0.9", "100.64.0.8")}
+    claude = next(g for g in a_groups if g["ua"] == "claude-code/2.1")
+    assert (claude["requests"], claude["reads"], claude["writes"]) == (2, 2, 0)
+    assert claude["namespaces"] == {"alpha": 2, "beta": 1}
+    feeder = _groups(report, "capability:feeder")
+    assert sorted((g["ua"], g["denied"]) for g in feeder) == [("-", 1), ("python-httpx/0.27", 0)]
+    assert next(g for g in feeder if g["ua"] == "-")["fwd"] == "-"
+    assert report["identity_totals"]["reader:agent-a"] == 3
+    assert _groups(report, "none")[0]["denied"] == 1
+    assert (
+        "capability:ltm-writer" in report["zero_use_identities"]
+        and "reader:idle-agent" in report["zero_use_identities"]
+    )
+    assert "reader:agent-a" not in report["zero_use_identities"]
+    # delta was never read in the window, gamma neither; gamma also has no reader grant at all
+    assert report["namespaces_without_reads_in_window"] == ["delta", "gamma"]
+    assert report["namespaces_without_any_reader_grant"] == ["gamma"]
     text = access_report.render_text(report)
-    assert "ZERO use" in text and "reader:agent-a" in text and "Limits:" in text
+    assert "ua=claude-code/2.1  fwd=100.64.0.7" in text and "NO reader grant" in text and "Limits:" in text
+    assert "not verified" in text
+
+
+def test_a_write_or_a_denied_request_does_not_count_as_a_read_of_a_namespace(tmp_path, monkeypatch):
+    now = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
+    _write(
+        tmp_path,
+        [
+            _rec(now - timedelta(minutes=3), "capability:feeder", mode="write", ns=["alpha"]),
+            _rec(now - timedelta(minutes=2), "reader:agent-a", ns=["beta"], status=403),
+            _rec(now - timedelta(minutes=1), "reader:agent-a", ns=[]),  # unscoped read names no namespace
+        ],
+    )
+    monkeypatch.setattr(
+        access_report, "database_lists", lambda use_db: (None, [("alpha", True), ("beta", True)], "test")
+    )
+    report = access_report.build_report(tmp_path, 1, use_db=True, now=now)
+    assert report["namespaces_without_reads_in_window"] == ["alpha", "beta"]
+
+
+def test_without_a_database_the_namespace_lists_are_reported_as_unavailable(tmp_path):
+    now = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
+    _write(tmp_path, [_rec(now - timedelta(minutes=1), "reader:agent-a", ns=["alpha"])])
+    report = access_report.build_report(tmp_path, 1, use_db=False, now=now)
+    assert (
+        report["namespaces_without_reads_in_window"] is None and report["namespaces_without_any_reader_grant"] is None
+    )
+    assert "not available" in access_report.render_text(report)
 
 
 def test_the_report_skips_corrupt_lines_and_reads_rotated_files(tmp_path):
@@ -232,4 +294,119 @@ def test_the_report_skips_corrupt_lines_and_reads_rotated_files(tmp_path):
     )
     _write(tmp_path, [_rec(now - timedelta(minutes=2), "reader:agent-b", ns=["beta"])])
     report = access_report.build_report(tmp_path, 2, use_db=False, now=now)
-    assert report["identities"]["reader:agent-b"]["requests"] == 2
+    assert _groups(report, "reader:agent-b")[0]["requests"] == 2
+
+
+# --- R1: the two attribution fields that are not credentials ------------------------------------------
+
+
+def _client_with(app, peer):
+    return TestClient(app, raise_server_exceptions=False, client=peer)
+
+
+def test_ua_and_the_proxy_reported_address_are_recorded_when_the_peer_is_the_proxy(client_and_dir):
+    client, directory = client_and_dir
+    app = client.app
+    with _client_with(app, PROXY_PEER) as proxied:
+        proxied.get(
+            "/v1/open", headers={"User-Agent": "claude-code/2.1 (cli)", "X-Forwarded-For": "100.64.0.7, 172.23.0.4"}
+        )
+    (record,) = _records(directory)
+    assert record["src"] == "172.23.0.4"
+    assert record["fwd"] == "100.64.0.7"  # first hop of X-Forwarded-For
+    assert record["ua"] == "claude-code/2.1 (cli)"
+
+
+def test_cf_connecting_ip_wins_over_x_forwarded_for(client_and_dir):
+    client, directory = client_and_dir
+    with _client_with(client.app, PROXY_PEER) as proxied:
+        proxied.get("/v1/open", headers={"CF-Connecting-IP": "203.0.113.9", "X-Forwarded-For": "100.64.0.7"})
+    assert _records(directory)[0]["fwd"] == "203.0.113.9"
+
+
+def test_a_forwarded_address_from_a_public_peer_is_ignored_so_it_cannot_be_forged(client_and_dir):
+    client, directory = client_and_dir
+    for peer in (("8.8.8.8", 40000), ("100.101.102.103", 40000)):  # a public caller, and a direct mesh caller
+        with _client_with(client.app, peer) as remote:
+            remote.get("/v1/open", headers={"X-Forwarded-For": "10.1.2.3", "CF-Connecting-IP": "10.1.2.3"})
+    public, mesh = _records(directory)
+    assert (public["src"], public["fwd"]) == ("8.8.8.8", None)
+    assert (mesh["src"], mesh["fwd"]) == ("100.101.102.103", None)  # its own address is already in src
+
+
+@pytest.mark.parametrize("forwarded", ["not-an-address", "100.64.0.7; DROP", "999.1.1.1", "", " , "])
+def test_an_invalid_forwarded_address_is_recorded_as_null(client_and_dir, forwarded):
+    client, directory = client_and_dir
+    with _client_with(client.app, ("127.0.0.1", 40000)) as local:
+        local.get("/v1/open", headers={"X-Forwarded-For": forwarded})
+    assert _records(directory)[0]["fwd"] is None
+
+
+def test_the_user_agent_is_cut_to_80_characters_and_made_printable_ascii(client_and_dir):
+    client, directory = client_and_dir
+    client.get("/v1/open", headers={"User-Agent": "agent/1.0 " + "x" * 200})
+    client.get("/v1/open", headers={"User-Agent": "caf\xe9\x01\x7f-tool".encode("latin-1")})
+    client.get("/v1/open", headers={"User-Agent": ""})
+    long_ua, odd_ua, empty_ua = [r["ua"] for r in _records(directory)]
+    assert len(long_ua) == 80 and long_ua.startswith("agent/1.0 xxx")
+    assert odd_ua.startswith("caf") and odd_ua.endswith("-tool")
+    assert all(" " <= ch <= "~" for ch in odd_ua), "every non-printable or non-ASCII byte is replaced"
+    assert "?" in odd_ua and "\x01" not in odd_ua and "\x7f" not in odd_ua
+    assert empty_ua is None
+
+
+def test_no_credential_header_value_ever_reaches_a_record_even_with_ua_and_fwd_recorded(client_and_dir):
+    client, directory = client_and_dir
+    headers = {
+        "Authorization": f"Bearer {SECRET}",
+        "X-KB-Feeder-Token": SECRET,
+        "X-LTM-Writer-Token": SECRET + "-ltm",
+        "X-KB-Rollback-Token": SECRET + "-rb",
+        "X-Capability-Projection-Token": SECRET + "-cp",
+        "Cookie": "session=" + SECRET,
+        "User-Agent": "tool/1.0",
+        "X-Forwarded-For": "100.64.0.7",
+    }
+    with _client_with(client.app, PROXY_PEER) as proxied:
+        proxied.post("/v1/write", headers=headers)
+        proxied.get("/v1/open", headers=headers)
+    raw = (directory / access_log.ACCESS_FILE).read_text(encoding="utf-8")
+    assert SECRET not in raw and "Bearer" not in raw and "session=" not in raw
+    assert all(r["ua"] == "tool/1.0" and r["fwd"] == "100.64.0.7" for r in _records(directory))
+
+
+def test_the_middleware_reads_only_three_named_request_headers():
+    scope = {
+        "headers": [(b"authorization", b"A"), (b"x-kb-feeder-token", b"B"), (b"user-agent", b"U"), (b"cookie", b"C")],
+        "client": ("127.0.0.1", 1),
+    }
+    asked: list[bytes] = []
+    original = access_log._header
+
+    def spy(s, name):
+        asked.append(name)
+        return original(s, name)
+
+    access_log._header, saved = spy, access_log._header
+    try:
+        access_log.client_agent(scope)
+        access_log.reported_client(scope)
+    finally:
+        access_log._header = saved
+    assert set(asked) <= {b"user-agent", b"cf-connecting-ip", b"x-forwarded-for"}
+
+
+# --- R2: the single-process assumption is visible -----------------------------------------------------
+
+
+def test_the_single_process_assumption_is_logged_and_a_multi_worker_setting_warns(tmp_path, monkeypatch, caplog):
+    caplog.set_level("INFO", logger="scrutator.access_log")
+    monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
+    monkeypatch.delenv("UVICORN_WORKERS", raising=False)
+    access_log.AccessLogMiddleware(lambda *a: None, directory=str(tmp_path), backups=3)
+    assert any("single-process assumption" in r.getMessage() for r in caplog.records)
+    assert not any(r.levelname == "WARNING" for r in caplog.records)
+    caplog.clear()
+    monkeypatch.setenv("WEB_CONCURRENCY", "4")
+    access_log.AccessLogMiddleware(lambda *a: None, directory=str(tmp_path), backups=3)
+    assert any(r.levelname == "WARNING" and "4 workers" in r.getMessage() for r in caplog.records)
