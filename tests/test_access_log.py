@@ -45,6 +45,14 @@ def client_and_dir(tmp_path, monkeypatch):
         access_log.note_namespace("alpha")
         return {"namespaces": sorted(cap.namespaces)}
 
+    @app.get("/v1/cap-read")
+    async def cap_read(cap=Depends(capabilities.require_feeder_capability)):
+        return {"namespaces": sorted(cap.namespaces)}
+
+    @app.delete("/v1/cap-delete")
+    async def cap_delete(cap=Depends(capabilities.require_feeder_capability)):
+        return {"deleted": True}
+
     @app.post("/v1/search")
     async def search():
         # what the real dependency and handler do for a reader
@@ -410,3 +418,33 @@ def test_the_single_process_assumption_is_logged_and_a_multi_worker_setting_warn
     monkeypatch.setenv("WEB_CONCURRENCY", "4")
     access_log.AccessLogMiddleware(lambda *a: None, directory=str(tmp_path), backups=3)
     assert any(r.levelname == "WARNING" and "4 workers" in r.getMessage() for r in caplog.records)
+
+
+# --- mode follows the verb for machine capabilities (control decision on 4e0054f0) ---------------------
+
+
+def test_a_capability_get_is_logged_as_a_read_and_a_capability_post_or_delete_as_a_write(client_and_dir):
+    client, directory = client_and_dir
+    headers = {"X-KB-Feeder-Token": SECRET}
+    assert client.get("/v1/cap-read", headers=headers).status_code == 200
+    assert client.post("/v1/write", headers=headers).status_code == 200
+    assert client.delete("/v1/cap-delete", headers=headers).status_code == 200
+    got, posted, deleted = _records(directory)
+    assert (got["identity"], got["mode"]) == ("capability:feeder", "read")
+    assert (posted["identity"], posted["mode"]) == ("capability:feeder", "write")
+    assert (deleted["identity"], deleted["mode"]) == ("capability:feeder", "write")
+
+
+def test_a_refused_capability_get_is_a_read_too_and_a_refused_post_stays_a_write(client_and_dir):
+    client, directory = client_and_dir
+    assert client.get("/v1/cap-read").status_code == 401
+    assert client.post("/v1/write").status_code == 401
+    refused_get, refused_post = _records(directory)
+    assert (refused_get["mode"], refused_get["auth"], refused_get["status"]) == ("read", "none", 401)
+    assert (refused_post["mode"], refused_post["auth"], refused_post["status"]) == ("write", "none", 401)
+
+
+def test_only_the_logged_field_changes_the_capability_still_authorises_the_same_way(client_and_dir):
+    client, _directory = client_and_dir
+    assert client.get("/v1/cap-read", headers={"X-KB-Feeder-Token": "wrong"}).status_code == 401
+    assert client.get("/v1/cap-read", headers={"X-KB-Feeder-Token": SECRET}).json() == {"namespaces": ["alpha", "beta"]}
