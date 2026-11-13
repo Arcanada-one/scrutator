@@ -69,7 +69,10 @@ services:
       # these three (governance already granted). Runtime-only kind like kc2-store: every reconcile
       # runner in the paired arcanada-workspace change must declare --runtime-only-namespace for each,
       # or unexpected_runtime_grants halts all lanes. Do NOT widen authoritative-namespaces.txt.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program"
+      # One more PROJECTED-CORPUS scope (2026-11-12, Muneral fd0e1fe2): knowledge-contract. Projects/Knowledge Contract/ routes to it
+      # (taxonomy since 2026-11-06, KC-PIPE-T3 875b6035; the paired grant promised in authoritative-namespaces.txt never landed) and
+      # every kb-reconcile run on prd ends `missing_namespace_grants=knowledge-contract`. The isolated KC corpus stays in its own instance.
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program,knowledge-contract"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
