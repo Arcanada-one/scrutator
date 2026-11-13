@@ -43,6 +43,11 @@ _ENTROPY_THRESHOLD = 4.0
 # fail on every run (13 of the first 200 tasks). A slug of real words is not a credential; a random token
 # (mixed case, hex, base64, a letters-and-digits part) is not a slug and is still reported.
 _SLUG_SHAPE = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+){2,}")
+# The slug exemption does not apply under a credential-named key: a passphrase of words under "password" or
+# "api_key" is exactly what the entropy rule must still read as a secret (control review of #175).
+_CREDENTIAL_KEY = re.compile(
+    r"password|passwd|secret|token|api[_\-.]?key|apikey|credential|private|auth", re.IGNORECASE
+)
 _SLUG_TIMESTAMP = re.compile(r"\d{8}t\d{4,6}z")
 ALLOWLIST_PATH = Path(__file__).with_name("secret_allowlist.json")
 _SHA256_HEX = re.compile(r"[0-9a-f]{64}")
@@ -209,7 +214,7 @@ def scan_text(text: str, *, info_patterns: list[str] | None = None) -> ScanResul
             value = match.group("val")
             if (
                 shannon_entropy(value) > _ENTROPY_THRESHOLD
-                and not is_identifier_slug(value)
+                and not (is_identifier_slug(value) and not _CREDENTIAL_KEY.search(match.group("key")))
                 and not any(pattern.search(value) for pattern in compiled_info)
             ):
                 findings.append(Finding("generic-entropy", SEV_CRITICAL, line_number, _sha256(value)))

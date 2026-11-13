@@ -125,3 +125,39 @@ def test_scan_serialized_applies_the_allowlist(monkeypatch, tmp_path):
         secretscan, "_run_gitleaks", lambda text: [Finding("gitleaks:generic-api-key", SEV_CRITICAL, 1, "0" * 64)]
     )
     assert secretscan.scan_serialized('{"k":"v"}').is_critical
+
+
+# A slug that the entropy rule would flag (entropy above 4.0 because it is long and varied).
+HIGH_ENTROPY_SLUG = "Prime-short-ui-stage-bounded-review-2026-11-02"
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "password",
+        "PASSWORD",
+        "passwd",
+        "client_secret",
+        "access_token",
+        "api_key",
+        "apikey",
+        "api-key",
+        "credential",
+        "private_key",
+        "auth",
+        "authorization",
+        "db_password",
+        "X-Auth-Token",
+    ],
+)
+def test_the_same_slug_is_blocked_under_a_credential_named_key(key):
+    assert secretscan.shannon_entropy(HIGH_ENTROPY_SLUG) > secretscan._ENTROPY_THRESHOLD
+    assert is_identifier_slug(HIGH_ENTROPY_SLUG)
+    result = scan_text(json.dumps({key: HIGH_ENTROPY_SLUG}))
+    assert result.is_critical and result.findings[0].rule == "generic-entropy"
+    assert scan_text(f'{key} = "{HIGH_ENTROPY_SLUG}"').is_critical
+
+
+@pytest.mark.parametrize("key", ["display_name", "muneral_id", "description", "title", "name", "source_path"])
+def test_the_same_slug_passes_under_a_name_field(key):
+    assert scan_text(json.dumps({key: HIGH_ENTROPY_SLUG})).findings == []
