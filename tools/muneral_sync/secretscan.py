@@ -54,19 +54,25 @@ _SHA256_HEX = re.compile(r"[0-9a-f]{64}")
 
 
 def is_identifier_slug(value: str) -> bool:
-    """True for a lowercase kebab/snake slug of real words (at most one leading capital).
+    """True for a lowercase kebab/snake slug of real words (the first part may be Capitalized or an acronym).
 
     Every word part (3+ letters) must look like a word: a vowel and no run of five consonants, so a
-    random lowercase license-key shape such as ``xqzmk-dpvrw-tbnhj`` is not a slug. At least three
-    word parts and 60% of the non-numeric parts must be words; numeric parts and a ``20261029t0518z``
+    random lowercase license-key shape such as ``xqzmk-dpvrw-tbnhj`` is not a slug. At least two word
+    parts and 60% of the non-numeric parts must be words; numeric parts and a ``20261029t0518z``
     timestamp are allowed; a part that mixes letters and digits is not (that is what a token looks like).
-    This is a heuristic without a dictionary: a random lowercase key whose every group happens to hold
-    a vowel would pass here, and is still caught by gitleaks and the named rules.
+    Measured shapes of the blocked task names: ``word-word-12345678`` (two words and a date) and
+    ``Word-word-word-word-word-word-2026-11-02``. This is a heuristic without a dictionary: a random
+    lowercase key whose every group happens to hold a vowel would pass here, and is still caught by
+    gitleaks and the named rules; under a credential-named key the exemption is never applied.
     """
-    candidate = value[:1].lower() + value[1:] if value[:1].isupper() else value
-    if not _SLUG_SHAPE.fullmatch(candidate):
+    head, sep, rest = value.partition("-")
+    if not sep:
+        head, sep, rest = value.partition("_")
+    if re.fullmatch(r"[A-Z][a-z]*|[A-Z]{2,8}", head):
+        value = head.lower() + sep + rest
+    if not _SLUG_SHAPE.fullmatch(value):
         return False
-    parts = re.split(r"[-_]", candidate)
+    parts = re.split(r"[-_]", value)
     if any(len(part) > 20 for part in parts):
         return False
     words = 0
@@ -82,7 +88,7 @@ def is_identifier_slug(value: str) -> bool:
         if not re.search(r"[aeiouy]", part) or re.search(r"[^aeiouy]{5}", part):
             return False
         words += 1
-    return words >= 3 and words * 5 >= non_numeric * 3
+    return words >= 2 and words * 5 >= non_numeric * 3
 
 
 def load_allowlist(path: Path | None = None) -> dict[tuple[str, str], str]:
