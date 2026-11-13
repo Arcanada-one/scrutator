@@ -1492,6 +1492,9 @@ def validate_stage_userpath_result(result_path: str | None, result_root: str | N
 CALLER_DEPENDENCY_SETUP_SCHEMA = "CallerDependencySetup/v1"
 CALLER_DEPENDENCY_SETUP_POLICY = "pnpm-frozen-web-typecheck/v1"
 CALLER_DEPENDENCY_SETUP_REPOSITORY = "Arcanada-one/muneral"
+# Exact Node versions the MUN dependency-setup profiles (web typecheck and full suite) admit. An exact list, never
+# a range: 26.13.0 is what Arcanada-one/muneral pins in package.json engines.node, .nvmrc and ci.yml (muneral#362).
+MUN_DEPENDENCY_SETUP_NODE_VERSIONS = ("24.22.1", "26.13.0")
 CALLER_DEPENDENCY_SETUP_FILES = (
     ".github/workflows/ci.yml",
     "package.json",
@@ -1646,7 +1649,7 @@ def validate_candidate_dependency_setup(manifest: dict, repo_path: str | Path,
     except (UnicodeError, json.JSONDecodeError, ValueError) as exc:
         raise ValueError("dependency setup package inputs are malformed") from exc
     if (root_package.get("packageManager") != "pnpm@11.5.2"
-            or (root_package.get("engines") or {}).get("node") != "24.22.1"):
+            or (root_package.get("engines") or {}).get("node") not in MUN_DEPENDENCY_SETUP_NODE_VERSIONS):
         raise ValueError("root package manager or Node pin differs from the supported setup policy")
     if (web_package.get("name") != "@muneral/web"
             or (web_package.get("dependencies") or {}).get("@muneral/types") != "workspace:*"):
@@ -1789,7 +1792,7 @@ def validate_candidate_full_suite_dependency_setup(manifest: dict, repo_path: st
     except (UnicodeError, ValueError) as exc:
         raise ValueError("full-suite package inputs are malformed") from exc
     if (root.get("packageManager") != "pnpm@11.5.2"
-            or (root.get("engines") or {}).get("node") != "24.22.1"
+            or (root.get("engines") or {}).get("node") not in MUN_DEPENDENCY_SETUP_NODE_VERSIONS
             or (root.get("scripts") or {}).get("test") != "turbo run test"
             or (root.get("scripts") or {}).get("build") != "turbo run build"):
         raise ValueError("root package manager, Node pin, or full-suite commands differ from supported source")
@@ -1830,7 +1833,7 @@ def validate_candidate_full_suite_dependency_setup(manifest: dict, repo_path: st
         'corepack enable --install-directory "${COREPACK_HOME}"',
         'echo "${COREPACK_HOME}" >> "${GITHUB_PATH}"',
         "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
-        "node-version: 24.22.1", "pnpm install --frozen-lockfile",
+        f"node-version: {root['engines']['node']}", "pnpm install --frozen-lockfile",
         "pnpm --filter @muneral/types build", "pnpm build", "pnpm test",
     )
     if any(literal not in workflow for literal in required_literals):

@@ -348,7 +348,7 @@ UNRESOLVED_MODULE_CODES = {"TS2307", "TS2688", "TS7016"}
 SHARED_KINDS = {"library", "shared_package"}
 MANDATORY_IDS = ["type_check", "contract_diff", "route_config_consistency", "schema_diff", "config_schema", "fitness_rules", "doc_reference",
                  "canary", "shell_syntax", "shell_behavior", "systemd_unit_semantics", "source_file_integrity",
-                 "source_input_contract"]
+                 "source_input_contract", "trust_anchor_pin_consistency"]
 SELECTABLE_IDS = ["targeted_test", "property_check"]
 # internal rules the mutation battery disables one at a time
 RULES = ["aggregate_failed_wins", "missing_required_not_measured", "disabled_mandatory_event", "inferred_boundary_hold",
@@ -654,7 +654,75 @@ def systemd_graph_parity(doc: dict, tree: build_graph.Tree) -> list[str]:
     return errors
 
 
-SYSTEMD_MANDATORY_FLOOR = {"systemd_unit": ["systemd_unit_semantics"], "source_file": ["source_file_integrity"]}
+SYSTEMD_MANDATORY_FLOOR = {"systemd_unit": ["systemd_unit_semantics"], "source_file": ["source_file_integrity"],
+                           "trust_anchor_pin": ["trust_anchor_pin_consistency"]}
+
+
+_ANCHOR_UNIT_USES_RE = re.compile(
+    r"^\s*uses:\s*Arcanada-one/arcanada-universal-program/\.github/workflows/graph-admission\.ya?ml@(?P<sha>[0-9a-f]{40})\s*(?:#.*)?$", re.M)
+_ANCHOR_ANY_USES_RE = re.compile(
+    r"^\s*uses:\s*Arcanada-one/arcanada-universal-program/\.github/workflows/graph-admission\.ya?ml@(?P<ref>\S+?)\s*(?:#.*)?$", re.M)
+_ANCHOR_PROGRAM_REF_RE = re.compile(r"^\s*program_ref:\s*['\"]?(?P<sha>[0-9a-f]{40})['\"]?\s*(?:#.*)?$", re.M)
+_ANCHOR_FINGERPRINT_RE = re.compile(r"^\s*signing_key_fingerprint:\s*['\"]?(?P<fp>SHA256:[A-Za-z0-9+/=]+)['\"]?\s*(?:#.*)?$", re.M)
+ANCHOR_BUNDLE_MANIFEST = ".github/graph-admission/BUNDLE.json"
+
+
+def trust_anchor_pin_evaluate(pin_raw: bytes, files: dict) -> tuple[str, str]:
+    """(verdict, reason) for one trust-anchor pin file against the caller workflow(s) and the vendored bundle manifest
+    of the same tree. Pure function of bytes: no network, no clock."""
+    try:
+        pin = json.loads(pin_raw.decode("utf-8"))
+    except (UnicodeError, ValueError):
+        return "failed", "TRUST_ANCHOR_PIN_UNREADABLE"
+    if not isinstance(pin, dict) or not isinstance(pin.get("program_ref"), str) or not isinstance(pin.get("signing_key_fingerprint"), str):
+        return "failed", "TRUST_ANCHOR_PIN_FIELDS_MISSING"
+    callers = []  # (path, uses shas, program_ref inputs, fingerprints) for every workflow that carries the program_ref input
+    for path in sorted(files):
+        if not (path.startswith(".github/workflows/") and path.endswith((".yml", ".yaml"))):
+            continue
+        text = files[path].decode("utf-8", errors="replace")
+        refs = [m.group("sha") for m in _ANCHOR_PROGRAM_REF_RE.finditer(text)]
+        if not refs:
+            continue
+        callers.append((path, [m.group("sha") for m in _ANCHOR_UNIT_USES_RE.finditer(text)], refs,
+                        [m.group("fp") for m in _ANCHOR_FINGERPRINT_RE.finditer(text)],
+                        [m.group("ref") for m in _ANCHOR_ANY_USES_RE.finditer(text)]))
+    manifest_raw = files.get(ANCHOR_BUNDLE_MANIFEST)
+    if not callers or manifest_raw is None:
+        return "not_measured", "ANCHOR_CALLER_OR_BUNDLE_UNAVAILABLE"
+    try:
+        manifest_ref = json.loads(manifest_raw.decode("utf-8")).get("program_ref")
+    except (UnicodeError, ValueError, AttributeError):
+        return "not_measured", "ANCHOR_BUNDLE_MANIFEST_UNREADABLE"
+    problems = []
+    if manifest_ref != pin["program_ref"]:
+        problems.append(f"pin.program_ref != {ANCHOR_BUNDLE_MANIFEST} program_ref")
+    unmeasured = []
+    compared = ["bundle manifest program_ref"]
+    for path, uses, refs, fingerprints, any_uses in callers:
+        # control review of #606: a graph-admission `uses:` line that is not a 40-hex SHA (tag, branch) is a failure,
+        # never a silent skip; a caller with no signing_key_fingerprint line cannot be compared (not_measured).
+        for ref in any_uses:
+            if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                problems.append(f"uses: ref '{ref}' in {path} is not a 40-hex SHA")
+        if any_uses:
+            compared.append(f"uses: SHA in {path}")
+        compared.append(f"program_ref input in {path}")
+        if fingerprints:
+            compared.append(f"signing_key_fingerprint input in {path}")
+        else:
+            unmeasured.append(f"signing_key_fingerprint input absent in {path}")
+        if any(sha != pin["program_ref"] for sha in uses):
+            problems.append(f"pin.program_ref != uses: SHA in {path}")
+        if any(sha != pin["program_ref"] for sha in refs):
+            problems.append(f"pin.program_ref != program_ref input in {path}")
+        if any(fp != pin["signing_key_fingerprint"] for fp in fingerprints):
+            problems.append(f"pin.signing_key_fingerprint != signing_key_fingerprint input in {path}")
+    if problems:
+        return "failed", "TRUST_ANCHOR_DRIFT: " + "; ".join(problems)
+    if unmeasured:
+        return "not_measured", "TRUST_ANCHOR_FINGERPRINT_NOT_COMPARABLE: " + "; ".join(unmeasured)
+    return "verified", "pin equals, as compared: " + "; ".join(compared)
 
 
 def validate_systemd_matrix_floor(matrix: dict, node_types: set[str]) -> None:
@@ -2039,6 +2107,24 @@ class Verify:
                         entities, 0 if all(v[0] == "verified" for v in verdicts.values()) else 2,
                         json.dumps({"schema": "SystemdSourceFileIntegrity/v1", "rows": rows}, ensure_ascii=False, indent=1),
                         now_iso(), 0.0, "same-tree source-file identity", verdicts, ext="json")
+
+    def v_trust_anchor_pin_consistency(self):
+        entities = self.needing("trust_anchor_pin_consistency")
+        verdicts, rows = {}, []
+        for eid in entities:
+            ent = self.entities[eid]; path = ent["node"].get("path")
+            raw = self.tree_head.files.get(path) if path else None
+            if raw is None:
+                verdict, reason = "not_measured", "TRUST_ANCHOR_PIN_UNAVAILABLE_AT_HEAD"
+            else:
+                verdict, reason = trust_anchor_pin_evaluate(raw, self.tree_head.files)
+            verdicts[eid] = (verdict, reason)
+            rows.append({"entity": eid, "path": path, "verdict": verdict, "reason": reason})
+        if entities:
+            self.record("v-trust_anchor_pin_consistency", "trust_anchor_pin_consistency", "verify.py trust_anchor_pin_consistency",
+                        entities, 0 if all(v[0] == "verified" for v in verdicts.values()) else 2,
+                        json.dumps({"schema": "TrustAnchorPinConsistency/v1", "rows": rows}, ensure_ascii=False, indent=1),
+                        now_iso(), 0.0, "caller trust-anchor pin vs workflow and bundle", verdicts, ext="json")
 
     def v_systemd_unit_semantics(self):
         entities = self.needing("systemd_unit_semantics")
@@ -4343,6 +4429,7 @@ class Verify:
                         ("shell_syntax", self.v_shell_syntax), ("shell_behavior", self.v_shell_behavior),
                         ("systemd_unit_semantics", self.v_systemd_unit_semantics),
                         ("source_file_integrity", self.v_source_file_integrity),
+                        ("trust_anchor_pin_consistency", self.v_trust_anchor_pin_consistency),
                         ("source_input_contract", self.v_source_input_contract),
                         ("full_fallback_test", self.v_global_fallback_test), ("targeted_test", self.v_targeted_test), ("property_check", self.v_property_check)):
             with impact_pair.trace_phase("verifier-" + mid):
@@ -4748,6 +4835,14 @@ def selftest(a) -> int:
                                      "test_systemd_source_contract.SystemdVerifierCalibration." + method],
                                     cwd=Path(__file__).parent, capture_output=True, text=True)
             check(f"mandatory verifier {vid}: pinned positive, identity fault and disabled controls",
+                  result.returncode == 0, output=(result.stdout + result.stderr)[-2000:])
+            continue
+        if vid == "trust_anchor_pin_consistency":
+            result = subprocess.run([sys.executable, "-m", "unittest",
+                                     "test_trust_anchor_pin.TrustAnchorPinTests."
+                                     "test_trust_anchor_verifier_enabled_fault_and_disabled_control"],
+                                    cwd=Path(__file__).parent, capture_output=True, text=True)
+            check("mandatory verifier trust_anchor_pin_consistency: pinned positive, drift fault and disabled control",
                   result.returncode == 0, output=(result.stdout + result.stderr)[-2000:])
             continue
         if vid in {"shell_syntax", "shell_behavior"}:
