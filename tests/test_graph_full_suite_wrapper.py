@@ -1,6 +1,7 @@
 """scripts/graph-full-suite.sh reports `not measured` (127), never a failure, when it cannot run the suite."""
+
 import json
-import os
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -22,7 +23,16 @@ def test_unimportable_environment_exits_127_not_failure(tmp_path):
     fake.write_text("#!/bin/sh\nexit 1\n")
     fake.chmod(0o755)
     bash = "/bin/bash"
-    result = subprocess.run([bash, str(SCRIPT)], capture_output=True, text=True,
-                            env={"PATH": str(tmp_path), "HOME": str(tmp_path)})
+    # The fake python3 comes first; the directory of `dirname` follows so the wrapper's own
+    # `cd "$(dirname ...)"` works as it does in CI. That directory also holds a real python3, which
+    # the fake shadows.
+    tools = Path(shutil.which("dirname")).parent
+    result = subprocess.run(
+        [bash, str(SCRIPT)],
+        capture_output=True,
+        text=True,
+        env={"PATH": f"{tmp_path}:{tools}", "HOME": str(tmp_path)},
+    )
     assert result.returncode == 127
     assert "FULL_FALLBACK_TEST_NOT_MEASURED" in result.stderr
+    assert "dirname: command not found" not in result.stderr
