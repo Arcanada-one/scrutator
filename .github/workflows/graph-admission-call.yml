@@ -52,6 +52,9 @@ jobs:
     uses: ./.github/workflows/graph-admission.yml
     with:
       program_ref: "cdbf3b4e4920a68f08136dca510a0b0c8d2dbec5"
+      # Signed graph-admission.yml cannot change runs-on defaults (BUNDLE_ACTIVE_WORKFLOW_BYTES_MISMATCH).
+      # Pass a single self-hosted label via caller input instead.
+      runs_on: "ci-general"
       # AUP-GRAPH-006:gate2b. The fingerprint of the Ed25519 key that signs the vendored bundle's
       # BUNDLE.json. It lives HERE, in this repository's own workflow file, deliberately OUTSIDE
       # .github/graph-admission/: a fingerprint kept inside the bundle would be replaced by the very

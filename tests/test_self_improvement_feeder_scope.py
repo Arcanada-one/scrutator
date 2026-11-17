@@ -75,6 +75,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # to `doclab-arcana`, the projection lists it, the token lacked it (`missing_namespace_grants=doclab-arcana`, seq
 # 6328..6331 on prd). The arcanada-workspace mirror declares it in the paired change; no
 # --runtime-only-namespace is needed.
+# `mail-arcana` (2026-11-15, Muneral 7f47617d) is the same PROJECTED-CORPUS kind: Projects/Mail Arcana/ routes to
+# `mail-arcana`; the arcanada-workspace mirror declares it in the paired change; no --runtime-only-namespace is needed.
 # `contracts`, `integrations`, `universal-program` (2026-11-06, Muneral b435) are the RUNTIME-ONLY kind, like
 # `kc2-store`: the program lane indexes them (kb-program-reconcile-run.sh); they are not in the core
 # authoritative-namespaces mirror. After PR1830 the program runner expects them; natural tick
@@ -102,6 +104,7 @@ FEEDER_APPENDED_SCOPES = (
     "universal-program",
     "knowledge-contract",
     "road-mapmd",
+    "mail-arcana",
 )
 
 
@@ -134,7 +137,7 @@ def test_compose_appends_only_reviewed_skills_proof_scopes():
         "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,"
         "kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,"
         "collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,"
-        "contracts,integrations,universal-program,knowledge-contract,road-mapmd"
+        "contracts,integrations,universal-program,knowledge-contract,road-mapmd,mail-arcana"
     )
     assert environment["SCRUTATOR_ROLLBACK_NAMESPACES"] == ("${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills")
     assert "SCRUTATOR_CAPABILITY_PROJECTION_TOKEN" not in environment
