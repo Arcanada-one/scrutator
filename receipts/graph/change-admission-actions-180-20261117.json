@@ -1,745 +1,764 @@
 {
-  "admission": {
-    "rule": "admitted requires every verdict = verified; failed without exemption \u21d2 refused; not_measured without exemption \u21d2 paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
-    "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold \u2014 the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
-    "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item \u2014 the ordinary case after a rebase or a second commit on a card \u2014 the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-    "verdict": "admitted_with_exemptions"
-  },
-  "captured_at_utc": "2026-11-17T17:50:57Z",
-  "change_set": {
-    "base": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f",
-    "files": [
-      {
-        "kind": "config",
-        "node_id": "code_unit:.github/workflows/benchmark-scrutator.yml",
-        "node_ids": [
-          "code_unit:.github/workflows/benchmark-scrutator.yml"
-        ],
-        "path": ".github/workflows/benchmark-scrutator.yml",
-        "status": "M"
-      },
-      {
-        "kind": "config",
-        "node_id": "code_unit:.github/workflows/governance.yml",
-        "node_ids": [
-          "code_unit:.github/workflows/governance.yml"
-        ],
-        "path": ".github/workflows/governance.yml",
-        "status": "M"
-      }
+ "admission": {
+  "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
+  "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
+  "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
+  "verdict": "admitted_with_exemptions"
+ },
+ "captured_at_utc": "2026-11-17T17:52:58Z",
+ "change_set": {
+  "base": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f",
+  "files": [
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/workflows/benchmark-scrutator.yml",
+    "node_ids": [
+     "code_unit:.github/workflows/benchmark-scrutator.yml"
     ],
-    "head": "755bc5a8cea53a181e7cbfa8fc41b20588649432",
-    "mode": "diff"
-  },
-  "decision_ref": "DEC-AUP-0008",
-  "exemptions": [
-    {
-      "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
-      "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "expires_at_utc": "2026-12-17T00:00:00Z",
-      "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
-      "reason": "Pinned workflow YAML pin bumps only (setup-python/upload-artifact). Graph verifier cannot close dynamic/opaque workflow shell callers / host toolchain gap. CI remains separate evidence. No shell caller behavior is claimed verified."
-    },
-    {
-      "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
-      "entity": "code_unit:.github/workflows/governance.yml",
-      "expires_at_utc": "2026-12-17T00:00:00Z",
-      "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
-      "reason": "Pinned governance-diff-guard action SHA bump only. Graph verifier cannot close dynamic/opaque workflow shell callers / host toolchain gap. CI remains separate evidence. No shell caller behavior is claimed verified."
-    },
-    {
-      "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
-      "entity": "deployable_unit:.",
-      "expires_at_utc": "2026-12-17T00:00:00Z",
-      "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
-      "reason": "Workflow pin bumps outside the signed graph-admission bundle and outside deploy-surface paths. Deployable-unit shell/dynamic closure remains not measured on this host; CI on the PR head remains separate evidence. No production behavior is claimed verified."
-    }
+    "path": ".github/workflows/benchmark-scrutator.yml",
+    "status": "M"
+   },
+   {
+    "kind": "config",
+    "node_id": "code_unit:.github/workflows/governance.yml",
+    "node_ids": [
+     "code_unit:.github/workflows/governance.yml"
+    ],
+    "path": ".github/workflows/governance.yml",
+    "status": "M"
+   },
+   {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-actions-180-20261117.json"
+    ],
+    "path": "receipts/graph/change-admission-actions-180-20261117.json",
+    "status": "A"
+   }
   ],
-  "graph": {
-    "builder_version": "1.0.6",
-    "built_at_utc": "2026-09-05T00:00:00Z",
-    "graph_digest": "sha256:cecaac6dd5178bce6d1965a4532e2d73f9ee2061a1bb6712ca3ffe8e6cc9fa2b",
-    "path": "/tmp/arcana-verify-u4gyykn_/verifier-out/graph-6f732508371c.json",
-    "source_commit": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f"
+  "head": "97fb4031fd1c755b501af76a729357329475937e",
+  "mode": "diff"
+ },
+ "decision_ref": "DEC-AUP-0008",
+ "exemptions": [
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "expires_at_utc": "2026-12-17T00:00:00Z",
+   "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
+   "reason": "Pinned workflow YAML pin bumps only (setup-python/upload-artifact). Graph verifier cannot close dynamic/opaque workflow shell callers / host toolchain gap. CI remains separate evidence. No shell caller behavior is claimed verified."
   },
-  "head_graph": {
-    "builder_version": "1.0.6",
-    "built_at_utc": "2026-09-05T00:00:00Z",
-    "graph_digest": "sha256:708fe34cf5a60dda1d6a3992f247c2fa698b97fb8e1bc83d526799e11b73f9bc",
-    "path": "/tmp/arcana-verify-u4gyykn_/verifier-out/graph-head-755bc5a8cea5.json",
-    "source_commit": "755bc5a8cea53a181e7cbfa8fc41b20588649432",
-    "staleness": {
-      "checked_at_utc": "2026-11-17T17:52:23Z",
-      "checked_nodes": 400,
-      "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
-      "mismatched_nodes": [],
-      "verdict": "fresh"
-    }
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/governance.yml",
+   "expires_at_utc": "2026-12-17T00:00:00Z",
+   "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
+   "reason": "Pinned governance-diff-guard action SHA bump only. Graph verifier cannot close dynamic/opaque workflow shell callers / host toolchain gap. CI remains separate evidence. No shell caller behavior is claimed verified."
   },
-  "host": "fin-w2-scr-auth",
-  "host_redacted": true,
-  "host_sha256": "3af0c3380deb48d52dfce110b719027d53a629406b5356636d1ea5f9a1fd8ac3",
-  "impact_set": {
-    "deterministic_core": [
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "deployable_unit:.",
-        "node_type": "deployable_unit",
-        "path": [
-          {
-            "edge_type": "deploys_to",
-            "from": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "provenance": "deterministic",
-            "to": "deployable_unit:.",
-            "via": "containment"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-access-log.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-access-log.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-kb-cons-02.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-kcp-0025.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-pr161.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-pr161.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-pr165.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-pr165.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/governance.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      },
-      {
-        "boundary": "intra_unit",
-        "depth": 1,
-        "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
-        "node_type": "receipt",
-        "path": [
-          {
-            "edge_type": "verifies",
-            "from": "receipt:receipts/graph/exact-evidence-receiving.json",
-            "provenance": "deterministic",
-            "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-            "via": "explicit-path"
-          }
-        ],
-        "revisions": [
-          "base",
-          "head"
-        ],
-        "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-      }
-    ],
-    "edge_types": "all",
-    "global_fallback": {
-      "triggered": false
-    },
-    "inferred_tail": [],
-    "max_depth": 3,
-    "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-    "total": 14
-  },
-  "notes": [
-    "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = \u22c3 edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i\u2026",
-    "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-    "exemptions: 3 attached from /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/exemptions.json",
-    "head tree 755bc5a8cea5 exported with git archive into /tmp/arcana-verify-u4gyykn_/export-755bc5a8cea5 (node_modules linked from the repository for []; workspace packages built: none); the repository was not written",
-    "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/car-final.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
-    "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/car-final.json, which is outside this repository, so no path in the tree is the one this run supersedes."
-  ],
-  "producer": {
-    "tool": "tools/graph/verify.py",
-    "version": "1.4.1"
-  },
-  "receipt_id": "car-verify-20261117T175057Z-755bc5a8",
-  "receipt_path": "receipts/graph/change-admission-actions-180-20261117.json",
-  "repo": {
-    "name": "Arcanada-one/scrutator",
-    "path": "/home/dev/aup/claude-work/fin-w2-scr-auth/scrutator"
-  },
-  "revision_selection": {
-    "base": [
-      "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "code_unit:.github/workflows/governance.yml",
-      "deployable_unit:.",
-      "receipt:receipts/graph/A2-308-scope-enforcement.json",
-      "receipt:receipts/graph/change-admission-access-log.json",
-      "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
-      "receipt:receipts/graph/change-admission-kb-cons-02.json",
-      "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
-      "receipt:receipts/graph/change-admission-kcp-0025.json",
-      "receipt:receipts/graph/change-admission-pr161.json",
-      "receipt:receipts/graph/change-admission-pr165.json",
-      "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-      "receipt:receipts/graph/change-admission-rate-limit-9060.json",
-      "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-      "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
-      "receipt:receipts/graph/exact-evidence-receiving.json"
-    ],
-    "head": [
-      "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "code_unit:.github/workflows/governance.yml",
-      "deployable_unit:.",
-      "receipt:receipts/graph/A2-308-scope-enforcement.json",
-      "receipt:receipts/graph/change-admission-access-log.json",
-      "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
-      "receipt:receipts/graph/change-admission-kb-cons-02.json",
-      "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
-      "receipt:receipts/graph/change-admission-kcp-0025.json",
-      "receipt:receipts/graph/change-admission-pr161.json",
-      "receipt:receipts/graph/change-admission-pr165.json",
-      "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-      "receipt:receipts/graph/change-admission-rate-limit-9060.json",
-      "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-      "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
-      "receipt:receipts/graph/exact-evidence-receiving.json"
-    ],
-    "schema": "RevisionImpactSelection/v1",
-    "unmeasured_head_files": []
-  },
-  "schema": "ChangeAdmissionReceipt/v1",
+  {
+   "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
+   "entity": "deployable_unit:.",
+   "expires_at_utc": "2026-12-17T00:00:00Z",
+   "owner": "Arcanada (Muneral 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 author fix)",
+   "reason": "Workflow pin bumps outside the signed graph-admission bundle and outside deploy-surface paths. Deployable-unit shell/dynamic closure remains not measured on this host; CI on the PR head remains separate evidence. No production behavior is claimed verified."
+  }
+ ],
+ "graph": {
+  "builder_version": "1.0.6",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:cecaac6dd5178bce6d1965a4532e2d73f9ee2061a1bb6712ca3ffe8e6cc9fa2b",
+  "path": "/tmp/arcana-verify-slt17f21/verifier-out/graph-6f732508371c.json",
+  "source_commit": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f"
+ },
+ "head_graph": {
+  "builder_version": "1.0.6",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:f73574c66f5e6b4612ceac916d641ad89834610b97920415fae8a671f7e89dbd",
+  "path": "/tmp/arcana-verify-slt17f21/verifier-out/graph-head-97fb4031fd1c.json",
+  "source_commit": "97fb4031fd1c755b501af76a729357329475937e",
   "staleness": {
-    "checked_at_utc": "2026-11-17T17:52:23Z",
-    "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
-    "mismatched_nodes": [],
-    "verdict": "fresh"
-  },
-  "structural_exclusions": [
-    {
-      "content_hash": {
-        "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
-        "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
-      },
-      "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/A2-308-scope-enforcement.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:8c1ce968debf58ab4ac1eb71aab2ef101a2509acca0b23d98c7ba9e909db9c4d",
-        "head": "sha256:8c1ce968debf58ab4ac1eb71aab2ef101a2509acca0b23d98c7ba9e909db9c4d"
-      },
-      "entity": "receipt:receipts/graph/change-admission-access-log.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-access-log.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:ba7f5ada9051cad3fcd95f44ef6ef363ebbf9bcbbfaa5e8c0a0ca581fd72d101",
-        "head": "sha256:ba7f5ada9051cad3fcd95f44ef6ef363ebbf9bcbbfaa5e8c0a0ca581fd72d101"
-      },
-      "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-kb-cons-01-n.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a",
-        "head": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a"
-      },
-      "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-kb-cons-02.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:f8e80ea3daaeacea1b92e59354fcccc635d2d66676bb3c153781b59daf7bf228",
-        "head": "sha256:f8e80ea3daaeacea1b92e59354fcccc635d2d66676bb3c153781b59daf7bf228"
-      },
-      "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:a2c51a4abc1120dc657c812faca9e4f0f58082fcfcc1127d05f6dce96390fa61",
-        "head": "sha256:a2c51a4abc1120dc657c812faca9e4f0f58082fcfcc1127d05f6dce96390fa61"
-      },
-      "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-kcp-0025.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d",
-        "head": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d"
-      },
-      "entity": "receipt:receipts/graph/change-admission-pr161.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-pr161.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:8a6237ce1a608b82b59246912f3a573ae5788ab39b5d5e54f6ae6e6a233bea9b",
-        "head": "sha256:8a6237ce1a608b82b59246912f3a573ae5788ab39b5d5e54f6ae6e6a233bea9b"
-      },
-      "entity": "receipt:receipts/graph/change-admission-pr165.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-pr165.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:77df583379ef4b807e4d4cec855e91566f19e56f8eddf1a11a5a3dcc8e067ff3",
-        "head": "sha256:77df583379ef4b807e4d4cec855e91566f19e56f8eddf1a11a5a3dcc8e067ff3"
-      },
-      "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db",
-        "head": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db"
-      },
-      "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-rate-limit-9060.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:309cf7fc2b8c7f1a5f28f8ddf6961febf934549dff8745ce9e334d4a95610fd5",
-        "head": "sha256:309cf7fc2b8c7f1a5f28f8ddf6961febf934549dff8745ce9e334d4a95610fd5"
-      },
-      "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-selfhosted-runners-20261117.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:80c5670fdf0a2e486edf8d8cf3e5ba1407f1324a26575a31e25e21edb5263586",
-        "head": "sha256:80c5670fdf0a2e486edf8d8cf3e5ba1407f1324a26575a31e25e21edb5263586"
-      },
-      "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/change-admission-wrapper-full-test-186.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    },
-    {
-      "content_hash": {
-        "base": "sha256:5bd5e84e9ce8adf01780d763127ce601d5f85ac8b8b5f40deb3f5029560af582",
-        "head": "sha256:5bd5e84e9ce8adf01780d763127ce601d5f85ac8b8b5f40deb3f5029560af582"
-      },
-      "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
-      "node_type": "receipt",
-      "path": "receipts/graph/exact-evidence-receiving.json",
-      "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
-      "rule": "DEC-AUP-0034"
-    }
-  ],
-  "tree": {
-    "commit": "fde31f38ee6c276340f2b94648973f99f8f17bbe",
-    "dirty": false
-  },
-  "verdicts": [
-    {
-      "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
-      "verdict": "not_measured",
-      "verifier_ids": [
-        "v-fitness",
-        "v-workflow-config-2b43e97319f91478"
-      ]
-    },
-    {
-      "entity": "code_unit:.github/workflows/governance.yml",
-      "reason": "v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
-      "verdict": "not_measured",
-      "verifier_ids": [
-        "v-fitness",
-        "v-workflow-config-5844296ae241614c"
-      ]
-    },
-    {
-      "entity": "deployable_unit:.",
-      "reason": "v-type-check-tsconfig: tsc unavailable on this host",
-      "verdict": "not_measured",
-      "verifier_ids": [
-        "v-fitness",
-        "v-type-check-tsconfig"
-      ]
-    }
-  ],
-  "verifier_selection": {
-    "applied": {},
-    "not_applied": [],
-    "requested": [],
-    "schema": "VerifierSelection/v1"
-  },
-  "verifiers": [
-    {
-      "command": "tsc -p /tmp/arcana-verify-u4gyykn_/export-755bc5a8cea5/contracts/http/tsconfig.json (tsc not found)",
-      "duration_s": 0.0,
-      "entities": [
-        "deployable_unit:."
-      ],
-      "entity_verdicts": {
-        "deployable_unit:.": "not_measured"
-      },
-      "exit_code": 127,
-      "id": "v-type-check-tsconfig",
-      "kind": "type_check",
-      "output_ref": "/tmp/arcana-verify-u4gyykn_/verifier-out/v-type-check-tsconfig.txt",
-      "started_at_utc": "2026-11-17T17:52:30Z",
-      "summary": "not_measured: tsc unavailable"
-    },
-    {
-      "command": "workflow_config.validate exact head bytes",
-      "duration_s": 0.0,
-      "entities": [
-        "code_unit:.github/workflows/benchmark-scrutator.yml"
-      ],
-      "entity_verdicts": {
-        "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured"
-      },
-      "exit_code": 1,
-      "id": "v-workflow-config-2b43e97319f91478",
-      "kind": "config_schema",
-      "output_ref": "/tmp/arcana-verify-u4gyykn_/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-      "started_at_utc": "2026-11-17T17:52:30Z",
-      "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
-    },
-    {
-      "command": "workflow_config.validate exact head bytes",
-      "duration_s": 0.0,
-      "entities": [
-        "code_unit:.github/workflows/governance.yml"
-      ],
-      "entity_verdicts": {
-        "code_unit:.github/workflows/governance.yml": "verified"
-      },
-      "exit_code": 0,
-      "id": "v-workflow-config-5844296ae241614c",
-      "kind": "config_schema",
-      "output_ref": "/tmp/arcana-verify-u4gyykn_/verifier-out/v-workflow-config-5844296ae241614c.txt",
-      "started_at_utc": "2026-11-17T17:52:30Z",
-      "summary": "bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED"
-    },
-    {
-      "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-      "duration_s": 0.01,
-      "entities": [
-        "code_unit:.github/workflows/benchmark-scrutator.yml",
-        "code_unit:.github/workflows/governance.yml",
-        "deployable_unit:."
-      ],
-      "entity_verdicts": {
-        "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured",
-        "code_unit:.github/workflows/governance.yml": "not_measured",
-        "deployable_unit:.": "verified"
-      },
-      "exit_code": 0,
-      "id": "v-fitness",
-      "kind": "fitness_rules",
-      "output_ref": "/tmp/arcana-verify-u4gyykn_/verifier-out/v-fitness.json",
-      "started_at_utc": "2026-11-17T17:52:30Z",
-      "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
-    }
-  ],
-  "verify": {
-    "events": [
-      {
-        "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
-        "rule": "DEC-AUP-0035",
-        "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/car-final.json, which is outside this repository, so no path in the tree is the one this run supersedes."
-      },
-      {
-        "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
-        "rule": "DEC-AUP-0035",
-        "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/car-final.json, which is outside this repository, so no path in the tree is the one this run supersedes."
-      },
-      {
-        "code": "STRUCTURAL_EXCLUSION",
-        "rule": "DEC-AUP-0034",
-        "text": "13 affected entity(ies) owe no verdict (receipt: 13): unchanged at both revisions and given no verifier by the matrix"
-      }
+   "checked_at_utc": "2026-11-17T17:54:26Z",
+   "checked_nodes": 401,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
+ },
+ "host": "fin-w2-scr-auth",
+ "host_redacted": true,
+ "host_sha256": "7f19c8dcdb527baf1adb67d930814dfc20a04a864cb6c4b92c313f590868b7d8",
+ "impact_set": {
+  "deterministic_core": [
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "deployable_unit:.",
+    "node_type": "deployable_unit",
+    "path": [
+     {
+      "edge_type": "deploys_to",
+      "from": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "provenance": "deterministic",
+      "to": "deployable_unit:.",
+      "via": "containment"
+     }
     ],
-    "required_by_entity": {
-      "code_unit:.github/workflows/benchmark-scrutator.yml": [
-        "config_schema",
-        "fitness_rules"
-      ],
-      "code_unit:.github/workflows/governance.yml": [
-        "config_schema",
-        "fitness_rules"
-      ],
-      "deployable_unit:.": [
-        "fitness_rules",
-        "type_check"
-      ],
-      "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
-      "receipt:receipts/graph/change-admission-access-log.json": [],
-      "receipt:receipts/graph/change-admission-kb-cons-01-n.json": [],
-      "receipt:receipts/graph/change-admission-kb-cons-02.json": [],
-      "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
-      "receipt:receipts/graph/change-admission-kcp-0025.json": [],
-      "receipt:receipts/graph/change-admission-pr161.json": [],
-      "receipt:receipts/graph/change-admission-pr165.json": [],
-      "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json": [],
-      "receipt:receipts/graph/change-admission-rate-limit-9060.json": [],
-      "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json": [],
-      "receipt:receipts/graph/change-admission-wrapper-full-test-186.json": [],
-      "receipt:receipts/graph/exact-evidence-receiving.json": []
-    },
-    "seconds": {
-      "prepare": 2.74,
-      "total": 92.63,
-      "verifiers": 0.01
-    }
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "can-i-deploy gate (GRAPH-008)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-access-log.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-access-log.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kcp-0025.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-pr161.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-pr161.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-pr165.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-pr165.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/governance.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/exact-evidence-receiving.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   }
+  ],
+  "edge_types": "all",
+  "global_fallback": {
+   "triggered": false
   },
-  "work_item": "597f92c3-ed72-4791-ab6e-c5e8e2ee30d0"
+  "inferred_tail": [],
+  "max_depth": 3,
+  "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "total": 14
+ },
+ "notes": [
+  "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
+  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 3 attached from /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/exemptions.json"
+ ],
+ "producer": {
+  "tool": "tools/graph/verify.py",
+  "version": "1.4.1"
+ },
+ "receipt_id": "car-verify-20261117T175258Z-97fb4031",
+ "receipt_path": "receipts/graph/change-admission-actions-180-20261117.json",
+ "repo": {
+  "name": "Arcanada-one/scrutator",
+  "path": "/home/dev/aup/claude-work/fin-w2-scr-auth/scrutator"
+ },
+ "revision_selection": {
+  "base": [
+   "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "code_unit:.github/workflows/governance.yml",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/change-admission-access-log.json",
+   "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+   "receipt:receipts/graph/change-admission-kb-cons-02.json",
+   "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "receipt:receipts/graph/change-admission-kcp-0025.json",
+   "receipt:receipts/graph/change-admission-pr161.json",
+   "receipt:receipts/graph/change-admission-pr165.json",
+   "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+   "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+   "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+   "receipt:receipts/graph/exact-evidence-receiving.json"
+  ],
+  "head": [
+   "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "code_unit:.github/workflows/governance.yml",
+   "deployable_unit:.",
+   "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "receipt:receipts/graph/change-admission-access-log.json",
+   "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+   "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+   "receipt:receipts/graph/change-admission-kb-cons-02.json",
+   "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "receipt:receipts/graph/change-admission-kcp-0025.json",
+   "receipt:receipts/graph/change-admission-pr161.json",
+   "receipt:receipts/graph/change-admission-pr165.json",
+   "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+   "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+   "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+   "receipt:receipts/graph/exact-evidence-receiving.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
+ "schema": "ChangeAdmissionReceipt/v1",
+ "staleness": {
+  "checked_at_utc": "2026-11-17T17:54:26Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "mismatched_nodes": [],
+  "verdict": "fresh"
+ },
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959",
+    "head": "sha256:c82cd43dd9c844a14610dec24c00c62fc185308cae0a6c1db486948f1211f959"
+   },
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/A2-308-scope-enforcement.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:8c1ce968debf58ab4ac1eb71aab2ef101a2509acca0b23d98c7ba9e909db9c4d",
+    "head": "sha256:8c1ce968debf58ab4ac1eb71aab2ef101a2509acca0b23d98c7ba9e909db9c4d"
+   },
+   "entity": "receipt:receipts/graph/change-admission-access-log.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-access-log.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:82d6a3ff755943870c9650a72d38581ce150a699238234ef9e380015b232256c"
+   },
+   "entity": "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-actions-180-20261117.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-actions-180-20261117.json for work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-actions-180-20261117.json",
+    "work_item": "597f92c3-ed72-4791-ab6e-c5e8e2ee30d0"
+   }
+  },
+  {
+   "content_hash": {
+    "base": "sha256:ba7f5ada9051cad3fcd95f44ef6ef363ebbf9bcbbfaa5e8c0a0ca581fd72d101",
+    "head": "sha256:ba7f5ada9051cad3fcd95f44ef6ef363ebbf9bcbbfaa5e8c0a0ca581fd72d101"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kb-cons-01-n.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a",
+    "head": "sha256:510a7a2688fbac39074ba2d66b6d68d7a15b2bf9b293d66bbb5c6c28c99c9c8a"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kb-cons-02.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:f8e80ea3daaeacea1b92e59354fcccc635d2d66676bb3c153781b59daf7bf228",
+    "head": "sha256:f8e80ea3daaeacea1b92e59354fcccc635d2d66676bb3c153781b59daf7bf228"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:a2c51a4abc1120dc657c812faca9e4f0f58082fcfcc1127d05f6dce96390fa61",
+    "head": "sha256:a2c51a4abc1120dc657c812faca9e4f0f58082fcfcc1127d05f6dce96390fa61"
+   },
+   "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-kcp-0025.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d",
+    "head": "sha256:c8990033b207f130084f8f505edc2f51caea71515a16523b7108e9426ed7055d"
+   },
+   "entity": "receipt:receipts/graph/change-admission-pr161.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-pr161.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:8a6237ce1a608b82b59246912f3a573ae5788ab39b5d5e54f6ae6e6a233bea9b",
+    "head": "sha256:8a6237ce1a608b82b59246912f3a573ae5788ab39b5d5e54f6ae6e6a233bea9b"
+   },
+   "entity": "receipt:receipts/graph/change-admission-pr165.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-pr165.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:77df583379ef4b807e4d4cec855e91566f19e56f8eddf1a11a5a3dcc8e067ff3",
+    "head": "sha256:77df583379ef4b807e4d4cec855e91566f19e56f8eddf1a11a5a3dcc8e067ff3"
+   },
+   "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db",
+    "head": "sha256:0e78e6e358771cf0b7335dc8bcafbb069c619c10d962cdef40f236440dc7b9db"
+   },
+   "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-rate-limit-9060.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:309cf7fc2b8c7f1a5f28f8ddf6961febf934549dff8745ce9e334d4a95610fd5",
+    "head": "sha256:309cf7fc2b8c7f1a5f28f8ddf6961febf934549dff8745ce9e334d4a95610fd5"
+   },
+   "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-selfhosted-runners-20261117.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:80c5670fdf0a2e486edf8d8cf3e5ba1407f1324a26575a31e25e21edb5263586",
+    "head": "sha256:80c5670fdf0a2e486edf8d8cf3e5ba1407f1324a26575a31e25e21edb5263586"
+   },
+   "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-wrapper-full-test-186.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  },
+  {
+   "content_hash": {
+    "base": "sha256:5bd5e84e9ce8adf01780d763127ce601d5f85ac8b8b5f40deb3f5029560af582",
+    "head": "sha256:5bd5e84e9ce8adf01780d763127ce601d5f85ac8b8b5f40deb3f5029560af582"
+   },
+   "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/exact-evidence-receiving.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
+  }
+ ],
+ "tree": {
+  "commit": "97fb4031fd1c755b501af76a729357329475937e",
+  "dirty": false
+ },
+ "verdicts": [
+  {
+   "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-fitness",
+    "v-workflow-config-2b43e97319f91478"
+   ]
+  },
+  {
+   "entity": "code_unit:.github/workflows/governance.yml",
+   "reason": "v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-fitness",
+    "v-workflow-config-5844296ae241614c"
+   ]
+  },
+  {
+   "entity": "deployable_unit:.",
+   "reason": "v-type-check-tsconfig: tsc unavailable on this host",
+   "verdict": "not_measured",
+   "verifier_ids": [
+    "v-fitness",
+    "v-type-check-tsconfig"
+   ]
+  }
+ ],
+ "verifier_selection": {
+  "applied": {},
+  "not_applied": [],
+  "requested": [],
+  "schema": "VerifierSelection/v1"
+ },
+ "verifiers": [
+  {
+   "command": "tsc -p /home/dev/aup/claude-work/fin-w2-scr-auth/scrutator/contracts/http/tsconfig.json (tsc not found)",
+   "duration_s": 0.0,
+   "entities": [
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "deployable_unit:.": "not_measured"
+   },
+   "exit_code": 127,
+   "id": "v-type-check-tsconfig",
+   "kind": "type_check",
+   "output_ref": "/tmp/arcana-verify-slt17f21/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-17T17:54:34Z",
+   "summary": "not_measured: tsc unavailable"
+  },
+  {
+   "command": "workflow_config.validate exact head bytes",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/benchmark-scrutator.yml"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured"
+   },
+   "exit_code": 1,
+   "id": "v-workflow-config-2b43e97319f91478",
+   "kind": "config_schema",
+   "output_ref": "/tmp/arcana-verify-slt17f21/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-17T17:54:34Z",
+   "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "command": "workflow_config.validate exact head bytes",
+   "duration_s": 0.0,
+   "entities": [
+    "code_unit:.github/workflows/governance.yml"
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/governance.yml": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-workflow-config-5844296ae241614c",
+   "kind": "config_schema",
+   "output_ref": "/tmp/arcana-verify-slt17f21/verifier-out/v-workflow-config-5844296ae241614c.txt",
+   "started_at_utc": "2026-11-17T17:54:34Z",
+   "summary": "bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED"
+  },
+  {
+   "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
+   "duration_s": 0.01,
+   "entities": [
+    "code_unit:.github/workflows/benchmark-scrutator.yml",
+    "code_unit:.github/workflows/governance.yml",
+    "deployable_unit:."
+   ],
+   "entity_verdicts": {
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured",
+    "code_unit:.github/workflows/governance.yml": "not_measured",
+    "deployable_unit:.": "verified"
+   },
+   "exit_code": 0,
+   "id": "v-fitness",
+   "kind": "fitness_rules",
+   "output_ref": "/tmp/arcana-verify-slt17f21/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-17T17:54:34Z",
+   "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
+  }
+ ],
+ "verify": {
+  "events": [
+   {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-actions-180-20261117.json is the previous version of the one this run is writing, for the same work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0 — superseded by construction, so it owes this change no verdict"
+   },
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "14 affected entity(ies) owe no verdict (receipt: 14): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
+  "required_by_entity": {
+   "code_unit:.github/workflows/benchmark-scrutator.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "code_unit:.github/workflows/governance.yml": [
+    "config_schema",
+    "fitness_rules"
+   ],
+   "deployable_unit:.": [
+    "fitness_rules",
+    "type_check"
+   ],
+   "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
+   "receipt:receipts/graph/change-admission-access-log.json": [],
+   "receipt:receipts/graph/change-admission-actions-180-20261117.json": [],
+   "receipt:receipts/graph/change-admission-kb-cons-01-n.json": [],
+   "receipt:receipts/graph/change-admission-kb-cons-02.json": [],
+   "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
+   "receipt:receipts/graph/change-admission-kcp-0025.json": [],
+   "receipt:receipts/graph/change-admission-pr161.json": [],
+   "receipt:receipts/graph/change-admission-pr165.json": [],
+   "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json": [],
+   "receipt:receipts/graph/change-admission-rate-limit-9060.json": [],
+   "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json": [],
+   "receipt:receipts/graph/change-admission-wrapper-full-test-186.json": [],
+   "receipt:receipts/graph/exact-evidence-receiving.json": []
+  },
+  "seconds": {
+   "prepare": 2.92,
+   "total": 96.51,
+   "verifiers": 0.01
+  }
+ },
+ "work_item": "597f92c3-ed72-4791-ab6e-c5e8e2ee30d0"
 }
