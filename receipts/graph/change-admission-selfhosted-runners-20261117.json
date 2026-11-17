@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-11-17T08:16:08Z",
+ "captured_at_utc": "2026-11-17T08:36:18Z",
  "change_set": {
   "base": "17277ac7ad2be3c1e4a1db268bf899e61e5bbc2f",
   "files": [
@@ -46,7 +46,7 @@
     "status": "A"
    }
   ],
-  "head": "4a94addefb66fa632bfa0b819aee63181c43237a",
+  "head": "6099fa5fa3cd952aa4534ed87290bc921be94b71",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -84,17 +84,17 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:ededcf0eed249341ccbd8bbe304e0273908c795748de043380ab89e76906c12a",
-  "path": "/tmp/arcana-verify-97avwqqd/verifier-out/graph-17277ac7ad2b.json",
+  "path": "/tmp/arcana-verify-zpy_c0m0/verifier-out/graph-17277ac7ad2b.json",
   "source_commit": "17277ac7ad2be3c1e4a1db268bf899e61e5bbc2f"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:570c86512f3442238338fbf73e859cf4960b73d9798d9d8fa0087f47b10482ce",
-  "path": "/tmp/arcana-verify-97avwqqd/verifier-out/graph-head-4a94addefb66.json",
-  "source_commit": "4a94addefb66fa632bfa0b819aee63181c43237a",
+  "graph_digest": "sha256:0bc618d7815e50dcbf108870a6047e1191595cd799becfa2ed8d5ecfd0302155",
+  "path": "/tmp/arcana-verify-zpy_c0m0/verifier-out/graph-head-6099fa5fa3cd.json",
+  "source_commit": "6099fa5fa3cd952aa4534ed87290bc921be94b71",
   "staleness": {
-   "checked_at_utc": "2026-11-17T08:17:01Z",
+   "checked_at_utc": "2026-11-17T08:37:18Z",
    "checked_nodes": 399,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -603,7 +603,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261117T081608Z-4a94adde",
+ "receipt_id": "car-verify-20261117T083618Z-6099fa5f",
  "receipt_path": "receipts/graph/change-admission-selfhosted-runners-20261117.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -674,7 +674,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-17T08:17:01Z",
+  "checked_at_utc": "2026-11-17T08:37:18Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -892,7 +892,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:43325eaf935fc6dfefed600db140cb13d9c1ef529e945433ad4c2eca7f6ac39a"
+    "head": "sha256:c322e175ba7479b72ff65d1bdf6f6c895c6f1ae8799a94cb5b27150d36e383a4"
    },
    "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
    "node_type": "receipt",
@@ -950,7 +950,7 @@
   }
  ],
  "tree": {
-  "commit": "4a94addefb66fa632bfa0b819aee63181c43237a",
+  "commit": "6099fa5fa3cd952aa4534ed87290bc921be94b71",
   "dirty": false
  },
  "verdicts": [
@@ -1010,8 +1010,8 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-97avwqqd/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-17T08:17:05Z",
+   "output_ref": "/tmp/arcana-verify-zpy_c0m0/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-17T08:37:22Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
@@ -1026,8 +1026,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-97avwqqd/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-17T08:17:05Z",
+   "output_ref": "/tmp/arcana-verify-zpy_c0m0/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-17T08:37:22Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -1042,8 +1042,8 @@
    "exit_code": 0,
    "id": "v-workflow-config-5844296ae241614c",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-97avwqqd/verifier-out/v-workflow-config-5844296ae241614c.txt",
-   "started_at_utc": "2026-11-17T08:17:05Z",
+   "output_ref": "/tmp/arcana-verify-zpy_c0m0/verifier-out/v-workflow-config-5844296ae241614c.txt",
+   "started_at_utc": "2026-11-17T08:37:22Z",
    "summary": "bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED"
   },
   {
@@ -1058,8 +1058,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-97avwqqd/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-17T08:17:05Z",
+   "output_ref": "/tmp/arcana-verify-zpy_c0m0/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-17T08:37:22Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -1080,8 +1080,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-97avwqqd/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-17T08:17:05Z",
+   "output_ref": "/tmp/arcana-verify-zpy_c0m0/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-17T08:37:22Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   }
  ],
@@ -1142,8 +1142,8 @@
    "receipt:receipts/graph/qualified-refresh-089a771c.json": []
   },
   "seconds": {
-   "prepare": 1.55,
-   "total": 57.39,
+   "prepare": 1.57,
+   "total": 64.94,
    "verifiers": 0.01
   }
  },
