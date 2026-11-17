@@ -114,7 +114,7 @@ on:
       runs_on:
         description: 'Runner label set.'
         required: false
-        default: '["self-hosted","linux","ci-general"]'
+        default: 'ubuntu-latest'
         type: string
       verifier_job:
         description: >-
@@ -160,7 +160,7 @@ permissions:
 jobs:
   graph-admission:
     name: graph-admission
-    runs-on: ${{ fromJSON(inputs.runs_on) }}
+    runs-on: ${{ inputs.runs_on }}
     permissions:
       contents: read
       actions: read
