@@ -83,7 +83,7 @@ jobs:
 
       - name: Pre-deploy host readiness
         id: preflight
-        uses: Arcanada-one/datarim/.github/actions/preflight-check@50351e0468f57a39b280d75cf41827329d6393d2
+        uses: Arcanada-one/datarim/.github/actions/preflight-check@e3136b1b6d245c29805cc7ef1555fcbc1e3c92ff  # v4.12.6
         with:
           target-host: arcana-kb
           service-name: scrutator
