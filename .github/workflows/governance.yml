@@ -16,6 +16,6 @@ permissions:
 jobs:
   governance:
     name: governance-diff-guard
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ci-general]
     steps:
       - uses: Arcanada-one/shared-workflows/.github/actions/governance-diff-guard@0dec9a70b4796928c383ccf4438be19367f7ad3b
