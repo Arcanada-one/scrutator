@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "admitted_with_exemptions"
+  "verdict": "paused_safe"
  },
- "captured_at_utc": "2026-11-18T09:50:58Z",
+ "captured_at_utc": "2026-11-18T09:52:47Z",
  "change_set": {
   "base": "9dc5a7d7ff49e0da24f56e4ba647486e0b503ab8",
   "files": [
@@ -19,6 +19,15 @@
     "status": "M"
    },
    {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json"
+    ],
+    "path": "receipts/graph/change-admission-preflight-target-host-20261118.json",
+    "status": "A"
+   },
+   {
     "kind": "test",
     "node_id": "code_unit:tests/test_deploy_preflight_target_host.py",
     "node_ids": [
@@ -28,7 +37,7 @@
     "status": "A"
    }
   ],
-  "head": "5bffdc750daee41316fdac24a8d167e57c180dda",
+  "head": "311af8683fa7acf740e245aa457987b9f4cdf1e1",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -108,18 +117,18 @@
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:97cbdeceb6f51a939caeed8293e3e8038f55ce6028d548ec82fadd1a3dc0664c",
-  "path": "/tmp/arcana-verify-6oto7yux/verifier-out/graph-9dc5a7d7ff49.json",
+  "path": "/tmp/arcana-verify-7kdngzfx/verifier-out/graph-9dc5a7d7ff49.json",
   "source_commit": "9dc5a7d7ff49e0da24f56e4ba647486e0b503ab8"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:2fefd307617f0119de33b34d2f54c6225ac999f692c871fa341d86688f44eb5b",
-  "path": "/tmp/arcana-verify-6oto7yux/verifier-out/graph-head-5bffdc750dae.json",
-  "source_commit": "5bffdc750daee41316fdac24a8d167e57c180dda",
+  "graph_digest": "sha256:075b3ea9d53014c40d672f06c003db3a10541a4d52c1b42b0003557bce27e96c",
+  "path": "/tmp/arcana-verify-7kdngzfx/verifier-out/graph-head-311af8683fa7.json",
+  "source_commit": "311af8683fa7acf740e245aa457987b9f4cdf1e1",
   "staleness": {
-   "checked_at_utc": "2026-11-18T09:52:23Z",
-   "checked_nodes": 403,
+   "checked_at_utc": "2026-11-18T09:54:11Z",
+   "checked_nodes": 404,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -127,7 +136,7 @@
  },
  "host": "ci-lane",
  "host_redacted": true,
- "host_sha256": "98fc2a96e6e2b934a023510a465b9f2e1503e11e2b62cc006da027d7a6ed66fb",
+ "host_sha256": "596960466dafab84f99d174ab9d7ed279178d71d513a4aba7d512907c5e873d0",
  "impact_set": {
   "deterministic_core": [
    {
@@ -1440,15 +1449,16 @@
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
   "exemptions: 10 attached from /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/exemptions.json",
-  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
-  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-fork-deny-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
-  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes."
+  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
+  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-fork-deny-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
+  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes.",
+  "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-target-host-20261118.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes."
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261118T095058Z-5bffdc75",
+ "receipt_id": "car-verify-20261118T095247Z-311af868",
  "repo": {
   "name": "Arcanada-one/scrutator",
   "path": "/home/dev/aup/claude-work/dev-iss-opsbot/scrutator-probe"
@@ -1548,6 +1558,7 @@
    "receipt:receipts/graph/change-admission-pr161.json",
    "receipt:receipts/graph/change-admission-pr165.json",
    "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json",
    "receipt:receipts/graph/change-admission-rate-limit-9060.json",
    "receipt:receipts/graph/change-admission-runbook-rotate-tokens.json",
    "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
@@ -1562,7 +1573,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-18T09:52:23Z",
+  "checked_at_utc": "2026-11-18T09:54:11Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -1977,7 +1988,7 @@
   }
  ],
  "tree": {
-  "commit": "5bffdc750daee41316fdac24a8d167e57c180dda",
+  "commit": "311af8683fa7acf740e245aa457987b9f4cdf1e1",
   "dirty": false
  },
  "verdicts": [
@@ -2095,6 +2106,11 @@
    "verifier_ids": [
     "v-doc-reference"
    ]
+  },
+  {
+   "entity": "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "verdict": "not_measured"
   }
  ],
  "verifier_selection": {
@@ -2116,8 +2132,8 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-18T09:52:29Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
@@ -2132,8 +2148,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-18T09:52:29Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2148,8 +2164,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-18T09:52:29Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2164,8 +2180,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-18T09:52:29Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2180,8 +2196,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-18T09:52:29Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2196,8 +2212,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2212,8 +2228,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2228,8 +2244,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: command/process substitution closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 14: checkout root or source-affecting workflow environment unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: command/process substitution closure is unresolved; job graph-admission step 1: command/process substitution closure is unresolved; job graph-admission step 20: checkout root or source-affecting workflow environment unresolved; job graph-admission step 20: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 21: checkout root or source-affecting workflow environment unresolved; job graph-admission step 21: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: command/process substitution closure is unresolved; job graph-admission step 23: checkout root or source-affecting workflow environment unresolved; job graph-admission step 23: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 24: checkout root or source-affecting workflow environment unresolved; job graph-admission step 24: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 25: checkout root or source-affecting workflow environment unresolved; job graph-admission step 25: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 26: checkout root or source-affecting workflow environment unresolved; job graph-admission step 26: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 28: checkout root or source-affecting workflow environment unresolved; job graph-admission step 2: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 5: command/process substitution closure is unresolved; job graph-admission step 9: checkout root or source-affecting workflow environment unresolved; job graph-admission step 9: command/process substitution closure is unresolved; 33 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2244,8 +2260,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2280,8 +2296,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -2298,8 +2314,8 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-doc-reference.txt",
-   "started_at_utc": "2026-11-18T09:52:30Z",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-doc-reference.txt",
+   "started_at_utc": "2026-11-18T09:54:17Z",
    "summary": "2 document(s), 0 failed"
   },
   {
@@ -2314,9 +2330,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-18T09:52:34Z",
+   "started_at_utc": "2026-11-18T09:54:21Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -2331,9 +2347,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/tmp/arcana-verify-6oto7yux/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/tmp/arcana-verify-7kdngzfx/verifier-out/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-18T09:52:34Z",
+   "started_at_utc": "2026-11-18T09:54:21Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   }
  ],
@@ -2342,17 +2358,22 @@
    {
     "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
     "rule": "DEC-AUP-0035",
-    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes."
+    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes."
    },
    {
     "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
     "rule": "DEC-AUP-0035",
-    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-fork-deny-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes."
+    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-fork-deny-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes."
    },
    {
     "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
     "rule": "DEC-AUP-0035",
-    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-draft.json, which is outside this repository, so no path in the tree is the one this run supersedes."
+    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes."
+   },
+   {
+    "code": "SUPERSEDED_SELF_NOT_APPLICABLE",
+    "rule": "DEC-AUP-0035",
+    "text": "DEC-AUP-0035 not applied to receipt:receipts/graph/change-admission-preflight-target-host-20261118.json: it declares this run's work item 597f92c3-ed72-4791-ab6e-c5e8e2ee30d0, but the receipt is being written to /home/dev/aup/claude-work/dev-iss-opsbot/evidence/opsbot-4/car-reissue.json, which is outside this repository, so no path in the tree is the one this run supersedes."
    },
    {
     "code": "STRUCTURAL_EXCLUSION",
@@ -2440,6 +2461,7 @@
    "receipt:receipts/graph/change-admission-pr161.json": [],
    "receipt:receipts/graph/change-admission-pr165.json": [],
    "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json": [],
+   "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json": [],
    "receipt:receipts/graph/change-admission-rate-limit-9060.json": [],
    "receipt:receipts/graph/change-admission-runbook-rotate-tokens.json": [],
    "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json": [],
@@ -2450,8 +2472,8 @@
    "receipt:receipts/graph/qualified-refresh-089a771c.json": []
   },
   "seconds": {
-   "prepare": 2.51,
-   "total": 95.25,
+   "prepare": 2.24,
+   "total": 94.67,
    "verifiers": 0.01
   }
  },
