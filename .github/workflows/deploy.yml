@@ -85,7 +85,7 @@ jobs:
         id: preflight
         uses: Arcanada-one/datarim/.github/actions/preflight-check@2ef3dc606919c1b82c5fb440b49519f7f2a1e293  # v4.12.9
         with:
-          target-host: arcana-kb
+          target-host: arcana-prd
           service-name: scrutator
           extra-checks: |
             tailscale
