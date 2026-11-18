@@ -5,9 +5,9 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-11-17T17:54:50Z",
+ "captured_at_utc": "2026-11-18T08:48:45Z",
  "change_set": {
-  "base": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f",
+  "base": "9dc5a7d7ff49e0da24f56e4ba647486e0b503ab8",
   "files": [
    {
     "kind": "config",
@@ -37,7 +37,7 @@
     "status": "A"
    }
   ],
-  "head": "0315b010bc4ac9135ed05daba6344ae58dccf40a",
+  "head": "1332565ea632efc9332a90848db3af7948ce6f3f",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -67,27 +67,27 @@
  "graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:cecaac6dd5178bce6d1965a4532e2d73f9ee2061a1bb6712ca3ffe8e6cc9fa2b",
-  "path": "/tmp/arcana-verify-p2ixy_ko/verifier-out/graph-6f732508371c.json",
-  "source_commit": "6f732508371c3ac1c5ed77e1cc65e96dcd09b75f"
+  "graph_digest": "sha256:97cbdeceb6f51a939caeed8293e3e8038f55ce6028d548ec82fadd1a3dc0664c",
+  "path": "/tmp/arcana-verify-dk7dtkfr/verifier-out/graph-9dc5a7d7ff49.json",
+  "source_commit": "9dc5a7d7ff49e0da24f56e4ba647486e0b503ab8"
  },
  "head_graph": {
   "builder_version": "1.0.6",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:dff88bfc0c7d04a715386a41b705d56649d0f86b6f373a12e22170cba92e79d2",
-  "path": "/tmp/arcana-verify-p2ixy_ko/verifier-out/graph-head-0315b010bc4a.json",
-  "source_commit": "0315b010bc4ac9135ed05daba6344ae58dccf40a",
+  "graph_digest": "sha256:80ad26c072c2cb2417eca51cd41afd360c875e1423146deb20c1a97624e90f8b",
+  "path": "/tmp/arcana-verify-dk7dtkfr/verifier-out/graph-head-1332565ea632.json",
+  "source_commit": "1332565ea632efc9332a90848db3af7948ce6f3f",
   "staleness": {
-   "checked_at_utc": "2026-11-17T17:56:10Z",
-   "checked_nodes": 401,
+   "checked_at_utc": "2026-11-18T08:50:07Z",
+   "checked_nodes": 403,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "fin-w2-scr-auth",
+ "host": "dev-sh-scrutator",
  "host_redacted": true,
- "host_sha256": "b6f5747e1db119d9a6495523f174345c1c7e421a7d198ebe6d48681722acce1a",
+ "host_sha256": "861e2c9878e968ed7b6c3ea2c2df74afce7e258b13b0ddf431ff5315fd25868d",
  "impact_set": {
   "deterministic_core": [
    {
@@ -141,6 +141,26 @@
       "from": "receipt:receipts/graph/change-admission-access-log.json",
       "provenance": "deterministic",
       "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 1,
+    "entity": "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/governance.yml",
       "via": "explicit-path"
      }
     ],
@@ -378,22 +398,22 @@
   "inferred_tail": [],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 14
+  "total": 15
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.1) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
   "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
-  "exemptions: 3 attached from /home/dev/aup/claude-work/fin-w2-scr-auth/verify-180/exemptions.json"
+  "exemptions: 3 attached from /home/dev/aup/claude-work/dev-sh-scrutator/exemptions-180.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.1"
  },
- "receipt_id": "car-verify-20261117T175450Z-0315b010",
+ "receipt_id": "car-verify-20261118T084845Z-1332565e",
  "receipt_path": "receipts/graph/change-admission-actions-180-20261117.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/fin-w2-scr-auth/scrutator"
+  "path": "/home/dev/aup/claude-work/dev-sh-scrutator/scrutator"
  },
  "revision_selection": {
   "base": [
@@ -402,6 +422,7 @@
    "deployable_unit:.",
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "receipt:receipts/graph/change-admission-access-log.json",
+   "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
    "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
    "receipt:receipts/graph/change-admission-kb-cons-02.json",
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
@@ -421,6 +442,7 @@
    "receipt:receipts/graph/A2-308-scope-enforcement.json",
    "receipt:receipts/graph/change-admission-access-log.json",
    "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+   "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
    "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
    "receipt:receipts/graph/change-admission-kb-cons-02.json",
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
@@ -438,7 +460,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-17T17:56:10Z",
+  "checked_at_utc": "2026-11-18T08:50:07Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -469,7 +491,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:7b56923124eb35440dc1ff90b8e221964dc64bc109a80df9f6e07d5be68dc625"
+    "head": "sha256:23deef322e96204b735bff664228d06749a9ef177ae8d16b1e5842a523e8f066"
    },
    "entity": "receipt:receipts/graph/change-admission-actions-180-20261117.json",
    "node_type": "receipt",
@@ -480,6 +502,17 @@
     "receipt_path": "receipts/graph/change-admission-actions-180-20261117.json",
     "work_item": "597f92c3-ed72-4791-ab6e-c5e8e2ee30d0"
    }
+  },
+  {
+   "content_hash": {
+    "base": "sha256:f72086866972e0178c60d63988e8ceb7ec3dedb7bcdfa5a43c4444bd381b4029",
+    "head": "sha256:f72086866972e0178c60d63988e8ceb7ec3dedb7bcdfa5a43c4444bd381b4029"
+   },
+   "entity": "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-fork-deny-20261117.json",
+   "reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "rule": "DEC-AUP-0034"
   },
   {
    "content_hash": {
@@ -604,7 +637,7 @@
   }
  ],
  "tree": {
-  "commit": "0315b010bc4ac9135ed05daba6344ae58dccf40a",
+  "commit": "1332565ea632efc9332a90848db3af7948ce6f3f",
   "dirty": false
  },
  "verdicts": [
@@ -644,7 +677,7 @@
  },
  "verifiers": [
   {
-   "command": "tsc -p /home/dev/aup/claude-work/fin-w2-scr-auth/scrutator/contracts/http/tsconfig.json (tsc not found)",
+   "command": "tsc -p /home/dev/aup/claude-work/dev-sh-scrutator/scrutator/contracts/http/tsconfig.json (tsc not found)",
    "duration_s": 0.0,
    "entities": [
     "deployable_unit:."
@@ -655,8 +688,8 @@
    "exit_code": 127,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/tmp/arcana-verify-p2ixy_ko/verifier-out/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-17T17:56:16Z",
+   "output_ref": "/tmp/arcana-verify-dk7dtkfr/verifier-out/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-18T08:50:15Z",
    "summary": "not_measured: tsc unavailable"
   },
   {
@@ -671,8 +704,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-p2ixy_ko/verifier-out/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-17T17:56:16Z",
+   "output_ref": "/tmp/arcana-verify-dk7dtkfr/verifier-out/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-18T08:50:15Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -687,8 +720,8 @@
    "exit_code": 0,
    "id": "v-workflow-config-5844296ae241614c",
    "kind": "config_schema",
-   "output_ref": "/tmp/arcana-verify-p2ixy_ko/verifier-out/v-workflow-config-5844296ae241614c.txt",
-   "started_at_utc": "2026-11-17T17:56:16Z",
+   "output_ref": "/tmp/arcana-verify-dk7dtkfr/verifier-out/v-workflow-config-5844296ae241614c.txt",
+   "started_at_utc": "2026-11-18T08:50:15Z",
    "summary": "bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED"
   },
   {
@@ -707,8 +740,8 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/tmp/arcana-verify-p2ixy_ko/verifier-out/v-fitness.json",
-   "started_at_utc": "2026-11-17T17:56:16Z",
+   "output_ref": "/tmp/arcana-verify-dk7dtkfr/verifier-out/v-fitness.json",
+   "started_at_utc": "2026-11-18T08:50:15Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   }
  ],
@@ -723,7 +756,7 @@
    {
     "code": "STRUCTURAL_EXCLUSION",
     "rule": "DEC-AUP-0034",
-    "text": "14 affected entity(ies) owe no verdict (receipt: 14): unchanged at both revisions and given no verifier by the matrix"
+    "text": "15 affected entity(ies) owe no verdict (receipt: 15): unchanged at both revisions and given no verifier by the matrix"
    }
   ],
   "required_by_entity": {
@@ -742,6 +775,7 @@
    "receipt:receipts/graph/A2-308-scope-enforcement.json": [],
    "receipt:receipts/graph/change-admission-access-log.json": [],
    "receipt:receipts/graph/change-admission-actions-180-20261117.json": [],
+   "receipt:receipts/graph/change-admission-fork-deny-20261117.json": [],
    "receipt:receipts/graph/change-admission-kb-cons-01-n.json": [],
    "receipt:receipts/graph/change-admission-kb-cons-02.json": [],
    "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": [],
@@ -755,8 +789,8 @@
    "receipt:receipts/graph/exact-evidence-receiving.json": []
   },
   "seconds": {
-   "prepare": 2.15,
-   "total": 86.01,
+   "prepare": 2.79,
+   "total": 89.91,
    "verifiers": 0.01
   }
  },
