@@ -66,6 +66,9 @@ services:
       # One more PROJECTED-CORPUS scope (2026-11-15, Muneral 7f47617d): mail-arcana. Projects/Mail Arcana/README.md
       # (arcanada-workspace PR 2109) routes to it; same kind as doclab-arcana: no --runtime-only-namespace; the repo mirror
       # dev-tools/kb-feeder/deploy/authoritative-namespaces.txt declares it in the paired arcanada-workspace change.
+      # One more PROJECTED-CORPUS scope (2026-11-19): collective-mailbox. Projects/Collective-Mailbox/README.md (workspace
+      # #2153, 2026-11-16) routes to it; since the canonical snapshot reached that commit, every kb-reconcile run on prd ends
+      # `missing_namespace_grants=collective-mailbox` (exit 4). Same kind as mail-arcana; the workspace mirror declares it.
       # Three PROGRAM-LANE runtime-only scopes (2026-11-06, Muneral b435): contracts, integrations,
       # universal-program. After PR1830 the program runner expects them via --runtime-only-namespace;
       # natural tick run-20261106T114010Z cleared BatchHalt then failed missing_namespace_grants for
@@ -79,7 +82,7 @@ services:
       # (kb_feeder.projection --history only ever grows) since Projects/ROAD MAP.md was once routed to it by the taxonomy; the
       # routing was fixed (workspace #2004) but the name stays expected forever, so every lane ends `missing_namespace_grants=road-mapmd`
       # until the feeder may write it (an authoritative run then drains the stale chunks). Same shape as knowledge-contract above.
-      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program,knowledge-contract,road-mapmd,mail-arcana"
+      SCRUTATOR_FEEDER_NAMESPACES: "${SCRUTATOR_FEEDER_NAMESPACES:-},self-improvement,arcanada-design-system,skills,talomnia,kc2-store,governance,decisions,lessons,research,history-datarim,unreviewed,collective,contract-place,conversion-arcana,prime-agent,doclab-arcana,contracts,integrations,universal-program,knowledge-contract,road-mapmd,mail-arcana,collective-mailbox"
       SCRUTATOR_ROLLBACK_NAMESPACES: "${SCRUTATOR_ROLLBACK_NAMESPACES:-},skills"
     restart: unless-stopped
     volumes:
