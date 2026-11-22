@@ -19,7 +19,9 @@ from __future__ import annotations
 
 import argparse
 import copy
+import contextvars
 import fnmatch
+from functools import wraps
 import hashlib
 import json
 import io
@@ -29,11 +31,15 @@ import os
 import posixpath
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -92,6 +98,55 @@ INFORMATIONAL_CHECK_IDS = ["C14", "C15", "C17", "C20", "C22"]
 C18_PROBLEMS_SHOWN = 20
 VERDICT_RANK = {"admit": 0, "paused_safe": 1, "refuse": 2}
 EXIT_OF = {"admit": 0, "paused_safe": 3, "refuse": 5}
+
+# Temporary paths created by these commands belong to the current invocation. Keep
+# ownership explicit so cleanup never sweeps a shared temp directory or caller path.
+_OWNED_TEMP_DIRS: contextvars.ContextVar[list[Path] | None] = contextvars.ContextVar(
+    "graph_owned_temp_dirs", default=None)
+
+
+def _owned_mkdtemp(*, prefix: str) -> str:
+    path = tempfile.mkdtemp(prefix=prefix)
+    owned = _OWNED_TEMP_DIRS.get()
+    if owned is not None:
+        owned.append(Path(path))
+    return path
+
+
+class OwnedTempCleanupError(RuntimeError):
+    """An invocation-owned scratch directory could not be removed."""
+
+
+def _remove_owned_temp_dirs(fn):
+    @wraps(fn)
+    def run(*args, **kwargs):
+        owned: list[Path] = []
+        token = _OWNED_TEMP_DIRS.set(owned)
+        result = None
+        primary_error: BaseException | None = None
+        try:
+            result = fn(*args, **kwargs)
+        except BaseException as exc:
+            primary_error = exc
+        finally:
+            _OWNED_TEMP_DIRS.reset(token)
+        cleanup_failed = False
+        for path in reversed(owned):
+            try:
+                shutil.rmtree(path)
+            except FileNotFoundError:
+                pass
+            except Exception:
+                cleanup_failed = True
+        if cleanup_failed:
+            if primary_error is not None:
+                primary_error.add_note("Invocation temporary-directory cleanup failed.")
+            else:
+                raise OwnedTempCleanupError("Invocation temporary-directory cleanup failed.")
+        if primary_error is not None:
+            raise primary_error.with_traceback(primary_error.__traceback__)
+        return result
+    return run
 
 
 # ------------------------------------------------------------------ helpers
@@ -2978,13 +3033,843 @@ def evaluate_workflow_integrity(repo: Path, head: str, man_h: dict | None, ev: d
                  + " — a workflow change is admissible, a workflow change the manifest does not attest is not"))
 
 
+# --------------------------------------------------------------------- DEC-AUP-0197 — B9 fallback parity
+# A gate self-update triggers the global fallback rule, so every fallback unit owes a COMPLETE suite. Where
+# that suite is not_measured by its own design (held prerequisites: no execution grant, no disposable
+# store, no real provider arm), no refresh of the bundle could ever leave paused_safe. B9 does not widen
+# GATE_SELF_UPDATE to any not_measured unit (declined 2026-11-20). It measures, in this very evaluation,
+# the unit's complete suite at BASE and at HEAD in two fresh private worktrees, and carries the unit only
+# when the two executions agree in everything the change could have moved. Nothing is handed in: B9 never
+# accepts an execution document from a caller, and C16 re-runs both sides on every evaluation.
+FALLBACK_PARITY_SETUP_KEY = "full_test_parity_setup"
+FALLBACK_PARITY_DOC_SCHEMA = "MaintainedFullSuiteExecution/v1"
+FALLBACK_PARITY_DOC_MAX_BYTES = 4 * 1024 * 1024
+FALLBACK_PARITY_EVIDENCE_LINE = re.compile(r"^Full-suite evidence: (/[^\n]+)$", re.M)
+FALLBACK_PARITY_SCOPE = "global_fallback_full_suite"
+FALLBACK_PARITY_PROFILE_REL = ".arcana/verify.json"
+FALLBACK_PARITY_SETUP_TIMEOUT = 900
+FALLBACK_PARITY_DEAD_PROXY = "http://127.0.0.1:9"
+FALLBACK_PARITY_REAL_ARMS = frozenset({"real_disposable", "real_external"})
+FALLBACK_PARITY_SANDBOX_KEY = "full_test_parity_sandbox"
+FALLBACK_PARITY_RUNTIME_DIR = "/run/b9"
+FALLBACK_PARITY_SEED_MAX = 8
+FALLBACK_PARITY_SEED_PREFIXES = (".cache/", ".local/share/pnpm/")
+FALLBACK_PARITY_SEED_REL = re.compile(r"[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*")
+FALLBACK_PARITY_SEED_ENV = re.compile(r"GRAPH_FULL_SUITE_[A-Z0-9_]{1,47}")  # an allowlist prefix (rev-sec, #637)
+FALLBACK_PARITY_SEED_COPY_MAX = 512 * 1024 * 1024
+FALLBACK_PARITY_SANDBOX_ETC = ("/etc/passwd", "/etc/group", "/etc/nsswitch.conf", "/etc/hosts", "/etc/ld.so.cache",
+                               "/etc/ld.so.conf", "/etc/ld.so.conf.d", "/etc/ssl", "/etc/ca-certificates",
+                               "/etc/alternatives", "/etc/localtime", "/etc/os-release", "/etc/mime.types")
+FALLBACK_PARITY_NPMRC_PATH_KEYS = frozenset({"store-dir", "virtual-store-dir", "cache-dir", "cache", "global-dir",
+                                             "global-bin-dir", "state-dir", "modules-dir", "tmp", "prefix",
+                                             "userconfig", "globalconfig", "npmrc", "globalconfig"})
+
+
+def _row_verdict(value) -> str:
+    if isinstance(value, (list, tuple)) and value:
+        value = value[0]
+    if isinstance(value, dict):
+        value = value.get("verdict")
+    return str(value)
+
+
+def fallback_only_units(doc: dict) -> frozenset[str]:
+    """Clause (b): the deployable units B9 may even consider — never more.
+
+    A unit qualifies only when its entity verdict is not_measured (never failed), and among ALL the
+    verifier rows that name it, exactly one is non-verified and that one is the global fallback suite.
+    Every verifier the entity lists must have a row. A type_check or fitness row that is not_measured or
+    failed keeps the unit out, so its own exemption is still owed: an exemption covers the whole
+    entity, so carrying the fallback row must never hide another row (cmd_exempt drops every exempted
+    entity from `left`)."""
+    rows: dict[str, dict[str, tuple[str, str]]] = {}
+    for v in doc.get("verifiers") or []:
+        if not isinstance(v, dict):
+            continue
+        for eid, verdict in (v.get("entity_verdicts") or {}).items():
+            rows.setdefault(str(eid), {})[str(v.get("id"))] = (str(v.get("scope") or ""), _row_verdict(verdict))
+    out = set()
+    for x in doc.get("verdicts") or []:
+        if not isinstance(x, dict):
+            continue
+        eid = str(x.get("entity"))
+        if not eid.startswith("deployable_unit:") or x.get("verdict") != "not_measured":
+            continue
+        mine = rows.get(eid) or {}
+        listed = [str(i) for i in (x.get("verifier_ids") or [])]
+        if not listed or any(i not in mine for i in listed):
+            continue
+        nonv = [(s, vd) for s, vd in mine.values() if vd != "verified"]
+        if len(nonv) == 1 and nonv[0] == (FALLBACK_PARITY_SCOPE, "not_measured"):
+            out.add(eid)
+    return frozenset(out)
+
+
+def _strip_head(value):
+    if isinstance(value, dict):
+        return {k: _strip_head(v) for k, v in value.items() if k != "head"}
+    if isinstance(value, list):
+        return [_strip_head(v) for v in value]
+    return value
+
+
+def compare_fallback_parity(base_doc, head_doc, *, base: str, head: str, unit: str,
+                            managed: set[str] | frozenset[str],
+                            arm_requirements: dict | None = None) -> tuple[bool | None, str]:
+    """→ (True = carry, None = pause, False = refuse). Pure: two execution documents in, one verdict out.
+
+    Clause (a): an execution whose members are ALL bundle-managed may differ between the sides in its
+    member hashes and counts (the bundle under review is its subject), but it must be verified at head.
+    Everything else must agree exactly."""
+    for side, d, sha in (("base", base_doc, base), ("head", head_doc, head)):
+        if not isinstance(d, dict) or d.get("schema") != FALLBACK_PARITY_DOC_SCHEMA:
+            return None, f"the {side} execution document is not a {FALLBACK_PARITY_DOC_SCHEMA}"
+        if d.get("unit") != unit or d.get("head") != sha:
+            return None, (f"the {side} execution document is not bound to unit {unit!r} at {sha[:12]} "
+                          f"(it names {str(d.get('unit'))!r} at {str(d.get('head'))[:12]})")
+        if not isinstance(d.get("results"), list) or not isinstance(d.get("membership"), list):
+            return None, f"the {side} execution document has no results/membership lists"
+
+    def execs(d):
+        for r in d["results"]:
+            for e in (r.get("executions") or []) if isinstance(r, dict) else []:
+                yield r.get("suite"), e
+
+    head_failed = [s for s, e in execs(head_doc) if not isinstance(e, dict) or e.get("verdict") == "failed"]
+    base_failed = {s for s, e in execs(base_doc) if not isinstance(e, dict) or e.get("verdict") == "failed"}
+    # A suite that fails at head only is a regression of the change: refuse. One that fails at base too (an
+    # environment the host could not provide, e.g. a missing offline seed) has no baseline: pause, carry nothing.
+    head_new = [s for s in head_failed if s not in base_failed]
+    if head_new:
+        return False, f"{len(head_new)} execution(s) FAILED at head only ({', '.join(map(str, head_new[:3]))})"
+    if base_failed:
+        return None, ("the base run has a failed execution, so there is no baseline to keep ("
+                      + ", ".join(sorted(map(str, base_failed))[:3]) + ")")
+    for key in ("exit_code", "runtime_authorized", "knowledge_admitted", "remaining"):
+        if base_doc.get(key) != head_doc.get(key):
+            return None, f"{key} differs: base {base_doc.get(key)!r}, head {head_doc.get(key)!r}"
+
+    def members(d):
+        out = {}
+        for m in d["membership"]:
+            if not isinstance(m, dict) or not isinstance(m.get("path"), str) or m["path"] in out:
+                return None
+            out[m["path"]] = m.get("sha256")
+        return out
+    bm, hm = members(base_doc), members(head_doc)
+    if bm is None or hm is None:
+        return None, "a membership list is malformed or repeats a path"
+    if set(bm) != set(hm):
+        gone, new = sorted(set(bm) - set(hm)), sorted(set(hm) - set(bm))
+        return None, f"the member set changed (removed {gone[:3]}, added {new[:3]})"
+    moved = sorted(p for p in bm if bm[p] != hm[p] and p not in managed)
+    if moved:
+        return None, f"{len(moved)} non-bundle member(s) changed bytes ({', '.join(moved[:3])})"
+
+    ba, ha = base_doc.get("arms"), head_doc.get("arms")
+    if _strip_head(ba) != _strip_head(ha):
+        return None, "the arm evidence differs between base and head"
+    not_run = sorted((ha or {}).get("not_run") or []) if isinstance(ha, dict) else []
+    reqs = arm_requirements or {}
+    if base_doc.get("suite_plan") != head_doc.get("suite_plan"):
+        return None, "the suite plan differs between base and head"
+
+    def suites(d):
+        out = {}
+        for r in d["results"]:
+            if not isinstance(r, dict) or not isinstance(r.get("suite"), str) or r["suite"] in out:
+                return None
+            out[r["suite"]] = r
+        return out
+    bs, hs = suites(base_doc), suites(head_doc)
+    if bs is None or hs is None:
+        return None, "a results list is malformed or repeats a suite"
+    if set(bs) != set(hs):
+        return None, (f"suites differ: run at base only {sorted(set(bs) - set(hs))[:3]}, "
+                      f"at head only {sorted(set(hs) - set(bs))[:3]}")
+    # Member lists are compared as they are written, never coerced (rev-core B1 on #641: members [1] read as
+    # ["1"] and carried). Every member list a result carries — members, held_members and each execution's
+    # members — is a list of strings when present, at both sides; executions is a list of objects. Anything
+    # else pauses before any comparison can coerce it or raise on it.
+    def str_list(v):
+        return v is None or (isinstance(v, list) and all(isinstance(m, str) for m in v))
+    for side, ss in (("base", bs), ("head", hs)):
+        for name, r in sorted(ss.items()):
+            ex = r.get("executions")
+            if not (str_list(r.get("members")) and str_list(r.get("held_members"))
+                    and (ex is None or (isinstance(ex, list)
+                                        and all(isinstance(e, dict) and str_list(e.get("members")) for e in ex)))):
+                return None, (f"{side}: {name}: members, held members and execution members must be lists of "
+                              f"strings")
+    # Coverage (Arcana-Brain 95125b37 on #637 r3): equal empty or partial results prove nothing. The harness
+    # partitions the unit's members into its suite plan (inside the membership, no member twice) and writes
+    # exactly one result per planned suite; a result that lists members lists the plan's, and a verified one must.
+    plan = base_doc.get("suite_plan")
+    if not isinstance(plan, list) or not plan:
+        return None, "the suite plan is missing or empty: nothing was measured"
+    planned = {}
+    for x in plan:
+        if (not isinstance(x, dict) or not isinstance(x.get("suite"), str) or x["suite"] in planned
+                or not isinstance(x.get("members"), list) or not x["members"]
+                or not all(isinstance(m, str) for m in x["members"])):
+            return None, "the suite plan is malformed or repeats a suite"
+        planned[x["suite"]] = x["members"]
+    allp = [m for v in planned.values() for m in v]
+    if len(allp) != len(set(allp)) or not set(allp) <= set(bm):
+        return None, "the suite plan does not partition members of the membership (a member repeats or is unknown)"
+    if set(planned) != set(bs):
+        return None, (f"planned suites and results differ: planned without a result "
+                      f"{sorted(set(planned) - set(bs))[:3]}, result without a plan {sorted(set(bs) - set(planned))[:3]}")
+    for name, r in bs.items():
+        rm = r.get("members")
+        if (rm is not None or r.get("verdict") == "verified") and (
+                not isinstance(rm, list) or sorted(rm) != sorted(planned[name])):
+            return None, f"{name}: the result's members are not the planned members"
+    carried_nm = []
+    for name in sorted(bs):
+        b, h = bs[name], hs[name]
+        for key in ("verdict", "reason"):
+            if b.get(key) != h.get(key):
+                return None, f"{name}: {key} differs (base {b.get(key)!r}, head {h.get(key)!r})"
+        for key in ("members", "held_members"):
+            if sorted(b.get(key) or []) != sorted(h.get(key) or []):
+                return None, f"{name}: {key} differ"
+
+        def by_members(r):
+            out = {}
+            for e in r.get("executions") or []:
+                k = tuple(sorted(e.get("members") or []))
+                if k in out:
+                    return None
+                out[k] = e
+            return out
+        be, he = by_members(b), by_members(h)
+        if be is None or he is None or set(be) != set(he):
+            return None, f"{name}: the executions differ in number or members"
+        for k in sorted(be):
+            x, y = be[k], he[k]
+            if k and all(p in managed for p in k):
+                if y.get("verdict") != "verified":
+                    return None, f"{name}: the bundle-only execution {k[:1]} is not verified at head"
+                continue
+            if (x.get("verdict"), x.get("exit_code"), x.get("counts")) != (y.get("verdict"), y.get("exit_code"), y.get("counts")):
+                return None, f"{name}: execution {k[:1]} differs in verdict, exit code or counts"
+        if h.get("verdict") != "verified":
+            if h.get("verdict") != "not_measured":
+                return None, (f"{name}: suite verdict {h.get('verdict')!r} at both sides; only not_measured by held "
+                              f"prerequisites can carry")
+            held = set(h.get("held_members") or [])
+            if not held:
+                return None, (f"{name}: not_measured with no held member — an executed suite that could not be "
+                              f"read never carries")
+            if any(e.get("verdict") != "verified" for e in he.values()):
+                return None, f"{name}: not_measured with an execution that is not verified"
+            ran = {m for e in he.values() for m in (e.get("members") or [])}
+            open_ = set(h.get("members") or []) - ran
+            if not open_ or not open_ <= held:
+                return None, f"{name}: a member that did not run is not a held member"
+            carried_nm.append(name)
+    # Execution coverage (Arcana-Brain D96/D97 on #641): a verified suite is verified by its executions, not
+    # by its label. At each side its executions are a nonempty list of verified records whose members
+    # partition the suite's members: none missing, none twice, none from outside, no record without members.
+    # Equal empty or partial execution maps at both sides prove nothing and never carry. It runs after the
+    # per-suite comparison so that every earlier guard still answers with its own reason.
+    for side, ss in (("base", bs), ("head", hs)):
+        for name, r in sorted(ss.items()):
+            if r.get("verdict") != "verified":
+                continue
+            ex = r.get("executions")
+            if not isinstance(ex, list) or not ex:
+                return None, f"{side}: {name}: verified with no execution"
+            if any(e.get("verdict") != "verified" for e in ex):
+                return None, f"{side}: {name}: verified with an execution that is not verified"
+            ran = [m for e in ex for m in (e.get("members") or [])]
+            if (any(not e.get("members") for e in ex) or len(ran) != len(set(ran))
+                    or set(ran) != set(r.get("members") or [])):
+                return None, f"{side}: {name}: the executions do not partition the suite's members"
+    if carried_nm:
+        if not not_run:
+            return None, "suites are not_measured but the arm evidence names no arm that did not run"
+        weak = [a for a in not_run if reqs.get(a) not in FALLBACK_PARITY_REAL_ARMS]
+        if weak:
+            return None, f"arm(s) {weak[:3]} did not run but are not declared real_* at base"
+    return True, (f"{len(bs)} suite(s) agree at base and head; {len(carried_nm)} not_measured by held "
+                  f"prerequisites only ({', '.join(carried_nm[:4])}); arms not run: {', '.join(not_run[:4]) or 'none'}")
+
+
+def _parity_env(tmp: Path, home: Path | None = None, seed_env: dict | None = None) -> dict:
+    """The scrub (R3): built from nothing. Only PATH survives from the caller, filtered of every entry under
+    the caller's HOME. HOME, TMPDIR and XDG_RUNTIME_DIR are this side's own. Proxies still point at a
+    closed port, but they are a second line only: R1's network namespace is what cuts the network."""
+    path = ":".join(p for p in os.environ.get("PATH", "/usr/bin:/bin").split(":") if _path_entry_ok(p))
+    env = {"PATH": path or "/usr/bin:/bin", "HOME": str(home or tmp), "LANG": "C.UTF-8", "TMPDIR": str(tmp),
+           "XDG_RUNTIME_DIR": FALLBACK_PARITY_RUNTIME_DIR, "CI": "1", "PYTHONDONTWRITEBYTECODE": "1",
+           "FORCE_COLOR": "0", "NO_COLOR": "1", "npm_config_offline": "true", "PIP_NO_INDEX": "1",
+           "COREPACK_ENABLE_NETWORK": "0", "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+           "npm_config_proxy": FALLBACK_PARITY_DEAD_PROXY, "npm_config_https_proxy": FALLBACK_PARITY_DEAD_PROXY,
+           "NO_PROXY": "", "no_proxy": ""}
+    for k in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
+        env[k] = FALLBACK_PARITY_DEAD_PROXY
+    for k, v in (seed_env or {}).items():
+        env[k] = v
+    return env
+
+
+def _protected_homes() -> list[str]:
+    """Home directories a PATH bind must never expose: $HOME, the passwd home of this uid (HOME is the
+    caller's to set, so it alone is not enough), and every passwd home under /home or /root."""
+    homes = [os.environ.get("HOME", "")]
+    try:
+        import pwd
+        homes.append(pwd.getpwuid(os.getuid()).pw_dir)
+        homes += [e.pw_dir for e in pwd.getpwall() if e.pw_dir.startswith(("/home/", "/root"))]
+    except (ImportError, KeyError, OSError):
+        pass
+    return sorted({os.path.abspath(h) for h in homes if h.startswith("/") and os.path.abspath(h) != "/"})
+
+
+def _path_entry_ok(p: str) -> bool:
+    """A PATH entry the sandbox may expose read-only. Its tool root (the parent when the entry is named
+    `bin`) must not be a protected home or contain one. Under a home (a runner's tool cache, e.g.
+    <home>/runner/_work/_tool/Python/3.12/x64/bin) it must be at least two levels below it with no hidden
+    component, so a home itself and its dot-dirs (.ssh, .config, .npmrc, .local, ...) are never mounted."""
+    if not p.startswith("/"):
+        return False
+    root = os.path.abspath(os.path.dirname(p) if os.path.basename(p) == "bin" else p)
+    for h in _protected_homes():
+        if _under(Path(h), Path(root)):
+            return False
+        if _under(Path(root), Path(h)):
+            rel = os.path.relpath(root, h).split("/")
+            if len(rel) < 2 or any(c.startswith(".") for c in rel):
+                return False
+    return True
+
+
+def _under(p: Path, root: Path) -> bool:
+    try:
+        return os.path.abspath(p) == os.path.abspath(root) or \
+            os.path.abspath(p).startswith(os.path.abspath(root).rstrip("/") + "/")
+    except (OSError, ValueError):
+        return False
+
+
+def _parity_seeds(prof_unit: dict) -> tuple[list[dict] | None, str]:
+    """R2/R4: the host caches a side may see, declared at BASE under full_test_parity_sandbox.seeds. Each is
+    a directory under the gate user's HOME, inside an allow-listed prefix, mounted at the same relative
+    path under the side's private HOME: `ro` read-only (with optional tmpfs `writable` holes), `copy` as a
+    private copy. A seed with `manifest` is content-addressed (Root ruling 2026-11-20): every file in it is
+    listed with its sha256, and the gate verifies the list before use. Invalid declaration ⇒ no carry."""
+    box = prof_unit.get(FALLBACK_PARITY_SANDBOX_KEY)
+    if box is None:
+        return [], "no seeds declared"
+    if not isinstance(box, dict) or set(box) - {"seeds"} or not isinstance(box.get("seeds", []), list) \
+            or len(box.get("seeds", [])) > FALLBACK_PARITY_SEED_MAX:
+        return None, f"{FALLBACK_PARITY_SANDBOX_KEY} is malformed"
+    out, seen_env = [], set()
+    for s in box.get("seeds", []):
+        if not isinstance(s, dict) or set(s) - {"home", "mode", "writable", "manifest", "manifest_sha256", "env"}:
+            return None, "a seed is malformed"
+        rel, mode = s.get("home"), s.get("mode")
+        if not (isinstance(rel, str) and FALLBACK_PARITY_SEED_REL.fullmatch(rel)
+                and os.path.normpath(rel) == rel and ".." not in rel.split("/")
+                and any(rel.startswith(p) for p in FALLBACK_PARITY_SEED_PREFIXES)):
+            return None, f"seed home {rel!r} is outside the allowed prefixes"
+        if mode not in ("ro", "copy"):
+            return None, f"seed {rel}: mode must be ro or copy"
+        holes = s.get("writable", [])
+        if not isinstance(holes, list) or (holes and mode != "ro") or not all(
+                isinstance(h, str) and FALLBACK_PARITY_SEED_REL.fullmatch(h) and os.path.normpath(h) == h
+                and ".." not in h.split("/") for h in holes):
+            return None, f"seed {rel}: writable holes are malformed"
+        man = s.get("manifest")
+        if man is not None and not (isinstance(man, str) and re.fullmatch(r"[A-Za-z0-9._-]+", man)):
+            return None, f"seed {rel}: manifest must be a plain file name"
+        pin = s.get("manifest_sha256")
+        if (man is None) != (pin is None) or (pin is not None and not (
+                isinstance(pin, str) and re.fullmatch(r"[0-9a-f]{64}", pin))):
+            return None, f"seed {rel}: a manifest needs its sha256 pinned at base (manifest_sha256), and only then"
+        name = s.get("env")
+        if name is not None and (not isinstance(name, str) or not FALLBACK_PARITY_SEED_ENV.fullmatch(name)
+                                 or name in seen_env
+                                 or name in _parity_env(Path("/nonexistent"))):
+            return None, f"seed {rel}: env name {name!r} is not allowed"
+        seen_env.add(name)
+        out.append({"home": rel, "mode": mode, "writable": holes, "manifest": man, "manifest_sha256": pin, "env": name})
+    return out, f"{len(out)} seed(s) declared"
+
+
+def _seed_source(rel: str) -> tuple[Path | None, str]:
+    real_home = os.environ.get("HOME", "")
+    if not real_home.startswith("/"):
+        return None, "the gate user has no absolute HOME"
+    src = Path(real_home) / rel
+    try:
+        if os.path.realpath(src) != os.path.abspath(src):
+            return None, f"seed {rel}: a path component is a symlink"
+        if not src.is_dir():
+            return None, f"seed {rel}: missing on this host"
+    except OSError as exc:
+        return None, f"seed {rel}: {type(exc).__name__}"
+    return src, "ok"
+
+
+def _verify_seed_manifest(src: Path, man: str, pin: str) -> str | None:
+    """The manifest matches the sha256 pinned at base, and every regular file of the seed (but the manifest) is
+    listed once with its sha256; nothing else is in it. The pin is what makes the list more than self-attested."""
+    mpath = src / man
+    try:
+        if mpath.is_symlink() or not mpath.is_file() or mpath.stat().st_size > 1024 * 1024:
+            return f"manifest {man} is missing or not a bounded regular file"
+        if hashlib.sha256(mpath.read_bytes()).hexdigest() != pin:
+            return f"manifest {man} does not match the sha256 pinned at base"
+        listed = {}
+        for line in mpath.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            m = re.fullmatch(r"([0-9a-f]{64})  ([A-Za-z0-9._+-]+)", line)
+            if not m or m.group(2) in listed:
+                return f"manifest {man} has a malformed or duplicate line"
+            listed[m.group(2)] = m.group(1)
+        present = {}
+        for e in os.scandir(src):
+            if e.name == man:
+                continue
+            if e.is_symlink() or not e.is_file(follow_symlinks=False):
+                return f"seed entry {e.name} is not a regular file"
+            present[e.name] = hashlib.sha256(Path(e.path).read_bytes()).hexdigest()
+    except (OSError, UnicodeDecodeError) as exc:
+        return f"manifest check failed: {type(exc).__name__}"
+    if not listed:
+        return f"manifest {man} lists nothing"
+    if set(listed) != set(present):
+        return "seed files and manifest differ: " + ", ".join(sorted(set(listed) ^ set(present))[:3])
+    bad = sorted(n for n in listed if listed[n] != present[n])
+    return f"sha256 mismatch: {', '.join(bad[:3])}" if bad else None
+
+
+def _copy_seed(src: Path, dst: Path) -> str | None:
+    total = 0
+    for dirpath, dirnames, filenames in os.walk(src):
+        for n in dirnames + filenames:
+            p = Path(dirpath) / n
+            if p.is_symlink():
+                return f"copy seed holds a symlink: {p.relative_to(src)}"
+            if p.is_file():
+                total += p.stat().st_size
+                if total > FALLBACK_PARITY_SEED_COPY_MAX:
+                    return "copy seed exceeds the size cap"
+    shutil.copytree(src, dst, symlinks=True, dirs_exist_ok=True)
+    return None
+
+
+def _git_object_dirs(tree: Path) -> list[str]:
+    """The object directories the side's shared clone reads (its alternates, one level of nesting)."""
+    out = []
+    alt = tree / ".git" / "objects" / "info" / "alternates"
+    for line in (alt.read_text().splitlines() if alt.is_file() else []):
+        d = line.strip()
+        if d.startswith("/") and os.path.isdir(d):
+            out.append(os.path.realpath(d))
+            nested = Path(d) / "info" / "alternates"
+            for line2 in (nested.read_text().splitlines() if nested.is_file() else []):
+                if line2.strip().startswith("/") and os.path.isdir(line2.strip()):
+                    out.append(os.path.realpath(line2.strip()))
+    return sorted(set(out))
+
+
+def _parity_path_binds(path_env: str) -> list[str]:
+    """The PATH tool roots the sandbox binds read-only, in order: each entry's root (its parent when it is
+    named `bin`), resolved, an existing directory that _path_entry_ok allows, not below one already bound
+    (/usr first), not under /etc, and never / or /home."""
+    bound, out = ["/usr"], []
+    for p in path_env.split(":"):
+        root = os.path.dirname(p) if os.path.basename(p) == "bin" else p
+        real = os.path.realpath(root)
+        if real and os.path.isdir(real) and _path_entry_ok(real) and not any(_under(Path(real), Path(b)) for b in bound) \
+                and not _under(Path(real), Path("/etc")) and real not in ("/", "/home"):
+            out.append(real)
+            bound.append(real)
+    return out
+
+
+def _parity_sandbox_argv(bwrap: str, side: Path, home: Path, runtime: Path, mounts: list[tuple[str, str, str]],
+                         objects: list[str], path_env: str, cwd: Path) -> list[str]:
+    """R1+R2: a network namespace, a read-only view of the system, and ONE writable bind: the side's own
+    private root (tree, HOME, TMPDIR, runtime dir). The other side's root is not mounted at all."""
+    argv = [bwrap, "--unshare-net", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--die-with-parent",
+            "--new-session", "--ro-bind", "/usr", "/usr"]
+    for d in ("/bin", "/sbin", "/lib", "/lib32", "/lib64", "/libx32"):
+        if os.path.islink(d):
+            argv += ["--symlink", os.readlink(d), d]
+        elif os.path.isdir(d):
+            argv += ["--ro-bind", d, d]
+    for e in FALLBACK_PARITY_SANDBOX_ETC:
+        if os.path.exists(e):
+            argv += ["--ro-bind", e, e]
+    argv += ["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--tmpfs", "/run"]
+    for real in _parity_path_binds(path_env):
+        argv += ["--ro-bind", real, real]
+    argv += ["--bind", str(side), str(side), "--bind", str(runtime), FALLBACK_PARITY_RUNTIME_DIR]
+    for o in objects:
+        argv += ["--ro-bind", o, o]
+    for kind, src, dst in mounts:
+        argv += (["--ro-bind", src, dst] if kind == "ro" else ["--tmpfs", dst])
+    return argv + ["--chdir", str(cwd), "--"]
+
+
+def _parity_run(argv: list[str], cwd: Path, env: dict, timeout: int) -> tuple[int, str]:
+    try:
+        p = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, text=True, start_new_session=True)
+    except OSError as exc:
+        return 127, f"not runnable: {type(exc).__name__}"
+    try:
+        out, _ = p.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        out, _ = p.communicate()
+        return 124, out or ""
+    return p.returncode, out or ""
+
+
+def _parity_net_probe(prefix: list[str], env: dict) -> str | None:
+    """R1, measured not assumed: inside the sandbox the only interface is loopback. Anything else — or a
+    sandbox that does not start — means the side cannot run, and B9 is not_measured."""
+    rc, out = _parity_run(prefix + ["cat", "/proc/net/dev"], Path("/"), env, 60)
+    if rc != 0:
+        return f"sandbox unavailable (probe exited {rc})"
+    ifaces = sorted({ln.split(":", 1)[0].strip() for ln in out.splitlines()[2:] if ":" in ln})
+    if ifaces != ["lo"]:
+        return "network reachable inside the sandbox: " + ",".join(ifaces[:4])
+    return None
+
+
+def _parity_side(repo: Path, sha: str, unit: str, setup: list[list[str]], full_test: list[str],
+                 timeout: int, root: Path, seeds: list[dict] | None = None) -> dict:
+    """One side: a private shared clone at `sha`, the declared setup, the declared suite, the document it
+    names — all inside the side's own sandbox. The private root is removed in `finally` whatever happened."""
+    root.mkdir(mode=0o700, parents=True, exist_ok=False)
+    tree, tmp, home, runtime = root / "tree", root / "tmp", root / "home", root / "run"
+    for d in (tmp, home, runtime):
+        d.mkdir(mode=0o700)
+    rec: dict = {"sha": sha, "setup": [], "doc": None}
+    t0 = time.monotonic()
+    try:
+        r = subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", str(repo), str(tree)],
+                           capture_output=True, text=True)
+        if r.returncode == 0:
+            r = subprocess.run(["git", "-C", str(tree), "-c", "advice.detachedHead=false", "checkout",
+                                "--quiet", "--detach", sha], capture_output=True, text=True)
+        if r.returncode != 0:
+            rec["why"] = "private clone failed"
+            return rec
+        mounts, seed_env = [], {}
+        for s in seeds or []:
+            src, why = _seed_source(s["home"])
+            if src is None:
+                rec["why"] = why
+                return rec
+            if s["manifest"]:
+                bad = _verify_seed_manifest(src, s["manifest"], s["manifest_sha256"])
+                if bad:
+                    rec["why"] = f"seed {s['home']}: {bad}"
+                    return rec
+            dst = home / s["home"]
+            dst.mkdir(mode=0o700, parents=True, exist_ok=True)
+            if s["mode"] == "copy":
+                bad = _copy_seed(src, dst)
+                if bad:
+                    rec["why"] = f"seed {s['home']}: {bad}"
+                    return rec
+            else:
+                mounts.append(("ro", str(src), str(dst)))
+                for h in s["writable"]:
+                    if not (src / h).is_dir() or (src / h).is_symlink():
+                        rec["why"] = f"seed {s['home']}: writable hole {h} is not a directory"
+                        return rec
+                    mounts.append(("tmpfs", "", str(dst / h)))
+            if s["env"]:
+                seed_env[s["env"]] = str(dst)
+        # Seeds are verified first, so a bad seed reads the same on every host.
+        bwrap = shutil.which("bwrap")
+        if not bwrap:
+            rec["why"] = "sandbox unavailable: no bwrap on this host"
+            return rec
+        env = _parity_env(tmp, home, seed_env)
+        exposed = [r for r in _parity_path_binds(env["PATH"]) if _under(root.parent, Path(r))]
+        if exposed:
+            # A read-only bind of an ancestor of the b9 workdir would show this side the other side's root.
+            rec["why"] = f"PATH tool root {exposed[0]} contains the b9 workdir; binding it would expose the other side"
+            return rec
+        cwd = tree / unit if unit != "." else tree
+        prefix = _parity_sandbox_argv(bwrap, root, home, runtime, mounts, _git_object_dirs(tree), env["PATH"], cwd)
+        why = _parity_net_probe(prefix, env)
+        if why:
+            rec["why"] = why
+            return rec
+        for argv in setup:
+            rc, _out = _parity_run(prefix + argv, cwd, env, FALLBACK_PARITY_SETUP_TIMEOUT)
+            rec["setup"].append({"argv": argv, "exit_code": rc})
+            if rc != 0:
+                rec["why"] = f"setup {argv[:2]} exited {rc} (no network, read-only outside the private root)"
+                return rec
+        rc, out = _parity_run(prefix + full_test, cwd, env, timeout)
+        rec["full_test_exit_code"] = rc
+        found = FALLBACK_PARITY_EVIDENCE_LINE.findall(out)
+        if not found:
+            rec["why"] = f"the suite exited {rc} and named no execution document"
+            return rec
+        path = Path(found[-1].strip())
+        try:
+            real = path.resolve(strict=True)
+            if not any(real.is_relative_to(x.resolve()) for x in (tree, tmp)):
+                raise ValueError("outside this side's private dirs")
+            info = path.lstat()
+            if path.is_symlink() or not stat.S_ISREG(info.st_mode) or info.st_size > FALLBACK_PARITY_DOC_MAX_BYTES:
+                raise ValueError("not a bounded regular file")
+            rec["doc"] = json.loads(path.read_text(encoding="utf-8"))
+            rec["doc_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except (OSError, ValueError, RecursionError) as exc:
+            rec["why"] = f"the execution document is unusable: {type(exc).__name__}"
+        return rec
+    finally:
+        rec["duration_s"] = round(time.monotonic() - t0, 2)
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def _npmrc_redirects(text: str) -> list[str]:
+    bad = []
+    for ln in text.splitlines():
+        ln = ln.strip()
+        if not ln or ln[0] in "#;" or "=" not in ln:
+            continue
+        k, v = (x.strip() for x in ln.split("=", 1))
+        k = k.lower()
+        if (k in FALLBACK_PARITY_NPMRC_PATH_KEYS or k.endswith("-dir")) and _redirecting(v):
+            bad.append(k)
+    return bad
+
+
+def _workspace_redirects(text: str) -> list[str]:
+    bad = []
+    for ln in text.splitlines():
+        m = re.match(r"^([A-Za-z][A-Za-z0-9]*)\s*:\s*(.+?)\s*$", ln)
+        if m and (m.group(1).endswith("Dir") or m.group(1) in ("cache", "storeDir")) \
+                and _redirecting(m.group(2).strip("'\"")):
+            bad.append(m.group(1))
+    return bad
+
+
+def _redirecting(v: str) -> bool:
+    v = v.strip().strip("'\"")
+    return v.startswith(("/", "~", "$")) or "${" in v or ".." in v.replace("\\", "/").split("/")
+
+
+def _parity_head_policy(repo: Path, base: str, head: str, unit: str, setup: list[list[str]]) -> list[str]:
+    """R2+R3, below every blocker: the head tree is untrusted code. Refuse (no carry) when
+      - a file a setup argv names, as it exists at BASE, differs at head (the setup script comes from base);
+      - .npmrc, pnpm-workspace.yaml, .pnpmfile.cjs or .yarnrc.yml differ at head, at the root or in the unit;
+      - package.json `pnpm` or `packageManager` differs at head;
+      - the head .npmrc / pnpm-workspace.yaml redirects a store, cache or state dir out of the worktree."""
+    def blob(rev, rel):
+        return git(repo, "rev-parse", "--verify", "--quiet", f"{rev}:{rel}", check=False).strip()
+
+    def show(rev, rel):
+        return git(repo, "show", f"{rev}:{rel}", check=False)
+
+    out = []
+    dirs = sorted({".", unit})
+    for argv in setup:
+        for tok in argv:
+            if tok.startswith("-") or "/" not in tok and "." not in tok:
+                continue
+            rel = os.path.normpath(tok if unit == "." else f"{unit}/{tok}")
+            if rel.startswith(("..", "/")):
+                continue
+            b = blob(base, rel)
+            if b and blob(head, rel) != b:
+                out.append(f"setup file {rel} differs at head (the setup script is taken from base)")
+    for d in dirs:
+        for f in (".npmrc", "pnpm-workspace.yaml", ".pnpmfile.cjs", ".yarnrc.yml"):
+            rel = f if d == "." else f"{d}/{f}"
+            if blob(base, rel) != blob(head, rel):
+                out.append(f"{rel} differs at head")
+        rel = "package.json" if d == "." else f"{d}/package.json"
+        try:
+            pb, ph = (json.loads(show(r, rel) or "{}") for r in (base, head))
+        except json.JSONDecodeError:
+            out.append(f"{rel} is not JSON at base or head")
+            continue
+        for k in ("pnpm", "packageManager"):
+            if isinstance(pb, dict) and isinstance(ph, dict) and pb.get(k) != ph.get(k):
+                out.append(f"{rel} `{k}` differs at head")
+        for f, fn in ((".npmrc", _npmrc_redirects), ("pnpm-workspace.yaml", _workspace_redirects)):
+            rel2 = f if d == "." else f"{d}/{f}"
+            bad = fn(show(head, rel2))
+            if bad:
+                out.append(f"{rel2} redirects writes out of the worktree: {', '.join(bad[:3])}")
+    return out
+
+
+def _parity_profile(repo: Path, base: str, head: str) -> tuple[dict | None, str]:
+    raw_b = git(repo, "show", f"{base}:{FALLBACK_PARITY_PROFILE_REL}", check=False)
+    raw_h = git(repo, "show", f"{head}:{FALLBACK_PARITY_PROFILE_REL}", check=False)
+    if not raw_b.strip():
+        return None, f"no {FALLBACK_PARITY_PROFILE_REL} at base"
+    if raw_b != raw_h:
+        return None, f"{FALLBACK_PARITY_PROFILE_REL} differs between base and head"
+    try:
+        prof = json.loads(raw_b)
+    except json.JSONDecodeError:
+        return None, f"{FALLBACK_PARITY_PROFILE_REL} at base is not JSON"
+    return (prof if isinstance(prof, dict) else None), "read at base"
+
+
+def _argv(x) -> bool:
+    return isinstance(x, list) and bool(x) and all(isinstance(a, str) and a for a in x)
+
+
+FALLBACK_PARITY_HELD_EXIT = 127  # the maintained full-suite harness: every run arm passed, some arms held
+FALLBACK_PARITY_EXITS = (0, FALLBACK_PARITY_HELD_EXIT)
+
+
+def _parity_exit_policy(rb: dict, rh: dict):
+    """D90: the observed return codes are evidence too, not only the documents. Normal exits are 0 (all ran)
+    and the held exit. A base exit that is not normal has no baseline: pause, the change is not blamed. A head
+    exit that is not normal over a normal base refuses. Then each side's exit must equal its document's
+    exit_code; two normal exits that differ pause; and exit 0 means every suite ran, so a not_measured suite
+    under exit 0 is not a measurement. Returns (False|None, why) or (True, None)."""
+    eb, eh = rb.get("full_test_exit_code"), rh.get("full_test_exit_code")
+    if eb not in FALLBACK_PARITY_EXITS:
+        return None, (f"no baseline: the suite exited {eb} at base, neither 0 (all ran) nor "
+                      f"{FALLBACK_PARITY_HELD_EXIT} (arms held)")
+    if eh not in FALLBACK_PARITY_EXITS:
+        return False, f"the suite exited {eb} at base and {eh} at head (observed exit differs)"
+    for side, r in (("base", rb), ("head", rh)):
+        doc = r.get("doc")
+        if not isinstance(doc, dict) or doc.get("exit_code") != r.get("full_test_exit_code"):
+            return None, f"{side}: observed exit {r.get('full_test_exit_code')} does not match the document's exit_code"
+    for side, r in (("base", rb), ("head", rh)):
+        res = r["doc"].get("results")
+        if not isinstance(res, list) or not all(isinstance(x, dict) for x in res):
+            return None, f"{side}: the document's results are not a list of suite objects ({type(res).__name__})"
+    if eb != eh:
+        return None, f"the suite exited {eb} at base and {eh} at head: both normal, but not the same"
+    if eb == 0:
+        for side, r in (("base", rb), ("head", rh)):
+            open_ = [x.get("suite") for x in r["doc"].get("results") or []
+                     if not isinstance(x, dict) or x.get("verdict") != "verified"]
+            if open_:
+                return None, (f"{side}: exit 0 means every suite ran, but {', '.join(map(str, open_[:3]))} "
+                              f"is not verified")
+    return True, None
+
+
+def evaluate_fallback_parity(repo: Path, base: str, head: str, candidates, managed: set[str],
+                             wd: Path, ev: dict, blockers: list[str], *, measure: bool = True) -> list[str]:
+    """B9 → the deployable units carried. Its own arm, never part of `eligible`: a unit B9 cannot carry
+    simply stays uncovered, and cmd_exempt then pauses or refuses on its own.
+
+    `measure=False` is `exempt`'s mode (Root, DEC-AUP-0197 Q2): the suites run ONCE per job, at the
+    authoritative point, the C16 recheck inside the gate. `exempt` checks only the cheap preconditions
+    (blockers, profile identity, the declaration) and returns the declared units as PENDING: it writes no
+    verdict, and the exemption it lets `exempt` issue admits nothing by itself, because every evaluation
+    of a structural exemption re-runs this function with measure=True (recheck_structural) and a unit the
+    measurement does not carry is then outside what the code may cover."""
+    cands = sorted(c for c in candidates if str(c).startswith("deployable_unit:"))
+    ev["fallback_parity"] = {"rule": "DEC-AUP-0197", "candidates": cands, "units": {}}
+    if not cands:
+        return []
+    if blockers:
+        _chk(ev, "B9", "SELF_UPDATE_FALLBACK_PARITY", None,
+             "no unit is carried: " + "; ".join(blockers[:4]))
+        return []
+    prof, why = _parity_profile(repo, base, head)
+    if prof is None:
+        _chk(ev, "B9", "SELF_UPDATE_FALLBACK_PARITY", None, f"no unit is carried: {why}")
+        return []
+    carried, refused, notes, pending = [], [], [], []
+    for eid in cands:
+        unit = eid.partition(":")[2] or "."
+        dep = (prof.get("deployables") or {}).get(unit) or {}
+        setup, full = dep.get(FALLBACK_PARITY_SETUP_KEY), dep.get("full_test")
+        timeout = dep.get("full_test_timeout_seconds", 900)
+        if not (isinstance(setup, list) and setup and all(_argv(a) for a in setup)) or not _argv(full) \
+                or type(timeout) is not int or not 1 <= timeout <= 7200:
+            ev["fallback_parity"]["units"][eid] = {"verdict": "not_measured",
+                                                   "why": f"no {FALLBACK_PARITY_SETUP_KEY} / full_test declared at base"}
+            notes.append(f"{eid}: nothing declared")
+            continue
+        arms = {a.get("name"): a.get("requires") for a in (dep.get("full_test_arms") or [])
+                if isinstance(a, dict)}
+        seeds, seeds_why = _parity_seeds(dep)
+        if seeds is None:
+            ev["fallback_parity"]["units"][eid] = {"verdict": "not_measured", "why": seeds_why}
+            notes.append(f"{eid}: {seeds_why}")
+            continue
+        policy = _parity_head_policy(repo, base, head, unit, setup)
+        if policy:
+            ev["fallback_parity"]["units"][eid] = {"verdict": "failed", "why": "; ".join(policy[:4])}
+            refused.append(f"{eid}: untrusted head: {'; '.join(policy[:2])}")
+            continue
+        if not measure:
+            ev["fallback_parity"]["units"][eid] = {
+                "verdict": "pending_c16",
+                "why": "not measured here: the gate's C16 recheck runs base and head and alone decides"}
+            pending.append(eid)
+            continue
+        Path(wd).mkdir(mode=0o700, parents=True, exist_ok=True)
+        side_root = Path(tempfile.mkdtemp(prefix="b9-", dir=str(wd)))
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            fb = pool.submit(_parity_side, repo, base, unit, setup, full, timeout, side_root / "base", seeds)
+            fh = pool.submit(_parity_side, repo, head, unit, setup, full, timeout, side_root / "head", seeds)
+            rb, rh = fb.result(), fh.result()
+        shutil.rmtree(side_root, ignore_errors=True)
+        if rb.get("doc") is None or rh.get("doc") is None:
+            ok, detail = None, (rb.get("why") or rh.get("why") or "no execution document")
+        else:
+            ok, detail = _parity_exit_policy(rb, rh)
+            if ok is not False and detail is None:
+                ok, detail = compare_fallback_parity(rb["doc"], rh["doc"], base=base, head=head, unit=unit,
+                                                     managed=managed, arm_requirements=arms)
+        ev["fallback_parity"]["units"][eid] = {
+            "verdict": "verified" if ok else ("failed" if ok is False else "not_measured"), "why": detail,
+            "base": {k: rb.get(k) for k in ("setup", "full_test_exit_code", "doc_sha256", "duration_s")},
+            "head": {k: rh.get(k) for k in ("setup", "full_test_exit_code", "doc_sha256", "duration_s")}}
+        (carried if ok else refused if ok is False else notes).append(eid if ok else f"{eid}: {detail}")
+    if not measure:
+        ev["fallback_parity"]["pending_c16"] = pending
+        if refused:
+            _chk(ev, "B9", "SELF_UPDATE_FALLBACK_PARITY", False, "refused: " + "; ".join(refused[:2]))
+            ev["fallback_parity_units"] = pending
+            return pending
+        _chk(ev, "B9", "SELF_UPDATE_FALLBACK_PARITY", None,
+             f"pending: {len(pending)} of {len(cands)} unit(s) declared; base/head parity is measured only by "
+             f"the gate's C16 recheck, never here"
+             + (f"; not carried: {'; '.join(notes[:2])}" if notes else ""))
+        ev["fallback_parity_units"] = pending
+        return pending
+    _chk(ev, "B9", "SELF_UPDATE_FALLBACK_PARITY",
+         False if refused else (True if len(carried) == len(cands) else None),
+         (f"carried {len(carried)} of {len(cands)} unit(s) on same-run base/head parity"
+          + (f"; refused: {'; '.join(refused[:2])}" if refused else "")
+          + (f"; not carried: {'; '.join(notes[:2])}" if notes else "")))
+    ev["fallback_parity_units"] = carried
+    return carried
+
+
 def evaluate_self_update(repo: Path, base: str, head: str, files: list[dict], workdir: Path,
                          bundle_rel: str = DEFAULT_BUNDLE_DIR, *,
                          declaration_rel: str = DEFAULT_DECLARATION_REL,
                          verifier_job: str | None = None,
                          verifier_conclusion: str | None = None,
                          base_branch: str | None = None,
-                         composition: bool = False) -> dict:
+                         composition: bool = False,
+                         parity_candidates=frozenset(), parity_measure: bool = True) -> dict:
     """B1-B5. The anchor is B2 and only B2: on a bundle-refresh pull request every byte of the head
     checkout is written by the pull request, so evidence collected by the head bundle is evidence the
     artefact under review collected about itself. B2 verifies the head manifest with the BASE tree's
@@ -3123,6 +4008,20 @@ def evaluate_self_update(repo: Path, base: str, head: str, files: list[dict], wo
     b8 = evaluate_workflow_integrity(repo, head, man_h, ev)
     ev["program_ref"] = {"base": (man_b or {}).get("program_ref"), "head": (man_h or {}).get("program_ref")}
     ev["eligible"] = bool(b1 and b1m and b2 and b3 and b4 and b6 and b8)
+    # DEC-AUP-0197 B9 — after the battery and outside `eligible`. Condition 1 is read from the WHOLE
+    # changed set: any path B1 set aside for a reason other than «bundle-managed or a validated pin»
+    # (a base-branch merge, a declared derived artefact, the self-update receipt, a declaration
+    # bootstrap) is a unit file changed in range, so no unit is carried.
+    blockers = [why for cond, why in (
+        (composition, "a mixed composition carries no unit"),
+        (not ev["eligible"], "the self-update battery does not pass"),
+        (bool(outside_real), "the change touches paths outside the bundle"),
+        (bool(merged_in), "a base-branch merge is in range"),
+        (bool(derived), "a declared derived artefact is in range"),
+        (bool(self_receipt), "the range files a self-update receipt"),
+        (bool(boot), "the range adds the declaration")) if cond]
+    evaluate_fallback_parity(repo, base, head, parity_candidates, managed_base | managed_head,
+                             wd / "b9", ev, blockers, measure=parity_measure)
     return ev
 
 
@@ -3131,7 +4030,8 @@ def evaluate_structural(repo: Path, base: str, head: str, files: list[dict], cas
                         declaration_rel: str = DEFAULT_DECLARATION_REL,
                         verifier_job: str | None = None, verifier_conclusion: str | None = None,
                         candidate_range: str | None = None, authority_id: str | None = None,
-                        second_opinion: dict | None = None, base_branch: str | None = None) -> dict:
+                        second_opinion: dict | None = None, base_branch: str | None = None,
+                        parity_candidates=frozenset(), parity_measure: bool = True) -> dict:
     Path(workdir).mkdir(parents=True, exist_ok=True)
     if case == "no_impact_by_construction":
         return evaluate_no_impact(repo, base, head, files, Path(workdir),
@@ -3147,7 +4047,8 @@ def evaluate_structural(repo: Path, base: str, head: str, files: list[dict], cas
                                           verifier_job=verifier_job, verifier_conclusion=verifier_conclusion)
     return evaluate_self_update(repo, base, head, files, Path(workdir), bundle_rel,
                                 declaration_rel=declaration_rel, verifier_job=verifier_job,
-                                verifier_conclusion=verifier_conclusion, base_branch=base_branch)
+                                verifier_conclusion=verifier_conclusion, base_branch=base_branch,
+                                parity_candidates=parity_candidates, parity_measure=parity_measure)
 
 
 MATRIX_REL = "contracts/graph-verified-change/verifier-matrix.v1.json"
@@ -3175,7 +4076,8 @@ def matrix_declared_unverifiable(repo: Path, ref: str, bundle_rel: str) -> froze
 
 def structural_covered_entities(case: str, synthesized: str, verdict_entities, managed: set[str],
                                 declared_unverifiable: frozenset[str] = frozenset(),
-                                pin_updates: frozenset[str] = frozenset()) -> set[str]:
+                                pin_updates: frozenset[str] = frozenset(),
+                                parity_units: frozenset[str] = frozenset()) -> set[str]:
     """Which entities an exemption of this code may name — never more.
 
     `NO_IMPACT_BY_CONSTRUCTION`: exactly the synthesized entity (there are no others; the receipt has
@@ -3212,6 +4114,9 @@ def structural_covered_entities(case: str, synthesized: str, verdict_entities, m
                 allowed.add(eid)
             elif node_type in declared_unverifiable:
                 allowed.add(eid)
+            elif node_type == "deployable_unit" and eid in parity_units:
+                # DEC-AUP-0197: only a unit B9 carried IN THIS EVALUATION, and only on a self-update.
+                allowed.add(eid)
     elif case == "spent_receipt_archive":
         # The receipt being archived is itself a `receipt` node, and `receipt` carries `mandatory: []`
         # in the matrix — not_measured BY DECLARATION, for the reason the matrix states: a historical
@@ -3241,7 +4146,8 @@ def structural_exemption(repo: Path, base: str, head: str, files: list[dict], po
                          verifier_conclusion: str | None = None,
                          candidate_range: str | None = None, authority_id: str | None = None,
                          second_opinion: dict | None = None,
-                         base_branch: str | None = None) -> tuple[list[dict], dict]:
+                         base_branch: str | None = None,
+                         parity_candidates=frozenset(), parity_measure: bool = True) -> tuple[list[dict], dict]:
     """The gate issues the exemption(s). → (exemptions, evidence). [] means: not eligible, stay paused."""
     case, cev = structural_case(repo, base, head, files, bundle_rel, base_branch)
     if case is None:
@@ -3250,7 +4156,8 @@ def structural_exemption(repo: Path, base: str, head: str, files: list[dict], po
                              declaration_rel=declaration_rel, verifier_job=verifier_job,
                              verifier_conclusion=verifier_conclusion, candidate_range=candidate_range,
                              authority_id=authority_id, second_opinion=second_opinion,
-                             base_branch=base_branch)
+                             base_branch=base_branch, parity_candidates=parity_candidates,
+                             parity_measure=parity_measure)
     ev.update({k: v for k, v in cev.items() if k not in ev})
     if not ev["eligible"]:
         return [], ev
@@ -3261,7 +4168,8 @@ def structural_exemption(repo: Path, base: str, head: str, files: list[dict], po
     managed |= bundle_paths_at(repo, base, bundle_rel)[0]
     covered = structural_covered_entities(case, synth, verdict_entities, managed,
                                           matrix_declared_unverifiable(repo, base, bundle_rel),
-                                          frozenset(cev.get("program_ref_pin_updates") or ()))
+                                          frozenset(cev.get("program_ref_pin_updates") or ()),
+                                          frozenset(ev.get("fallback_parity_units") or ()))
     binding = {"base": base, "head": head, "digest": diff_digest(repo, base, head)}
     ev["change_binding"] = binding
     ev["synthesized_entity"] = synth
@@ -3285,6 +4193,7 @@ def structural_exemption(repo: Path, base: str, head: str, files: list[dict], po
                          **({"selftest": ev["selftest"]} if "selftest" in ev else {}),
                          **({"derived_arms": ev["derived_arms"]} if ev.get("derived_arms") else {}),
                          **({"derived_runs": ev["derived_runs"]} if ev.get("derived_runs") else {}),
+                         **({"fallback_parity": ev["fallback_parity"]} if ev.get("fallback_parity") else {}),
                          **({"program_side_receipt": program_receipt} if program_receipt else {}),
                          # AUP-DEBT-002:B7 — the inputs C16 needs to RE-DERIVE this verdict on every future
                          # evaluation, not trust it. Never a claim of the verdict itself: recheck_structural
@@ -3324,7 +4233,8 @@ def recheck_structural(repo: Path, base: str, head: str, files: list[dict], poli
                        verifier_job: str | None = None,
                        verifier_conclusion: str | None = None,
                        receipt_head: str | None = None,
-                       base_branch: str | None = None) -> tuple[list[str], dict]:
+                       base_branch: str | None = None,
+                       parity_candidates=frozenset()) -> tuple[list[str], dict]:
     """C16 — the gate RE-MEASURES the battery of every structural exemption it is shown.
 
     The cheap discriminators run first (the git-status classification, then the binding digest), so
@@ -3409,12 +4319,23 @@ def recheck_structural(repo: Path, base: str, head: str, files: list[dict], poli
     # `the synthesized entity gate_self_update:…@8870dcea3979 carries no exemption`, on a receipt
     # whose exemption named …@46a4a922322f, one commit earlier, that commit being the receipt itself.
     synths = {synth} | ({f"{ENTITY_PREFIX_OF_CASE[case]}:{repo_name}@{record_head[:12]}"} if record_head else set())
+    named = {x.get("entity") for x in exemptions}
+    # DEC-AUP-0197: the battery runs BEFORE `allowed` is computed, so B9's carried units come from
+    # this evaluation's own measurement and never from the receipt. Only units the exemptions name
+    # and that are fallback-only in the receipt under review are measured.
+    b7meta = (exemptions[0].get("evidence") or {}).get("b7") or {} if case == "declaration_amend" else {}
+    ev = evaluate_structural(repo, base, head, files, case, Path(workdir), bundle_rel,
+                             declaration_rel=declaration_rel, verifier_job=verifier_job,
+                             verifier_conclusion=verifier_conclusion,
+                             candidate_range=b7meta.get("candidate_range"), authority_id=b7meta.get("authority_id"),
+                             second_opinion=b7meta.get("second_opinion"), base_branch=base_branch,
+                             parity_candidates=frozenset(parity_candidates) & frozenset(map(str, named)))
     managed, _ = bundle_paths_at(repo, head, bundle_rel)
     managed |= bundle_paths_at(repo, base, bundle_rel)[0]
     allowed = structural_covered_entities(case, synth, verdict_entities, managed,
                                           matrix_declared_unverifiable(repo, base, bundle_rel),
-                                          frozenset(cev.get("program_ref_pin_updates") or ())) | synths
-    named = {x.get("entity") for x in exemptions}
+                                          frozenset(cev.get("program_ref_pin_updates") or ()),
+                                          frozenset(ev.get("fallback_parity_units") or ())) | synths
     extra = sorted(named - allowed)
     if extra:
         problems.append(f"{code}: exempts {len(extra)} entity(ies) outside what this code may cover "
@@ -3424,12 +4345,6 @@ def recheck_structural(repo: Path, base: str, head: str, files: list[dict], poli
     if not (named & synths):
         problems.append(f"{code}: the synthesized entity {synth} carries no exemption — the code exists to cover "
                         f"exactly that entity" + record_note)
-    b7meta = (exemptions[0].get("evidence") or {}).get("b7") or {} if case == "declaration_amend" else {}
-    ev = evaluate_structural(repo, base, head, files, case, Path(workdir), bundle_rel,
-                             declaration_rel=declaration_rel, verifier_job=verifier_job,
-                             verifier_conclusion=verifier_conclusion,
-                             candidate_range=b7meta.get("candidate_range"), authority_id=b7meta.get("authority_id"),
-                             second_opinion=b7meta.get("second_opinion"), base_branch=base_branch)
     # The binding evidence was computed above and then overwritten by the battery's own dictionary, so no
     # receipt ever carried it. It is the one place a reader can see WHICH range the exemption bound.
     ev["binding"] = binding_ev
@@ -3684,8 +4599,19 @@ def _git_valid_structural_exclusions(repo_path: Path, doc: dict, base: str, head
     repo = impact_pair.impact.Repo(repo_path)
     before = impact_pair.index_at(repo, base)
     after = impact_pair.index_at(repo, head)
+    cs = doc.get("change_set") or {}
+    paths = {f.get("path") for f in cs.get("files", []) if isinstance(f, dict)}
+    files = [f for f in repo.diff_files(base, head) if f.get("path") in paths]
+    selection_config = doc.get("impact_set") or {}
+    depth = selection_config.get("max_depth", impact_pair.impact.DEFAULT_MAX_DEPTH)
+    edge_types = selection_config.get("edge_types", "all")
+    q = impact_pair.query(
+        before, after, files, repo=repo, base=base, head=head,
+        tree_commit=repo.head(), tree_dirty=repo.dirty(), max_depth=depth,
+        edge_types=None if edge_types == "all" else set(edge_types))
+    minimum_by_entity = impact_pair.mandatory_by_entity(before, after, q)
     accepted, _problems = impact_pair.structural_exclusions_rederived(
-        repo, doc, base, head, before, after)
+        repo, doc, base, head, before, after, minimum_by_entity)
     return accepted
 
 
@@ -3853,6 +4779,7 @@ def origin_binding_at_base(repo: Path, base: str, bundle_rel: str, path: Path,
             "trusted_base_key": key, "receipt_digest": receipt_digest}
 
 
+@_remove_owned_temp_dirs
 def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: dict, *,
          description: str = "", bypass_flag: bool = False, disabled: frozenset[str] = frozenset(),
          work_item_enforcement: str | None = None, ledger_dir: Path = LEDGER_DIR,
@@ -3948,7 +4875,7 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             declared_au, _bad_au = declared_artefacts(decl_au)
             candidates = [p for p in outside if p in declared_au]
             if candidates:
-                wd_au = Path(automated_workdir) if automated_workdir else Path(tempfile.mkdtemp(prefix="gate2a-decl-"))
+                wd_au = Path(automated_workdir) if automated_workdir else Path(_owned_mkdtemp(prefix="gate2a-decl-"))
                 wd_au.mkdir(parents=True, exist_ok=True)
                 ok_au, why_v = _verify_declared_artefacts(repo, head, declared_au, candidates, wd_au)
                 automated["declared_artefacts"] = {"paths": candidates, "verdict": ok_au,
@@ -3962,7 +4889,7 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
                        f"outside the dependency-manifest allowlist ({', '.join(outside[:4])}"
                        f"{' …' if len(outside) > 4 else ''}) — no exemption is issued and the ordinary rule applies")
         else:
-            wd = Path(automated_workdir) if automated_workdir else Path(tempfile.mkdtemp(prefix="gate2a-"))
+            wd = Path(automated_workdir) if automated_workdir else Path(_owned_mkdtemp(prefix="gate2a-"))
             wd.mkdir(parents=True, exist_ok=True)
             rec_doc, note = synthesize_automated_receipt(
                 repo, base, head, files, au_spec, policy,
@@ -4107,19 +5034,21 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         # Revision selections are remeasured from Git, not trusted from receipt node_ids.
         try:
             origin_binding = None
+            binding_diagnostics = []
             if origin_association_path is not None:
                 origin_binding = origin_binding_at_base(repo, base, bundle_rel, origin_association_path,
                                                        rec["digest"], enforcement)
             with impact_pair.trace_phase("admission-C18-paired-coverage"):
                 coverage_problems = impact_pair.receipt_problems(repo, doc, origin_binding=origin_binding,
-                                                                trusted_base=base)
-                coverage_problems += full_suite_ci.receipt_errors(
-                    repo, head, impact_pair.build_graph.source_repo_name(repo), doc.get("verifiers", []))
-                coverage_problems += full_suite_ci.root_typecheck_receipt_errors(
-                    repo, base, head, impact_pair.build_graph.source_repo_name(repo), doc.get("verifiers", []),
-                    root_typecheck_ci_root, token=github_token)
+                                                                trusted_base=base,
+                                                                binding_diagnostics=binding_diagnostics)
+                coverage_problems += full_suite_ci.authenticated_ci_receipt_errors(
+                    repo, base, head, impact_pair.build_graph.source_repo_name(repo),
+                    doc.get("verifiers", []), root_typecheck_ci_root, token=github_token)
             if origin_binding is not None and "proof" in origin_binding:
                 rec["origin_association_proof"] = origin_binding["proof"]
+            import receipt_data
+            coverage_problems.extend(receipt_data.rederive_claims(repo, doc, candidate_head=head))
         except Exception as exc:
             # The class name alone ("Refusal") hides the whole diagnosis: the reason a coverage
             # measurement refused (STALE_GRAPH, a dirty tree, a missing graph) is carried in the
@@ -4135,10 +5064,13 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
             # of hiding it: a gate that knows ten problems must never report "4".
             shown = coverage_problems[:C18_PROBLEMS_SHOWN]
             more = len(coverage_problems) - len(shown)
+            c18_extra = {"coverage_problems": list(coverage_problems)}
+            if binding_diagnostics:
+                c18_extra["binding_diagnostics"] = binding_diagnostics
             add("C18", f"{Path(rec['path']).name}: " + "; ".join(shown)
                        + (f" …and {more} more of {len(coverage_problems)} (the full list is in this check's "
                           f"`coverage_problems` — re-run the gate with --json)" if more else ""),
-                coverage_problems=list(coverage_problems))
+                **c18_extra)
 
         # verdict aggregation with admissible exemptions
         captured = parse_iso(doc.get("captured_at_utc")) or datetime.now(timezone.utc)
@@ -4202,13 +5134,14 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         struct = [x for x in (doc.get("exemptions") or [])
                   if isinstance(x, dict) and x.get("code") in STRUCTURAL_CODES]
         if struct:
-            swd = Path(structural_workdir) if structural_workdir else Path(tempfile.mkdtemp(prefix="gate4b-"))
+            swd = Path(structural_workdir) if structural_workdir else Path(_owned_mkdtemp(prefix="gate4b-"))
             problems, sev = recheck_structural(repo, base, head, files, policy, struct,
                                                repo_name=repo_name or repo_remote_name(repo),
                                                verdict_entities=list(verdict_of), workdir=swd,
                                                bundle_rel=bundle_rel, verifier_job=verifier_job,
                                                verifier_conclusion=verifier_conclusion,
-                                               receipt_head=_receipt_head(doc), base_branch=base_branch)
+                                               receipt_head=_receipt_head(doc), base_branch=base_branch,
+                                               parity_candidates=fallback_only_units(doc))
             rec["structural_exemption"] = {"code": sorted({x.get("code") for x in struct})[0],
                                            "entities": sorted(str(x.get("entity")) for x in struct),
                                            "re_measured": [c for c in (sev.get("checks") or [])],
@@ -4283,7 +5216,7 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         imp = doc.get("impact_set") or {}
         try:
             structural_exclusions = _git_valid_structural_exclusions(repo, doc, base, head)
-        except (impact.Refusal, ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
+        except (impact_pair.impact.Refusal, ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
             # Coverage already reports its own refusal (C18). Fail closed here: an exclusion that
             # cannot be re-derived still owes the ordinary canary obligation.
             structural_exclusions = set()
@@ -4460,6 +5393,17 @@ def gate(repo: Path, base: str, head: str, receipt_paths: list[Path], policy: di
         if VERDICT_RANK[c["verdict"]] > VERDICT_RANK[verdict]:
             verdict = c["verdict"]
 
+    # The generated receipt is already in the result's receipts collection and its gate
+    # checks have completed. Its invocation-local file is about to be removed, so do not
+    # return a locator that would point to a missing file. A caller-owned workdir remains
+    # durable and keeps its existing locator.
+    if not automated_workdir and automated.get("receipt_path"):
+        generated_receipt_path = automated["receipt_path"]
+        for receipt in bound + unbound:
+            if receipt.get("path") == generated_receipt_path:
+                receipt["path"] = None
+        automated["receipt_path"] = None
+
     doc = {
         "schema": "AdmissionGateReceipt/v1",
         "gate_receipt_id": f"gate-{stamp()}",
@@ -4549,6 +5493,29 @@ class AttachRefusal(ValueError):
     repository never holds. The message is the whole answer: what is wrong and the command that fixes it."""
 
 
+def attachment_uri(prefix: str | None, rel: str) -> str:
+    """Validate a directory URI prefix and retain the complete relative receipt path."""
+    prefix = prefix if prefix is not None else "aup://arcanada-universal-program/"
+    try:
+        parsed = urllib.parse.urlsplit(prefix)
+        parsed.port  # reject malformed or out-of-range ports, even before any network request
+        valid = (parsed.scheme in ("aup", "https", "http") and parsed.hostname
+                 and not parsed.username and not parsed.password and not parsed.query
+                 and not parsed.fragment and prefix.endswith("/")
+                 and not any(c.isspace() or ord(c) < 32 for c in urllib.parse.unquote(prefix))
+                 and not parsed.path.rstrip("/").endswith("/" + rel))
+    except ValueError:
+        valid = False
+    if not valid:
+        raise AttachRefusal("ATTACH_URI_PREFIX_INVALID: --uri/--uri-prefix requires a directory URI "
+                            "ending in '/', without credentials, query, fragment or receipt suffix")
+    uri = prefix + urllib.parse.quote(rel, safe="/")
+    if len(uri) > 512:
+        raise AttachRefusal("ATTACH_URI_TOO_LONG: complete evidence URI exceeds512 characters; "
+                            "it must not be truncated")
+    return uri
+
+
 def build_attachment(receipt_path: Path, doc: dict, work_item: str, label: str, uri: str | None,
                      muneral_task_id: str | None = None, root: Path | None = None) -> dict:
     """A2-331. `receipt_path` MUST lie inside `root` (the repository that commits the ledger; default the
@@ -4572,7 +5539,7 @@ def build_attachment(receipt_path: Path, doc: dict, work_item: str, label: str, 
         "work_item": {"system": "muneral", "task_id": work_item, "muneral_task_id": muneral_task_id,
                       "epic": doc.get("work_item", {}).get("epic") if isinstance(doc.get("work_item"), dict) else None},
         "evidence_ref": {
-            "uri": f"{uri or 'aup://arcanada-universal-program/'}{rel}"[:512],
+            "uri": attachment_uri(uri, rel),
             "digest": digest,
             "contentType": "application/json",
             "label": label[:128],
@@ -4603,6 +5570,37 @@ def _muneral_error_body(raw: bytes) -> tuple[dict | None, str]:
         return (body if isinstance(body, dict) else None), text
     except json.JSONDecodeError:
         return None, text
+
+
+def evidence_identity_matches(body: dict | None, task_id: str, payload: dict) -> bool:
+    return (isinstance(body, dict) and isinstance(body.get("evidence_id"), str)
+            and bool(UUID_RE.fullmatch(body["evidence_id"])) and body.get("task_id") == task_id
+            and body.get("sha256") == payload["sha256"] and body.get("uri") == payload["uri"]
+            and body.get("content_type") == payload["contentType"])
+
+
+def muneral_readback(base_url: str, path: str, task_id: str, payload: dict,
+                    evidence_id: str, key: str, ua: str, timeout: float) -> dict:
+    """Verify one scoped durable row after POST; never record headers or answer bodies."""
+    probe = {"probe": "GET /tasks/<task>/evidence", "task_id": task_id}
+    req = urllib.request.Request(base_url.rstrip("/") + path, method="GET",
+                                 headers={"Authorization": f"Bearer {key}", "User-Agent": ua})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            probe["status"] = response.status
+            doc = json.loads(response.read())
+    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError,
+            ValueError, UnicodeError) as error:
+        probe["status"] = f"error:{type(error).__name__}"
+        return {"status": "not_measured", "reason_code": "MUNERAL_READBACK_NOT_MEASURED", "probe": probe}
+    rows = doc.get("evidence") if isinstance(doc, dict) else None
+    matches = ([row for row in rows if isinstance(row, dict) and row.get("evidence_id") == evidence_id]
+               if isinstance(rows, list) else [])
+    if (not isinstance(doc, dict) or doc.get("task_id") != task_id or len(matches) != 1
+            or not evidence_identity_matches(matches[0], task_id, payload)):
+        return {"status": "failed", "reason_code": "MUNERAL_READBACK_MISMATCH", "probe": probe}
+    return {"status": "verified", "probe": probe,
+            "identity": {"exact_tuple_verified": True, "evidence_id": evidence_id}}
 
 
 def muneral_deliver(att: dict, task_id: str, key: str, base_url: str, ua: str, route: str,
@@ -4652,15 +5650,21 @@ def muneral_deliver(att: dict, task_id: str, key: str, base_url: str, ua: str, r
     body, text = _muneral_error_body(raw)
     d["http"] = code
     if code in (200, 201):
-        ok = (body is not None and body.get("sha256") == sha_hex and body.get("evidence_id")
-              and (code == 201 or body.get("idempotent") is True))
+        ok = (evidence_identity_matches(body, task_id, payload)
+              and ((code == 201 and body.get("idempotent") is False)
+                   or (code == 200 and body.get("idempotent") is True)))
         if not ok:
             return d | {"status": "failed", "reason_code": "MUNERAL_ANSWER_MISMATCH",
-                        "answer": text[:300], "probe": [probe]}
+                        "probe": [probe]}
+        readback = muneral_readback(base_url, path, task_id, payload, body["evidence_id"], key, ua, timeout)
+        probes = [probe, readback["probe"]]
+        if readback["status"] != "verified":
+            return d | {"status": readback["status"], "reason_code": readback["reason_code"],
+                        "evidence_id": body["evidence_id"], "probe": probes}
         return d | {"status": "posted", "reason_code": "MUNERAL_EVIDENCE_CREATED" if code == 201
                     else "MUNERAL_EVIDENCE_IDEMPOTENT",
                     "evidence_id": body["evidence_id"], "idempotent": bool(body.get("idempotent")),
-                    "created_at": body.get("created_at"), "probe": [probe]}
+                    "created_at": body.get("created_at"), "probe": probes, "readback": readback["identity"]}
     server_code = (body or {}).get("code")
     message = (body or {}).get("message") if body else text
     if code == 404 and body is None and f"Cannot {method}" in text:
@@ -4827,9 +5831,10 @@ def cmd_attach(a) -> int:
             return 2
     else:
         ledger = anchor_ledger
+    task_id = a.muneral_task_id or (wi if UUID_RE.match(wi) else None)
     try:
         att = build_attachment(receipt_path, doc, wi, a.label or f"ChangeAdmissionReceipt/v1 {doc.get('receipt_id')}",
-                               a.uri, a.muneral_task_id, root=root)
+                               a.uri, task_id, root=root)
     except AttachRefusal as e:
         print(f"refuse {e}", file=sys.stderr)
         return 2
@@ -4842,6 +5847,7 @@ def cmd_attach(a) -> int:
         return merged, outcome
 
     try:
+        # Resolve every local conflict before an HTTP write. The later merge changes delivery only.
         ledger, outcome = candidate_ledger()
     except AttachRefusal as e:
         print(f"refuse {e}", file=sys.stderr)
@@ -4852,7 +5858,6 @@ def cmd_attach(a) -> int:
         # a fact about Muneral that nobody measured.
         m = policy["work_item_evidence"]["muneral"]
         key = os.environ.get("MUNERAL_API_KEY")
-        task_id = a.muneral_task_id or (wi if UUID_RE.match(wi) else None)
         route = m.get("evidence_route")
         att["delivery"]["checked_at_utc"] = now_iso()
         if not route:
@@ -4983,6 +5988,13 @@ def merge_attachment(ledger: dict, att: dict, base_ledger: dict | None, base_whe
     action = "superseded" if superseded else "appended"
     for i, x in enumerate(atts):
         if _att_digest(x) == d:
+            def identity(row):
+                ref, work_item = row.get("evidence_ref") or {}, row.get("work_item") or {}
+                return (row.get("receipt_path"), work_item.get("task_id"), work_item.get("muneral_task_id"),
+                        ref.get("uri"), ref.get("digest"), ref.get("contentType"))
+            if identity(x) != identity(att):
+                raise AttachRefusal("ATTACH_EVIDENCE_IDENTITY_CONFLICT: same digest has a different "
+                                    "task/URI/media/path tuple; existing evidence is preserved")
             atts[i] = att | {"attached_at_utc": x.get("attached_at_utc", att["attached_at_utc"])}
             action = "refreshed"
             break
@@ -5742,8 +6754,8 @@ def selftest(receipt_out: Path | None, keep: bool = False) -> int:
 
         # 7. no status/transition route is reachable from this tool. A2-336: the tool now makes ONE
         # write — the evidence POST of `attach --post` — so the invariant is stated as what it always
-        # meant: the only network call site is `muneral_deliver`, and the only route it can be given is
-        # the policy's evidence route, which is neither a status nor a transition.
+        # meant: the only WRITE is `muneral_deliver` on the policy's evidence route; the second call
+        # is its GET readback of that same scoped evidence path, never a status or transition write.
         src = Path(__file__).read_text(encoding="utf-8")
         delivery_start = src.index("def muneral_deliver(")
         delivery_end = src.find("\ndef ", delivery_start + 1)
@@ -5752,7 +6764,8 @@ def selftest(receipt_out: Path | None, keep: bool = False) -> int:
         # that this tool's sole network write remains the exact Muneral evidence route.
         needles = ["/trans" + "itions", "/sta" + "tus", "method=" + "\"POST\""]
         route = policy["work_item_evidence"]["muneral"].get("evidence_route")
-        ok = (not any(n in delivery_src for n in needles) and src.count("urlopen" + "(") == 1
+        ok = (not any(n in delivery_src for n in needles) and src.count("urlopen" + "(") == 2
+              and src.count("method=" + "\"GET\"") == 1
               and route == "POST /tasks/{id}/evidence")
         results.append({"case": "no-status-write-path", "ok": ok})
         passed, failed = (passed + 1, failed) if ok else (passed, failed + 1)
@@ -7247,6 +8260,7 @@ def cmd_reissue(a) -> int:
     return subprocess.run(argv).returncode
 
 
+@_remove_owned_temp_dirs
 def cmd_exempt(a) -> int:
     """AUP-GRAPH-006:gate4b — the GATE issues a structural exemption into a receipt.
 
@@ -7260,7 +8274,7 @@ def cmd_exempt(a) -> int:
     doc = json.loads(rp.read_text(encoding="utf-8"))
     verdict_of = {v["entity"]: v.get("verdict") for v in (doc.get("verdicts") or [])
                   if isinstance(v, dict) and "entity" in v}
-    wd = Path(a.workdir) if a.workdir else Path(tempfile.mkdtemp(prefix="gate4b-exempt-"))
+    wd = Path(a.workdir) if a.workdir else Path(_owned_mkdtemp(prefix="gate4b-exempt-"))
     repo_name = a.repo_name or (doc.get("repo") or {}).get("name") or repo_remote_name(repo)
     second_opinion = None
     if getattr(a, "b7_second_opinion", None):
@@ -7274,7 +8288,10 @@ def cmd_exempt(a) -> int:
                                           program_receipt=a.program_receipt,
                                           candidate_range=getattr(a, "b7_candidate_range", None),
                                           authority_id=getattr(a, "b7_authority_id", None),
-                                          second_opinion=second_opinion)
+                                          second_opinion=second_opinion,
+                                          parity_candidates=fallback_only_units(doc),
+                                          # DEC-AUP-0197 Q2: B9 runs once per job, in the C16 recheck.
+                                          parity_measure=False)
     report = {"schema": "StructuralExemptionEvidence/v1", "producer": {"tool": TOOL, "version": VERSION},
               "model": MODEL, "provisional_until_fable_review": True,
               "decision_ref": "DEC-AUP-0008", "portion_id": "AUP-GRAPH-006:gate4b",
@@ -7896,6 +8913,7 @@ def _path_inside(p: Path, root: Path) -> bool:
         return False
 
 
+@_remove_owned_temp_dirs
 def cmd_exempt_decision(a) -> int:
     """A2-314 — an ADMITTING agent records a signed decision to proceed past named not_measured entities.
 
@@ -8017,7 +9035,7 @@ def cmd_exempt_decision(a) -> int:
     expires = (now + timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
     fp = sshsig.fingerprint(*sshsig.parse_public_key(me["public_key"]))
     binding = {"base": cs["base"], "head": cs["head"], "digest": diff_digest(repo, cs["base"], cs["head"])}
-    wd = Path(a.workdir) if a.workdir else Path(tempfile.mkdtemp(prefix="a2-314-decision-"))
+    wd = Path(a.workdir) if a.workdir else Path(_owned_mkdtemp(prefix="a2-314-decision-"))
     new = []
     for facts in elig:
         e = facts["entity"]
@@ -8066,6 +9084,7 @@ def cmd_exempt_decision(a) -> int:
     return 0 if adm == "admitted_with_exemptions" else 3
 
 
+@_remove_owned_temp_dirs
 def cmd_b7_opine(a) -> int:
     """DEC-AUP-0020 rule 7 — the second, independent authority's OWN recomputation, never a copy of
     the primary's claim. Runs the full B7.1-B7.4 arm set itself, from git and from a scratch worktree
@@ -8077,7 +9096,7 @@ def cmd_b7_opine(a) -> int:
     base, head = resolve_range(a)
     files = range_files(repo, base, head)
     case, cev = structural_case(repo, base, head, files, a.bundle_dir)
-    wd = Path(a.workdir) if a.workdir else Path(tempfile.mkdtemp(prefix="b7-opine-"))
+    wd = Path(a.workdir) if a.workdir else Path(_owned_mkdtemp(prefix="b7-opine-"))
     if case != "declaration_amend":
         doc = {"schema": "B7SecondOpinion/v1", "authority_id": a.authority_id, "base": base, "head": head,
                "verdict": "failed",
@@ -8316,7 +9335,9 @@ def main(argv=None) -> int:
     at.add_argument("--work-item")
     at.add_argument("--muneral-task-id", help="the Muneral task uuid the evidence belongs to (receipts/muneral/*task-map*)")
     at.add_argument("--label")
-    at.add_argument("--uri")
+    at.add_argument("--uri", "--uri-prefix", dest="uri",
+                    help="directory URI PREFIX ending in '/'; repository-relative receipt path is appended "
+                         "once (default: aup://arcanada-universal-program/); never a complete receipt URI")
     at.add_argument("--ledger-dir")
     at.add_argument("--policy", type=Path)
     at.add_argument("--post", action="store_true",
@@ -8364,6 +9385,9 @@ def main(argv=None) -> int:
                         "compiler_sdk_declaration", "compiler_sdk_declaration_sha256", "compiler_sdk_evidence")):
                     raise UsageError("compiler SDK inputs require --compiler-sdk-root")
                 return a.fn(a)
+    except OwnedTempCleanupError:
+        print("refuse TEMP_DIRECTORY_CLEANUP_FAILED", file=sys.stderr)
+        return 5
     except UsageError as e:
         (getattr(a, "parser", None) or ap).error(str(e))   # usage + message on stderr, exit 2
 

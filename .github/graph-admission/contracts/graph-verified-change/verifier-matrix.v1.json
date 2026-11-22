@@ -258,7 +258,7 @@
     "state": "not_measured"
    },
    "mandatory": [],
-   "note": "a spec reached as a code node still gets type_check + fitness_rules from its node type; a receipt reached here is historical evidence — asserted, never re-verified (I14) → not_measured",
+   "note": "A receipt node owes receipt_data archival-data measurement; the foreign source change is historical testimony and is not re-executed or certified. Code/spec node obligations remain unchanged.",
    "selectable": [
     "targeted_test"
    ],
@@ -345,8 +345,10 @@
    "selectable": []
   },
   "receipt": {
-   "mandatory": [],
-   "not_measured_reason": "historical receipt: asserted, never re-verified (I14); a new receipt supersedes it",
+   "mandatory": [
+    "receipt_data"
+   ],
+   "not_measured_reason": "No genuine archival-data measurement: historical foreign source claims are never rerun or upgraded by receipt_data.",
    "selectable": []
   },
   "route": {
@@ -525,7 +527,16 @@
   },
   "systemd_unit_semantics": {"applies_to_nodes":["systemd_unit"],"kind":"systemd_unit_semantics","tool":"tools/graph/verify.py (built in)","verdict_rule":"verified only for byte-bound owner-pinned declarations that satisfy every mapped policy predicate and have no unresolved controlling reference; failed for exact identity or semantic mismatch; not_measured for unavailable source binding or unresolved external/runtime references","what":"bounded systemd service/timer source declarations, same-tree references, owner-pinned policy and durable unresolved-reference evidence"},
   "source_file_integrity": {"applies_to_nodes":["source_file"],"kind":"source_file_integrity","tool":"tools/graph/verify.py (built in)","verdict_rule":"verified only when exact same-tree regular blob identity, byte length and SHA-256 match; otherwise not_measured or failed on a measured mismatch","what":"integrity of a directly referenced source file node"},
-  "trust_anchor_pin_consistency": {"applies_to_nodes":["trust_anchor_pin"],"kind":"trust_anchor_pin_consistency","tool":"tools/graph/verify.py (built in)","verdict_rule":"verified only when the pin file's program_ref equals the hosted caller's `uses: ...graph-admission.yml@<sha>` SHA (when the caller is hosted), the caller's program_ref input and .github/graph-admission/BUNDLE.json program_ref, and its signing_key_fingerprint equals the caller's signing_key_fingerprint input; failed on any mismatch (the mismatching fields are named); not_measured when the caller workflow or the bundle manifest cannot be read","what":"a caller's second pin of the program commit and signing key (trust anchor) against the caller workflow and the vendored bundle"}
+  "trust_anchor_pin_consistency": {"applies_to_nodes":["trust_anchor_pin"],"kind":"trust_anchor_pin_consistency","tool":"tools/graph/verify.py (built in)","verdict_rule":"verified only when the pin file's program_ref equals the hosted caller's `uses: ...graph-admission.yml@<sha>` SHA (when the caller is hosted), the caller's program_ref input and .github/graph-admission/BUNDLE.json program_ref, and its signing_key_fingerprint equals the caller's signing_key_fingerprint input; failed on any mismatch (the mismatching fields are named); not_measured when the caller workflow or the bundle manifest cannot be read","what":"a caller's second pin of the program commit and signing key (trust anchor) against the caller workflow and the vendored bundle"},
+  "receipt_data": {
+   "applies_to_nodes": [
+    "receipt"
+   ],
+   "kind": "receipt_data",
+   "tool": "tools/graph/receipt_data.py via verify.py; gate independently rederives Git and native GET",
+   "what": "archived_evidence_data only: original/current immutable receipt bytes, provenance, canonical schema and fresh authenticated native evidence identity; foreign source verdicts unchanged",
+   "verdict_rule": "verified only with all archive-data checks measured; contradictory byte/schema/source/native bindings failed; unsupported schema/origin/access not_measured. No stored posted/readback JSON, prefix, manual verdict or exemption supplies proof."
+  }
 },
  "node_kinds": {
   "native_patch_manifest": {

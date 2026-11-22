@@ -20,8 +20,10 @@ Semantics (the graph SELECTS verification, it never replaces it — consilium 20
   refusals     STALE_GRAPH (manifest.dirty, source_commit ≠ HEAD in --worktree / ≠ base in --diff, dirty tree in
                --diff, a tracked node whose content hash no longer matches the tree), UNKNOWN_NODE (a modified or
                deleted code file the graph has no node for), GRAPH_INVALID (schema violations), EMPTY_CHANGE_SET
-  fallback     lockfile / root package.json / root tsconfig / nx / turbo / pnpm-workspace / env schema changed ⇒
-               every node is affected (global_fallback.triggered + reason)
+  fallback     root lockfile / root package.json / root tsconfig / nx / turbo / pnpm-workspace / env schema changed ⇒
+               every node is affected (global_fallback.triggered + reason). Nested lockfiles (any path with a
+               directory component, including vendored `.github/graph-admission/tools/graph/pnpm-lock.yaml`) are
+               package-scoped like nested package.json — never whole-repository global_fallback.
   event        EMPTY_IMPACT_REQUIRES_EXPLANATION — non-doc change with an empty impact set: exit 3, a generated
                explanation draft with graph_metadata (leaf unit / new file / uncovered language); never an approval
 
@@ -50,7 +52,7 @@ sys.path.insert(0, str(HERE))
 import schema_check  # noqa: E402
 import build_graph  # noqa: E402
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 TOOL = "tools/graph/impact.py"
 QUERY_SCHEMA = "ImpactQuery/v1"
 FIXTURE_DIR = ROOT / "contracts" / "graph-verified-change" / "fixtures"
@@ -71,13 +73,15 @@ GLOBAL_ROOT_PREFIXES = ("tsconfig",)  # tsconfig.json, tsconfig.base.json … at
 CODE_EXTS = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"}
 DOC_EXTS = {".md", ".mdx", ".rst", ".txt", ".adoc"}
 CONFIG_EXTS = {".json", ".yml", ".yaml", ".toml", ".ini", ".env", ".cfg", ".conf", ".properties"}
+# DEC-AUP-0188: Python dependency manifests are lock-class files. Without this a requirements*.txt change
+# falls into DOC_EXTS (.txt) and a range of only such files measures nothing (empty verdict list).
 DOC_KINDS = {"doc", "receipt"}
 FALLBACK_KINDS = {"lockfile", "global_config"}
 TEST_RE = re.compile(r"(^|/)(test|tests|__tests__|e2e|spec)(/|$)|\.(spec|test)\.[cm]?[jt]sx?$")
 FORWARD_TYPES = {"provides_route", "implements_contract", "maps_model", "deploys_to"}
 BOUNDARY_RANK = {"intra_unit": 0, "service": 1, "repo": 2}
 FILE_HASH_TYPES = {"code_unit", "document", "receipt", "deployable_unit", "systemd_unit", "source_file", "trust_anchor_pin"}  # whole-file bytes
-DEPLOYABLE_MANIFEST_NAMES = ("package.json", "Cargo.toml", "pyproject.toml", "setup.py", "setup.cfg")  # AUP-GRAPH-009: deployable_unit
+DEPLOYABLE_MANIFEST_NAMES = ("package.json", "Cargo.toml", "pyproject.toml", "setup.py", "setup.cfg", "go.mod")  # AUP-GRAPH-009: deployable_unit
 # manifests are no longer always npm — try every builder's manifest name, first one present in the tree wins
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -301,8 +305,12 @@ def classify_file(path: str, idx: GraphIndex | None) -> str:
     base = os.path.basename(path)
     ext = os.path.splitext(base)[1].lower()
     is_root = "/" not in path
-    if base in LOCKFILES:
-        return "lockfile"
+    # Root lockfiles / Python dependency manifests are repository-wide (Bazel/Nx practice). A nested
+    # lockfile is package-scoped — same asymmetry as nested package.json vs root package.json. Without
+    # the root gate, vendoring tools/graph/pnpm-lock.yaml into a caller forced global_fallback_full_suite
+    # on every GATE_SELF refresh and blocked admission where root FULL arms stay held.
+    if base in LOCKFILES or schema_check.is_python_dependency_manifest(path):
+        return "lockfile" if is_root else "config"
     if is_root and (base in GLOBAL_ROOT_FILES or base.startswith(GLOBAL_ROOT_PREFIXES) and ext == ".json"):
         return "global_config"
     if path.startswith("receipts/") and ext == ".json":
@@ -313,6 +321,8 @@ def classify_file(path: str, idx: GraphIndex | None) -> str:
         return "test"
     if idx is not None:
         types = {idx.nodes[i]["type"] for i in idx.by_path.get(path, [])}
+        if any(idx.nodes[i].get("kind") == "operational_configuration" for i in idx.by_path.get(path, [])):
+            return "config"
         if "systemd_unit" in types:
             return "systemd_unit"
         if "source_file" in types:
@@ -622,12 +632,13 @@ def query(idx: GraphIndex, files: list[dict], *, mode: str, base: str | None = N
         base_name = os.path.basename(f["path"])
         d = os.path.dirname(f["path"])
         dep_id = idx.deployables.get(d) or (f"deployable_unit:{d}" if f"deployable_unit:{d}" in idx.nodes else None)
-        if d and dep_id and (base_name == "package.json" or base_name.startswith("tsconfig")) and "scoped_fallback" in rules:
+        nested_lock = base_name in LOCKFILES or schema_check.is_python_dependency_manifest(f["path"])
+        if d and dep_id and (base_name == "package.json" or base_name.startswith("tsconfig") or nested_lock) and "scoped_fallback" in rules:
             ids = sorted(set(ids) | {dep_id})
             open_containment.add(dep_id)
             entry["scoped_fallback"] = f"{f['path']} changed ⇒ every unit shipped inside {dep_id} is affected"
         elif d and not dep_id and "scoped_fallback" in rules and (
-                base_name == "package.json" or re.fullmatch(r"tsconfig(?:\.[\w.-]+)?\.json", base_name)):
+                base_name == "package.json" or nested_lock or re.fullmatch(r"tsconfig(?:\.[\w.-]+)?\.json", base_name)):
             compiler_units = sorted(nid for nid, node in idx.nodes.items()
                                     if node["type"] == "code_unit"
                                     and node.get("path", "").startswith(d + "/")
@@ -662,7 +673,8 @@ def query(idx: GraphIndex, files: list[dict], *, mode: str, base: str | None = N
                 entry["uncovered"] = True
                 uncovered.append(f["path"])
                 uncovered_assets.append(f["path"])
-        elif os.path.splitext(f["path"])[1].lower() in CODE_EXTS | {".prisma"}:
+        elif (os.path.splitext(f["path"])[1].lower() in CODE_EXTS | {".prisma", ".sh", ".bash", ".bats"}
+              or build_graph.operational_config_kind(f["path"])):
             unknown.append(f["path"])
         else:
             entry["uncovered"] = True
@@ -980,6 +992,13 @@ def fixture_battery(rules: set[str]) -> list[dict]:
     q = query(g01, [{"path": "apps/api/package.json", "status": "M"}], mode="worktree", tree_commit=SRC, tree_dirty=True, rules=rules)
     add("global fallback on root package.json / tsconfig.base.json / turbo.json / .env.example / pnpm-workspace.yaml, not on a nested package.json",
         all(trig) and q["impact_set"]["global_fallback"].get("triggered") is False, triggered=trig)
+    q_nested_lock = query(g01, [{"path": ".github/graph-admission/tools/graph/pnpm-lock.yaml", "status": "A"}],
+                          mode="worktree", tree_commit=SRC, tree_dirty=True, rules=rules)
+    add("nested vendored lockfile does not trigger global_fallback (root lockfiles only)",
+        q_nested_lock["impact_set"]["global_fallback"].get("triggered") is False
+        and q_nested_lock["change_set"]["files"][0].get("kind") == "config",
+        kind=(q_nested_lock["change_set"]["files"][0].get("kind")
+              if q_nested_lock["change_set"]["files"] else None))
     # scoped fallback: apps/api/package.json seeds the deployable and opens its containment
     ents = _entity_view(q)
     api_units = sorted(e["from"] for e in g01.rev.get("deployable_unit:apps/api", []) if e["type"] == "deploys_to")
@@ -1052,9 +1071,9 @@ def fixture_battery(rules: set[str]) -> list[dict]:
     add("UNKNOWN_NODE: a modified code file without a node is refused", ok, got=got)
     ok, got = refuses("EMPTY_CHANGE_SET", files=[], mode="worktree", tree_commit=SRC, tree_dirty=False)
     add("EMPTY_CHANGE_SET: nothing changed ⇒ refusal, not an empty (approving) impact set", ok, got=got)
-    q = query(g01, [{"path": "apps/api/scripts/setup.sh", "status": "M"}], mode="worktree", tree_commit=SRC, tree_dirty=True, rules=rules)
-    add("uncovered file kind (.sh) is not UNKNOWN_NODE: answered with uncovered flag + EMPTY_IMPACT event",
-        q["change_set"]["files"][0].get("uncovered") is True and [e["code"] for e in q["events"]] == ["EMPTY_IMPACT_REQUIRES_EXPLANATION"])
+    ok, got = refuses("UNKNOWN_NODE", files=[{"path": "apps/api/scripts/setup.sh", "status": "M"}],
+                      mode="worktree", tree_commit=SRC, tree_dirty=True)
+    add("modified shell source absent from the graph is refused rather than reported as an empty impact set", ok, got=got)
 
     # --- provenance separation, depth and edge-type filters on the fixture graph
     files = [{"path": "apps/api/src/tasks/tasks.service.ts", "status": "M"}]
