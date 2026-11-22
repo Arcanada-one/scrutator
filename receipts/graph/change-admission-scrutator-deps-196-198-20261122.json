@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-11-22T19:35:23Z",
+ "captured_at_utc": "2026-11-22T20:34:12Z",
  "change_set": {
   "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
   "files": [
@@ -34,15 +34,6 @@
      "code_unit:.github/workflows/deploy.yml"
     ],
     "path": ".github/workflows/deploy.yml",
-    "status": "M"
-   },
-   {
-    "kind": "config",
-    "node_id": "code_unit:.github/workflows/graph-admission.yml",
-    "node_ids": [
-     "code_unit:.github/workflows/graph-admission.yml"
-    ],
-    "path": ".github/workflows/graph-admission.yml",
     "status": "M"
    },
    {
@@ -106,9 +97,24 @@
     "kind": "lockfile",
     "path": "requirements-dev.txt",
     "status": "M"
+   },
+   {
+    "kind": "other",
+    "path": "scripts/scrutator-known-fix-retriever",
+    "status": "M",
+    "uncovered": true
+   },
+   {
+    "kind": "other",
+    "node_id": "code_unit:scripts/scrutator-known-fix-retriever.py",
+    "node_ids": [
+     "code_unit:scripts/scrutator-known-fix-retriever.py"
+    ],
+    "path": "scripts/scrutator-known-fix-retriever.py",
+    "status": "A"
    }
   ],
-  "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+  "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -468,18 +474,18 @@
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:d84ff35b917c4a3919c08dccf39042963934b76e8c3e7c5a6cc2fa307316cb9c",
-  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/graph-7e8e8319b404.json",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/graph-7e8e8319b404.json",
   "source_commit": "7e8e8319b404ef32e9ede969dd883ee250ecb89e"
  },
  "head_graph": {
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:8871ea31ae4ebd76d1bc2a8bbfd3cacbed222fa2efcfd5c1acee146018da54fe",
-  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/graph-head-0b5a822f2a60.json",
-  "source_commit": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+  "graph_digest": "sha256:bd7344dca960de713bbe88c6dd2adf51c7b24497b4e0edec58fe1010fbf57025",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/graph-head-76c548059983.json",
+  "source_commit": "76c548059983483ca4a34e98223cc2c9a18262d7",
   "staleness": {
-   "checked_at_utc": "2026-11-22T19:36:49Z",
-   "checked_nodes": 417,
+   "checked_at_utc": "2026-11-22T20:35:07Z",
+   "checked_nodes": 418,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
@@ -1287,26 +1293,6 @@
      "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
-    "node_type": "code_unit",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "type-check of the caller; canary when inferred across a boundary"
    },
    {
     "boundary": "intra_unit",
@@ -9950,33 +9936,6 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
     "depth": 1,
     "entity": "receipt:receipts/graph/change-admission-A2-scrutator-canary-token.json",
     "node_type": "receipt",
@@ -9986,60 +9945,6 @@
       "from": "receipt:receipts/graph/change-admission-A2-scrutator-canary-token.json",
       "provenance": "deterministic",
       "to": "code_unit:.github/workflows/deploy.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-a2-256.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-a2-256.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
       "via": "explicit-path"
      }
     ],
@@ -10120,141 +10025,6 @@
       "from": "receipt:receipts/graph/change-admission-actions-bump-20261122.json",
       "provenance": "deterministic",
       "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
       "via": "explicit-path"
      }
     ],
@@ -10626,53 +10396,6 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
     "depth": 1,
     "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
     "node_type": "receipt",
@@ -10933,33 +10656,6 @@
    },
    {
     "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
     "depth": 1,
     "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
     "node_type": "receipt",
@@ -10969,33 +10665,6 @@
       "from": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
       "provenance": "deterministic",
       "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 2,
-    "entity": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "calls",
-      "from": "code_unit:.github/workflows/graph-admission-call.yml",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
-      "via": "literal-local-workflow"
-     },
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission-call.yml",
       "via": "explicit-path"
      }
     ],
@@ -11036,26 +10705,6 @@
       "from": "receipt:receipts/graph/pin-repair-scrutator-20261007.json",
       "provenance": "deterministic",
       "to": "code_unit:.github/workflows/ci.yml",
-      "via": "explicit-path"
-     }
-    ],
-    "revisions": [
-     "base",
-     "head"
-    ],
-    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
-   },
-   {
-    "boundary": "intra_unit",
-    "depth": 1,
-    "entity": "receipt:receipts/graph/qualified-refresh-089a771c.json",
-    "node_type": "receipt",
-    "path": [
-     {
-      "edge_type": "verifies",
-      "from": "receipt:receipts/graph/qualified-refresh-089a771c.json",
-      "provenance": "deterministic",
-      "to": "code_unit:.github/workflows/graph-admission.yml",
       "via": "explicit-path"
      }
     ],
@@ -12235,6 +11884,64 @@
    },
    {
     "boundary": "intra_unit",
+    "depth": 2,
+    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "type-check of the caller; canary when inferred across a boundary"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 2,
+    "entity": "code_unit:.github/workflows/graph-admission.yml",
+    "node_type": "code_unit",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "type-check of the caller; canary when inferred across a boundary"
+   },
+   {
+    "boundary": "intra_unit",
     "depth": 1,
     "entity": "code_unit:deploy/scrutator-deploy-transaction.sh",
     "node_type": "code_unit",
@@ -12281,6 +11988,294 @@
      "head"
     ],
     "verifier_hint": "doc reference check (path/id still resolves)"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-a2-256.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
    },
    {
     "boundary": "intra_unit",
@@ -12349,6 +12344,78 @@
    {
     "boundary": "intra_unit",
     "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
     "entity": "receipt:receipts/graph/change-admission-runbook-rotate-tokens.json",
     "node_type": "receipt",
     "path": [
@@ -12380,21 +12447,130 @@
      "head"
     ],
     "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/dependabot-auto-merge.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/dependabot-auto-merge.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
+   },
+   {
+    "boundary": "intra_unit",
+    "depth": 3,
+    "entity": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+    "node_type": "receipt",
+    "path": [
+     {
+      "edge_type": "calls",
+      "from": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "inferred_by": "bounded-shell-unknown-cwd-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:.github/workflows/ci.yml",
+      "via": "literal-shell-reference"
+     },
+     {
+      "edge_type": "calls",
+      "from": "code_unit:.github/workflows/graph-admission-call.yml",
+      "inferred_by": "bounded-workflow-unknown-shell-candidate",
+      "provenance": "inferred",
+      "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
+      "via": "unresolved-workflow-shell-closure"
+     },
+     {
+      "edge_type": "verifies",
+      "from": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+      "provenance": "deterministic",
+      "to": "code_unit:.github/workflows/graph-admission-call.yml",
+      "via": "explicit-path"
+     }
+    ],
+    "revisions": [
+     "base",
+     "head"
+    ],
+    "verifier_hint": "selectable: run the targeted test / re-read the receipt"
    }
   ],
   "max_depth": 3,
   "method": "Union of independently revision-bound base/head traversals; global fallback: every node of the graph is affected (depth 0, synthetic containment hop); reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
-  "total": 587
+  "total": 588
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.2) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
-  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none"
+  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 50 attached from /home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/scrutator-202-r4-exemptions.json"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.2"
  },
- "receipt_id": "car-verify-20261122T193523Z-0b5a822f",
+ "receipt_id": "car-verify-20261122T203412Z-76c54805",
  "receipt_path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -12468,6 +12644,7 @@
    "code_unit:.github/workflows/graph-admission.yml",
    "code_unit:.github/workflows/recall-regression.yml",
    "code_unit:deploy/scrutator-deploy-transaction.sh",
+   "code_unit:scripts/scrutator-known-fix-retriever.py",
    "deployable_unit:.",
    "document:AGENTS.md",
    "document:README.md",
@@ -12522,7 +12699,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-22T19:36:49Z",
+  "checked_at_utc": "2026-11-22T20:35:07Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -12531,7 +12708,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:ee0704f1af12566af7b45c19f4263711828e8cc23bc25b7d03c3628f0b5165f4"
+    "head": "sha256:c9951b0cd3b27b154b4030261d5838117dcb61504d678c646bfab3796d7bf00c"
    },
    "entity": "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
    "node_type": "receipt",
@@ -12545,13 +12722,13 @@
   }
  ],
  "tree": {
-  "commit": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+  "commit": "76c548059983483ca4a34e98223cc2c9a18262d7",
   "dirty": false
  },
  "verdicts": [
   {
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12560,7 +12737,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/ci.yml",
-   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12569,7 +12746,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
-   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12578,7 +12755,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violati",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12587,7 +12764,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy.yml",
-   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fi",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12596,7 +12773,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
-   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12614,7 +12791,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/recall-regression.yml",
-   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
+   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -12629,6 +12806,14 @@
     "v-fitness",
     "v-shell-behavior-353478d40e08b4d8",
     "v-shell-syntax-353478d40e08b4d8"
+   ]
+  },
+  {
+   "entity": "code_unit:scripts/scrutator-known-fix-retriever.py",
+   "reason": "v-fitness: no new fitness violation",
+   "verdict": "verified",
+   "verifier_ids": [
+    "v-fitness"
    ]
   },
   {
@@ -13018,8 +13203,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/ts-project/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/type-check-zeh3sz51/check.tsbuildinfo --listFiles",
-   "duration_s": 1.14,
+   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/ts-project/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/type-check-b0am2s9b/check.tsbuildinfo --listFiles",
+   "duration_s": 1.27,
    "entities": [
     "deployable_unit:."
    ],
@@ -13029,8 +13214,8 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-22T19:36:53Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-22T20:35:12Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
@@ -13045,8 +13230,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13061,8 +13246,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13077,8 +13262,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13093,8 +13278,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13109,8 +13294,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13125,8 +13310,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13141,8 +13326,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: command/process substitution closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 13: checkout root or source-affecting workflow environment unresolved; job graph-admission step 13: command/process substitution closure is unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: command/process substitution closure is unresolved; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: command/process substitution closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: command/process substitution closure is unresolved; job graph-admission step 23: checkout root or source-affecting workflow environment unresolved; job graph-admission step 23: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 26: checkout root or source-affecting workflow environment unresolved; job graph-admission step 26: command/process substitution closure is unresolved; job graph-admission step 27: checkout root or source-affecting workflow environment unresolved; job graph-admission step 27: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 28: checkout root or source-affecting workflow environment unresolved; job graph-admission step 28: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 29: checkout root or source-affecting workflow environment unresolved; job graph-admission step 29: command/process substitution closure is unresolved; job graph-admission step 2: command/process substitution closure is unresolved; job graph-admission step 30: checkout root or source-affecting workflow environment unresolved; job graph-admission step 30: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 31: checkout root or source-affecting workflow environment unresolved; job graph-admission step 31: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 32: checkout root or source-affecting workflow environment unresolved; job graph-admission step 32: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 33: checkout root or source-affecting workflow environment unresolved; job graph-admission step 33: command/process substitution closure is unresolved; job graph-admission step 34: checkout root or source-affecting workflow environment unresolved; job graph-admission step 34: line 4: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 35: checkout root or source-affecting workflow environment unresolved; job graph-admission step 36: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 5: line 7: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 6: command/process substitution closure is unresolved; 45 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -13157,13 +13342,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 0.73,
+   "duration_s": 0.01,
    "entities": [
     "code_unit:.github/workflows/benchmark-scrutator.yml",
     "code_unit:.github/workflows/ci.yml",
@@ -13174,25 +13359,27 @@
     "code_unit:.github/workflows/graph-admission.yml",
     "code_unit:.github/workflows/recall-regression.yml",
     "code_unit:deploy/scrutator-deploy-transaction.sh",
+    "code_unit:scripts/scrutator-known-fix-retriever.py",
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "code_unit:.github/workflows/benchmark-scrutator.yml": "verified",
-    "code_unit:.github/workflows/ci.yml": "verified",
-    "code_unit:.github/workflows/dependabot-auto-merge.yml": "verified",
-    "code_unit:.github/workflows/deploy-kc-corpus.yml": "verified",
-    "code_unit:.github/workflows/deploy.yml": "verified",
-    "code_unit:.github/workflows/graph-admission-call.yml": "verified",
-    "code_unit:.github/workflows/graph-admission.yml": "verified",
-    "code_unit:.github/workflows/recall-regression.yml": "verified",
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured",
+    "code_unit:.github/workflows/ci.yml": "not_measured",
+    "code_unit:.github/workflows/dependabot-auto-merge.yml": "not_measured",
+    "code_unit:.github/workflows/deploy-kc-corpus.yml": "not_measured",
+    "code_unit:.github/workflows/deploy.yml": "not_measured",
+    "code_unit:.github/workflows/graph-admission-call.yml": "not_measured",
+    "code_unit:.github/workflows/graph-admission.yml": "not_measured",
+    "code_unit:.github/workflows/recall-regression.yml": "not_measured",
     "code_unit:deploy/scrutator-deploy-transaction.sh": "verified",
+    "code_unit:scripts/scrutator-known-fix-retriever.py": "verified",
     "deployable_unit:.": "verified"
    },
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-fitness.json",
-   "started_at_utc": "2026-11-22T19:36:55Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-fitness.json",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -13215,13 +13402,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-doc-reference.txt",
-   "started_at_utc": "2026-11-22T19:36:56Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-doc-reference.txt",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "5 document(s), 0 failed"
   },
   {
    "command": "verify.py receipt_data (Git + authenticated native GET)",
-   "duration_s": 0.32,
+   "duration_s": 0.3,
    "entities": [
     "receipt:receipts/graph/A2-308-scope-enforcement.json",
     "receipt:receipts/graph/A2-311-contracts-and-canary.json",
@@ -13315,7 +13502,7 @@
     "receipt:receipts/graph/A2-308-scope-enforcement.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/A2-308-scope-enforcement.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13324,7 +13511,7 @@
     "receipt:receipts/graph/A2-311-contracts-and-canary.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/A2-311-contracts-and-canary.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13333,7 +13520,7 @@
     "receipt:receipts/graph/A2-329-deploy-surface-canary.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/A2-329-deploy-surface-canary.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13342,7 +13529,7 @@
     "receipt:receipts/graph/A2-384-deploy-gate-lane.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/A2-384-deploy-gate-lane.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13351,7 +13538,7 @@
     "receipt:receipts/graph/change-admission-A2-457-deploy-lane.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-A2-457-deploy-lane.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13360,7 +13547,7 @@
     "receipt:receipts/graph/change-admission-A2-457-preflight.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-A2-457-preflight.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13369,7 +13556,7 @@
     "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13378,7 +13565,7 @@
     "receipt:receipts/graph/change-admission-A2-scrutator-canary-token.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-A2-scrutator-canary-token.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13387,7 +13574,7 @@
     "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13396,7 +13583,7 @@
     "receipt:receipts/graph/change-admission-a2-256.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-a2-256.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13405,7 +13592,7 @@
     "receipt:receipts/graph/change-admission-access-log.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-access-log.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13414,7 +13601,7 @@
     "receipt:receipts/graph/change-admission-actions-180-20261117.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-actions-180-20261117.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13423,7 +13610,7 @@
     "receipt:receipts/graph/change-admission-actions-bump-20261122.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-actions-bump-20261122.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13432,7 +13619,7 @@
     "receipt:receipts/graph/change-admission-bundle-46cbdc0.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-bundle-46cbdc0.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13441,7 +13628,7 @@
     "receipt:receipts/graph/change-admission-bundle-5fde907.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-bundle-5fde907.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13450,7 +13637,7 @@
     "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-bundle-72ea-20261001.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13459,7 +13646,7 @@
     "receipt:receipts/graph/change-admission-bundle-966bcf3.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-bundle-966bcf3.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13468,7 +13655,7 @@
     "receipt:receipts/graph/change-admission-bundle-a81a6d5.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-bundle-a81a6d5.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13477,7 +13664,7 @@
     "receipt:receipts/graph/change-admission-ci-pr-concurrency.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-ci-pr-concurrency.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13486,7 +13673,7 @@
     "receipt:receipts/graph/change-admission-deploy-broker.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-deploy-broker.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13495,7 +13682,7 @@
     "receipt:receipts/graph/change-admission-deploy-through-broker.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-deploy-through-broker.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13504,7 +13691,7 @@
     "receipt:receipts/graph/change-admission-fork-deny-20261117.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-fork-deny-20261117.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13513,7 +13700,7 @@
     "receipt:receipts/graph/change-admission-kb-cons-01-n.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kb-cons-01-n.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13522,7 +13709,7 @@
     "receipt:receipts/graph/change-admission-kb-cons-02.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kb-cons-02.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13531,7 +13718,7 @@
     "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kcp-0017-auth-retry.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13540,7 +13727,7 @@
     "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kcp-0023-actions-read.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13549,7 +13736,7 @@
     "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13558,7 +13745,7 @@
     "receipt:receipts/graph/change-admission-kcp-0025.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-kcp-0025.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13567,7 +13754,7 @@
     "receipt:receipts/graph/change-admission-pr161.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-pr161.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13576,7 +13763,7 @@
     "receipt:receipts/graph/change-admission-pr165.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-pr165.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13585,7 +13772,7 @@
     "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13594,7 +13781,7 @@
     "receipt:receipts/graph/change-admission-preflight-pin-v4.12.9-20261118.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-preflight-pin-v4.12.9-20261118.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13603,7 +13790,7 @@
     "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-preflight-target-host-20261118.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13612,7 +13799,7 @@
     "receipt:receipts/graph/change-admission-rate-limit-9060.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-rate-limit-9060.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13621,7 +13808,7 @@
     "receipt:receipts/graph/change-admission-runbook-rotate-tokens.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-runbook-rotate-tokens.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13630,7 +13817,7 @@
     "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-selfhosted-runners-20261117.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13639,7 +13826,7 @@
     "receipt:receipts/graph/change-admission-wrapper-full-test-186.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/change-admission-wrapper-full-test-186.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13648,7 +13835,7 @@
     "receipt:receipts/graph/ctl-bundle-refresh-20260925.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/ctl-bundle-refresh-20260925.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13657,7 +13844,7 @@
     "receipt:receipts/graph/exact-evidence-receiving.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/exact-evidence-receiving.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13666,7 +13853,7 @@
     "receipt:receipts/graph/pin-repair-scrutator-20261007.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/pin-repair-scrutator-20261007.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
@@ -13675,16 +13862,16 @@
     "receipt:receipts/graph/qualified-refresh-089a771c.json": {
      "base": "7e8e8319b404ef32e9ede969dd883ee250ecb89e",
      "entity_path": "receipts/graph/qualified-refresh-089a771c.json",
-     "head": "0b5a822f2a607fbe257e3ff3a87e1b833ba7cbdf",
+     "head": "76c548059983483ca4a34e98223cc2c9a18262d7",
      "reason": "BASE_NATIVE_POLICY_MISSING",
      "schema": "ReceiptDataMeasurement/v1",
      "scope": "archived_evidence_data",
      "verdict": "not_measured"
     }
    },
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-receipt-data.json",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-receipt-data.json",
    "scope": "archived_evidence_data",
-   "started_at_utc": "2026-11-22T19:36:56Z",
+   "started_at_utc": "2026-11-22T20:35:13Z",
    "summary": "archival data only; foreign source claims unchanged"
   },
   {
@@ -13699,9 +13886,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-22T19:36:59Z",
+   "started_at_utc": "2026-11-22T20:35:16Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -13716,14 +13903,14 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-22T19:36:59Z",
+   "started_at_utc": "2026-11-22T20:35:16Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   },
   {
    "command": "bash scripts/graph-full-suite.sh",
-   "duration_s": 776.49,
+   "duration_s": 751.09,
    "entities": [
     "deployable_unit:."
    ],
@@ -13733,9 +13920,9 @@
    "exit_code": 0,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r3/v-global-fallback-test-root.txt",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scrutator-202-r4/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-22T19:36:59Z",
+   "started_at_utc": "2026-11-22T20:35:16Z",
    "summary": "complete fallback suite: verified",
    "timeout_seconds": 3600
   }
@@ -13791,6 +13978,9 @@
     "fitness_rules",
     "shell_behavior",
     "shell_syntax"
+   ],
+   "code_unit:scripts/scrutator-known-fix-retriever.py": [
+    "fitness_rules"
    ],
    "deployable_unit:.": [
     "fitness_rules",
@@ -13940,9 +14130,9 @@
    ]
   },
   "seconds": {
-   "prepare": 1.77,
-   "total": 872.63,
-   "verifiers": 778.68
+   "prepare": 1.54,
+   "total": 815.44,
+   "verifiers": 752.67
   }
  },
  "work_item": "scrutator dependency updates superseding #196 and #198"
