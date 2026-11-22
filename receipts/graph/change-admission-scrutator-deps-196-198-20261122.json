@@ -5,7 +5,7 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted"
  },
- "captured_at_utc": "2026-11-22T16:51:36Z",
+ "captured_at_utc": "2026-11-22T17:37:13Z",
  "change_set": {
   "base": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d",
   "files": [
@@ -30,7 +30,7 @@
     "status": "M"
    }
   ],
-  "head": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "head": "840f00061db4a2eb4e5c7c489934c2a42a7510bf",
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
@@ -39,17 +39,17 @@
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:ae87b26ecfdf104f7b6ff2006a0dc3fc2411ae33bdeae8db5c4a87e0c0ef8843",
-  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/graph-d08e14f2f0ef.json",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/graph-d08e14f2f0ef.json",
   "source_commit": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d"
  },
  "head_graph": {
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
-  "graph_digest": "sha256:ba01e8b806a1c783b67d0b972be160be7df92b32a50eb7f70e2e7cbbfd33fecf",
-  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/graph-head-cdf01f8b768d.json",
-  "source_commit": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "graph_digest": "sha256:f6f0e12ecb1d45f4d9448f8c2a2139710839335fb53315e9f0007e8fc8980f6f",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/graph-head-840f00061db4.json",
+  "source_commit": "840f00061db4a2eb4e5c7c489934c2a42a7510bf",
   "staleness": {
-   "checked_at_utc": "2026-11-22T16:52:24Z",
+   "checked_at_utc": "2026-11-22T17:38:21Z",
    "checked_nodes": 415,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
@@ -11941,7 +11941,7 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.2"
  },
- "receipt_id": "car-verify-20261122T165136Z-cdf01f8b",
+ "receipt_id": "car-verify-20261122T173713Z-840f0006",
  "receipt_path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
@@ -11960,7 +11960,7 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-22T16:52:24Z",
+  "checked_at_utc": "2026-11-22T17:38:21Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
@@ -11969,7 +11969,7 @@
   {
    "content_hash": {
     "base": null,
-    "head": "sha256:5ffbae268e91d041d88d4c2758092ec3eb6686ed2bda6cc700c613909dfd20fc"
+    "head": "sha256:e7df22d7d88b847cd15e991a1f169eda9eed0eaf4ea455fe6316f4e304f1a297"
    },
    "entity": "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
    "node_type": "receipt",
@@ -11983,7 +11983,7 @@
   }
  ],
  "tree": {
-  "commit": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "commit": "840f00061db4a2eb4e5c7c489934c2a42a7510bf",
   "dirty": false
  },
  "verdicts": [
@@ -12006,8 +12006,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/type-check-ishba4e8/check.tsbuildinfo --listFiles",
-   "duration_s": 1.15,
+   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/ts-project/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/type-check-d5wqiowr/check.tsbuildinfo --listFiles",
+   "duration_s": 1.33,
    "entities": [
     "deployable_unit:."
    ],
@@ -12017,8 +12017,8 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-22T16:52:29Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-22T17:38:26Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
@@ -12033,13 +12033,13 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-fitness.json",
-   "started_at_utc": "2026-11-22T16:52:30Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/v-fitness.json",
+   "started_at_utc": "2026-11-22T17:38:28Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
    "command": "bash scripts/graph-full-suite.sh",
-   "duration_s": 730.07,
+   "duration_s": 701.43,
    "entities": [
     "deployable_unit:."
    ],
@@ -12049,9 +12049,9 @@
    "exit_code": 0,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-global-fallback-test-root.txt",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/.private-scrutator-toolchain-20261122/verifier-output-scratch-tsc/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-22T16:52:30Z",
+   "started_at_utc": "2026-11-22T17:38:28Z",
    "summary": "complete fallback suite: verified",
    "timeout_seconds": 3600
   }
@@ -12081,9 +12081,9 @@
    ]
   },
   "seconds": {
-   "prepare": 2.27,
-   "total": 784.89,
-   "verifiers": 731.23
+   "prepare": 1.93,
+   "total": 775.82,
+   "verifiers": 702.77
   }
  },
  "work_item": "scrutator dependency updates superseding #196 and #198"
