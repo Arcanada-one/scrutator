@@ -54,63 +54,63 @@
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/ci.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/deploy.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/graph-admission.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-dc49cc771602c92b: workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: command/process substitution closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution cl"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/recall-regression.yml",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:deploy/scrutator-deploy-transaction.sh",
-   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
    "reason": "v-shell-syntax-353478d40e08b4d8: shell syntax/closure: not_measured; v-shell-behavior-353478d40e08b4d8: SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution c"
   },
