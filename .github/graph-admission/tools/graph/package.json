@@ -1,0 +1,11 @@
+{
+  "name": "@arcanada/graph-environment-source-observer",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "description": "Strict checked-JavaScript coverage for the bounded environment source observer",
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
+  }
+}

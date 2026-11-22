@@ -1065,3 +1065,224 @@ def resolve(tree, deployable, deployables, profile=None):
     except (ValueError, TypeError, AttributeError) as exc:
         result.reason = str(exc)
     return result
+
+
+
+@dataclass
+class TestingBootstrap(Bootstrap):
+    registered: bool = False
+
+
+def _testing_import(ts, name, module):
+    """One literal named import; arbitrary objects and replacement stay unknown."""
+    found = []
+    for i, token in enumerate(ts):
+        if token != 'import':
+            continue
+        end = next((j for j in range(i + 1, len(ts)) if ts[j] == ';'), len(ts))
+        part = ts[i + 1:end]
+        if name not in part:
+            continue
+        if 'from' not in part:
+            return False
+        at = part.index('from')
+        fields = part[:at]
+        try:
+            found.append(fields[:1] == ['{'] and fields[-1:] == ['}']
+                         and [name] in split(fields[1:-1])
+                         and literal(part[at + 1]) == module
+                         and all(len(x) == 1 for x in split(fields[1:-1])))
+        except (ValueError, IndexError):
+            return False
+    return found == [True] and not _name_shadowed(ts, name)
+
+
+def _testing_registration(items):
+    if items[:1] != ['{'] or items[-1:] != ['}']:
+        raise ValueError('testing registration is not a literal object')
+    fields = {}
+    for part in split(items[1:-1]):
+        if len(part) < 3 or part[1] != ':':
+            raise ValueError('testing registration spread/computed/duplicate field')
+        key = literal(part[0]) if part[0][:1] in ('"', "'") else part[0]
+        if key not in ('imports', 'controllers', 'providers', 'exports') or key in fields:
+            raise ValueError('testing registration unknown/duplicate field')
+        fields[key] = part[2:]
+    result = {}
+    for key in ('imports', 'controllers'):
+        value = fields.get(key, ['[', ']'])
+        if value[:1] != ['['] or value[-1:] != [']']:
+            raise ValueError('testing registration array is dynamic')
+        names = split(value[1:-1])
+        if any(len(x) != 1 or not re.fullmatch(r'[A-Za-z_$][\w$]*', x[0]) for x in names):
+            raise ValueError('testing registration array contains unresolved binding')
+        result[key] = [x[0] for x in names]
+    return result
+
+
+def _testing_controller(ts, pairs):
+    definitions = []
+    for i in range(len(ts) - 3):
+        if ts[i:i + 3] != ['@', 'Controller', '(']:
+            continue
+        end = pairs[i + 2]
+        at = next((j for j in range(end + 1, len(ts)) if ts[j] == 'class'), None)
+        if at is None:
+            raise ValueError('testing controller declaration unresolved')
+        definitions.append(ts[at + 1])
+    if len(definitions) != 1 or not _testing_import(ts, 'Controller', '@nestjs/common'):
+        raise ValueError('testing route controller is missing/ambiguous/untrusted')
+    return definitions[0]
+
+
+def _testing_class_binding(ts, name):
+    declarations = [i for i in range(len(ts) - 1) if ts[i:i + 2] == ['class', name]]
+    if len(declarations) != 1:
+        return False
+    pairs = _pairs(ts)
+    for i, token in enumerate(ts):
+        if token == name and i != declarations[0] + 1:
+            if (ts[i - 1:i] in (['const'], ['let'], ['var'], ['function'], ['class'])
+                    or ts[i + 1:i + 3] == ['=', '>']
+                    or ts[i + 1:i + 2] == ['='] and ts[i + 2:i + 3] != ['=']):
+                return False
+        if token == 'function':
+            opening = i + 2 if ts[i + 2:i + 3] == ['('] else i + 1
+            if opening in pairs and name in ts[opening + 1:pairs[opening]]:
+                return False
+        if token in ('const', 'let', 'var') and ts[i + 1:i + 2] in (['{'], ['[']):
+            if i + 1 in pairs and name in ts[i + 2:pairs[i + 1]]:
+                return False
+    # Use balanced parameter spans: a decorator's outer argument list can
+    # contain nested provider arrows without declaring controller parameters.
+    return not any(ts[p] == '(' and ts[end + 1:end + 3] == ['=', '>']
+                   and name in ts[p + 1:end] for p, end in pairs.items())
+
+
+def _testing_local_module(ts, pairs, name):
+    classes = [i for i in range(len(ts) - 1) if ts[i:i + 2] == ['class', name]]
+    if (len(classes) != 1 or not _testing_class_binding(ts, name)
+            or not _testing_import(ts, 'Module', '@nestjs/common')):
+        raise ValueError('testing root module binding missing/ambiguous/untrusted')
+    at = classes[0]
+    if ts[at + 2:at + 4] != ['{', '}']:
+        raise ValueError('testing root module executable class body unqualified')
+    matches = [i for i in range(at) if ts[i:i + 3] == ['@', 'Module', '(']
+               and pairs[i + 2] < at
+               and all(x in ('export', 'default', 'abstract') for x in ts[pairs[i + 2] + 1:at])]
+    if len(matches) != 1:
+        raise ValueError('testing root module metadata is not uniquely attached')
+    args = call_args(ts, matches[0] + 2)
+    if len(args) != 1:
+        raise ValueError('testing root module arguments unresolved')
+    meta = _testing_registration(args[0])
+    if meta['imports']:
+        raise ValueError('testing nested module imports are not qualified')
+    return meta['controllers']
+
+
+def resolve_test(tree, path):
+    """Static RC-01/02 context, not execution or runtime admission of tests.
+
+    A closed trusted testing-module/application/init chain is selected by source,
+    not filename. Unresolved testing syntax never borrows production evidence.
+    The initial grammar supports one local controller and literal local modules.
+    """
+    try:
+        source = tree.text(path)
+    except KeyError:
+        return None
+    ts = tokens(source)
+    sites = [i for i in range(len(ts) - 1) if ts[i:i + 2] == ['createTestingModule', '(']]
+    if not sites:
+        return None
+    result = TestingBootstrap(root_file=path)
+    try:
+        pairs = _pairs(ts)
+        functions = _functions(ts, pairs)
+        controller = _testing_controller(ts, pairs)
+        if not _testing_class_binding(ts, controller) or any(x in ts for x in ('Reflect', 'Proxy', 'eval', 'Function')):
+            raise ValueError('testing controller/metadata binding mutable/dynamic')
+        if not _testing_import(ts, 'Test', '@nestjs/testing'):
+            raise ValueError('testing factory binding untrusted/shadowed')
+        if sum(t == 'Test' for t in ts) != len(sites) + 1:
+            raise ValueError('testing factory binding aliased/replaced')
+        proof = []
+        for i in sites:
+            if i < 6 or ts[i - 6:i] != ['const', ts[i - 5], '=', 'await', 'Test', '.']:
+                raise ValueError('testing module declaration is not direct/awaited')
+            receiver = ts[i - 5]
+            owner = _owner(functions, i)
+            if not owner:
+                raise ValueError('testing module is outside a concrete driver callback')
+            for scope in (f for f in functions if f[0] <= owner[0] and owner[1] <= f[1]):
+                if ts[scope[3]:scope[3] + 2] != ['=', '>']:
+                    raise ValueError('testing driver callback is not a closed arrow')
+                parameters = [p for p, end in pairs.items() if ts[p] == '(' and end == scope[3] - 1]
+                if len(parameters) != 1 or ts[parameters[0] + 1:scope[3] - 1]:
+                    raise ValueError('testing driver callback parameters shadow bindings')
+                hook = [p for p, end in pairs.items() if ts[p] == '(' and p < scope[3] < end
+                        and ts[p - 1] in ('beforeAll', 'beforeEach', 'it', 'test', 'describe')
+                        and ts[p - 2] not in ('.', '?.')]
+                if not hook or not _testing_import(ts, ts[max(hook) - 1], 'vitest'):
+                    raise ValueError('testing driver binding is untrusted')
+            block = lambda pos: max((p for p, end in pairs.items() if ts[p] == '{' and p < pos < end), default=-1)
+            if block(i) != owner[0]:
+                raise ValueError('conditional testing module creation')
+            end = pairs[i + 1]
+            if ts[end + 1:end + 6] != ['.', 'compile', '(', ')', ';']:
+                raise ValueError('testing module compile chain unresolved')
+            args = call_args(ts, i + 1)
+            if len(args) != 1:
+                raise ValueError('testing module registration arguments unresolved')
+            meta = _testing_registration(args[0])
+            registered = list(meta['controllers'])
+            for module in meta['imports']:
+                registered.extend(_testing_local_module(ts, pairs, module))
+            creations = [j for j in range(end + 6, owner[1])
+                         if ts[j:j + 3] == [receiver, '.', 'createNestApplication']
+                         and _owner(functions, j) == owner]
+            if len(creations) != 1:
+                raise ValueError('testing application receiver missing/ambiguous')
+            j = creations[0]
+            if ts[j - 1] != '=' or block(j) != owner[0]:
+                raise ValueError('testing application creation is not direct')
+            if receiver in ts[end + 6:j]:
+                raise ValueError('compiled testing-module receiver escapes/replaced')
+            app = ts[j - 2]
+            if not re.fullmatch(r'[A-Za-z_$][\w$]*', app) or ts[j - 3] == '.':
+                raise ValueError('testing application target is not a local/name binding')
+            opening = j + 3
+            if ts[opening] == '<':
+                if (not re.fullmatch(r'[A-Za-z_$][\w$]*', ts[opening + 1])
+                        or ts[opening + 2] != '>'):
+                    raise ValueError('testing application type arguments unresolved')
+                opening += 3
+            if ts[opening] != '(':
+                raise ValueError('testing application factory is not called')
+            adapters = call_args(ts, opening)
+            if adapters:
+                if (len(adapters) != 1 or adapters[0][:3] != ['new', 'FastifyAdapter', '(']
+                        or adapters[0][-1:] != [')']
+                        or not _testing_import(ts, 'FastifyAdapter', '@nestjs/platform-fastify')
+                        or not _literal_boolean_options(adapters[0][3:-1], {'logger'})):
+                    raise ValueError('testing application adapter/options unqualified')
+            if ts[pairs[opening] + 1] != ';':
+                raise ValueError('testing application creation expression unresolved')
+            init = [k for k in range(j + 3, owner[1]) if ts[k:k + 6] == ['await', app, '.', 'init', '(', ')']
+                    and _owner(functions, k) == owner and block(k) == owner[0]]
+            if len(init) != 1:
+                raise ValueError('testing application init missing/ambiguous')
+            if any(ts[k:k + 2] == [app, '='] for k in range(j + 1, init[0])):
+                raise ValueError('testing application receiver replaced')
+            if any(t.strip("'\"") == 'setGlobalPrefix' for t in ts):
+                raise ValueError('testing prefix configuration not qualified')
+            proof.append({'module_receiver': receiver, 'application_receiver': app,
+                          'controller': controller, 'registered': controller in registered})
+        result.registered = all(x['registered'] for x in proof)
+        result.complete = True
+        result.reason = 'trusted literal testing-module/application/init bindings; static registration only'
+        result.proof = {'scope': 'static testing RC-01/02 only; no test execution/runtime grant', 'applications': proof}
+    except (ValueError, IndexError, TypeError) as exc:
+        result.reason = str(exc)
+    return result

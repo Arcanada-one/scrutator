@@ -230,13 +230,17 @@
     "shell_behavior",
     "systemd_unit_semantics",
     "source_file_integrity",
-    "trust_anchor_pin_consistency"
+    "trust_anchor_pin_consistency",
+    "receipt_data"
    ],
    "optional": [
     "started_at_utc",
     "duration_s",
-    "summary"
-   ]
+    "summary",
+    "scope",
+    "measurements"
+   ],
+   "receipt_data_rule": "kind receipt_data requires scope archived_evidence_data and per-entity ReceiptDataMeasurement/v1 rows. VERIFIED means archival fidelity only; foreign source admission/tri-valued verdicts remain unchanged. Gate independently rederives actual Git lineage/bytes/schema and fresh native task/evidence tuple/creator; committed output or locator/readback JSON is not authority."
   },
   "verdict": {
    "required": [
@@ -409,7 +413,8 @@
   "PROBE_CLAIM_CONTRADICTS_OBSERVATION": "an entity whose verdict is `verified` cites a verifier of kind endpoint_probe among whose `observed` rows at least one carries verdict failed or not_measured — the receipt claims more than the contour was observed to do. An exemption cannot waive this: an exemption is the instrument for a NON-verified entity, and this rule fires precisely where the receipt says `verified`. The honest shapes are a `not_measured`/`failed` verdict for the entity, or a second endpoint_probe row that carries only the probes that were green",
   "VERIFIER_SELECTION_INVALID": "verifier_selection is malformed or contradicts itself or verify.required_by_entity: unknown schema/verifier/reason, an applied or not_applied verifier that was not requested, a requested verifier accounted for nowhere, or an applied set that disagrees with the required set",
   "VERIFIER_SELECTION_MISSING": "a receipt from a producer that writes verifier_selection (tools/graph/verify.py >= 1.1.0) carries none — the absence that cannot be told apart from «nobody asked»",
-  "VERIFIER_SELECTION_CONTRADICTS_NOTES": "the prose `selected:` note and verifier_selection.requested name different sets"
+  "VERIFIER_SELECTION_CONTRADICTS_NOTES": "the prose `selected:` note and verifier_selection.requested name different sets",
+  "RECEIPT_DATA_SCOPE_INVALID": "receipt_data verifier lacks exact archived_evidence_data scope, a consistent native per-entity ReceiptDataMeasurement/v1/data-only binding, actual range/subject, or contradicts its own tri-valued measurement. Schema checks are data shape only; gate rederives actual Git and fresh native bindings."
  },
  "verdicts": {
   "conformant": "0 violations",

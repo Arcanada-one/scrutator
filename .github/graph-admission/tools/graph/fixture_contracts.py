@@ -324,3 +324,123 @@ def paired_manifest_dependencies(base: GitSnapshot, head: GitSnapshot,
 def affected_cases(base: dict[str, set[str]], head: dict[str, set[str]], changed_paths: set[str]) -> set[str]:
     """Mandatory complete dependency union; deletion cannot shrink the old set."""
     return {cid for cid, deps in dependency_union(base, head).items() if deps & changed_paths}
+
+
+PRODUCTION_USE_KINDS = frozenset({"import", "call", "deploy", "publication"})
+UNSUPPORTED_USE_KINDS = frozenset({"dynamic", "unknown"})
+
+
+def assess_containment(inventory: dict, analysis: dict) -> dict:
+    """Positive production-containment assessment for one declared fixture case.
+
+    Absence of a detected edge alone never verifies. Only an explicit complete
+    analysis with empty production and unsupported inventories can verify, and
+    even then this is a diagnostic verdict — not admission or classification.
+    """
+    exact_keys(analysis, {"schema", "case_id", "complete", "production_uses",
+                          "unsupported_uses", "context_digest"}, "CONTAINMENT_SHAPE")
+    if analysis["schema"] != "TypedFixtureContainmentAnalysis/v1":
+        raise FixtureError("CONTAINMENT_VERSION", repr(analysis["schema"]))
+    if type(analysis["complete"]) is not bool:
+        raise FixtureError("CONTAINMENT_COMPLETE_INVALID", repr(analysis["complete"]))
+    cid = analysis["case_id"]
+    if not isinstance(cid, str) or cid not in inventory["cases"]:
+        raise FixtureError("CONTAINMENT_CASE_UNKNOWN", repr(cid))
+    members = {path for path, meta in inventory["members"].items() if meta["case"] == cid}
+    roots = set(inventory["cases"][cid]["canonical_roots"].values())
+
+    def closed_body():
+        return {k: analysis[k] for k in ("schema", "case_id", "complete",
+                                         "production_uses", "unsupported_uses")}
+
+    if digest(canonical(closed_body())) != analysis["context_digest"]:
+        raise FixtureError("CONTAINMENT_DIGEST_MISMATCH", cid)
+
+    production = analysis["production_uses"]
+    unsupported = analysis["unsupported_uses"]
+    if not isinstance(production, list) or not isinstance(unsupported, list):
+        raise FixtureError("CONTAINMENT_LIST_SHAPE", cid)
+
+    for use in production:
+        exact_keys(use, {"kind", "from_path", "to_path", "evidence_sha256"}, "PRODUCTION_USE_SHAPE")
+        if use["kind"] not in PRODUCTION_USE_KINDS:
+            raise FixtureError("PRODUCTION_USE_KIND", str(use["kind"]))
+        from_path, to_path = safe_path(use["from_path"]), safe_path(use["to_path"])
+        if to_path not in members:
+            raise FixtureError("PRODUCTION_USE_TARGET", to_path)
+        if any(from_path == root or from_path.startswith(root + "/") for root in roots):
+            raise FixtureError("PRODUCTION_USE_FROM_SPECIMEN", from_path)
+        if not re.fullmatch(r"[0-9a-f]{64}", str(use["evidence_sha256"])):
+            raise FixtureError("PRODUCTION_USE_EVIDENCE", from_path)
+
+    for use in unsupported:
+        exact_keys(use, {"kind", "path", "reason"}, "UNSUPPORTED_USE_SHAPE")
+        if use["kind"] not in UNSUPPORTED_USE_KINDS:
+            raise FixtureError("UNSUPPORTED_USE_KIND", str(use["kind"]))
+        safe_path(use["path"])
+        if not isinstance(use["reason"], str) or not use["reason"]:
+            raise FixtureError("UNSUPPORTED_USE_REASON", use["path"])
+
+    if production:
+        return {"containment_verdict": "failed", "reason": "CONTAINMENT_PRODUCTION_USE",
+                "case_id": cid, "production_uses": copy.deepcopy(production),
+                "unsupported_uses": copy.deepcopy(unsupported)}
+    if unsupported or not analysis["complete"]:
+        return {"containment_verdict": "not_measured", "reason": "CONTAINMENT_INCOMPLETE",
+                "case_id": cid, "production_uses": [], "unsupported_uses": copy.deepcopy(unsupported)}
+    return {"containment_verdict": "verified", "reason": "complete context excludes production use",
+            "case_id": cid, "production_uses": [], "unsupported_uses": []}
+
+
+def source_pinned_witness_replay(snapshot: GitSnapshot, retained: Mapping[str, list],
+                                 actuals: Mapping[str, Mapping]) -> dict[str, dict]:
+    """Replay retained independent witnesses from immutable Git-bound bytes.
+
+    Witness files must contain ExactFixtureDiagnostic/v1. Co-edited expectations
+    outside the retained bindings cannot substitute. Missing actual diagnostics
+    stay not_measured. This helper never grants admission.
+    """
+    if not isinstance(retained, Mapping) or not retained:
+        raise FixtureError("RETAINED_WITNESS_EMPTY", "at least one retained case is required")
+    results = {}
+    for cid, witnesses in retained.items():
+        if not isinstance(cid, str) or not cid:
+            raise FixtureError("RETAINED_CASE_INVALID", repr(cid))
+        if not isinstance(witnesses, list) or not witnesses:
+            raise FixtureError("RETAINED_WITNESS_MISSING", cid)
+        actual = actuals.get(cid)
+        witness_rows = []
+        if actual is None:
+            for witness in witnesses:
+                snapshot.bound(witness)
+                witness_rows.append({"path": witness["path"], "diagnostic_verdict": "not_measured",
+                                     "reason": "ACTUAL_DIAGNOSTIC_MISSING"})
+            results[cid] = {"witness_verdict": "not_measured", "reason": "ACTUAL_DIAGNOSTIC_MISSING",
+                            "witnesses": witness_rows}
+            continue
+        exact_keys(dict(actual), {"raw", "raw_exit"}, "ACTUAL_DIAGNOSTIC_SHAPE")
+        raw, raw_exit = actual["raw"], actual["raw_exit"]
+        if not isinstance(raw, dict) or type(raw_exit) is not int:
+            raise FixtureError("ACTUAL_DIAGNOSTIC_TYPE", cid)
+        verdicts = []
+        for witness in witnesses:
+            blob = snapshot.bound(witness)
+            expectation = strict_json(blob.data)
+            if not isinstance(expectation, dict) or expectation.get("case_id") != cid:
+                raise FixtureError("WITNESS_CASE_MISMATCH", f"{cid}: {witness['path']}")
+            row = compare_diagnostics(expectation, raw, raw_exit)
+            row = {"path": witness["path"], **{k: row[k] for k in row if k != "raw_diagnostics"},
+                   "raw_diagnostics": row["raw_diagnostics"]}
+            witness_rows.append(row)
+            verdicts.append(row["diagnostic_verdict"])
+        if any(v == "failed" for v in verdicts):
+            results[cid] = {"witness_verdict": "failed", "reason": "WITNESS_DIAGNOSTIC_MISMATCH",
+                            "witnesses": witness_rows}
+        elif any(v != "verified" for v in verdicts):
+            results[cid] = {"witness_verdict": "not_measured", "reason": "WITNESS_INCOMPLETE",
+                            "witnesses": witness_rows}
+        else:
+            results[cid] = {"witness_verdict": "verified",
+                            "reason": "retained witnesses reproduced exact diagnostics",
+                            "witnesses": witness_rows}
+    return results

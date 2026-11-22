@@ -23,6 +23,12 @@
 #   creates no shared credential, so the tools travel as a digest-pinned vendored bundle. The job
 #   refuses if any bundled file's sha256 does not match BUNDLE.json, if the caller's program_ref does
 #   not match the bundle's, or if the pull request itself touches the bundle.
+#
+#   PR body input: this workflow reads `pull_request.body` from `$GITHUB_EVENT_PATH` into a
+#   runner-temp file and passes `--pr-body-file` to the gate. It must never place body bytes in
+#   `env:` / argv (measured failure: E2BIG / "Argument list too long" → no verdict). Interim
+#   workaround for callers still on older pins: commit the CAR under `receipts/graph/` and keep the
+#   PR body short — that workaround is valid until those callers rebundle, and is not itself the fix.
 # ============================================================================================
 name: graph-admission
 
@@ -81,10 +87,10 @@ on:
         type: boolean
       candidate_dependency_setup:
         description: >-
-          Optional CallerDependencySetup/v1 subject-and-digest manifest for the fixed MUN web typecheck
-          dependency profile. It binds repository/base/head, policy pnpm-frozen-web-typecheck/v1, scope apps/web,
-          cwd ., and blob_oid/sha256/bytes for the seven fixed source inputs. It accepts no command, script,
-          registry, or filesystem path from the caller.
+          Optional CallerDependencySetup/v1 subject-and-digest manifest for either fixed MUN policy:
+          pnpm-frozen-web-typecheck/v1 (scope apps/web) or pnpm-frozen-api-prisma-typecheck/v1 (scope apps/api).
+          The matching prepare step runs only the selected validated plan's fixed commands after frozen install.
+          The caller supplies no command, script, registry, filesystem path, or environment value.
         required: false
         default: ''
         type: string
@@ -112,9 +118,9 @@ on:
         default: true
         type: boolean
       runs_on:
-        description: 'Runner label set.'
+        description: 'Runner label set (one self-hosted pool label; callers use ci-general).'
         required: false
-        default: 'ubuntu-latest'
+        default: 'ci-general'
         type: string
       verifier_job:
         description: >-
@@ -167,7 +173,7 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Check out the pull-request head (full history — the gate needs base..head)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -182,6 +188,9 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          EMPTY_IMPACT_INPUT: ${{ inputs.empty_impact_explanation }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          THIS_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           BASE_BRANCH=""
@@ -193,11 +202,52 @@ jobs:
             BASE="$(git rev-parse HEAD~1)"
             HEAD_SHA="$(git rev-parse HEAD)"
           fi
+          # DEC-AUP-0198: a committed EmptyImpactExplanation as the single tip commit of a pull request.
+          # Program only, and a no-op unless the PR adds a file under receipts/graph/empty-impact/. When the
+          # claim is structurally accepted the whole job measures base..H' (H' = the tip's parent), so every
+          # existing validator judges the claim exactly as it judges the workflow_call input route; the claim
+          # file itself is never measured. A refusal keeps the PR head and the run ends as it would today.
+          CLAIM_FILE=""
+          if [ -n "${PR_BASE:-}" ] && [ "${THIS_REPOSITORY:-}" = "Arcanada-one/arcanada-universal-program" ] \
+             && [ -f tools/graph/empty_impact_claim.py ] && [ ! -L tools/graph/empty_impact_claim.py ]; then
+            CLAIM_OUT="${RUNNER_TEMP:?}/empty-impact-claim.json"
+            mkdir -p "${RUNNER_TEMP}/graph-admission"
+            CLAIM_DECISION="${RUNNER_TEMP}/graph-admission/empty-impact-claim.decision.json"
+            CLAIM_RC=0
+            python3 -I -B tools/graph/empty_impact_claim.py check --repo . --base "$BASE" --head "$HEAD_SHA" \
+              --default-branch "${DEFAULT_BRANCH:-}" --base-branch "$BASE_BRANCH" \
+              --out-claim "$CLAIM_OUT" --summary "${GITHUB_STEP_SUMMARY:-/dev/null}" > "$CLAIM_DECISION" || CLAIM_RC=$?
+            if [ "$CLAIM_RC" = "0" ]; then
+              if [ -n "${EMPTY_IMPACT_INPUT:-}" ]; then
+                echo "::error::a committed empty-impact claim and the empty_impact_explanation input are both present" >&2
+                exit 2
+              fi
+              HEAD_SHA="$(python3 -I -B -c 'import json,sys; print(json.load(open(sys.argv[1]))["h_prime"])' "$CLAIM_DECISION")"
+              CLAIM_FILE="$CLAIM_OUT"
+            elif [ "$CLAIM_RC" != "10" ] && [ "$CLAIM_RC" != "11" ]; then
+              echo "::error::the empty-impact claim check failed to run (exit $CLAIM_RC)" >&2
+              exit 2
+            fi
+          fi
           {
             echo "base=$BASE"
             echo "head=$HEAD_SHA"
             echo "base_branch=$BASE_BRANCH"
+            echo "claim_file=$CLAIM_FILE"
           } >> "$GITHUB_OUTPUT"
+
+      # DEC-AUP-0198: when the range step accepted a committed empty-impact claim, evaluate the pull
+      # request exactly as it stands without that one data commit: the working tree and HEAD become H'
+      # (the claim commit's parent), so every later step sees HEAD == range head, as on any other run.
+      - name: Evaluate the claim-parent head (committed empty-impact claim only)
+        if: steps.range.outputs.claim_file != ''
+        env:
+          CLAIM_PARENT_HEAD: ${{ steps.range.outputs.head }}
+        run: |
+          set -euo pipefail
+          git checkout --detach "$CLAIM_PARENT_HEAD"
+          test "$(git rev-parse HEAD)" = "$CLAIM_PARENT_HEAD"
+          test -z "$(git status --porcelain --untracked-files=no)"
 
       # The reusable workflow is loaded from the caller-pinned Program ref. Before it invokes any
       # vendored code, independently authenticate the complete bundle with the caller's pin and the
@@ -688,7 +738,7 @@ jobs:
           PY
 
       - name: Python 3.12
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: '3.12'
 
@@ -701,15 +751,77 @@ jobs:
         # -I: isolated mode puts neither the working directory nor user site on sys.path. The checkout is
         # the pull request's own tree, so a planted ./pip package would otherwise run inside this required
         # gate before it measures anything (FRONTEND review of PR399).
-        run: python3 -I -m pip install --disable-pip-version-check --no-input 'pyyaml==6.0.2'
-
-      # AUP-GRAPH-006:gate5b (B6). A DECLARED DERIVED ARTEFACT is admitted only if the gate can RUN the
-      # caller's own verifier — accept the honest tree, then REFUSE it with one byte corrupted. That needs
-      # the caller's toolchain, which this job otherwise has no reason to install, so these steps are
-      # guarded on the declaration existing: a caller that declares nothing pays nothing, and the gate's
-      # 16 s stays 16 s. NON-COVERAGE, stated in derived-artefacts.v1.md §6: this knows about exactly ONE
-      # ecosystem. A caller in another needs its own toolchain, and the honest remedy is a
-      # declaration-driven toolchain field — named here, not built.
+        # --require-hashes: version alone is not enough; altered index/wheel bytes must not satisfy the pin
+        # (Muneral cfa0ff41 / PR399 follow-up). Reusable callers check out THEIR tree, not Program's, so the
+        # reviewed pin is carried in this step's env block (same bytes as tools/graph/hashes/pyyaml-6.0.2.txt).
+        # test_graph_admission_pip_isolated.py refuses drift between the env block and that file.
+        env:
+          PYYAML_HASHES: |
+            # Reviewed PyYAML 6.0.2 hashes from PyPI JSON digests (https://pypi.org/pypi/PyYAML/6.0.2/json).
+            # Generated for graph-admission hash-pin follow-up (Muneral cfa0ff41-5352-4f62-931d-d06e6e6c6ea1).
+            # Do not edit hashes without re-reviewing against PyPI digests.
+            pyyaml==6.0.2 \
+                --hash=sha256:0a9a2848a5b7feac301353437eb7d5957887edbf81d56e903999a75a3d743086 \
+                --hash=sha256:29717114e51c84ddfba879543fb232a6ed60086602313ca38cce623c1d62cfbf \
+                --hash=sha256:8824b5a04a04a047e72eea5cec3bc266db09e35de6bdfe34c9436ac5ee27d237 \
+                --hash=sha256:7c36280e6fb8385e520936c3cb3b8042851904eba0e58d277dca80a5cfed590b \
+                --hash=sha256:ec031d5d2feb36d1d1a24380e4db6d43695f3748343d99434e6f5f9156aaa2ed \
+                --hash=sha256:936d68689298c36b53b29f23c6dbb74de12b4ac12ca6cfe0e047bedceea56180 \
+                --hash=sha256:23502f431948090f597378482b4812b0caae32c22213aecf3b55325e049a6c68 \
+                --hash=sha256:2e99c6826ffa974fe6e27cdb5ed0021786b03fc98e5ee3c5bfe1fd5015f42b99 \
+                --hash=sha256:a4d3091415f010369ae4ed1fc6b79def9416358877534caf6a0fdd2146c87a3e \
+                --hash=sha256:cc1c1159b3d456576af7a3e4d1ba7e6924cb39de8f67111c735f6fc832082774 \
+                --hash=sha256:1e2120ef853f59c7419231f3bf4e7021f1b936f6ebd222406c3b60212205d2ee \
+                --hash=sha256:5d225db5a45f21e78dd9358e58a98702a0302f2659a3c6cd320564b75b86f47c \
+                --hash=sha256:5ac9328ec4831237bec75defaf839f7d4564be1e6b25ac710bd1a96321cc8317 \
+                --hash=sha256:3ad2a3decf9aaba3d29c8f537ac4b243e36bef957511b4766cb0057d32b0be85 \
+                --hash=sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4 \
+                --hash=sha256:797b4f722ffa07cc8d62053e4cff1486fa6dc094105d13fea7b1de7d8bf71c9e \
+                --hash=sha256:11d8f3dd2b9c1207dcaf2ee0bbbfd5991f571186ec9cc78427ba5bd32afae4b5 \
+                --hash=sha256:e10ce637b18caea04431ce14fabcf5c64a1c61ec9c56b071a4b7ca131ca52d44 \
+                --hash=sha256:c70c95198c015b85feafc136515252a261a84561b7b1d51e3384e0655ddf25ab \
+                --hash=sha256:ce826d6ef20b1bc864f0a68340c8b3287705cae2f8b4b1d932177dcc76721725 \
+                --hash=sha256:1f71ea527786de97d1a0cc0eacd1defc0985dcf6b3f17bb77dcfc8c34bec4dc5 \
+                --hash=sha256:9b22676e8097e9e22e36d6b7bda33190d0d400f345f23d4065d48f4ca7ae0425 \
+                --hash=sha256:80bab7bfc629882493af4aa31a4cfa43a4c57c83813253626916b8c7ada83476 \
+                --hash=sha256:0833f8694549e586547b576dcfaba4a6b55b9e96098b36cdc7ebefe667dfed48 \
+                --hash=sha256:8b9c7197f7cb2738065c481a0461e50ad02f18c78cd75775628afb4d7137fb3b \
+                --hash=sha256:ef6107725bd54b262d6dedcc2af448a266975032bc85ef0172c5f059da6325b4 \
+                --hash=sha256:7e7401d0de89a9a855c839bc697c079a4af81cf878373abd7dc625847d25cbd8 \
+                --hash=sha256:efdca5630322a10774e8e98e1af481aad470dd62c3170801852d752aa7a783ba \
+                --hash=sha256:50187695423ffe49e2deacb8cd10510bc361faac997de9efef88badc3bb9e2d1 \
+                --hash=sha256:0ffe8360bab4910ef1b9e87fb812d8bc0a308b0d0eef8c8f44e0254ab3b07133 \
+                --hash=sha256:17e311b6c678207928d649faa7cb0d7b4c26a0ba73d41e99c4fff6b6c3276484 \
+                --hash=sha256:70b189594dbe54f75ab3a1acec5f1e3faa7e8cf2f1e08d9b561cb41b845f69d5 \
+                --hash=sha256:41e4e3953a79407c794916fa277a82531dd93aad34e29c2a514c2c0c5fe971cc \
+                --hash=sha256:68ccc6023a3400877818152ad9a1033e3db8625d899c72eacb5a668902e4d652 \
+                --hash=sha256:bc2fa7c6b47d6bc618dd7fb02ef6fdedb1090ec036abab80d4681424b84c1183 \
+                --hash=sha256:8388ee1976c416731879ac16da0aff3f63b286ffdd57cdeb95f3f2e085687563 \
+                --hash=sha256:24471b829b3bf607e04e88d79542a9d48bb037c2267d7927a874e6c205ca7e9a \
+                --hash=sha256:d7fded462629cfa4b685c5416b949ebad6cec74af5e2d42905d41e257e0869f5 \
+                --hash=sha256:d84a1718ee396f54f3a086ea0a66d8e552b2ab2017ef8b420e92edbc841c352d \
+                --hash=sha256:9056c1ecd25795207ad294bcf39f2db3d845767be0ea6e6a34d856f006006083 \
+                --hash=sha256:82d09873e40955485746739bcb8b4586983670466c23382c19cffecbf1fd8706 \
+                --hash=sha256:43fa96a3ca0d6b1812e01ced1044a003533c47f6ee8aca31724f78e93ccc089a \
+                --hash=sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff \
+                --hash=sha256:688ba32a1cffef67fd2e9398a2efebaea461578b0923624778664cc1c914db5d \
+                --hash=sha256:a8786accb172bd8afb8be14490a16625cbc387036876ab6ba70912730faf8e1f \
+                --hash=sha256:d8e03406cac8513435335dbab54c0d385e4a49e4945d2909a581c83647ca0290 \
+                --hash=sha256:f753120cb8181e736c57ef7636e83f31b9c0d1722c516f7e86cf15b7aa57ff12 \
+                --hash=sha256:3b1fdb9dc17f5a7677423d508ab4f243a726dea51fa5e70992e59a7411c89d19 \
+                --hash=sha256:0b69e4ce7a131fe56b7e4d770c67429700908fc0752af059838b1cfb41960e4e \
+                --hash=sha256:a9f8c2e67970f13b16084e04f134610fd1d374bf477b17ec1599185cf611d725 \
+                --hash=sha256:6395c297d42274772abc367baaa79683958044e5d3835486c16da75d2a694631 \
+                --hash=sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8 \
+                --hash=sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e
+        run: |
+          set -euo pipefail
+          HASHES="${RUNNER_TEMP}/pyyaml-6.0.2.hashes.txt"
+          printf '%s' "$PYYAML_HASHES" > "$HASHES"
+          if [ -f tools/graph/hashes/pyyaml-6.0.2.txt ]; then
+            cmp -s "$HASHES" tools/graph/hashes/pyyaml-6.0.2.txt
+          fi
+          python3 -I -m pip install --disable-pip-version-check --no-input --require-hashes -r "$HASHES"
       - name: Does this repository declare derived artefacts? (B6)
         id: derived
         run: |
@@ -741,7 +853,7 @@ jobs:
 
       - name: Node toolchain for the declared verifier (B6)
         if: steps.derived.outputs.declared == 'yes'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: ${{ steps.derived.outputs.node_version || inputs.derived_artefact_node_version }}
 
@@ -759,7 +871,7 @@ jobs:
 
       - name: Node for the pinned admission-selftest compiler
         if: steps.derived.outputs.declared != 'yes'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: '24.20.0'
 
@@ -998,7 +1110,7 @@ jobs:
           printf '/contracts/http/node_modules\n' >> .git/info/exclude
           ln -s "$contract_root/node_modules" "$contract_modules"
 
-      # A caller may opt into the one fixed MUN web-typecheck setup policy. The signed bundle validates
+      # A caller may opt into one fixed MUN setup policy. The signed bundle validates
       # exact repository/range/package/lock/blob pins before Node or pnpm executes; the caller input
       # contains data only and cannot choose commands, paths, registries, or environment variables.
       - name: Validate fixed caller dependency setup subject and source pins
@@ -1031,11 +1143,12 @@ jobs:
             --repo "$GITHUB_WORKSPACE" --repository "$GITHUB_REPOSITORY" \
             --base "$RANGE_BASE" --head "$RANGE_HEAD" > "$PLAN_PATH"
           NODE_VERSION="$(python3 -I -B -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["node_version"])' "$PLAN_PATH")"
-          printf 'node_version=%s\nplan_path=%s\n' "$NODE_VERSION" "$PLAN_PATH" >> "$GITHUB_OUTPUT"
+          SETUP_POLICY="$(python3 -I -B -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["policy"])' "$PLAN_PATH")"
+          printf 'node_version=%s\nsetup_policy=%s\nplan_path=%s\n' "$NODE_VERSION" "$SETUP_POLICY" "$PLAN_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Node for the fixed caller dependency setup
         if: inputs.candidate_dependency_setup_required || inputs.candidate_dependency_setup != ''
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: ${{ steps.candidate_dependency_setup.outputs.node_version }}
           cache: pnpm
@@ -1052,13 +1165,92 @@ jobs:
       - name: Prepare frozen caller dependencies before candidate verification
         if: inputs.candidate_dependency_setup_required || inputs.candidate_dependency_setup != ''
         env:
+          # Prisma CLI usage telemetry goes to checkpoint.prisma.io; disable it for this setup.
+          # https://www.prisma.io/docs/orm/v6/tools/prisma-cli#telemetry
+          CHECKPOINT_DISABLE: '1'
+          # Same dummy DATABASE_URL shape as the Auth prepare step: prisma generate needs a
+          # URL string even when it only writes the client (muneral#444 / Auth path parity).
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+          SETUP_POLICY: ${{ steps.candidate_dependency_setup.outputs.setup_policy }}
           RUNNER_TEMP: ${{ runner.temp }}
         run: |
           set -euo pipefail
           PLAN_PATH="$RUNNER_TEMP/graph-admission/candidate-dependency-setup/plan.json"
           pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile
-          pnpm --filter @muneral/types build
+          case "$SETUP_POLICY" in
+            pnpm-frozen-web-typecheck/v1)
+              pnpm --filter @muneral/types build
+              # Preserve the existing web policy's exact fixed operations.
+              pnpm exec prisma generate --schema apps/api/prisma/schema.prisma
+              ;;
+            pnpm-frozen-api-prisma-typecheck/v1)
+              # `--ignore-scripts` skips postinstall; the pinned prisma.config.ts selects schema.
+              pnpm exec prisma generate
+              ;;
+            *)
+              echo "::error::validated dependency setup policy is unsupported" >&2
+              exit 2
+              ;;
+          esac
           cat "$PLAN_PATH" >> "$GITHUB_STEP_SUMMARY"
+
+      # Muneral Nest e2e suites inside the candidate producer's full_fallback_test need a live
+      # Postgres and a durable DATABASE_URL (muneral#444 / class-c on main). The prepare step's
+      # dummy URL is step-local and never reaches produce/verify. Match lint-and-test:
+      # postgres:16, user/db muneral_test, free host port (no fixed 5432 bind). Source-fixed to
+      # Arcanada-one/muneral only — never a caller-controlled input. Random password is generated
+      # here (not a repository secret), masked, written to GITHUB_ENV for later steps, torn down
+      # under if: always(). Measured: muneral lint-and-test already runs services.postgres on the
+      # same ci-general self-hosted pool, so docker is present on those runners.
+      - name: Start throwaway Postgres for Muneral candidate fallback suites
+        id: muneral_candidate_postgres
+        # Match Produce: Muneral candidate CAR also runs under gate_self_update. Start Postgres for
+        # both arms so a self_update-only Muneral path does not inherit the DATABASE_URL hole.
+        if: github.repository == 'Arcanada-one/muneral' && (inputs.candidate_receipt_required || steps.self_update_classifier.outputs.case == 'gate_self_update')
+        run: |
+          set -euo pipefail
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "::error::docker is required for Muneral candidate fallback Postgres (same capability as lint-and-test services.postgres on ci-general)" >&2
+            exit 2
+          fi
+          PASS="$(openssl rand -hex 16)"
+          NAME="muneral-ga-pg-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          # Container port only: Docker publishes a free host port (lint-and-test comment: fixed
+          # 5432:5432 dies with address already in use on shared ci-general runners).
+          docker run -d --name "$NAME" \
+            -e POSTGRES_USER=test \
+            -e "POSTGRES_PASSWORD=${PASS}" \
+            -e POSTGRES_DB=muneral_test \
+            -p 127.0.0.1::5432 \
+            postgres:16
+          # Publish the deterministic name immediately after docker run so Stop can tear down even
+          # when a later readiness/port line fails (step outputs are otherwise empty on failure).
+          echo "container=${NAME}" >> "$GITHUB_OUTPUT"
+          PORT="$(docker port "$NAME" 5432/tcp | awk -F: '{print $NF}' | head -n 1)"
+          test -n "$PORT"
+          for _ in $(seq 1 30); do
+            if docker exec "$NAME" pg_isready -U test -d muneral_test >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec "$NAME" pg_isready -U test -d muneral_test
+          URL="postgresql://test:${PASS}@127.0.0.1:${PORT}/muneral_test"
+          echo "::add-mask::${PASS}"
+          echo "::add-mask::${URL}"
+          {
+            echo "DATABASE_URL=${URL}"
+            echo "MUNERAL_GA_PG_CONTAINER=${NAME}"
+          } >> "$GITHUB_ENV"
+          echo "port=${PORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Apply Muneral Prisma migrations on throwaway Postgres
+        if: github.repository == 'Arcanada-one/muneral' && (inputs.candidate_receipt_required || steps.self_update_classifier.outputs.case == 'gate_self_update')
+        run: |
+          set -euo pipefail
+          test -n "${DATABASE_URL:-}"
+          # Same root prisma migrate deploy as muneral lint-and-test (schema via prisma.config.ts).
+          pnpm exec prisma migrate deploy
 
       - name: Validate canonical Auth dependency source and toolchain
         id: candidate_auth_dependency_setup
@@ -1091,14 +1283,14 @@ jobs:
 
       - name: Pin pnpm for canonical Auth candidate verification
         if: github.repository == 'Arcanada-one/auth-arcana'
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           version: ${{ steps.candidate_auth_dependency_setup.outputs.pnpm_version }}
           dest: ${{ runner.temp }}/auth-setup-pnpm
 
       - name: Pin Node for canonical Auth candidate verification
         if: github.repository == 'Arcanada-one/auth-arcana'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ steps.candidate_auth_dependency_setup.outputs.node_version }}
 
@@ -1128,12 +1320,83 @@ jobs:
           pnpm exec prisma generate
           cat "$RUNNER_TEMP/graph-admission/auth-dependency-setup/plan.json" >> "$GITHUB_STEP_SUMMARY"
 
+      # Talomnia-backend graph caller has no dependency-setup input. This fixed profile installs
+      # the root NestJS / Prisma closure before the current-candidate producer (talomnia-backend#66).
+      - name: Validate canonical Talomnia-backend dependency source and toolchain
+        id: candidate_talo_dependency_setup
+        if: github.repository == 'Arcanada-one/talomnia-backend'
+        env:
+          TOOLS_PATH: ${{ inputs.tools_path }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RANGE_BASE: ${{ steps.range.outputs.base }}
+          RANGE_HEAD: ${{ steps.range.outputs.head }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          GRAPH_TOOLS_ROOT="$GITHUB_WORKSPACE/$TOOLS_PATH"
+          PLAN_ROOT="$RUNNER_TEMP/graph-admission/talo-dependency-setup"
+          mkdir -p "$PLAN_ROOT"
+          PLAN_PATH="$PLAN_ROOT/plan.json"
+          set -C
+          python3 -I -B "$GRAPH_TOOLS_ROOT/tools/graph/ci_gate.py" candidate-talo-dependency-setup-plan \
+            --repo "$GITHUB_WORKSPACE" --repository "$GITHUB_REPOSITORY" \
+            --base "$RANGE_BASE" --head "$RANGE_HEAD" > "$PLAN_PATH"
+          python3 -I -B - "$PLAN_PATH" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys
+          plan = json.load(open(sys.argv[1], encoding="utf-8"))
+          if plan.get("policy") != "talo-pnpm-frozen-root/v1":
+              raise SystemExit("TALO_DEPENDENCY_SETUP_POLICY_REFUSED")
+          print("node_version=" + plan["node_version"])
+          print("pnpm_version=" + plan["pnpm_version"])
+          PY
+
+      - name: Pin pnpm for canonical Talomnia-backend candidate verification
+        if: github.repository == 'Arcanada-one/talomnia-backend'
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          version: ${{ steps.candidate_talo_dependency_setup.outputs.pnpm_version }}
+          dest: ${{ runner.temp }}/talo-setup-pnpm
+
+      - name: Pin Node for canonical Talomnia-backend candidate verification
+        if: github.repository == 'Arcanada-one/talomnia-backend'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ steps.candidate_talo_dependency_setup.outputs.node_version }}
+
+      - name: Prepare fixed Talomnia-backend verifier dependencies
+        if: github.repository == 'Arcanada-one/talomnia-backend'
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+          RUNNER_TEMP: ${{ runner.temp }}
+          TALO_NODE_VERSION: ${{ steps.candidate_talo_dependency_setup.outputs.node_version }}
+        run: |
+          set -euo pipefail
+          test -f package.json && test ! -L package.json
+          test -f pnpm-lock.yaml && test ! -L pnpm-lock.yaml
+          CONFIG_ROOT="$RUNNER_TEMP/graph-admission/talo-pnpm-config"
+          mkdir -p "$CONFIG_ROOT"
+          test ! -e "$CONFIG_ROOT/user.npmrc" && test ! -e "$CONFIG_ROOT/global.npmrc"
+          umask 077
+          : > "$CONFIG_ROOT/user.npmrc"
+          : > "$CONFIG_ROOT/global.npmrc"
+          export NPM_CONFIG_USERCONFIG="$CONFIG_ROOT/user.npmrc"
+          export NPM_CONFIG_GLOBALCONFIG="$CONFIG_ROOT/global.npmrc"
+          pnpm --version | grep -Fx '11.20.0'
+          test -n "$TALO_NODE_VERSION"
+          test "$(node --version)" = "v${TALO_NODE_VERSION}"
+          pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile --registry=https://registry.npmjs.org/
+          pnpm exec prisma generate
+          cat "$RUNNER_TEMP/graph-admission/talo-dependency-setup/plan.json" >> "$GITHUB_STEP_SUMMARY"
+
       # The canonical Model Connector self-update is the only caller admitted by the narrow
       # B1 pin/permission grammar. Its current-candidate TypeScript verifiers need the same
       # frozen dependencies and generated Prisma client as its ordinary CI job. Keep this
-      # source-fixed setup separate from caller-controlled dependency-setup inputs.
+      # source-fixed setup separate from caller-controlled dependency-setup inputs. It also runs on the
+      # ordinary candidate route (`candidate_receipt_required`): the hosted full-suite fallbacks refuse
+      # without an owned node_modules directory. The repository check is source-fixed; no new input.
       - name: Prepare canonical Model Connector self-update verifier dependencies
-        if: github.repository == 'Arcanada-one/model-connector' && steps.self_update_classifier.outputs.case == 'gate_self_update'
+        if: github.repository == 'Arcanada-one/model-connector' && (inputs.candidate_receipt_required || steps.self_update_classifier.outputs.case == 'gate_self_update')
         env:
           RANGE_BASE: ${{ steps.range.outputs.base }}
           RANGE_HEAD: ${{ steps.range.outputs.head }}
@@ -1173,6 +1436,7 @@ jobs:
           VERIFIER_JOB: ${{ inputs.verifier_job }}
           VERIFIER_CONCLUSION: ${{ inputs.verifier_conclusion }}
           EMPTY_IMPACT_EXPLANATION: ${{ inputs.empty_impact_explanation }}
+          EMPTY_IMPACT_CLAIM_FILE: ${{ steps.range.outputs.claim_file }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
@@ -1195,12 +1459,22 @@ jobs:
           fi
           mkdir -p "$CANDIDATE_ROOT/work" "$CANDIDATE_ROOT/verifier-out"
           EMPTY_IMPACT_PATH="$CANDIDATE_ROOT/empty-impact-explanation.json"
-          if [ -n "${EMPTY_IMPACT_EXPLANATION:-}" ]; then
+          if [ -n "${EMPTY_IMPACT_CLAIM_FILE:-}" ] && [ -n "${EMPTY_IMPACT_EXPLANATION:-}" ]; then
+            echo "::error::a committed empty-impact claim and the empty_impact_explanation input are both present" >&2
+            exit 2
+          fi
+          if [ -n "${EMPTY_IMPACT_EXPLANATION:-}" ] || [ -n "${EMPTY_IMPACT_CLAIM_FILE:-}" ]; then
             if [ "$CANDIDATE_SOURCE_OUTCOME_REQUIRED" != "true" ]; then
               echo "::error::empty-impact explanation requires same-run current-source outcome capture" >&2
               exit 2
             fi
-            if ! (umask 077; set -C; printf '%s' "$EMPTY_IMPACT_EXPLANATION" > "$EMPTY_IMPACT_PATH"); then
+            if [ -n "${EMPTY_IMPACT_CLAIM_FILE:-}" ]; then
+              # the claim blob was read by git at the exact PR head and validated before any head code ran
+              if ! (umask 077; set -C; cp -- "$EMPTY_IMPACT_CLAIM_FILE" "$EMPTY_IMPACT_PATH"); then
+                echo "::error::committed empty-impact claim could not be captured safely" >&2
+                exit 2
+              fi
+            elif ! (umask 077; set -C; printf '%s' "$EMPTY_IMPACT_EXPLANATION" > "$EMPTY_IMPACT_PATH"); then
               echo "::error::empty-impact explanation input could not be captured safely" >&2
               exit 2
             fi
@@ -1245,7 +1519,7 @@ jobs:
               --graph "$CANDIDATE_ROOT/base-graph.json" --out "$CANDIDATE_ROOT/receipt.json" --json
               --workdir "$CANDIDATE_ROOT/work" --verifier-out "$CANDIDATE_ROOT/verifier-out"
               --phase-log "$CANDIDATE_ROOT/phase.jsonl")
-            if [ -n "${EMPTY_IMPACT_EXPLANATION:-}" ]; then
+            if [ -n "${EMPTY_IMPACT_EXPLANATION:-}" ] || [ -n "${EMPTY_IMPACT_CLAIM_FILE:-}" ]; then
               VERIFY_ARGV+=(--empty-impact-explanation "$EMPTY_IMPACT_PATH")
             fi
             if [ "$GITHUB_REPOSITORY" = "Arcanada-one/auth-arcana" ]; then
@@ -1574,10 +1848,11 @@ jobs:
           CURRENT_EVALUATOR_REPOSITORY: ${{ github.repository }}
           CURRENT_EVALUATOR_CALLER_WORKFLOW_REF: ${{ github.workflow_ref }}
           CURRENT_EVALUATOR_CALLER_WORKFLOW_SHA: ${{ github.workflow_sha }}
-          CURRENT_EVALUATOR_WORKFLOW_REPOSITORY: ${{ job.workflow_repository }}
-          CURRENT_EVALUATOR_WORKFLOW_FILE_PATH: ${{ job.workflow_file_path }}
-          CURRENT_EVALUATOR_WORKFLOW_REF: ${{ job.workflow_ref }}
-          CURRENT_EVALUATOR_WORKFLOW_SHA: ${{ job.workflow_sha }}
+          # actionlint 1.7.12's job type lacks workflow_*; GitHub still populates those fields at
+          # runtime on reusable-workflow jobs. Serialize the whole job object (same pattern as
+          # ACTIVE_WORKFLOW_CONTEXT above) and extract below — do NOT substitute github.workflow_ref
+          # / github.workflow_sha here: those are the CALLER bindings already mapped above.
+          CURRENT_EVALUATOR_JOB_CONTEXT: ${{ toJSON(job) }}
           STAGE_USERPATH_RESULT: ${{ steps.stage_userpath.outputs.result }}
           STAGE_USERPATH_ROOT: ${{ steps.stage_userpath.outputs.root }}
           STAGE_USERPATH_REQUIRED: ${{ inputs.stage_userpath_required }}
@@ -1596,6 +1871,12 @@ jobs:
           # write the summary, upload the result and hand the verdict to the last step, which is the
           # single place the check turns red (GitHub starts this shell with -e; it is cleared here).
           set +e
+          # Extract reusable-workflow identity from toJSON(job). actionlint 1.7.12 rejects
+          # job.workflow_*; GitHub still provides those keys at runtime (see ACTIVE_WORKFLOW_CONTEXT).
+          CURRENT_EVALUATOR_WORKFLOW_REPOSITORY="$(python3 -c 'import json,os; print(json.loads(os.environ.get("CURRENT_EVALUATOR_JOB_CONTEXT") or "{}").get("workflow_repository") or "")')"
+          CURRENT_EVALUATOR_WORKFLOW_FILE_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ.get("CURRENT_EVALUATOR_JOB_CONTEXT") or "{}").get("workflow_file_path") or "")')"
+          CURRENT_EVALUATOR_WORKFLOW_REF="$(python3 -c 'import json,os; print(json.loads(os.environ.get("CURRENT_EVALUATOR_JOB_CONTEXT") or "{}").get("workflow_ref") or "")')"
+          CURRENT_EVALUATOR_WORKFLOW_SHA="$(python3 -c 'import json,os; print(json.loads(os.environ.get("CURRENT_EVALUATOR_JOB_CONTEXT") or "{}").get("workflow_sha") or "")')"
           ARGS=()
           if [ -n "${RANGE_BASE_BRANCH:-}" ]; then ARGS+=(--base-branch "$RANGE_BASE_BRANCH"); fi
           while IFS= read -r g; do [ -n "$g" ] && ARGS+=(--receipt-glob "$g"); done <<< "$RECEIPT_GLOBS"
@@ -1651,16 +1932,33 @@ jobs:
           echo "rc=$RC" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Upload the gate result
+      # DEC-AUP-0191: retain evidence in the job log (+ host dir when mounted). Never GitHub artifacts.
+      # Keep order: gate verdict first (above), retention here, fail-the-check after — retention never
+      # changes RC. tools/ci/retain_evidence.py must travel in the signed GraphAdmissionBundle.
+      - name: Retain the gate result
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-        with:
-          name: graph-admission-result
-          path: |
-            ${{ runner.temp }}/graph-admission/*.json
-            ${{ runner.temp }}/graph-admission/stage-userpath/
-            ${{ runner.temp }}/graph-admission/current-candidate/
-          if-no-files-found: warn
+        env:
+          TOOLS_PATH: ${{ steps.selftools.outputs.path || inputs.tools_path }}
+        run: |
+          set +e
+          ROOT="${TOOLS_PATH:-.github/graph-admission}"
+          # Quote globs so Python expands them; shell must not split into multiple --path values.
+          python3 "${ROOT}/tools/ci/retain_evidence.py" \
+            --name graph-admission-result \
+            --path "${RUNNER_TEMP}/graph-admission/*.json" \
+            --path "${RUNNER_TEMP}/graph-admission/stage-userpath/" \
+            --path "${RUNNER_TEMP}/graph-admission/current-candidate/" \
+            --summary "${GITHUB_STEP_SUMMARY}"
+          exit 0
+
+      - name: Stop throwaway Postgres for Muneral candidate fallback suites
+        if: always() && github.repository == 'Arcanada-one/muneral' && steps.muneral_candidate_postgres.outcome != 'skipped'
+        run: |
+          set -uo pipefail
+          # Derive the deterministic name; do not rely solely on Start step outputs (empty when
+          # docker run succeeded but a later Start line failed before writing GITHUB_OUTPUT).
+          NAME="muneral-ga-pg-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker rm -f "$NAME" || true
 
       - name: Fail the check on a red verdict
         if: always()
@@ -1669,7 +1967,7 @@ jobs:
         run: |
           set -uo pipefail
           if [ "${RC:-}" != "0" ]; then
-            echo "::error title=graph-admission::the admission gate returned ${RC:-<no verdict>} — see the job summary and the graph-admission-result artefact"
+            echo "::error title=graph-admission::the admission gate returned ${RC:-<no verdict>} — see the job summary and the retained graph-admission-result evidence"
             exit 1
           fi
           echo "graph-admission: admitted"

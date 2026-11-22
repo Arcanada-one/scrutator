@@ -9,11 +9,20 @@ Corrected semantics (RCH on 09:37 proposal):
   - Axes are independent (required-nullable is real and must not be collapsed).
   - Same-package static import/name resolution; else explicit unknown.
   - Constraints separate; unresolved constraint names → unknown.
-  - ConfigDict: AST-complete ``extra``-only forms extract; unsupported keys /
-    incomplete forms remain unknown (never silent drop).
+  - ConfigDict: AST-complete ``extra`` / ``frozen`` / ``strict`` /
+    ``populate_by_name`` (bool or extra literal) extract from
+    ``ConfigDict(...)`` or an equivalent dict literal assigned to
+    ``model_config``; unsupported keys / incomplete forms remain unknown
+    (never silent drop).
   - Inherited BaseModel subclasses: same-module complete parent shapes merge;
     incomplete inheritance remains unknown.
-  - Validators / generics / dynamic / unresolved → unknown (never silent drop).
+  - ``field_validator`` / ``model_validator``: measured as a schema fingerprint
+    (kind, fields, mode, body digest) so edits are detected; ``computed_field`` /
+    ``validator`` / ``root_validator`` and other unsupported forms remain unknown.
+  - Non-null unions of measurable arms → ``kind: union`` (Differ already
+    taxonomises union variants); ``tuple[...]`` → ``kind: tuple``; same-module
+    ``Enum`` / ``StrEnum`` member literals → ``kind: enum``; ``datetime`` →
+    ``kind: date``. Generics / dynamic / unresolved → unknown (never silent drop).
 
 Exact Pydantic version policy (public pin contract for this tool):
   - Env: ``CONTRACT_DIFF_PYDANTIC_EXACT_VERSION`` = one PEP 440 exact version
@@ -32,10 +41,18 @@ Never import/exec/eval candidate application code. No OpenAPI oracle.
 from __future__ import annotations
 
 import ast
+import hashlib
 import os
 import re
 from dataclasses import dataclass, field
 from typing import Any
+
+# ConfigDict / model_config keys this slice can measure as schema-lite.
+_CONFIG_BOOL_KEYS = frozenset({"frozen", "strict", "populate_by_name"})
+_CONFIG_EXTRA_VALUES = frozenset({"forbid", "ignore", "allow"})
+# Validator decorators measured (fingerprint) vs refused.
+_VALIDATOR_MEASURED = frozenset({"field_validator", "model_validator"})
+_VALIDATOR_REFUSED = frozenset({"computed_field", "validator", "root_validator"})
 
 KIND = "pydantic_basemodel"
 
@@ -250,18 +267,26 @@ class _Module:
     field_names: set[str]
     configdict_names: set[str]
     literal_names: set[str]
+    enum_base_names: set[str]
+    datetime_names: set[str]
     imports: dict[str, tuple[str, str]]  # local → (module_spec, imported_name)
     string_consts: dict[str, str]
+    int_consts: dict[str, int | float]
     literal_aliases: dict[str, list[Any]]
+    enum_aliases: dict[str, list[Any]]
     models: dict[str, _Model]
 
     @staticmethod
     def from_ast(path: str, tree: ast.AST, src: str) -> _Module:
         pkg = _path_to_pkg(path)
         basemodel, field_n, configdict, literal = set(), set(), set(), set()
+        enum_bases: set[str] = set()
+        datetime_names: set[str] = set()
         imports: dict[str, tuple[str, str]] = {}
         string_consts: dict[str, str] = {}
+        int_consts: dict[str, int | float] = {}
         literal_aliases: dict[str, list[Any]] = {}
+        enum_aliases: dict[str, list[Any]] = {}
         models: dict[str, _Model] = {}
         all_classes: dict[str, ast.ClassDef] = {}
 
@@ -288,6 +313,12 @@ class _Module:
                             literal.add(local)
                         if alias.name == "Optional":
                             pass  # handled via annotation walk
+                    if abs_mod == "enum" or mod == "enum":
+                        if alias.name in ("Enum", "StrEnum", "IntEnum"):
+                            enum_bases.add(local)
+                    if abs_mod == "datetime" or mod == "datetime":
+                        if alias.name == "datetime":
+                            datetime_names.add(local)
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     local = alias.asname or alias.name
@@ -297,6 +328,10 @@ class _Module:
                 tname = node.targets[0].id
                 if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
                     string_consts[tname] = node.value.value
+                if isinstance(node.value, ast.Constant) and isinstance(node.value.value, (int, float)) and not isinstance(
+                    node.value.value, bool
+                ):
+                    int_consts[tname] = node.value.value
                 lit_vals = _literal_values(node.value, literal)
                 if lit_vals is not None:
                     literal_aliases[tname] = lit_vals
@@ -307,6 +342,15 @@ class _Module:
 
             if isinstance(node, ast.ClassDef):
                 all_classes[node.name] = node
+
+        # Same-module Enum / StrEnum with constant members → enum aliases for type refs.
+        for name, node in all_classes.items():
+            if not _extends_enum_base(node, enum_bases, imports):
+                continue
+            vals = _enum_member_values(node)
+            if vals is None:
+                continue  # non-literal / dynamic members stay unresolved at use site
+            enum_aliases[name] = vals
 
         # Direct proven-BaseModel subclasses, then finite cycle-safe inherited subclasses.
         direct: set[str] = set()
@@ -340,9 +384,13 @@ class _Module:
             field_names=field_n,
             configdict_names=configdict,
             literal_names=literal,
+            enum_base_names=enum_bases,
+            datetime_names=datetime_names,
             imports=imports,
             string_consts=string_consts,
+            int_consts=int_consts,
             literal_aliases=literal_aliases,
+            enum_aliases=enum_aliases,
             models=models,
         )
 
@@ -356,15 +404,25 @@ class _Field:
 
 
 @dataclass
+class _ValidatorRec:
+    kind: str
+    fields: list[str]
+    mode: str | None
+    body_sha256: str
+
+
+@dataclass
 class _Model:
     path: str
     name: str
     fields: list[_Field]
     has_configdict: bool
     config_call: ast.Call | None
+    config_dict_node: ast.Dict | None
     config_incomplete: str | None
     parent_names: list[str]
-    has_validator: bool
+    validators: list[_ValidatorRec]
+    validator_refusal: str | None
     has_annotated: bool
     inherited: bool
     text: str
@@ -383,8 +441,10 @@ class _Model:
         fields: list[_Field] = []
         has_config = False
         config_call: ast.Call | None = None
+        config_dict_node: ast.Dict | None = None
         config_incomplete: str | None = None
-        has_validator = False
+        validators: list[_ValidatorRec] = []
+        validator_refusal: str | None = None
         has_annotated = False
         known_models = known_models or set()
         parent_names: list[str] = []
@@ -403,8 +463,10 @@ class _Model:
                             "ConfigDict"
                         }:
                             config_call = stmt.value
+                        elif isinstance(stmt.value, ast.Dict):
+                            config_dict_node = stmt.value
                         else:
-                            config_incomplete = "model_config is not a ConfigDict(...) call"
+                            config_incomplete = "model_config is not a ConfigDict(...) call or dict literal"
             if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
                 if stmt.target.id == "model_config":
                     has_config = True
@@ -412,8 +474,10 @@ class _Model:
                         "ConfigDict"
                     }:
                         config_call = stmt.value
+                    elif isinstance(stmt.value, ast.Dict):
+                        config_dict_node = stmt.value
                     else:
-                        config_incomplete = "model_config annotation is not a ConfigDict(...) call"
+                        config_incomplete = "model_config annotation is not a ConfigDict(...) call or dict literal"
                     continue
                 if stmt.target.id.startswith("_"):
                     continue
@@ -429,13 +493,22 @@ class _Model:
                 # Methods other than validators are ignored for shape (display helpers etc.).
                 for dec in stmt.decorator_list:
                     dname = _call_name(dec)
-                    if dname in ("field_validator", "model_validator", "computed_field", "validator", "root_validator"):
-                        has_validator = True
+                    if dname in _VALIDATOR_REFUSED:
+                        validator_refusal = f"{dname} unsupported in this slice"
+                    elif dname in _VALIDATOR_MEASURED:
+                        rec, verr = _validator_record(dname, dec, stmt)
+                        if verr:
+                            validator_refusal = verr
+                        else:
+                            assert rec is not None
+                            validators.append(rec)
             # ConfigDict(...) usage anywhere in class
             for child in ast.walk(stmt):
                 if isinstance(child, ast.Call) and _call_name(child) in configdict_names | {"ConfigDict"}:
                     has_config = True
-                    if config_call is None and not isinstance(stmt, (ast.Assign, ast.AnnAssign)):
+                    if config_call is None and config_dict_node is None and not isinstance(
+                        stmt, (ast.Assign, ast.AnnAssign)
+                    ):
                         # ConfigDict used outside model_config assignment — incomplete.
                         config_incomplete = config_incomplete or "ConfigDict used outside model_config assignment"
                     elif config_call is None and isinstance(stmt, (ast.Assign, ast.AnnAssign)):
@@ -451,13 +524,34 @@ class _Model:
             fields=fields,
             has_configdict=has_config,
             config_call=config_call,
+            config_dict_node=config_dict_node,
             config_incomplete=config_incomplete,
             parent_names=parent_names,
-            has_validator=has_validator,
+            validators=validators,
+            validator_refusal=validator_refusal,
             has_annotated=has_annotated,
             inherited=inherited,
             text=text,
         )
+
+
+def _parse_config_keywords(pairs: list[tuple[str, ast.AST]]) -> tuple[dict | None, str | None]:
+    """Parse measured ConfigDict / model_config keyword pairs."""
+    out: dict[str, Any] = {}
+    for arg, value in pairs:
+        if arg == "extra":
+            if isinstance(value, ast.Constant) and value.value in _CONFIG_EXTRA_VALUES:
+                out["extra"] = value.value
+            else:
+                return None, "ConfigDict extra non-literal or unsupported value"
+        elif arg in _CONFIG_BOOL_KEYS:
+            if isinstance(value, ast.Constant) and isinstance(value.value, bool):
+                out[arg] = value.value
+            else:
+                return None, f"ConfigDict keyword {arg} non-literal bool"
+        else:
+            return None, f"ConfigDict keyword {arg} unsupported"
+    return out, None
 
 
 def _parse_configdict(model: _Model) -> tuple[dict | None, str | None]:
@@ -466,23 +560,29 @@ def _parse_configdict(model: _Model) -> tuple[dict | None, str | None]:
         return None, None
     if model.config_incomplete:
         return None, f"ConfigDict incomplete: {model.config_incomplete}"
-    if model.config_call is None:
-        return None, "ConfigDict/model_config present but call unresolved"
-    call = model.config_call
-    if call.args:
-        return None, "ConfigDict positional args unsupported"
-    out: dict[str, Any] = {}
-    for kw in call.keywords:
-        if kw.arg is None:
-            return None, "ConfigDict **kwargs unsupported"
-        if kw.arg == "extra":
-            if isinstance(kw.value, ast.Constant) and kw.value.value in ("forbid", "ignore", "allow"):
-                out["extra"] = kw.value.value
-            else:
-                return None, "ConfigDict extra non-literal or unsupported value"
-        else:
-            return None, f"ConfigDict keyword {kw.arg} unsupported"
-    return out, None
+    if model.config_call is not None:
+        call = model.config_call
+        if call.args:
+            return None, "ConfigDict positional args unsupported"
+        pairs: list[tuple[str, ast.AST]] = []
+        for kw in call.keywords:
+            if kw.arg is None:
+                return None, "ConfigDict **kwargs unsupported"
+            pairs.append((kw.arg, kw.value))
+        return _parse_config_keywords(pairs)
+    if model.config_dict_node is not None:
+        d = model.config_dict_node
+        if len(d.keys) != len(d.values):
+            return None, "ConfigDict dict literal malformed"
+        pairs = []
+        for k, v in zip(d.keys, d.values):
+            if k is None:
+                return None, "ConfigDict dict ** unpack unsupported"
+            if not isinstance(k, ast.Constant) or not isinstance(k.value, str):
+                return None, "ConfigDict dict key non-literal string"
+            pairs.append((k.value, v))
+        return _parse_config_keywords(pairs)
+    return None, "ConfigDict/model_config present but call unresolved"
 
 
 def _merge_inherited_fields(
@@ -490,45 +590,47 @@ def _merge_inherited_fields(
     modules: dict[str, _Module],
     models: dict[tuple[str, str], _Model],
     _stack: set[tuple[str, str]] | None = None,
-) -> tuple[list[_Field] | None, dict | None, str | None]:
-    """Merge same-module parent fields (parents first). Also returns merged model_config.
+) -> tuple[list[_Field] | None, dict | None, list[_ValidatorRec] | None, str | None]:
+    """Merge same-module parent fields (parents first). Also returns merged model_config + validators.
 
-    Fail-closed when any ancestor is incomplete (validators / bad ConfigDict / cycles).
+    Fail-closed when any ancestor is incomplete (unsupported validators / bad ConfigDict / cycles).
     """
     stack = _stack or set()
     key = (model.path, model.name)
     if key in stack:
-        return None, None, "inherited BaseModel cycle unresolved"
+        return None, None, None, "inherited BaseModel cycle unresolved"
     stack = set(stack)
     stack.add(key)
 
-    if model.has_validator:
-        return None, None, "validators unsupported in first slice"
+    if model.validator_refusal:
+        return None, None, None, model.validator_refusal
     if model.has_annotated:
-        return None, None, "Annotated unsupported in first slice"
+        return None, None, None, "Annotated unsupported in first slice"
 
     own_config, cfg_err = _parse_configdict(model)
     if cfg_err:
-        return None, None, cfg_err
+        return None, None, None, cfg_err
 
     merged_fields: list[_Field] = []
     parent_config: dict | None = None
+    parent_validators: list[_ValidatorRec] = []
     if model.inherited or model.parent_names:
         if not model.parent_names:
-            return None, None, "inherited BaseModel subclass missing resolvable same-module parent"
+            return None, None, None, "inherited BaseModel subclass missing resolvable same-module parent"
         if len(model.parent_names) != 1:
-            return None, None, "multiple inherited BaseModel bases unsupported"
+            return None, None, None, "multiple inherited BaseModel bases unsupported"
         parent = models.get((model.path, model.parent_names[0]))
         if parent is None:
-            return None, None, (
+            return None, None, None, (
                 f"inherited BaseModel parent {model.parent_names[0]} unresolved in same module"
             )
-        p_fields, p_config, p_err = _merge_inherited_fields(parent, modules, models, stack)
+        p_fields, p_config, p_vals, p_err = _merge_inherited_fields(parent, modules, models, stack)
         if p_err:
-            return None, None, f"incomplete inheritance via {parent.name}: {p_err}"
+            return None, None, None, f"incomplete inheritance via {parent.name}: {p_err}"
         assert p_fields is not None
         merged_fields.extend(p_fields)
         parent_config = p_config
+        parent_validators = list(p_vals or [])
 
     # Own fields override same-named parent fields.
     by_name = {f.name: f for f in merged_fields}
@@ -548,7 +650,9 @@ def _merge_inherited_fields(
 
     # Child model_config overrides parent when both present; else inherit parent config.
     final_config = own_config if own_config is not None else parent_config
-    return ordered, final_config, None
+    # Validators accumulate parent-then-child (fingerprint change is semantic).
+    final_validators = parent_validators + list(model.validators)
+    return ordered, final_config, final_validators, None
 
 
 def _model_schema(
@@ -556,7 +660,7 @@ def _model_schema(
     modules: dict[str, _Module],
     models: dict[tuple[str, str], _Model],
 ) -> tuple[dict | None, str | None]:
-    fields, model_config, err = _merge_inherited_fields(model, modules, models)
+    fields, model_config, validators, err = _merge_inherited_fields(model, modules, models)
     if err:
         return None, err
     assert fields is not None
@@ -573,6 +677,16 @@ def _model_schema(
     schema: dict[str, Any] = {"kind": "object", "properties": props, "required": required}
     if model_config:
         schema["model_config"] = model_config
+    if validators:
+        schema["validators"] = [
+            {
+                "kind": v.kind,
+                "fields": list(v.fields),
+                "mode": v.mode,
+                "body_sha256": v.body_sha256,
+            }
+            for v in validators
+        ]
     return schema, None
 
 
@@ -632,8 +746,12 @@ def _presence_and_constraints(value: ast.AST | None, mod: _Module) -> tuple[str,
             elif kw.arg == "default_factory":
                 presence = "default_factory"
             elif kw.arg in ("min_length", "max_length", "ge", "le", "gt", "lt", "multiple_of", "min_items", "max_items"):
-                if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
+                if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)) and not isinstance(
+                    kw.value.value, bool
+                ):
                     constraints[kw.arg] = kw.value.value
+                elif isinstance(kw.value, ast.Name) and kw.value.id in mod.int_consts:
+                    constraints[kw.arg] = mod.int_consts[kw.value.id]
                 else:
                     return "required", {}, f"non-literal constraint {kw.arg}"
             elif kw.arg == "pattern":
@@ -641,6 +759,11 @@ def _presence_and_constraints(value: ast.AST | None, mod: _Module) -> tuple[str,
                 if err:
                     return "required", {}, err
                 constraints["pattern"] = pat
+            elif kw.arg == "strict":
+                if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, bool):
+                    constraints["strict"] = kw.value.value
+                else:
+                    return "required", {}, "non-literal Field strict"
             elif kw.arg in ("alias", "validation_alias", "serialization_alias"):
                 return "required", {}, f"unsupported Field wire alias ({kw.arg})"
             elif kw.arg in (
@@ -683,7 +806,7 @@ def _annotation_type(
         nullable = True
         core = ann.slice if not isinstance(ann.slice, ast.Tuple) else ann.slice.elts[0]
 
-    # T | None / None | T / Union[T, None]
+    # T | None / None | T / Union[T, None] / measurable multi-arm unions
     union_elts = _union_elts(ann)
     if union_elts is not None:
         non_none = []
@@ -692,9 +815,23 @@ def _annotation_type(
                 nullable = True
             else:
                 non_none.append(el)
-        if len(non_none) != 1:
-            return None, False, "unsupported union (only T|None supported)"
-        core = non_none[0]
+        if len(non_none) == 0:
+            return None, False, "unsupported union (None-only)"
+        if len(non_none) == 1:
+            core = non_none[0]
+            return _core_type(core, mod, modules, models, nullable)
+        variants: list[dict] = []
+        for el in non_none:
+            arm, n2, err = _annotation_type(el, mod, modules, models)
+            if err:
+                return None, False, f"unsupported union arm: {err}"
+            assert arm is not None
+            if n2:
+                arm = dict(arm)
+                arm["nullable"] = True
+            variants.append(arm)
+        schema: dict[str, Any] = {"kind": "union", "variants": variants}
+        return schema, nullable, None
 
     return _core_type(core, mod, modules, models, nullable)
 
@@ -718,6 +855,24 @@ def _core_type(
             item["nullable"] = True
         return {"kind": "array", "items": item}, nullable, None
 
+    # tuple[T, U, ...]
+    if isinstance(core, ast.Subscript) and _name_of(core.value) in ("tuple", "Tuple"):
+        sl = core.slice
+        elts = list(sl.elts) if isinstance(sl, ast.Tuple) else [sl]
+        if any(isinstance(el, ast.Constant) and el.value is Ellipsis for el in elts):
+            return None, False, "variable-length tuple unsupported"
+        items: list[dict] = []
+        for el in elts:
+            arm, n2, err = _annotation_type(el, mod, modules, models)
+            if err:
+                return None, False, err
+            assert arm is not None
+            if n2:
+                arm = dict(arm)
+                arm["nullable"] = True
+            items.append(arm)
+        return {"kind": "tuple", "items": items}, nullable, None
+
     # dict / Dict — open object
     if isinstance(core, ast.Name) and core.id in ("dict", "Dict"):
         return {"kind": "object", "properties": {}, "required": [], "open": True}, nullable, None
@@ -730,21 +885,28 @@ def _core_type(
         sl = core.slice
         elts = sl.elts if isinstance(sl, ast.Tuple) else [sl]
         for el in elts:
-            if isinstance(el, ast.Constant) and isinstance(el.value, (str, int, bool)) or (
-                isinstance(el, ast.Constant) and el.value is None
+            if isinstance(el, ast.Constant) and (
+                isinstance(el.value, (str, int, float, bool)) or el.value is None
             ):
+                # bool is a subclass of int; keep as-is (True/False are valid Literal members).
                 vals.append(el.value)
             else:
                 return None, False, "non-literal Literal member"
         return {"kind": "enum", "values": vals}, nullable, None
 
-    # Name → scalar / alias / model ref
+    # Name → scalar / alias / model ref / enum / datetime
     if isinstance(core, ast.Name):
         prim = {"str": "string", "int": "integer", "float": "number", "bool": "boolean"}
         if core.id in prim:
             return {"kind": prim[core.id]}, nullable, None
+        if core.id in mod.datetime_names or core.id == "datetime":
+            # Only treat bare `datetime` as date when it is the imported name (or builtin alias).
+            if core.id in mod.datetime_names:
+                return {"kind": "date"}, nullable, None
         if core.id in mod.literal_aliases:
             return {"kind": "enum", "values": list(mod.literal_aliases[core.id])}, nullable, None
+        if core.id in mod.enum_aliases:
+            return {"kind": "enum", "values": list(mod.enum_aliases[core.id])}, nullable, None
         # same-module model
         if (mod.path, core.id) in models:
             return {"kind": "ref", "name": core.id, "path": mod.path}, nullable, None
@@ -756,11 +918,24 @@ def _core_type(
         if kind == "literal_alias":
             vals = modules[rpath].literal_aliases[rname]
             return {"kind": "enum", "values": list(vals)}, nullable, None
+        if kind == "enum_alias":
+            vals = modules[rpath].enum_aliases[rname]
+            return {"kind": "enum", "values": list(vals)}, nullable, None
         if kind == "model":
             return {"kind": "ref", "name": rname, "path": rpath}, nullable, None
+        if kind == "datetime":
+            return {"kind": "date"}, nullable, None
         return None, False, f"unsupported resolved kind for {core.id}"
 
     if isinstance(core, ast.Attribute):
+        # datetime.datetime
+        if (
+            isinstance(core.value, ast.Name)
+            and core.attr == "datetime"
+            and core.value.id in mod.imports
+            and mod.imports[core.value.id][0] in ("datetime",)
+        ):
+            return {"kind": "date"}, nullable, None
         return None, False, f"unsupported attribute type {_name_of(core)}"
 
     return None, False, f"unsupported annotation {type(core).__name__}"
@@ -774,18 +949,26 @@ def _resolve_name(
 ) -> tuple[str, str, str] | None:
     if name in mod.literal_aliases:
         return mod.path, name, "literal_alias"
+    if name in mod.enum_aliases:
+        return mod.path, name, "enum_alias"
+    if name in mod.datetime_names:
+        return mod.path, name, "datetime"
     if (mod.path, name) in models:
         return mod.path, name, "model"
     imp = mod.imports.get(name)
     if not imp:
         return None
     spec, imported = imp
+    if spec == "datetime" and imported == "datetime":
+        return mod.path, name, "datetime"
     # map module spec → path among scanned modules
     target_paths = _module_spec_to_paths(spec, modules)
     for tpath in target_paths:
         tmod = modules[tpath]
         if imported in tmod.literal_aliases:
             return tpath, imported, "literal_alias"
+        if imported in tmod.enum_aliases:
+            return tpath, imported, "enum_alias"
         if (tpath, imported) in models:
             return tpath, imported, "model"
         # re-export: imported local may itself be an import in target — one hop
@@ -837,6 +1020,87 @@ def _is_none_type(n: ast.AST) -> bool:
 
 def _is_pydantic_module(spec: str) -> bool:
     return spec == "pydantic" or spec.startswith("pydantic.")
+
+
+def _validator_record(
+    kind: str, dec: ast.AST, fn: ast.FunctionDef
+) -> tuple[_ValidatorRec | None, str | None]:
+    """Fingerprint a measured field_validator / model_validator decorator + body."""
+    fields: list[str] = []
+    mode: str | None = None
+    call = dec if isinstance(dec, ast.Call) else None
+    if call is None:
+        # Bare @model_validator without call is invalid in pydantic v2; refuse.
+        return None, f"{kind} decorator must be a call"
+    for arg in call.args:
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            fields.append(arg.value)
+        else:
+            return None, f"{kind} non-literal field name unsupported"
+    for kw in call.keywords:
+        if kw.arg == "mode":
+            if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
+                mode = kw.value.value
+            else:
+                return None, f"{kind} mode non-literal"
+        elif kw.arg is None:
+            return None, f"{kind} **kwargs unsupported"
+        else:
+            # check_fields etc. — refuse unknowns rather than silent drop
+            return None, f"{kind} keyword {kw.arg} unsupported"
+    if kind == "field_validator" and not fields:
+        return None, "field_validator requires at least one field name"
+    body_src = ast.dump(fn, annotate_fields=True, include_attributes=False)
+    digest = hashlib.sha256(body_src.encode("utf-8")).hexdigest()
+    return _ValidatorRec(kind=kind, fields=fields, mode=mode, body_sha256=digest), None
+
+
+def _extends_enum_base(
+    node: ast.ClassDef,
+    enum_base_names: set[str],
+    imports: dict[str, tuple[str, str]],
+) -> bool:
+    for b in node.bases:
+        if isinstance(b, ast.Name) and b.id in enum_base_names:
+            return True
+        if isinstance(b, ast.Attribute) and b.attr in ("Enum", "StrEnum", "IntEnum") and isinstance(
+            b.value, ast.Name
+        ):
+            imp = imports.get(b.value.id)
+            if imp and imp[0] == "enum":
+                return True
+    return False
+
+
+def _enum_member_values(node: ast.ClassDef) -> list[Any] | None:
+    """Return constant enum member values, or None when any member is non-literal."""
+    vals: list[Any] = []
+    for stmt in node.body:
+        if isinstance(stmt, ast.Assign):
+            if not all(isinstance(t, ast.Name) for t in stmt.targets):
+                return None
+            if isinstance(stmt.value, ast.Constant) and isinstance(
+                stmt.value.value, (str, int, bool)
+            ):
+                vals.append(stmt.value.value)
+            else:
+                return None
+        elif isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            if stmt.value is None:
+                return None
+            if isinstance(stmt.value, ast.Constant) and isinstance(
+                stmt.value.value, (str, int, bool)
+            ):
+                vals.append(stmt.value.value)
+            else:
+                return None
+        elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Pass)):
+            continue
+        elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+            continue  # docstring
+        else:
+            return None
+    return vals if vals else None
 
 
 def _extends_proven_basemodel(
