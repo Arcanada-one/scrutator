@@ -14,6 +14,8 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
+import time
 import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -32,6 +34,11 @@ canary_evidence = importlib.util.module_from_spec(_canary_spec)
 _canary_spec.loader.exec_module(canary_evidence)
 
 SCHEMA = "GitHubFullSuiteEvidence/v1"
+FULL_SUITE_SCOPE = "global_fallback_full_suite"
+ROOT_TYPECHECK_SCOPE = "root_tsconfig_typecheck"
+ROOT_TYPECHECK_ROW_ID = "v-type-check-root-tsconfig-ci"
+ROOT_TYPECHECK_ROW_COMMAND = "authenticated GitHub root tsconfig typecheck; no local replay"
+FULL_SUITE_ROW_ID_PREFIX = "v-global-fallback-test-"
 MAX_BYTES = 16 * 1024 * 1024
 PERSONAL_DEP = "crates/disk-personal"
 PERSONAL_CMD = ["python3", "../../scripts/full-test-group.py", "disk-personal"]
@@ -807,12 +814,26 @@ def receipt_errors(repo, head, repository, rows):
     """Admission reauthenticates an imported VERIFIED row; author JSON is not CI authority."""
     errors = []
     for row in rows:
+        if not isinstance(row, dict):
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: malformed imported full-suite row")
+            continue
         if row.get("measurement_origin") != "authenticated_github_ci":
             continue
-        if not any(v == "verified" for v in row.get("entity_verdicts", {}).values()):
+        # Classify authenticated rows before considering their entity verdicts. An
+        # unverified row still belongs to one typed validator and cannot disappear
+        # through the historical "nothing verified" fast path.
+        if (row.get("scope") == ROOT_TYPECHECK_SCOPE
+                and row.get("kind") == "type_check"):
+            continue
+        entity_verdicts = row.get("entity_verdicts")
+        if not isinstance(entity_verdicts, dict):
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: malformed imported full-suite row")
+            continue
+        if not any(v == "verified" for v in entity_verdicts.values()):
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: authenticated full-suite row has no verified entity")
             continue
         paths = row.get("ci_evidence", [])
-        if (row.get("scope") != "global_fallback_full_suite" or row.get("kind") != "targeted_test"
+        if (row.get("scope") != FULL_SUITE_SCOPE or row.get("kind") != "targeted_test"
                 or len(paths) != 1 or row.get("exit_code") != 0):
             errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: invalid imported full-suite row")
             continue
@@ -849,6 +870,17 @@ ROOT_TYPECHECK_WORKFLOW = ".github/workflows/ci.yml"
 ROOT_TYPECHECK_JOB = "main-package-tsc"
 ROOT_TYPECHECK_JOB_NAME = "Type-check main package"
 ROOT_TYPECHECK_COMMAND = ["pnpm", "exec", "tsc", "--noEmit"]
+# Bounded wait for the exact Auth CI run to complete; constants on purpose (not PR/env controlled).
+TYPECHECK_WAIT_CAP_S = 600
+TYPECHECK_WAIT_STEP_S = 10
+
+
+class _RunNotCompleted(Exception):
+    """The exact Auth CI run matches in every identity field but is not completed yet."""
+
+
+class _RunNotStarted(Exception):
+    """A complete listing has no current-head run yet; it may appear before the wait cap."""
 ROOT_TYPECHECK_STEP_COMMANDS = {
     "pnpm install --frozen-lockfile",
     "pnpm exec prisma generate",
@@ -1133,7 +1165,7 @@ def _write_typecheck_record(root, document, log_raw=None):
 
 
 def collect_root_typecheck(repo, repository, source, base, event_file, evidence_root, *, token=None,
-                           read_api=None):
+                           read_api=None, sleep=None, monotonic=None):
     """Collect only one exact completed Auth PR typecheck run. No run is ever started or retried."""
     root = _typecheck_record(repo, evidence_root)
     record = {"schema": ROOT_TYPECHECK_SCHEMA, "scope": "root_tsconfig_typecheck",
@@ -1162,39 +1194,84 @@ def collect_root_typecheck(repo, repository, source, base, event_file, evidence_
             raise ValueError("Auth pull_request branch identity unavailable")
         endpoint = ("repos/Arcanada-one/auth-arcana/actions/workflows/ci.yml/runs"
                     f"?event=pull_request&branch={quote(branch, safe='')}&per_page=100")
-        listing = json.loads(api(endpoint))
-        runs = listing.get("workflow_runs") if isinstance(listing, dict) else None
-        if (not isinstance(runs, list) or type(listing.get("total_count")) is not int
-                or listing["total_count"] != len(runs)):
-            raise ValueError("exact Auth PR run listing is incomplete or paginated; uniqueness is not established")
-        matches = [run for run in runs or [] if isinstance(run, dict)
-                   and run.get("path", "").split("@", 1)[0] == ROOT_TYPECHECK_WORKFLOW
-                   and run.get("event") == "pull_request"
-                   and any(isinstance(item, dict) and item.get("number") == pr["number"]
-                           and (item.get("head") or {}).get("sha") == source
-                           and (item.get("base") or {}).get("sha") == base
-                           for item in run.get("pull_requests", []))
-                   and run.get("head_sha") == source]
-        if len(matches) != 1:
-            raise ValueError("exact Auth PR has no unique associated ci.yml workflow run")
-        run = matches[0]
-        run_id, attempt = run.get("id"), run.get("run_attempt")
-        if type(run_id) is not int or run_id <= 0 or type(attempt) is not int or attempt <= 0:
-            raise ValueError("Auth CI run/current attempt identity is not a positive integer")
-        current_run = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/actions/runs/{run_id}"))
-        if (current_run.get("id") != run_id or current_run.get("run_attempt") != attempt
-                or current_run.get("event") != "pull_request"
-                or current_run.get("path", "").split("@", 1)[0] != ROOT_TYPECHECK_WORKFLOW
-                or current_run.get("head_sha") != run.get("head_sha")
-                or current_run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
-                or current_run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
-                or current_run.get("status") != "completed"):
-            raise ValueError("Auth CI run detail does not confirm the exact current completed attempt")
-        if (run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
-                or run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO):
-            raise ValueError("Auth CI run repository identity is not canonical same-repository PR")
-        if run.get("status") != "completed":
-            raise ValueError("exact Auth CI run is not completed; no wait or retry was started")
+
+        def resolve_run():
+            """One read of the exact run. A complete listing with only older runs may be transient;
+            contradictory claims about the current head and non-unique exact matches refuse at once."""
+            listing = json.loads(api(endpoint))
+            runs = listing.get("workflow_runs") if isinstance(listing, dict) else None
+            if (not isinstance(runs, list) or type(listing.get("total_count")) is not int
+                    or listing["total_count"] != len(runs)):
+                raise ValueError("exact Auth PR run listing is incomplete or paginated; uniqueness is not established")
+            if any(not isinstance(run, dict)
+                   or not isinstance(run.get("path"), str)
+                   or not isinstance(run.get("event"), str)
+                   or not re.fullmatch(r"[0-9a-f]{40}", run.get("head_sha", ""))
+                   or not isinstance(run.get("pull_requests"), list)
+                   for run in runs):
+                raise ValueError("exact Auth PR run listing contains a malformed workflow run")
+            matches = [run for run in runs or [] if isinstance(run, dict)
+                       and run.get("path", "").split("@", 1)[0] == ROOT_TYPECHECK_WORKFLOW
+                       and run.get("event") == "pull_request"
+                       and any(isinstance(item, dict) and item.get("number") == pr["number"]
+                               and (item.get("head") or {}).get("sha") == source
+                               and (item.get("base") or {}).get("sha") == base
+                               for item in run.get("pull_requests", []))
+                       and run.get("head_sha") == source]
+            if len(matches) > 1:
+                raise ValueError("exact Auth PR has duplicate associated ci.yml workflow runs")
+            if not matches:
+                # GitHub's branch-scoped listing may associate an older run with the PR's
+                # mutable current head in pull_requests[]. The run's immutable head_sha is the
+                # identity of the execution: only that field can make a no-match row a
+                # contradictory current-head run instead of a historical run that may be followed
+                # by the exact run during the bounded wait.
+                claims_current_head = any(run.get("head_sha") == source for run in runs)
+                if claims_current_head:
+                    raise ValueError("Auth CI current-head run has contradictory workflow, PR, or repository identity")
+                raise _RunNotStarted()
+            run = matches[0]
+            run_id, attempt = run.get("id"), run.get("run_attempt")
+            if type(run_id) is not int or run_id <= 0 or type(attempt) is not int or attempt <= 0:
+                raise ValueError("Auth CI run/current attempt identity is not a positive integer")
+            current_run = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/actions/runs/{run_id}"))
+            if (current_run.get("id") != run_id or current_run.get("run_attempt") != attempt
+                    or current_run.get("event") != "pull_request"
+                    or current_run.get("path", "").split("@", 1)[0] != ROOT_TYPECHECK_WORKFLOW
+                    or current_run.get("head_sha") != run.get("head_sha")
+                    or current_run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
+                    or current_run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO):
+                raise ValueError("Auth CI run detail does not confirm the exact current attempt")
+            if (run.get("repository", {}).get("full_name") != ROOT_TYPECHECK_REPO
+                    or run.get("head_repository", {}).get("full_name") != ROOT_TYPECHECK_REPO):
+                raise ValueError("Auth CI run repository identity is not canonical same-repository PR")
+            if current_run.get("status") != "completed" or run.get("status") != "completed":
+                raise _RunNotCompleted()
+            return run, current_run, run_id, attempt
+
+        # Bounded wait for the exact run to complete (GATE-FINDING-ci-attempt-race). The caps are module
+        # constants, never read from the PR, the event or the environment. Only reads; nothing is started.
+        clock = monotonic or time.monotonic
+        pause = sleep or time.sleep
+        deadline = clock() + TYPECHECK_WAIT_CAP_S
+        started, polls = clock(), 0
+        while True:
+            polls += 1
+            try:
+                run, current_run, run_id, attempt = resolve_run()
+                break
+            except (_RunNotStarted, _RunNotCompleted) as pending:
+                if clock() >= deadline:
+                    print(f"TYPECHECK_WAIT polls={polls} waited_s={int(clock() - started)} result=timeout",
+                          file=sys.stderr)
+                    if isinstance(pending, _RunNotStarted):
+                        raise ValueError(f"Auth CI run did not appear within {TYPECHECK_WAIT_CAP_S} s; "
+                                         "bounded wait ended")
+                    raise ValueError(f"Auth CI run did not complete within {TYPECHECK_WAIT_CAP_S} s; "
+                                     "bounded wait ended")
+                pause(TYPECHECK_WAIT_STEP_S)
+        print(f"TYPECHECK_WAIT polls={polls} waited_s={int(clock() - started)} result=completed",
+              file=sys.stderr)
         job_list = json.loads(api(f"repos/{ROOT_TYPECHECK_REPO}/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"))
         jobs = job_list.get("jobs") if isinstance(job_list, dict) else None
         if (not isinstance(jobs, list) or type(job_list.get("total_count")) is not int
@@ -1433,6 +1510,9 @@ def root_typecheck_receipt_errors(repo, base, head, repository, rows, evidence_r
     for row in rows:
         if not isinstance(row, dict):
             continue
+        if (row.get("scope") == "global_fallback_full_suite"
+                and row.get("kind") == "targeted_test"):
+            continue
         ci_evidence = row.get("ci_evidence")
         typed_evidence = (
             isinstance(ci_evidence, str) and ci_evidence.startswith("ci-typecheck/")
@@ -1440,14 +1520,14 @@ def root_typecheck_receipt_errors(repo, base, head, repository, rows, evidence_r
             isinstance(ci_evidence, list)
             and any(isinstance(path, str) and path.startswith("ci-typecheck/") for path in ci_evidence)
         )
-        if (row.get("id") == "v-type-check-root-tsconfig-ci"
-                or row.get("command") == "authenticated GitHub root tsconfig typecheck; no local replay"
-                or row.get("scope") == "root_tsconfig_typecheck"
+        if (row.get("id") == ROOT_TYPECHECK_ROW_ID
+                or row.get("command") == ROOT_TYPECHECK_ROW_COMMAND
+                or row.get("scope") == ROOT_TYPECHECK_SCOPE
                 or row.get("measurement_origin") == "authenticated_github_ci"
                 or typed_evidence):
             relevant.append(row)
     for row in relevant:
-        if row.get("scope") != "root_tsconfig_typecheck" or row.get("kind") != "type_check":
+        if row.get("scope") != ROOT_TYPECHECK_SCOPE or row.get("kind") != "type_check":
             errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: imported CI row has an unknown type/scope")
             continue
         entity_verdicts = row.get("entity_verdicts")
@@ -1458,8 +1538,8 @@ def root_typecheck_receipt_errors(repo, base, head, repository, rows, evidence_r
             continue
         claimed = entity_verdicts["deployable_unit:."]
         expected_exit = {"verified": 0, "failed": 1, "not_measured": 125}.get(claimed)
-        if (row.get("id") != "v-type-check-root-tsconfig-ci"
-                or row.get("command") != "authenticated GitHub root tsconfig typecheck; no local replay"
+        if (row.get("id") != ROOT_TYPECHECK_ROW_ID
+                or row.get("command") != ROOT_TYPECHECK_ROW_COMMAND
                 or type(row.get("exit_code")) is not int or row.get("exit_code") != expected_exit
                 or row.get("process_pid") != "NOT_RETAINED"
                 or row.get("numeric_process_exit") != "NOT_RETAINED"
@@ -1482,6 +1562,72 @@ def root_typecheck_receipt_errors(repo, base, head, repository, rows, evidence_r
                 errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: source commit projection differs")
         except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
             errors.append("TYPECHECK_CI_EVIDENCE_UNVERIFIABLE: authenticated record missing")
+    return errors
+
+
+def authenticated_ci_receipt_errors(repo, base, head, repository, rows, evidence_root, *, token=None):
+    """Route each authenticated CI row once by exact scope/kind; refuse unknown or conflicting rows."""
+    if not isinstance(rows, list):
+        return ["FULL_CI_EVIDENCE_UNVERIFIABLE: malformed authenticated CI verifier rows"]
+    errors = []
+    seen_ids = set()
+    seen_scope_kinds = set()
+    seen_run_attempts = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: malformed imported authenticated CI row")
+            continue
+        if row.get("measurement_origin") != "authenticated_github_ci":
+            continue
+        row_id = row.get("id")
+        if not isinstance(row_id, str) or not row_id:
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: authenticated CI row identity is missing")
+            continue
+        if row_id in seen_ids:
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: duplicate authenticated CI verifier row")
+            continue
+        seen_ids.add(row_id)
+
+        scope_kind = (row.get("scope"), row.get("kind"))
+        if scope_kind in seen_scope_kinds:
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: duplicate authenticated CI scope/kind row")
+            continue
+        seen_scope_kinds.add(scope_kind)
+        run_id = row.get("ci_run_id", row.get("run_id"))
+        attempt = row.get("ci_run_attempt", row.get("run_attempt"))
+        if run_id is not None or attempt is not None:
+            if type(run_id) is not int or run_id <= 0 or type(attempt) is not int or attempt <= 0:
+                errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: malformed authenticated CI run/attempt identity")
+                continue
+            run_attempt = (run_id, attempt)
+            if run_attempt in seen_run_attempts:
+                errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: duplicate authenticated CI run/attempt identity")
+                continue
+            seen_run_attempts.add(run_attempt)
+
+        ci_evidence = row.get("ci_evidence")
+        evidence_paths = ([ci_evidence] if isinstance(ci_evidence, str) else
+                          ci_evidence if isinstance(ci_evidence, list) else [])
+        typed_identity = (
+            row_id == ROOT_TYPECHECK_ROW_ID
+            or row.get("command") == ROOT_TYPECHECK_ROW_COMMAND
+            or any(isinstance(path, str) and path.startswith("ci-typecheck/") for path in evidence_paths)
+        )
+        full_suite_identity = row_id.startswith(FULL_SUITE_ROW_ID_PREFIX)
+
+        if scope_kind == (ROOT_TYPECHECK_SCOPE, "type_check"):
+            if full_suite_identity:
+                errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: authenticated CI identity conflicts with scope/kind")
+                continue
+            errors.extend(root_typecheck_receipt_errors(
+                repo, base, head, ROOT_TYPECHECK_REPO, [row], evidence_root, token=token))
+        elif scope_kind == (FULL_SUITE_SCOPE, "targeted_test"):
+            if typed_identity or not full_suite_identity:
+                errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: authenticated CI identity conflicts with scope/kind")
+                continue
+            errors.extend(receipt_errors(repo, head, repository, [row]))
+        else:
+            errors.append("FULL_CI_EVIDENCE_UNVERIFIABLE: unrecognized authenticated CI scope/kind")
     return errors
 
 

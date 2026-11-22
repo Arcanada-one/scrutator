@@ -51,7 +51,7 @@ jobs:
     # "workflow file issue", with no job and no retrievable annotation. A hole, not a solved problem.
     uses: ./.github/workflows/graph-admission.yml
     with:
-      program_ref: "cdbf3b4e4920a68f08136dca510a0b0c8d2dbec5"
+      program_ref: "4dbf8a682d94ef43a174051f58c9aa8a1b6ba5a6"
       # Signed graph-admission.yml cannot change runs-on defaults (BUNDLE_ACTIVE_WORKFLOW_BYTES_MISMATCH).
       # Pass a single self-hosted label via caller input instead.
       runs_on: "ci-general"

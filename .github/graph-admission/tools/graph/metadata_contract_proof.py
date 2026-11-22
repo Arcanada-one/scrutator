@@ -22,6 +22,7 @@ EXPECTED_NODE_RUNTIMES = {
     "v24.20.0": "89af8424dd53e560b1933f87ba650d8bf57c83ca5a04600eefb31f416aabbae7",
     "v24.21.0": "7fde7b8afa198da66257f42ee2001d874c7355631e6d1579a5fb5ef1f246df4c",
     "v24.22.1": "e32e2d16081cf644f88392934288086e7662529d0d43277c34f7aad2207cfafb",
+    "v26.13.0": "0adde40d1b7dfa57c8bc83cbc319758c3ec6ebba21363bb2fa752ea6b267ad1b",
 }
 OBSERVER = Path(__file__).with_name("metadata_contract_observer.cjs")
 TARGET_SOURCE_FILES = ("apps/api/src/auth/agent-scope.decorator.ts",
