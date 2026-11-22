@@ -5,8 +5,9 @@
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
   "verdict": "admitted"
  },
- "captured_at_utc": "2026-11-22T16:24:27Z",
+ "captured_at_utc": "2026-11-22T16:51:36Z",
  "change_set": {
+  "base": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d",
   "files": [
    {
     "kind": "config",
@@ -15,12 +16,22 @@
     "uncovered": true
    },
    {
+    "kind": "receipt",
+    "node_id": "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+    "node_ids": [
+     "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json"
+    ],
+    "path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+    "status": "A"
+   },
+   {
     "kind": "lockfile",
     "path": "requirements-dev.txt",
     "status": "M"
    }
   ],
-  "mode": "worktree"
+  "head": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
  "exemptions": [],
@@ -28,8 +39,22 @@
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:ae87b26ecfdf104f7b6ff2006a0dc3fc2411ae33bdeae8db5c4a87e0c0ef8843",
-  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-initial/graph-d08e14f2f0ef.json",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/graph-d08e14f2f0ef.json",
   "source_commit": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d"
+ },
+ "head_graph": {
+  "builder_version": "1.0.7",
+  "built_at_utc": "2026-09-05T00:00:00Z",
+  "graph_digest": "sha256:ba01e8b806a1c783b67d0b972be160be7df92b32a50eb7f70e2e7cbbfd33fecf",
+  "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/graph-head-cdf01f8b768d.json",
+  "source_commit": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "staleness": {
+   "checked_at_utc": "2026-11-22T16:52:24Z",
+   "checked_nodes": 415,
+   "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+   "mismatched_nodes": [],
+   "verdict": "fresh"
+  }
  },
  "host": "arcana-devs",
  "impact_set": {
@@ -48,6 +73,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -63,6 +92,10 @@
       "to": "code_unit:.github/graph-admission/tools/ci/stage_userpath.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -80,6 +113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -95,6 +132,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/build_graph.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -112,6 +153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -127,6 +172,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/ci_gate.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -144,6 +193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -159,6 +212,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/contract_diff.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -176,6 +233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -191,6 +252,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/environment_obligations.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -208,6 +273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -223,6 +292,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/full_suite_ci.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -240,6 +313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -255,6 +332,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/impact.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -272,6 +353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -287,6 +372,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/inline_nest_harness.cjs",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -304,6 +393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -319,6 +412,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/metadata_contract_proof.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -336,6 +433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -351,6 +452,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/nest_bootstrap.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -368,6 +473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -383,6 +492,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/origin_association.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -400,6 +513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -415,6 +532,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/python_contracts.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -432,6 +553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -447,6 +572,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/readiness_check.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -464,6 +593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -479,6 +612,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/schema_check.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -496,6 +633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -511,6 +652,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/selected_dependency_fitness.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -528,6 +673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -543,6 +692,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/selected_dependency_runner.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -560,6 +713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -575,6 +732,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/shell_workflow.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -592,6 +753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -607,6 +772,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/sshsig.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -624,6 +793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -639,6 +812,10 @@
       "to": "code_unit:.github/graph-admission/tools/graph/verify.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -656,6 +833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -671,6 +852,10 @@
       "to": "code_unit:.github/workflows/benchmark-scrutator.yml",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -688,6 +873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -703,6 +892,10 @@
       "to": "code_unit:.github/workflows/dependabot-auto-merge.yml",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -720,6 +913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -735,6 +932,10 @@
       "to": "code_unit:.github/workflows/deploy.yml",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -752,6 +953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -767,6 +972,10 @@
       "to": "code_unit:.github/workflows/graph-admission-call.yml",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -784,6 +993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -799,6 +1012,10 @@
       "to": "code_unit:.github/workflows/recall-regression.yml",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -816,6 +1033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -831,6 +1052,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/benchmarks/bench_classification.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -848,6 +1073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -863,6 +1092,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/benchmarks/bench_ner.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -880,6 +1113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -895,6 +1132,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/benchmarks/bench_reranking.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -912,6 +1153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -927,6 +1172,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/scripts/01_sample_corpus.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -944,6 +1193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -959,6 +1212,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/utils/__init__.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -976,6 +1233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -991,6 +1252,10 @@
       "to": "code_unit:benchmark/ml-vs-llm/utils/metrics.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1008,6 +1273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1023,6 +1292,10 @@
       "to": "code_unit:benchmark/recall-gate/recall_gate.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1040,6 +1313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1055,6 +1332,10 @@
       "to": "code_unit:benchmark/recall-gate/tests/test_recall_gate.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1072,6 +1353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1087,6 +1372,10 @@
       "to": "code_unit:benchmark/scrutator/harness.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1104,6 +1393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1119,6 +1412,10 @@
       "to": "code_unit:benchmark/scrutator/live/run_rerank_gate.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1136,6 +1433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1151,6 +1452,10 @@
       "to": "code_unit:benchmark/scrutator/measure.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1168,6 +1473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1183,6 +1492,10 @@
       "to": "code_unit:benchmark/scrutator/tests/conftest.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1200,6 +1513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1215,6 +1532,10 @@
       "to": "code_unit:benchmark/scrutator/tests/test_harness.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1232,6 +1553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1247,6 +1572,10 @@
       "to": "code_unit:benchmark/scrutator/tests/test_live_wrapper_contract.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1264,6 +1593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1279,6 +1612,10 @@
       "to": "code_unit:benchmark/scrutator/tools/generate_candidates.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1296,6 +1633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1311,6 +1652,10 @@
       "to": "code_unit:contracts/http/scrutator-http.contract.ts",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1328,6 +1673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1343,6 +1692,10 @@
       "to": "code_unit:deploy/ltm-reflect-run.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1360,6 +1713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1375,6 +1732,10 @@
       "to": "code_unit:deploy/muneral-kb-sync-run.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1392,6 +1753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1407,6 +1772,10 @@
       "to": "code_unit:deploy/scrutator-deploy-transaction.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1424,6 +1793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1439,6 +1812,10 @@
       "to": "code_unit:scripts/a2-308-scope-mutation.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1456,6 +1833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1471,6 +1852,10 @@
       "to": "code_unit:scripts/backfill_evidence_exact_bytes.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1488,6 +1873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1503,6 +1892,10 @@
       "to": "code_unit:scripts/bootstrap_kc_corpus_namespace.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1520,6 +1913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1535,6 +1932,10 @@
       "to": "code_unit:scripts/ci/runner-broker-preflight.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1552,6 +1953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1567,6 +1972,10 @@
       "to": "code_unit:scripts/fi10_namespace_readback.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1584,6 +1993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1599,6 +2012,10 @@
       "to": "code_unit:scripts/graph-full-suite.sh",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1616,6 +2033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1631,6 +2052,10 @@
       "to": "code_unit:scripts/smoke_structured_graph_provenance.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1648,6 +2073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1663,6 +2092,10 @@
       "to": "code_unit:src/scrutator/access_log.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1680,6 +2113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1695,6 +2132,10 @@
       "to": "code_unit:src/scrutator/auth/capabilities.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1712,6 +2153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1727,6 +2172,10 @@
       "to": "code_unit:src/scrutator/auth/models.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1744,6 +2193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1759,6 +2212,10 @@
       "to": "code_unit:src/scrutator/auth/verifier.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1776,6 +2233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1791,6 +2252,10 @@
       "to": "code_unit:src/scrutator/chunker/__init__.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1808,6 +2273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1823,6 +2292,10 @@
       "to": "code_unit:src/scrutator/chunker/metadata.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1840,6 +2313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1855,6 +2332,10 @@
       "to": "code_unit:src/scrutator/chunker/splitters.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1872,6 +2353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1887,6 +2372,10 @@
       "to": "code_unit:src/scrutator/config.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1904,6 +2393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1919,6 +2412,10 @@
       "to": "code_unit:src/scrutator/db/connection.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1936,6 +2433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1951,6 +2452,10 @@
       "to": "code_unit:src/scrutator/db/kc_generations.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -1968,6 +2473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -1983,6 +2492,10 @@
       "to": "code_unit:src/scrutator/db/repository.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2000,6 +2513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2015,6 +2532,10 @@
       "to": "code_unit:src/scrutator/dream/analyzer.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2032,6 +2553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2047,6 +2572,10 @@
       "to": "code_unit:src/scrutator/dream/models.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2064,6 +2593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2079,6 +2612,10 @@
       "to": "code_unit:src/scrutator/fi10/harness.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2096,6 +2633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2111,6 +2652,10 @@
       "to": "code_unit:src/scrutator/fi10/readback.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2128,6 +2673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2143,6 +2692,10 @@
       "to": "code_unit:src/scrutator/fi10/withdrawal.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2160,6 +2713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2175,6 +2732,10 @@
       "to": "code_unit:src/scrutator/kc_router.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2192,6 +2753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2207,6 +2772,10 @@
       "to": "code_unit:src/scrutator/ltm/grouping.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2224,6 +2793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2239,6 +2812,10 @@
       "to": "code_unit:src/scrutator/ltm/models.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2256,6 +2833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2271,6 +2852,10 @@
       "to": "code_unit:src/scrutator/ltm/prompts.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2288,6 +2873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2303,6 +2892,10 @@
       "to": "code_unit:src/scrutator/ltm/reflect_runner.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2320,6 +2913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2335,6 +2932,10 @@
       "to": "code_unit:src/scrutator/ltm/temporal.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2352,6 +2953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2367,6 +2972,10 @@
       "to": "code_unit:src/scrutator/memory/models.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2384,6 +2993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2399,6 +3012,10 @@
       "to": "code_unit:src/scrutator/request_limits.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2416,6 +3033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2431,6 +3052,10 @@
       "to": "code_unit:src/scrutator/search/__init__.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2448,6 +3073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2463,6 +3092,10 @@
       "to": "code_unit:src/scrutator/search/fetcher.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2480,6 +3113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2495,6 +3132,10 @@
       "to": "code_unit:src/scrutator/search/ingest_safety.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2512,6 +3153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2527,6 +3172,10 @@
       "to": "code_unit:src/scrutator/search/reranker.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2544,6 +3193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2559,6 +3212,10 @@
       "to": "code_unit:src/scrutator/search/skill_promotions.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2576,6 +3233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2591,6 +3252,10 @@
       "to": "code_unit:src/scrutator/tools/access_report.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2608,6 +3273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2623,6 +3292,10 @@
       "to": "code_unit:src/scrutator/tools/known_fix_retriever.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2640,6 +3313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2655,6 +3332,10 @@
       "to": "code_unit:src/scrutator/tools/ltm_provenance_repair.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2672,6 +3353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2687,6 +3372,10 @@
       "to": "code_unit:tests/ac5_model/__init__.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2704,6 +3393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2719,6 +3412,10 @@
       "to": "code_unit:tests/ac5_model/generation_model.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2736,6 +3433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2751,6 +3452,10 @@
       "to": "code_unit:tests/ac5_model/test_generation_closure_model.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2768,6 +3473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2783,6 +3492,10 @@
       "to": "code_unit:tests/helpers/capability_projection_server.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2800,6 +3513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2815,6 +3532,10 @@
       "to": "code_unit:tests/kc_generations/helpers.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2832,6 +3553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2847,6 +3572,10 @@
       "to": "code_unit:tests/kc_generations/test_read_isolation_and_retention.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2864,6 +3593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2879,6 +3612,10 @@
       "to": "code_unit:tests/kc_generations/test_seal_and_selection.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2896,6 +3633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2911,6 +3652,10 @@
       "to": "code_unit:tests/security/conftest.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2928,6 +3673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2943,6 +3692,10 @@
       "to": "code_unit:tests/security/test_auth_enforced.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2960,6 +3713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -2975,6 +3732,10 @@
       "to": "code_unit:tests/security/test_ci_timer_quiescence.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -2992,6 +3753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3007,6 +3772,10 @@
       "to": "code_unit:tests/security/test_deploy_surface_real_git.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3024,6 +3793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3039,6 +3812,10 @@
       "to": "code_unit:tests/security/test_enumeration_scoped.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3056,6 +3833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3071,6 +3852,10 @@
       "to": "code_unit:tests/security/test_fetch_opaque_id.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3088,6 +3873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3103,6 +3892,10 @@
       "to": "code_unit:tests/security/test_fetch_skills_byte_exact.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3120,6 +3913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3135,6 +3932,10 @@
       "to": "code_unit:tests/security/test_machine_capability_auth.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3152,6 +3953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3167,6 +3972,10 @@
       "to": "code_unit:tests/security/test_project_write_adapter.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3184,6 +3993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3199,6 +4012,10 @@
       "to": "code_unit:tests/security/test_route_scope_enforcement.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3216,6 +4033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3231,6 +4052,10 @@
       "to": "code_unit:tests/security/test_tenant_mutation_scope.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3248,6 +4073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3263,6 +4092,10 @@
       "to": "code_unit:tests/test_auth_dependency.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3280,6 +4113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3295,6 +4132,10 @@
       "to": "code_unit:tests/test_auth_models.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3312,6 +4153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3327,6 +4172,10 @@
       "to": "code_unit:tests/test_auth_verifier.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3344,6 +4193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3359,6 +4212,10 @@
       "to": "code_unit:tests/test_backfill_doc_content_hash.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3376,6 +4233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3391,6 +4252,10 @@
       "to": "code_unit:tests/test_backfill_ltm_temper.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3408,6 +4273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3423,6 +4292,10 @@
       "to": "code_unit:tests/test_bootstrap_kc_corpus_namespace.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3440,6 +4313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3455,6 +4332,10 @@
       "to": "code_unit:tests/test_canary_plan.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3472,6 +4353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3487,6 +4372,10 @@
       "to": "code_unit:tests/test_capability_projection.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3504,6 +4393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3519,6 +4412,10 @@
       "to": "code_unit:tests/test_chunker.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3536,6 +4433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3551,6 +4452,10 @@
       "to": "code_unit:tests/test_connection_acquire_scoped.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3568,6 +4473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3583,6 +4492,10 @@
       "to": "code_unit:tests/test_delete_source.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3600,6 +4513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3615,6 +4532,10 @@
       "to": "code_unit:tests/test_deploy_canary_wiring.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3632,6 +4553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3647,6 +4572,10 @@
       "to": "code_unit:tests/test_deploy_preflight_target_host.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3664,6 +4593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3679,6 +4612,10 @@
       "to": "code_unit:tests/test_edges_by_path.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3696,6 +4633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3711,6 +4652,10 @@
       "to": "code_unit:tests/test_embedder_paging.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3728,6 +4673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3743,6 +4692,10 @@
       "to": "code_unit:tests/test_evidence_documents_integration.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3760,6 +4713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3775,6 +4732,10 @@
       "to": "code_unit:tests/test_evidence_exact_population.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3792,6 +4753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3807,6 +4772,10 @@
       "to": "code_unit:tests/test_evidence_population_integration.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3824,6 +4793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3839,6 +4812,10 @@
       "to": "code_unit:tests/test_exact_evidence_route_auth.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3856,6 +4833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3871,6 +4852,10 @@
       "to": "code_unit:tests/test_fetch.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3888,6 +4873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3903,6 +4892,10 @@
       "to": "code_unit:tests/test_fetch_range.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3920,6 +4913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3935,6 +4932,10 @@
       "to": "code_unit:tests/test_grant_namespace.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3952,6 +4953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3967,6 +4972,10 @@
       "to": "code_unit:tests/test_graph_full_suite_wrapper.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -3984,6 +4993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -3999,6 +5012,10 @@
       "to": "code_unit:tests/test_http_contract.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4016,6 +5033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4031,6 +5052,10 @@
       "to": "code_unit:tests/test_index_batch_atomic.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4048,6 +5073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4063,6 +5092,10 @@
       "to": "code_unit:tests/test_index_writer_auth.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4080,6 +5113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4095,6 +5132,10 @@
       "to": "code_unit:tests/test_kc2_fetch_exactness.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4112,6 +5153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4127,6 +5172,10 @@
       "to": "code_unit:tests/test_kc_corpus_profile.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4144,6 +5193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4159,6 +5212,10 @@
       "to": "code_unit:tests/test_known_fix_retriever.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4176,6 +5233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4191,6 +5252,10 @@
       "to": "code_unit:tests/test_ltm_entity_source_backfill.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4208,6 +5273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4223,6 +5292,10 @@
       "to": "code_unit:tests/test_ltm_llm.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4240,6 +5313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4255,6 +5332,10 @@
       "to": "code_unit:tests/test_ltm_pipeline.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4272,6 +5353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4287,6 +5372,10 @@
       "to": "code_unit:tests/test_ltm_provenance_repair.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4304,6 +5393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4319,6 +5412,10 @@
       "to": "code_unit:tests/test_ltm_reflect.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4336,6 +5433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4351,6 +5452,10 @@
       "to": "code_unit:tests/test_ltm_router.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4368,6 +5473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4383,6 +5492,10 @@
       "to": "code_unit:tests/test_ltm_structured_ingest.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4400,6 +5513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4415,6 +5532,10 @@
       "to": "code_unit:tests/test_ltm_temporal_integration.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4432,6 +5553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4447,6 +5572,10 @@
       "to": "code_unit:tests/test_memory.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4464,6 +5593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4479,6 +5612,10 @@
       "to": "code_unit:tests/test_muneral_sync.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4496,6 +5633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4511,6 +5652,10 @@
       "to": "code_unit:tests/test_muneral_sync_sql.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4528,6 +5673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4543,6 +5692,10 @@
       "to": "code_unit:tests/test_path_param_parsing.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4560,6 +5713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4575,6 +5732,10 @@
       "to": "code_unit:tests/test_relationship_graph_provenance_passthrough.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4592,6 +5753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4607,6 +5772,10 @@
       "to": "code_unit:tests/test_repository_deterministic_ordering.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4624,6 +5793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4639,6 +5812,10 @@
       "to": "code_unit:tests/test_repository_tenant_scoping.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4656,6 +5833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4671,6 +5852,10 @@
       "to": "code_unit:tests/test_reranker.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4688,6 +5873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4703,6 +5892,10 @@
       "to": "code_unit:tests/test_self_improvement_feeder_scope.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4720,6 +5913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4735,6 +5932,10 @@
       "to": "code_unit:tests/test_skill_maturity_contract.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4752,6 +5953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4767,6 +5972,10 @@
       "to": "code_unit:tests/test_source_documents_integration.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4784,6 +5993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4799,6 +6012,10 @@
       "to": "code_unit:tools/__init__.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4816,6 +6033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4831,6 +6052,10 @@
       "to": "code_unit:tools/backfill_sections.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4848,6 +6073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4863,6 +6092,10 @@
       "to": "code_unit:tools/gen_canary_plan.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4880,6 +6113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4895,6 +6132,10 @@
       "to": "code_unit:tools/kc_generation_mutation_check.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4912,6 +6153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4927,6 +6172,10 @@
       "to": "code_unit:tools/muneral_sync/cli.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4944,6 +6193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4959,6 +6212,10 @@
       "to": "code_unit:tools/muneral_sync/graph.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -4976,6 +6233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -4991,6 +6252,10 @@
       "to": "code_unit:tools/muneral_sync/source.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5008,6 +6273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5023,6 +6292,10 @@
       "to": "code_unit:tools/muneral_sync/sql/provision_readonly_role.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5040,6 +6313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5055,6 +6332,10 @@
       "to": "code_unit:tools/smoke_ltm_source_delete.py",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5072,6 +6353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5087,6 +6372,10 @@
       "to": "config_key:ARCA_0199_TEST_SCRUTATOR_READBACK_PATH",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5104,6 +6393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5119,6 +6412,10 @@
       "to": "config_key:AUP_SKIP_RECEIPT",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5136,6 +6433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5151,6 +6452,10 @@
       "to": "config_key:DATABASE_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5168,6 +6473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5183,6 +6492,10 @@
       "to": "config_key:GITHUB_REPOSITORY",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5200,6 +6513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5215,6 +6532,10 @@
       "to": "config_key:GITHUB_RUN_ATTEMPT",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5232,6 +6553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5247,6 +6572,10 @@
       "to": "config_key:GITHUB_STEP_SUMMARY",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5264,6 +6593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5279,6 +6612,10 @@
       "to": "config_key:IMPACT_TMP",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5296,6 +6633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5311,6 +6652,10 @@
       "to": "config_key:KC_TEST_PG_ADMIN_DSN",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5328,6 +6673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5343,6 +6692,10 @@
       "to": "config_key:LTM_BENCH_RERANKER_MODEL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5360,6 +6713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5375,6 +6732,10 @@
       "to": "config_key:MUNERAL_BASE_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5392,6 +6753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5407,6 +6772,10 @@
       "to": "config_key:MUNERAL_TEST_ADMIN_DSN_FILE",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5424,6 +6793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5439,6 +6812,10 @@
       "to": "config_key:MUNERAL_TEST_ROLE_PASSWORD_FILE",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5456,6 +6833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5471,6 +6852,10 @@
       "to": "config_key:OPENROUTER_API_KEY",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5488,6 +6873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5503,6 +6892,10 @@
       "to": "config_key:RUNNER_TEMP",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5520,6 +6913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5535,6 +6932,10 @@
       "to": "config_key:SCRUTATOR_BENCHMARK_PRINCIPAL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5552,6 +6953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5567,6 +6972,10 @@
       "to": "config_key:SCRUTATOR_LTM0014_TEST_DATABASE_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5584,6 +6993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5599,6 +7012,10 @@
       "to": "config_key:SCRUTATOR_RERANK_ENABLED",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5616,6 +7033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5631,6 +7052,10 @@
       "to": "config_key:SCRUTATOR_SRCH0038_TEST_DATABASE_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5648,6 +7073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5663,6 +7092,10 @@
       "to": "config_key:SCRUTATOR_TEST_DATABASE_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5680,6 +7113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5695,6 +7132,10 @@
       "to": "config_key:SCRUTATOR_URL",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5712,6 +7153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5727,6 +7172,10 @@
       "to": "config_key:SRCH0039_TEST_DB_GO",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5744,6 +7193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5759,6 +7212,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexFailedSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5776,6 +7233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5791,6 +7252,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#BatchIndexResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5808,6 +7273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5823,6 +7292,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#BeginReadRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5840,6 +7313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5855,6 +7332,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#CapabilityProjectionReceiptSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5872,6 +7353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5887,6 +7372,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ChunkLookupResultSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5904,6 +7393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5919,6 +7412,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ChunkMetadataSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5936,6 +7433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5951,6 +7452,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ChunkResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -5968,6 +7473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -5983,6 +7492,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#CitationSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6000,6 +7513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6015,6 +7532,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#DeleteSourceRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6032,6 +7553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6047,6 +7572,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#DreamAnalysisRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6064,6 +7593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6079,6 +7612,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#DuplicatePairSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6096,6 +7633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6111,6 +7652,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#EdgeCreateByPathSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6128,6 +7673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6143,6 +7692,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#EdgeInfoSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6160,6 +7713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6175,6 +7732,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#EntitySchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6192,6 +7753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6207,6 +7772,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#FeederCapabilityResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6224,6 +7793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6239,6 +7812,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#FetchResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6256,6 +7833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6271,6 +7852,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#HTTPValidationErrorSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6288,6 +7873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6303,6 +7892,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#IndexResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6320,6 +7913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6335,6 +7932,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#IngestRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6352,6 +7953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6367,6 +7972,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#InjectionSignalSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6384,6 +7993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6399,6 +8012,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#KcChunkRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6416,6 +8033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6431,6 +8052,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#KcSearchRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6448,6 +8073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6463,6 +8092,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#LtmJobSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6480,6 +8113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6495,6 +8132,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#MemoryBulkResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6512,6 +8153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6527,6 +8172,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6544,6 +8193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6559,6 +8212,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#MemoryRecallResultSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6576,6 +8233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6591,6 +8252,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#MemoryStatsSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6608,6 +8273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6623,6 +8292,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#NamespaceCreateSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6640,6 +8313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6655,6 +8332,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#NamespaceStatsSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6672,6 +8353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6687,6 +8372,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#OrphanChunkSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6704,6 +8393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6719,6 +8412,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ParentOfChunkRangeSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6736,6 +8433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6751,6 +8452,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ProjectedCapabilitySchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6768,6 +8473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6783,6 +8492,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#RecallResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6800,6 +8513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6815,6 +8532,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ReflectRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6832,6 +8553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6847,6 +8572,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ReflectRunSummarySchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6864,6 +8593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6879,6 +8612,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ScrutatorRouteRequest",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6896,6 +8633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6911,6 +8652,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#SearchResponseSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6928,6 +8673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6943,6 +8692,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#SectionBreadcrumbSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6960,6 +8713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -6975,6 +8732,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#SectionMetaSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -6992,6 +8753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7007,6 +8772,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#SourceDeleteRequestSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7024,6 +8793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7039,6 +8812,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#StaleChunkSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7056,6 +8833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7071,6 +8852,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#StructuredGraphEntitySchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7088,6 +8873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7103,6 +8892,10 @@
       "to": "contract:contracts/http/scrutator-http.contract.ts#ValidationErrorSchema",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7120,6 +8913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7135,6 +8932,10 @@
       "to": "document:.github/graph-admission/governance/decisions/DEC-AUP-0167.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7152,6 +8953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7167,6 +8972,10 @@
       "to": "document:CODE_OF_CONDUCT.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7184,6 +8993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7199,6 +9012,10 @@
       "to": "document:README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7216,6 +9033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7231,6 +9052,10 @@
       "to": "document:benchmark/recall-gate/SOURCE.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7248,6 +9073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7263,6 +9092,10 @@
       "to": "document:benchmark/scrutator/README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7280,6 +9113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7295,6 +9132,10 @@
       "to": "document:benchmark/scrutator/recall-baseline-2026-07-10.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7312,6 +9153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7327,6 +9172,10 @@
       "to": "document:benchmark/scrutator/tools/README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7344,6 +9193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7359,6 +9212,10 @@
       "to": "document:documentation/explanation/README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7376,6 +9233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7391,6 +9252,10 @@
       "to": "document:documentation/explanation/kc2-exact-evidence-receiving.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7408,6 +9273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7423,6 +9292,10 @@
       "to": "document:documentation/explanation/skill-ingest-trust-boundary.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7440,6 +9313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7455,6 +9332,10 @@
       "to": "document:documentation/how-to/access-log.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7472,6 +9353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7487,6 +9372,10 @@
       "to": "document:documentation/how-to/known-fix-recall.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7504,6 +9393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7519,6 +9412,10 @@
       "to": "document:documentation/how-to/muneral-kb-sync-release.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7536,6 +9433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7551,6 +9452,10 @@
       "to": "document:documentation/reference/README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7568,6 +9473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7583,6 +9492,10 @@
       "to": "document:documentation/reference/kc-generation-selection.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7600,6 +9513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7615,6 +9532,10 @@
       "to": "document:documentation/tutorials/README.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7632,6 +9553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7647,6 +9572,10 @@
       "to": "document:tests/ac5_model/REPORT.md",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7664,6 +9593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7679,6 +9612,10 @@
       "to": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7696,6 +9633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7711,6 +9652,10 @@
       "to": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7728,6 +9673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7743,6 +9692,10 @@
       "to": "receipt:receipts/graph/agents-md-migration.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7760,6 +9713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7775,6 +9732,10 @@
       "to": "receipt:receipts/graph/change-admission-A2-457-preflight.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7792,6 +9753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7807,6 +9772,10 @@
       "to": "receipt:receipts/graph/change-admission-A2-scrutator-canary-token.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7824,6 +9793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7839,6 +9812,10 @@
       "to": "receipt:receipts/graph/change-admission-a2-256.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7856,6 +9833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7871,6 +9852,10 @@
       "to": "receipt:receipts/graph/change-admission-access-log.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7888,6 +9873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7903,6 +9892,10 @@
       "to": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7920,6 +9913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7935,6 +9932,10 @@
       "to": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7952,6 +9953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7967,6 +9972,10 @@
       "to": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -7984,6 +9993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -7999,6 +10012,10 @@
       "to": "receipt:receipts/graph/change-admission-deploy-broker.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8016,6 +10033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8031,6 +10052,10 @@
       "to": "receipt:receipts/graph/change-admission-deps-184-20261118.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8048,6 +10073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8063,6 +10092,10 @@
       "to": "receipt:receipts/graph/change-admission-feeder-grant-collective-mailbox.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8080,6 +10113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8095,6 +10132,10 @@
       "to": "receipt:receipts/graph/change-admission-feeder-grant-four-projects.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8112,6 +10153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8127,6 +10172,10 @@
       "to": "receipt:receipts/graph/change-admission-feeder-grant-road-mapmd.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8144,6 +10193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8159,6 +10212,10 @@
       "to": "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8176,6 +10233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8191,6 +10252,10 @@
       "to": "receipt:receipts/graph/change-admission-history-datarim-namespaces.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8208,6 +10273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8223,6 +10292,10 @@
       "to": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8240,6 +10313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8255,6 +10332,10 @@
       "to": "receipt:receipts/graph/change-admission-kc2-fetch-1017732d.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8272,6 +10353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8287,6 +10372,10 @@
       "to": "receipt:receipts/graph/change-admission-kcp-0017-namespace-bootstrap.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8304,6 +10393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8319,6 +10412,10 @@
       "to": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8336,6 +10433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8351,6 +10452,10 @@
       "to": "receipt:receipts/graph/change-admission-mail-arcana-namespace.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8368,6 +10473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8383,6 +10492,10 @@
       "to": "receipt:receipts/graph/change-admission-muneral-sync-scan.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8400,6 +10513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8415,6 +10532,10 @@
       "to": "receipt:receipts/graph/change-admission-muneral-sync-start-limit.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8432,6 +10553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8447,6 +10572,10 @@
       "to": "receipt:receipts/graph/change-admission-pr165.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8464,6 +10593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8479,6 +10612,10 @@
       "to": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.9-20261118.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8496,6 +10633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8511,6 +10652,10 @@
       "to": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8528,6 +10673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8543,6 +10692,10 @@
       "to": "receipt:receipts/graph/change-admission-secretscan-fixture-runtime.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8560,6 +10713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8575,6 +10732,10 @@
       "to": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8592,6 +10753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8607,6 +10772,10 @@
       "to": "receipt:receipts/graph/exact-evidence-receiving.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8624,6 +10793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8639,6 +10812,10 @@
       "to": "receipt:receipts/graph/qualified-refresh-089a771c.json",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8656,6 +10833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8671,6 +10852,10 @@
       "to": "route:DELETE /v1/cap-delete",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8688,6 +10873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8703,6 +10892,10 @@
       "to": "route:DELETE /v1/index",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8720,6 +10913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8735,6 +10932,10 @@
       "to": "route:DELETE /v1/project/index",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8752,6 +10953,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8767,6 +10972,10 @@
       "to": "route:GET /boom",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8784,6 +10993,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8799,6 +11012,10 @@
       "to": "route:GET /events",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8816,6 +11033,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8831,6 +11052,10 @@
       "to": "route:GET /health",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8848,6 +11073,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8863,6 +11092,10 @@
       "to": "route:GET /meta_facts",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8880,6 +11113,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8895,6 +11132,10 @@
       "to": "route:GET /v1/chunks",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8912,6 +11153,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8927,6 +11172,10 @@
       "to": "route:GET /v1/index/capability",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8944,6 +11193,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8959,6 +11212,10 @@
       "to": "route:GET /v1/memories/stats",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -8976,6 +11233,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -8991,6 +11252,10 @@
       "to": "route:GET /v1/navigate/outline",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9008,6 +11273,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9023,6 +11292,10 @@
       "to": "route:GET /v1/open",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9040,6 +11313,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9055,6 +11332,10 @@
       "to": "route:GET /v1/stats",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9072,6 +11353,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9087,6 +11372,10 @@
       "to": "route:POST /recall",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9104,6 +11393,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9119,6 +11412,10 @@
       "to": "route:POST /v1/chunk",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9136,6 +11433,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9151,6 +11452,10 @@
       "to": "route:POST /v1/edges",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9168,6 +11473,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9183,6 +11492,10 @@
       "to": "route:POST /v1/fetch",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9200,6 +11513,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9215,6 +11532,10 @@
       "to": "route:POST /v1/index/batch",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9232,6 +11553,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9247,6 +11572,10 @@
       "to": "route:POST /v1/index/evidence-exact",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9264,6 +11593,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9279,6 +11612,10 @@
       "to": "route:POST /v1/kc/read/chunk",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9296,6 +11633,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9311,6 +11652,10 @@
       "to": "route:POST /v1/kc/read/graph",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9328,6 +11673,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9343,6 +11692,10 @@
       "to": "route:POST /v1/kc/read/search",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9360,6 +11713,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9375,6 +11732,10 @@
       "to": "route:POST /v1/memories/bulk",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9392,6 +11753,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9407,6 +11772,10 @@
       "to": "route:POST /v1/namespaces",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9424,6 +11793,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9439,6 +11812,10 @@
       "to": "route:POST /v1/search",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9456,6 +11833,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9471,6 +11852,10 @@
       "to": "systemd_unit:deploy/ltm-reflect.service",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9488,6 +11873,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
    {
@@ -9503,6 +11892,10 @@
       "to": "systemd_unit:deploy/muneral-kb-sync.service",
       "via": "global-fallback"
      }
+    ],
+    "revisions": [
+     "base",
+     "head"
     ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    },
@@ -9520,6 +11913,10 @@
       "via": "global-fallback"
      }
     ],
+    "revisions": [
+     "base",
+     "head"
+    ],
     "verifier_hint": "can-i-deploy gate (GRAPH-008)"
    }
   ],
@@ -9533,7 +11930,7 @@
   },
   "inferred_tail": [],
   "max_depth": 3,
-  "method": "global fallback: every node of the graph is affected (depth 0, synthetic containment hop); reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
+  "method": "Union of independently revision-bound base/head traversals; global fallback: every node of the graph is affected (depth 0, synthetic containment hop); reverse traversal (dependents) + forward declared-by hops (provides_route, implements_contract, maps_model of the same file, deploys_to); best path = fewest inferred/observed hops, then shortest; max_depth 3",
   "total": 593
  },
  "notes": [
@@ -9544,23 +11941,50 @@
   "tool": "tools/graph/verify.py",
   "version": "1.4.2"
  },
- "receipt_id": "car-verify-20261122T162427Z-d08e14f2",
+ "receipt_id": "car-verify-20261122T165136Z-cdf01f8b",
  "receipt_path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
  "repo": {
   "name": "Arcanada-one/scrutator",
   "path": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122"
  },
+ "revision_selection": {
+  "base": [
+   "deployable_unit:."
+  ],
+  "head": [
+   "deployable_unit:.",
+   "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json"
+  ],
+  "schema": "RevisionImpactSelection/v1",
+  "unmeasured_head_files": []
+ },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-22T16:24:58Z",
-  "method": "manifest.dirty must be false; manifest.source_commit == HEAD of the tree; content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes in the working tree, changed files excluded; contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
+  "checked_at_utc": "2026-11-22T16:52:24Z",
+  "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
  },
- "structural_exclusions": [],
+ "structural_exclusions": [
+  {
+   "content_hash": {
+    "base": null,
+    "head": "sha256:5ffbae268e91d041d88d4c2758092ec3eb6686ed2bda6cc700c613909dfd20fc"
+   },
+   "entity": "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+   "node_type": "receipt",
+   "path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+   "reason": "No genuine archival-data measurement: historical foreign source claims are never rerun or upgraded by receipt_data.; superseded by construction — this run re-issues the receipt at receipts/graph/change-admission-scrutator-deps-196-198-20261122.json for work item scrutator dependency updates superseding #196 and #198",
+   "rule": "DEC-AUP-0035",
+   "superseded": {
+    "receipt_path": "receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+    "work_item": "scrutator dependency updates superseding #196 and #198"
+   }
+  }
+ ],
  "tree": {
-  "commit": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d",
-  "dirty": true
+  "commit": "cdf01f8b768d97c106c3c89b2caeb067a8143c88",
+  "dirty": false
  },
  "verdicts": [
   {
@@ -9582,8 +12006,8 @@
  },
  "verifiers": [
   {
-   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-initial/type-check-7uwaondv/check.tsbuildinfo --listFiles",
-   "duration_s": 1.24,
+   "command": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-finish-deps-20261122/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/type-check-ishba4e8/check.tsbuildinfo --listFiles",
+   "duration_s": 1.15,
    "entities": [
     "deployable_unit:."
    ],
@@ -9593,8 +12017,8 @@
    "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-initial/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-22T16:26:34Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-22T16:52:29Z",
    "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
@@ -9609,13 +12033,13 @@
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-initial/v-fitness.json",
-   "started_at_utc": "2026-11-22T16:26:35Z",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-fitness.json",
+   "started_at_utc": "2026-11-22T16:52:30Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
    "command": "bash scripts/graph-full-suite.sh",
-   "duration_s": 690.2,
+   "duration_s": 730.07,
    "entities": [
     "deployable_unit:."
    ],
@@ -9625,26 +12049,41 @@
    "exit_code": 0,
    "id": "v-global-fallback-test-root",
    "kind": "targeted_test",
-   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-initial/v-global-fallback-test-root.txt",
+   "output_ref": "/home/dev/aup/claude-work/fin-w2-rev-d/scrutator-admission-verifier-output-final/v-global-fallback-test-root.txt",
    "scope": "global_fallback_full_suite",
-   "started_at_utc": "2026-11-22T16:26:35Z",
+   "started_at_utc": "2026-11-22T16:52:30Z",
    "summary": "complete fallback suite: verified",
    "timeout_seconds": 3600
   }
  ],
  "verify": {
-  "events": [],
+  "events": [
+   {
+    "code": "SUPERSEDED_SELF_EXCLUSION",
+    "entity": "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json",
+    "rule": "DEC-AUP-0035",
+    "text": "the receipt at receipts/graph/change-admission-scrutator-deps-196-198-20261122.json is the previous version of the one this run is writing, for the same work item scrutator dependency updates superseding #196 and #198 — superseded by construction, so it owes this change no verdict"
+   },
+   {
+    "code": "STRUCTURAL_EXCLUSION",
+    "rule": "DEC-AUP-0034",
+    "text": "1 affected entity(ies) owe no verdict (receipt: 1): unchanged at both revisions and given no verifier by the matrix"
+   }
+  ],
   "required_by_entity": {
    "deployable_unit:.": [
     "fitness_rules",
     "full_fallback_test",
     "type_check"
+   ],
+   "receipt:receipts/graph/change-admission-scrutator-deps-196-198-20261122.json": [
+    "receipt_data"
    ]
   },
   "seconds": {
-   "prepare": 46.16,
-   "total": 818.86,
-   "verifiers": 691.45
+   "prepare": 2.27,
+   "total": 784.89,
+   "verifiers": 731.23
   }
  },
  "work_item": "scrutator dependency updates superseding #196 and #198"
