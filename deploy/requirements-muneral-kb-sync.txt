@@ -1,7 +1,8 @@
-# CPython 3.12 / Linux x86_64 wheel lock for the isolated sync runtime.
+# CPython 3.12 and 3.15 / Linux x86_64 wheel lock for the isolated sync runtime.
 
 asyncpg==0.32.0 \
-    --hash=sha256:54851411bee2aa51a30d0911524201fbb05f82cc0f7c248b140203db637c723d
+    --hash=sha256:54851411bee2aa51a30d0911524201fbb05f82cc0f7c248b140203db637c723d \
+    --hash=sha256:ceea1064500d0d7a46c092cdbe9752064c23b720ab0e0bff83d1030fffe7a50a
 
 httpx==0.28.1 \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
