@@ -3,9 +3,9 @@
   "rule": "admitted requires every verdict = verified; failed without exemption ⇒ refused; not_measured without exemption ⇒ paused_safe; exemptions (owner + expiry) are attached by the admitting agent, never by the verifier (DEC-AUP-0008, matrix P1/P4)",
   "structural_exclusion_rule": "DEC-AUP-0034: an affected entity is NOT verdict-owing when all three hold — the verifier matrix declares neither a mandatory nor a selectable verifier for its node type (so the only verdict it could ever carry states a property of the MATRIX, not of this change), the change set does not contain it, and its bytes are identical at base and head. Each one is listed in structural_exclusions with the content hash at both revisions that proves the byte-identity, and impact_pair.receipt_problems re-derives that proof from Git rather than believing the receipt.",
   "superseded_self_rule": "DEC-AUP-0035: the entity a receipt can never verify is the PREVIOUS VERSION OF ITSELF. When a receipt is re-issued at the same path for the same work item — the ordinary case after a rebase or a second commit on a card — the copy of it standing in the tree is superseded by construction: this run is the measurement that replaces it, so the only verdict it could carry is I14 `not_measured` about a document that no longer exists at that path once the run finishes. It is excluded with the work item and the output path that identify it, both re-derived from Git by impact_pair.receipt_problems, never asserted.",
-  "verdict": "paused_safe"
+  "verdict": "admitted_with_exemptions"
  },
- "captured_at_utc": "2026-11-22T15:58:39Z",
+ "captured_at_utc": "2026-11-22T18:17:13Z",
  "change_set": {
   "base": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d",
   "files": [
@@ -50,29 +50,375 @@
   "mode": "diff"
  },
  "decision_ref": "DEC-AUP-0008",
- "exemptions": [],
+ "exemptions": [
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/ci.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/deploy.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/graph-admission-call.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/graph-admission.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-dc49cc771602c92b: workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: command/process substitution closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution cl"
+  },
+  {
+   "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:.github/workflows/recall-regression.yml",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+  },
+  {
+   "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
+   "entity": "code_unit:deploy/scrutator-deploy-transaction.sh",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-shell-syntax-353478d40e08b4d8: shell syntax/closure: not_measured; v-shell-behavior-353478d40e08b4d8: SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution c"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/A2-308-scope-enforcement.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/A2-311-contracts-and-canary.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/A2-329-deploy-surface-canary.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/A2-384-deploy-gate-lane.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-A2-457-deploy-lane.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-A2-457-preflight.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-A2-DRIFT-5a1d666d-bundle-ce356591.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-A2-scrutator-canary-token.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-BUNDLE-DRIFT-db9784ba.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-a2-256.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-access-log.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-actions-180-20261117.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-bundle-46cbdc0.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-bundle-5fde907.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-bundle-72ea-20261001.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-bundle-966bcf3.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-bundle-a81a6d5.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-ci-pr-concurrency.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-deploy-broker.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-deploy-through-broker.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-fork-deny-20261117.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-01-n.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kb-cons-02.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kcp-0017-auth-retry.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kcp-0023-actions-read.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kcp-0023-bundle-refresh.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-kcp-0025.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-pr161.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-pr165.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.6-20261117.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-preflight-pin-v4.12.9-20261118.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-preflight-target-host-20261118.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-rate-limit-9060.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-runbook-rotate-tokens.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-selfhosted-runners-20261117.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/change-admission-wrapper-full-test-186.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/ctl-bundle-refresh-20260925.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/exact-evidence-receiving.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/pin-repair-scrutator-20261007.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  },
+  {
+   "code": "BASE_NATIVE_POLICY_MISSING",
+   "entity": "receipt:receipts/graph/qualified-refresh-089a771c.json",
+   "expires_at_utc": "2026-12-06T00:00:00Z",
+   "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#201)",
+   "reason": "v-receipt-data: BASE_NATIVE_POLICY_MISSING"
+  }
+ ],
  "graph": {
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:ae87b26ecfdf104f7b6ff2006a0dc3fc2411ae33bdeae8db5c4a87e0c0ef8843",
-  "path": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/graph-d08e14f2f0ef.json",
+  "path": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/graph-d08e14f2f0ef.json",
   "source_commit": "d08e14f2f0efcacd7ee74d4afb4d0d0c9d100b8d"
  },
  "head_graph": {
   "builder_version": "1.0.7",
   "built_at_utc": "2026-09-05T00:00:00Z",
   "graph_digest": "sha256:3dcbf10a38617ed056882da23ea8333679771c7a617ce8a141ca9c8068094322",
-  "path": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/graph-head-e4efc2f0ef55.json",
+  "path": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/graph-head-e4efc2f0ef55.json",
   "source_commit": "e4efc2f0ef55ce8139bf2e7217594b648d2f1162",
   "staleness": {
-   "checked_at_utc": "2026-11-22T16:01:26Z",
+   "checked_at_utc": "2026-11-22T18:18:00Z",
    "checked_nodes": 414,
    "method": "manifest.dirty must be false; manifest.source_commit == change_set.head; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at head (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
    "mismatched_nodes": [],
    "verdict": "fresh"
   }
  },
- "host": "arcana-devs",
+ "host": "scrutator-local",
+ "host_redacted": true,
+ "host_sha256": "e728c5cea395b80e13fa6b66e10bb5fb348bd1398b14777f56dd3dc9abedb6b0",
  "impact_set": {
   "deterministic_core": [
    {
@@ -1337,16 +1683,18 @@
  },
  "notes": [
   "DRAFT produced by `arcana verify` (tools/graph/verify.py 1.4.2) from matrix contracts/graph-verified-change/verifier-matrix.v1.json; selection rule: required(entity) = ⋃ edge_types[t].mandatory over the edge types t of the hops that reach the entity in its best path (i…",
-  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none"
+  "profile: .arcana/verify.json at verified head; baseline: (auto-base-freeze: pre-existing findings at base frozen for this run; persist one with --freeze-baseline) (valid); selected: none; disabled: none",
+  "exemptions: 49 attached from /home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/exemptions-dec0199.json",
+  "head tree e4efc2f0ef55 exported with git archive into /home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verify-work-final/export-e4efc2f0ef55 (node_modules linked from the repository for ['contracts/http']; workspace packages built: none); the repository was not written"
  ],
  "producer": {
   "tool": "tools/graph/verify.py",
   "version": "1.4.2"
  },
- "receipt_id": "car-verify-20261122T155839Z-e4efc2f0",
+ "receipt_id": "car-verify-20261122T181713Z-e4efc2f0",
  "repo": {
   "name": "Arcanada-one/scrutator",
-  "path": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-20261122"
+  "path": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199"
  },
  "revision_selection": {
   "base": [
@@ -1464,20 +1812,20 @@
  },
  "schema": "ChangeAdmissionReceipt/v1",
  "staleness": {
-  "checked_at_utc": "2026-11-22T16:01:26Z",
+  "checked_at_utc": "2026-11-22T18:18:00Z",
   "method": "manifest.dirty must be false; manifest.source_commit == change_set.base; working tree must be clean (a receipt in diff mode describes committed history only); content_hash of every whole-file node (code_unit, document, receipt; deployable_unit via its package.json) must equal the sha256 of the file bytes at base (git objects); contract/route/data_model hashes are extractor-owned (declaration text) and not recomputed",
   "mismatched_nodes": [],
   "verdict": "fresh"
  },
  "structural_exclusions": [],
  "tree": {
-  "commit": "e4efc2f0ef55ce8139bf2e7217594b648d2f1162",
+  "commit": "b2356e3b5dd3eb2bb51b43c5055a6de34418d9d1",
   "dirty": false
  },
  "verdicts": [
   {
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
-   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1486,7 +1834,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/ci.yml",
-   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1495,7 +1843,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
-   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1504,7 +1852,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
-   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violati",
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1513,7 +1861,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/deploy.yml",
-   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fi",
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1522,8 +1870,8 @@
   },
   {
    "entity": "code_unit:.github/workflows/governance.yml",
-   "reason": "v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
-   "verdict": "not_measured",
+   "reason": "v-workflow-config-5844296ae241614c: bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED; v-fitness: no new fitness violation",
+   "verdict": "verified",
    "verifier_ids": [
     "v-fitness",
     "v-workflow-config-5844296ae241614c"
@@ -1531,7 +1879,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
-   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1549,7 +1897,7 @@
   },
   {
    "entity": "code_unit:.github/workflows/recall-regression.yml",
-   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable",
+   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence",
    "verdict": "not_measured",
    "verifier_ids": [
     "v-fitness",
@@ -1568,8 +1916,8 @@
   },
   {
    "entity": "deployable_unit:.",
-   "reason": "v-type-check-tsconfig: tsc unavailable on this host",
-   "verdict": "not_measured",
+   "reason": "v-type-check-tsconfig: contracts/http/tsconfig.json: 0 errors; v-fitness: no new violation in .",
+   "verdict": "verified",
    "verifier_ids": [
     "v-fitness",
     "v-type-check-tsconfig"
@@ -1920,20 +2268,20 @@
  },
  "verifiers": [
   {
-   "command": "tsc -p /home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-20261122/contracts/http/tsconfig.json (tsc not found)",
-   "duration_s": 0.0,
+   "command": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verify-work-final/export-e4efc2f0ef55/contracts/http/node_modules/.bin/tsc -p /home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verify-work-final/export-e4efc2f0ef55/contracts/http/tsconfig.json --noEmit --incremental true --tsBuildInfoFile /home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/type-check-vr4mmp5j/check.tsbuildinfo --listFiles",
+   "duration_s": 1.02,
    "entities": [
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "deployable_unit:.": "not_measured"
+    "deployable_unit:.": "verified"
    },
-   "exit_code": 127,
+   "exit_code": 0,
    "id": "v-type-check-tsconfig",
    "kind": "type_check",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-type-check-tsconfig.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
-   "summary": "not_measured: tsc unavailable"
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-type-check-tsconfig.txt",
+   "started_at_utc": "2026-11-22T18:18:04Z",
+   "summary": "contracts/http/tsconfig.json: exit 0, 0 error(s), 159 files listed"
   },
   {
    "command": "workflow_config.validate exact head bytes",
@@ -1947,8 +2295,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2b43e97319f91478",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-2b43e97319f91478.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-2b43e97319f91478.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -1963,8 +2311,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-b803fcb7f17ed923",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-b803fcb7f17ed923.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-b803fcb7f17ed923.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -1979,8 +2327,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-2fe48d1021006468",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-2fe48d1021006468.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-2fe48d1021006468.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -1995,8 +2343,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-eea5ff169848609b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-eea5ff169848609b.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-eea5ff169848609b.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2011,8 +2359,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-28802fbf11c83a2e",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-28802fbf11c83a2e.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-28802fbf11c83a2e.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2027,8 +2375,8 @@
    "exit_code": 0,
    "id": "v-workflow-config-5844296ae241614c",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-5844296ae241614c.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-5844296ae241614c.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "bounded workflow configuration shape valid; expressions, shell, actions, callee interface compatibility and hosted execution NOT_MEASURED"
   },
   {
@@ -2043,8 +2391,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-60a4bd100e640545",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-60a4bd100e640545.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-60a4bd100e640545.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2059,8 +2407,8 @@
    "exit_code": 1,
    "id": "v-workflow-config-dc49cc771602c92b",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-dc49cc771602c92b.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-dc49cc771602c92b.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job graph-admission step 10: checkout root or source-affecting workflow environment unresolved; job graph-admission step 10: command/process substitution closure is unresolved; job graph-admission step 11: checkout root or source-affecting workflow environment unresolved; job graph-admission step 11: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 12: checkout root or source-affecting workflow environment unresolved; job graph-admission step 12: command/process substitution closure is unresolved; job graph-admission step 13: checkout root or source-affecting workflow environment unresolved; job graph-admission step 13: command/process substitution closure is unresolved; job graph-admission step 15: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: checkout root or source-affecting workflow environment unresolved; job graph-admission step 16: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 17: checkout root or source-affecting workflow environment unresolved; job graph-admission step 17: command/process substitution closure is unresolved; job graph-admission step 18: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: checkout root or source-affecting workflow environment unresolved; job graph-admission step 19: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 1: command/process substitution closure is unresolved; job graph-admission step 22: checkout root or source-affecting workflow environment unresolved; job graph-admission step 22: command/process substitution closure is unresolved; job graph-admission step 23: checkout root or source-affecting workflow environment unresolved; job graph-admission step 23: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 26: checkout root or source-affecting workflow environment unresolved; job graph-admission step 26: command/process substitution closure is unresolved; job graph-admission step 27: checkout root or source-affecting workflow environment unresolved; job graph-admission step 27: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 28: checkout root or source-affecting workflow environment unresolved; job graph-admission step 28: line 1: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 29: checkout root or source-affecting workflow environment unresolved; job graph-admission step 29: command/process substitution closure is unresolved; job graph-admission step 2: command/process substitution closure is unresolved; job graph-admission step 30: checkout root or source-affecting workflow environment unresolved; job graph-admission step 30: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 31: checkout root or source-affecting workflow environment unresolved; job graph-admission step 31: line 11: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 32: checkout root or source-affecting workflow environment unresolved; job graph-admission step 32: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 33: checkout root or source-affecting workflow environment unresolved; job graph-admission step 33: command/process substitution closure is unresolved; job graph-admission step 34: checkout root or source-affecting workflow environment unresolved; job graph-admission step 34: line 4: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 35: checkout root or source-affecting workflow environment unresolved; job graph-admission step 36: checkout root or source-affecting workflow environment unresolved; job graph-admission step 3: heredoc/group/function/brace expansion closure is unresolved; job graph-admission step 5: line 7: unsupported interpreter script/module/stdin dispatch closure; job graph-admission step 6: command/process substitution closure is unresolved; 45 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
@@ -2075,13 +2423,13 @@
    "exit_code": 1,
    "id": "v-workflow-config-251cde5034c907f0",
    "kind": "config_schema",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-workflow-config-251cde5034c907f0.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-workflow-config-251cde5034c907f0.txt",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
   },
   {
    "command": "verify.py fitness_rules FR-01..FR-05 over the head graph + head sources",
-   "duration_s": 0.02,
+   "duration_s": 0.53,
    "entities": [
     "code_unit:.github/workflows/benchmark-scrutator.yml",
     "code_unit:.github/workflows/ci.yml",
@@ -2096,23 +2444,23 @@
     "deployable_unit:."
    ],
    "entity_verdicts": {
-    "code_unit:.github/workflows/benchmark-scrutator.yml": "not_measured",
-    "code_unit:.github/workflows/ci.yml": "not_measured",
-    "code_unit:.github/workflows/dependabot-auto-merge.yml": "not_measured",
-    "code_unit:.github/workflows/deploy-kc-corpus.yml": "not_measured",
-    "code_unit:.github/workflows/deploy.yml": "not_measured",
-    "code_unit:.github/workflows/governance.yml": "not_measured",
-    "code_unit:.github/workflows/graph-admission-call.yml": "not_measured",
-    "code_unit:.github/workflows/graph-admission.yml": "not_measured",
-    "code_unit:.github/workflows/recall-regression.yml": "not_measured",
+    "code_unit:.github/workflows/benchmark-scrutator.yml": "verified",
+    "code_unit:.github/workflows/ci.yml": "verified",
+    "code_unit:.github/workflows/dependabot-auto-merge.yml": "verified",
+    "code_unit:.github/workflows/deploy-kc-corpus.yml": "verified",
+    "code_unit:.github/workflows/deploy.yml": "verified",
+    "code_unit:.github/workflows/governance.yml": "verified",
+    "code_unit:.github/workflows/graph-admission-call.yml": "verified",
+    "code_unit:.github/workflows/graph-admission.yml": "verified",
+    "code_unit:.github/workflows/recall-regression.yml": "verified",
     "code_unit:deploy/scrutator-deploy-transaction.sh": "verified",
     "deployable_unit:.": "verified"
    },
    "exit_code": 0,
    "id": "v-fitness",
    "kind": "fitness_rules",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-fitness.json",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-fitness.json",
+   "started_at_utc": "2026-11-22T18:18:05Z",
    "summary": "0 finding(s): 0 new / 0 frozen; 0 entity(ies) failed"
   },
   {
@@ -2129,13 +2477,13 @@
    "exit_code": 0,
    "id": "v-doc-reference",
    "kind": "doc_reference",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-doc-reference.txt",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-doc-reference.txt",
+   "started_at_utc": "2026-11-22T18:18:06Z",
    "summary": "2 document(s), 0 failed"
   },
   {
    "command": "verify.py receipt_data (Git + authenticated native GET)",
-   "duration_s": 1.15,
+   "duration_s": 0.25,
    "entities": [
     "receipt:receipts/graph/A2-308-scope-enforcement.json",
     "receipt:receipts/graph/A2-311-contracts-and-canary.json",
@@ -2585,9 +2933,9 @@
      "verdict": "not_measured"
     }
    },
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-receipt-data.json",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-receipt-data.json",
    "scope": "archived_evidence_data",
-   "started_at_utc": "2026-11-22T16:01:37Z",
+   "started_at_utc": "2026-11-22T18:18:06Z",
    "summary": "archival data only; foreign source claims unchanged"
   },
   {
@@ -2602,9 +2950,9 @@
    "exit_code": 0,
    "id": "v-shell-syntax-353478d40e08b4d8",
    "kind": "shell_syntax",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-shell-syntax-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-shell-syntax-353478d40e08b4d8.txt",
    "scope": "shell_source_validation",
-   "started_at_utc": "2026-11-22T16:01:46Z",
+   "started_at_utc": "2026-11-22T18:18:08Z",
    "summary": "shell syntax/closure: not_measured"
   },
   {
@@ -2619,9 +2967,9 @@
    "exit_code": 0,
    "id": "v-shell-behavior-353478d40e08b4d8",
    "kind": "shell_behavior",
-   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scrutator-actions-bump-verification-r2/verifiers/v-shell-behavior-353478d40e08b4d8.txt",
+   "output_ref": "/home/dev/aup/claude-work/dev-sw19-c/scratch/scrutator-201-dec0199-data/verifier-out-final/v-shell-behavior-353478d40e08b4d8.txt",
    "scope": "shell_fixture_behavior",
-   "started_at_utc": "2026-11-22T16:01:46Z",
+   "started_at_utc": "2026-11-22T18:18:08Z",
    "summary": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED: line 108: wrapper options/child command unresolved; line 109: dynamic load/substitution; line 119: dynamic load/substitution; line 121: dynamic command/alias/eval; line 131: multiline/opaque shell statement; line 135: multiline/opaque shell statement; line 137: multiline/opaque shell statement; line 139: multiline/opaque shell statement; line 151: wrapper execution scope/options unresolved; line 163: dynamic load/substitution; line 16: relative execution cwd is not declared; line 174: dynamic load/substitution; line 175: dynamic command/alias/eval; line 17: relative execution cwd is not declared; line 188: dynamic load/substitution; line 18: relative execution cwd is not declared; line 198: dynamic load/substitution; line 19: relative execution cwd is not declared; line 20: relative execution cwd is not declared; line 233: dynamic load/substitution; line 240: dynamic command/alias/eval; line 244: dynamic command/alias/eval; line 259: dynamic load/substitution; line 25: relative execution cwd is not declared; line 263: missing/ambiguous literal helper ../*; line 266: dynamic load/substitution; line 28: relative execution cwd is not declared; line 291: dynamic command/alias/eval; line 293: dynamic command/alias/eval; line 298: dynamic command/alias/eval; line 299: dynamic command/alias/eval; line 302: multiline/opaque shell statement; line 306: multiline/opaque shell statement; line 307: multiline/opaque shell statement; line 308: dynamic command/alias/eval; line 313: wrapper execution scope/options unresolved; line 315: wrapper execution scope/options unresolved; line 339: wrapper execution scope/options unresolved; line 33: relative execution cwd is not declared; line 353: dynamic command/alias/eval; line 374: dynamic load/substitution; line 375: dynamic load/substitution; line 376: dynamic load/substitution; line 385: wrapper options/child command unresolved; line 386: dynamic load/substitution; line 387: dynamic load/substitution; line 388: multiline/opaque shell statement; line 389: dynamic command/alias/eval; line 407: relative execution cwd is not declared; line 410: dynamic load/substitution; line 434: dynamic load/substitution; line 447: multiline/opaque shell statement; line 448: multiline/opaque shell statement; line 449: multiline/opaque shell statement; line 450: multiline/opaque shell statement; line 466: wrapper options/child command unresolved; line 467: multiline/opaque shell statement; line 468: multiline/opaque shell statement; line 469: dynamic command/alias/eval; line 479: dynamic command/alias/eval; line 484: dynamic command/alias/eval; line 485: dynamic command/alias/eval; line 499: dynamic load/substitution; line 500: dynamic load/substitution; line 501: dynamic load/substitution; line 503: dynamic command/alias/eval; line 504: dynamic load/substitution; line 512: dynamic command/alias/eval; line 513: dynamic load/substitution; line 529: dynamic command/alias/eval; line 534: dynamic load/substitution; line 559: dynamic load/substitution; line 596: wrapper options/child command unresolved; line 619: directory transition has unresolved execution cwd; line 88: dynamic command/alias/eval; line 90: dynamic command/alias/eval; line 98: dynamic command/alias/eval; line 99: wrapper options/child command unresolved"
   }
  ],
@@ -2801,9 +3149,9 @@
    ]
   },
   "seconds": {
-   "prepare": 3.88,
-   "total": 187.57,
-   "verifiers": 1.17
+   "prepare": 1.47,
+   "total": 55.49,
+   "verifiers": 1.8
   }
  }
 }
