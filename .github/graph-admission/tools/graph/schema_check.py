@@ -104,6 +104,24 @@ def traversal_entities(rows) -> set[str]:
                    for p in e.get("revision_paths", [e]))}
 
 
+# DEC-AUP-0188: Python dependency manifests are lock-class files. ONE definition, used by impact.classify_file
+# (kind `lockfile` -> global fallback) and by ci_gate (a manifest can never be "doc only", whatever the signed
+# doc_only_globs say). Over-matching is the safe side: the cost of a false positive is one measured full suite.
+_PY_DEP_STEM = re.compile(r"(?:[a-z0-9]+[-_.])*(?:requirements|constraints)(?:[-_.][a-z0-9]+)*\.(?:txt|in)")
+PY_DEP_LOCKFILE_NAMES = frozenset({"pipfile.lock", "pdm.lock", "pylock.toml", "conda-lock.yml", "conda-lock.yaml"})
+
+
+def is_python_dependency_manifest(path: str) -> bool:
+    parts = [p.lower() for p in str(path).replace("\\", "/").split("/") if p]
+    if not parts:
+        return False
+    name = parts[-1]
+    if name in PY_DEP_LOCKFILE_NAMES or _PY_DEP_STEM.fullmatch(name):
+        return True
+    # requirements/base.txt, constraints/py312.in
+    return len(parts) > 1 and parts[-2] in {"requirements", "constraints"} and name.endswith((".txt", ".in"))
+
+
 ARMS_SCHEMA = "FullSuiteArmEvidence/v1"
 ARM_BACKENDS = {"real_disposable", "real_external", "stub", "none"}
 ARM_REQUIRES = {"real_disposable", "real_external", "stub_ok"}
@@ -624,6 +642,39 @@ def check_verifier_selection(c: Ctx, doc: dict, F: dict) -> None:
             c.add("VERIFIER_SELECTION_CONTRADICTS_NOTES", f"notes say {sorted(said)}, verifier_selection.requested {sorted(req)}")
 
 
+def check_receipt_data_row(v: dict, doc: dict) -> bool:
+    """Typed archival DATA only; native gate independently verifies these assertions."""
+    entities, measurements, per = v.get("entities"), v.get("measurements"), v.get("entity_verdicts")
+    if (v.get("scope") != "archived_evidence_data" or not isinstance(entities, list)
+            or not all(isinstance(e, str) and e.startswith("receipt:") for e in entities)
+            or len(set(entities)) != len(entities) or not isinstance(measurements, dict)
+            or set(measurements) != set(entities) or not isinstance(per, dict) or set(per) != set(entities)):
+        return False
+    source = doc.get("change_set") if isinstance(doc.get("change_set"), dict) else {}
+    for entity in entities:
+        m = measurements[entity]
+        if (not isinstance(m, dict) or m.get("schema") != "ReceiptDataMeasurement/v1"
+                or m.get("scope") != "archived_evidence_data" or m.get("entity_path") != entity[len("receipt:"):]
+                or m.get("verdict") not in {"verified", "failed", "not_measured"}
+                or per[entity] != m["verdict"] or m.get("base") != source.get("base")
+                or m.get("head") != source.get("head")):
+            return False
+        if m["verdict"] != "verified":
+            if not isinstance(m.get("reason"), str) or not m["reason"]:
+                return False
+            continue
+        origin, binding, foreign = m.get("origin"), m.get("native_binding"), m.get("foreign_claim")
+        if (not isinstance(origin, dict) or not isinstance(binding, dict) or not isinstance(foreign, dict)
+                or m.get("schema_verdict") != "conformant"
+                or not isinstance(m.get("sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", m["sha256"])
+                or binding.get("sha256") != m["sha256"] or binding.get("content_type") != "application/json"
+                or not all(isinstance(origin.get(k), str) and origin[k] for k in ("revision", "path", "blob"))
+                or not all(isinstance(binding.get(k), str) and binding[k] for k in ("task_id", "evidence_id", "uri", "created_by_agent_id"))
+                or not isinstance(foreign.get("admission"), dict) or not isinstance(foreign.get("verdicts"), list)):
+            return False
+    return True
+
+
 def check_receipt(doc: dict, schema: dict, disabled=frozenset(), arm_definition=None) -> list[dict]:
     c = Ctx(doc, schema, disabled)
     F = schema["fields"]
@@ -891,6 +942,8 @@ def check_receipt(doc: dict, schema: dict, disabled=frozenset(), arm_definition=
         for f in vspec["required"]:
             if f not in v and f not in ("output_ref", "exit_code"):
                 c.add("RECEIPT_MISSING_FIELD", f"verifier {v.get('id')}: {f}")
+        if v.get("kind") == "receipt_data" and not check_receipt_data_row(v, doc):
+            c.add("RECEIPT_DATA_SCOPE_INVALID", str(v.get("id")))
         if v.get("kind") in {"canary", "shell_behavior"}:
             canary_entities.update(v.get("entities") or [])
             canary_rows.append(v)
@@ -1094,7 +1147,7 @@ ALL_GRAPH_RULES = ("GRAPH_SCHEMA_MISMATCH", "MANIFEST_MISSING_FIELD", "SOURCE_CO
                    "NODE_WITHOUT_HASH", "NODE_ID_FORM", "DUPLICATE_NODE_ID", "EDGE_TYPE_UNKNOWN", "EDGE_WITHOUT_PROVENANCE",
                    "EDGE_PROVENANCE_INVALID", "INFERRED_WITHOUT_METHOD", "OBSERVED_WITHOUT_TIME", "LLM_EDGE_NOT_INFERRED",
                    "EDGE_ENDPOINT_UNKNOWN", "EDGE_ENDPOINT_TYPE_MISMATCH", "GRAPH_DIGEST_MISMATCH", "GRAPH_DIRTY")
-ALL_RECEIPT_RULES = ("RECEIPT_SCHEMA_MISMATCH", "RECEIPT_MISSING_FIELD", "RECEIPT_WITHOUT_GRAPH_COMMIT", "RECEIPT_WITHOUT_GRAPH_DIGEST",
+ALL_RECEIPT_RULES = ("RECEIPT_DATA_SCOPE_INVALID", "RECEIPT_SCHEMA_MISMATCH", "RECEIPT_MISSING_FIELD", "RECEIPT_WITHOUT_GRAPH_COMMIT", "RECEIPT_WITHOUT_GRAPH_DIGEST",
                      "RECEIPT_ON_STALE_GRAPH", "STALENESS_NOT_CHECKED", "CHANGE_SET_EMPTY", "CHANGE_SET_FILE_INVALID",
                      "EMPTY_IMPACT_WITHOUT_EXPLANATION", "IMPACT_ENTRY_WITHOUT_PROVENANCE", "IMPACT_ENTRY_MISPLACED",
                      "GLOBAL_FALLBACK_WITHOUT_REASON", "INFERRED_BOUNDARY_WITHOUT_CANARY", "VERIFIER_WITHOUT_OUTPUT_REF",

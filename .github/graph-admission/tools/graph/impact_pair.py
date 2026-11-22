@@ -466,7 +466,8 @@ def query(base_idx: impact.GraphIndex, head_idx: impact.GraphIndex, files: list[
                              if not (e.get("code") == "EMPTY_IMPACT_REQUIRES_EXPLANATION"
                                      and (entries or out["impact_set"]["global_fallback"]["triggered"])))
     missing = sorted(f["path"] for f in head_files
-                     if Path(f["path"]).suffix.lower() in SOURCE_EXTS
+                     if (Path(f["path"]).suffix.lower() in SOURCE_EXTS | {".sh", ".bash", ".bats"}
+                         or build_graph.operational_config_kind(f["path"]))
                      and not head_idx.path_nodes(f["path"], set(impact.RULES)))
     if missing:
         out["events"].append({"code": "HEAD_CODE_NOT_MEASURED", "files": missing})
@@ -623,8 +624,35 @@ def absent_suite_repo_problems(repo, head: str, doc: dict, units: set[str]) -> l
     return out
 
 
+def _c18_binding_diagnostic(side: str, expected: dict, actual: dict, *, origin_proof=None) -> tuple[dict, bool]:
+    """Project only bounded C18 comparison operands and their existing mismatch predicates."""
+    if side not in ("base", "head"):
+        raise ValueError("invalid C18 diagnostic side")
+    expected_commit = expected.get("source_commit")
+    actual_commit = actual["source_commit"]
+    expected_digest = expected.get("graph_digest")
+    actual_digest = actual["graph_digest"]
+    # Receipt values are untrusted. Keep only schema-shaped hashes; absent or malformed values
+    # remain null, while the booleans below retain the exact raw comparison result.
+    safe_expected_commit = (expected_commit if isinstance(expected_commit, str) and len(expected_commit) == 40
+                            and schema_check.COMMIT_RE.fullmatch(expected_commit) else None)
+    safe_actual_commit = (actual_commit if isinstance(actual_commit, str) and len(actual_commit) == 40
+                          and schema_check.COMMIT_RE.fullmatch(actual_commit) else None)
+    safe_expected_digest = (expected_digest if isinstance(expected_digest, str) and len(expected_digest) == 71
+                            and schema_check.SHA_RE.fullmatch(expected_digest) else None)
+    safe_actual_digest = (actual_digest if isinstance(actual_digest, str) and len(actual_digest) == 71
+                          and schema_check.SHA_RE.fullmatch(actual_digest) else None)
+    revision_mismatch = expected_commit != actual_commit
+    digest_mismatch = expected_digest != actual_digest and origin_proof is None
+    return ({"side": side, "expected_source_commit": safe_expected_commit,
+             "actual_source_commit": safe_actual_commit, "expected_graph_digest": safe_expected_digest,
+             "actual_graph_digest": safe_actual_digest, "revision_mismatch": revision_mismatch,
+             "digest_mismatch": digest_mismatch}, revision_mismatch or digest_mismatch)
+
+
 def receipt_problems(repo_path: Path, doc: dict, *, origin_binding: dict | None = None,
-                     trusted_base: str | None = None) -> list[str]:
+                     trusted_base: str | None = None,
+                     binding_diagnostics: list[dict] | None = None) -> list[str]:
     """Rebuild from Git, never from receipt node_ids or declared revision selections.
 
 Legacy receipts stay readable, but cannot omit workflow verifier obligations
@@ -709,8 +737,12 @@ A paired receipt must match both graph digests and the complete dual selection.
     if paired:
         for field, idx in (("graph", before), ("head_graph", after)):
             binding = doc.get(field) or {}
-            if (binding.get("source_commit") != idx.manifest["source_commit"]
-                    or (binding.get("graph_digest") != idx.manifest["graph_digest"] and origin_proof is None)):
+            side = "base" if field == "graph" else "head"
+            diagnostic, mismatched = _c18_binding_diagnostic(side, binding, idx.manifest,
+                                                              origin_proof=origin_proof)
+            if binding_diagnostics is not None:
+                binding_diagnostics.append(diagnostic)
+            if mismatched:
                 problems.append(field + " revision/digest does not match the rebuilt Git graph")
         if doc.get("revision_selection") != selection:
             problems.append("revision selection differs from independently rebuilt Git impact")
@@ -721,7 +753,9 @@ A paired receipt must match both graph digests and the complete dual selection.
     not_owed = not_owed_context(repo, base, head, str(doc.get("captured_at_utc") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")), after, before)
     expected = set(selection["base"]) | set(selection["head"])
     verdicts = {v.get("entity") for v in doc.get("verdicts", [])}
-    excluded, exclusion_problems = structural_exclusions_rederived(repo, doc, base, head, before, after)
+    minimum_by_entity = mandatory_by_entity(before, after, q)
+    excluded, exclusion_problems = structural_exclusions_rederived(
+        repo, doc, base, head, before, after, minimum_by_entity)
     problems.extend(exclusion_problems)
     missing = sorted(expected - verdicts - excluded)
     if missing:
@@ -750,6 +784,10 @@ A paired receipt must match both graph digests and the complete dual selection.
             if record.get("verdict") != "verified":
                 continue
             referenced = [verifiers.get(i, {}) for i in record.get("verifier_ids", [])]
+            for row in referenced:
+                if row.get("kind") == "receipt_data" and (row.get("scope") != "archived_evidence_data"
+                        or not isinstance(row.get("measurements"), dict) or entity not in row["measurements"]):
+                    problems.append("receipt_data lacks explicit archival-data scope/measurement: " + entity)
             covered_kinds = {("full_fallback_test" if v.get("scope") == "global_fallback_full_suite" else v.get("kind")) for v in referenced
                              if entity in v.get("entities", []) and row_measured_verified(v, entity)
                              and isinstance(v.get("output_ref"), str) and v["output_ref"].strip()}
@@ -813,7 +851,8 @@ def row_measured_verified(v: dict, entity: str) -> bool:
 
 
 def structural_exclusions_rederived(repo: impact.Repo, doc: dict, base: str, head: str,
-                                    before: impact.GraphIndex, after: impact.GraphIndex) -> tuple[set[str], list[str]]:
+                                    before: impact.GraphIndex, after: impact.GraphIndex,
+                                    minimum_by_entity: dict[str, list[str]]) -> tuple[set[str], list[str]]:
     """Which of the receipt's claimed exclusions survive an independent re-derivation (DEC-AUP-0034).
 
     The receipt does not get to assert its own coverage. DEC-AUP-0034 claims are checked against graph
@@ -826,7 +865,7 @@ def structural_exclusions_rederived(repo: impact.Repo, doc: dict, base: str, hea
         return set(), ([] if claims in (None, []) else ["structural_exclusions is not a list"])
     if not isinstance(claims, list):
         return set(), ["structural_exclusions is not a list"]
-    matrix = json.loads((Path(__file__).resolve().parents[2] / "contracts/graph-verified-change/verifier-matrix.v1.json").read_text())
+    matrix = _matrix()
     changed = {f.get("path") for f in (doc.get("change_set") or {}).get("files", [])}
     accepted, problems = set(), []
     for claim in claims:
@@ -839,6 +878,7 @@ def structural_exclusions_rederived(repo: impact.Repo, doc: dict, base: str, hea
             # represented as a graph node (and a forged non-receipt must still be read
             # from Git). Re-derive this class from its own typed path and blob contract;
             # DEC-AUP-0034's graph-identity/byte-identity checks below remain unchanged.
+            # DEC-AUP-0083: receipt_data may be the sole remaining mandatory obligation.
             path = claim.get("path")
             if (claim.get("node_type") != "receipt"
                     or not isinstance(path, str) or not path
@@ -846,8 +886,25 @@ def structural_exclusions_rederived(repo: impact.Repo, doc: dict, base: str, hea
                 problems.append(f"structural exclusion has invalid supersession identity: {eid}")
                 continue
             spec = matrix["node_types"].get("receipt")
-            if not isinstance(spec, dict) or (spec.get("mandatory") or []) or (spec.get("selectable") or []):
+            allowed = {"receipt_data"}
+            if (not isinstance(spec, dict) or set(spec.get("mandatory") or []) - allowed
+                    or spec.get("selectable")):
                 problems.append(f"structural exclusion claims a node type the matrix does verify: {eid}")
+                continue
+            # Independent traversal-derived minimum includes node-kind and incident/path
+            # edge obligations. The author's required_by_entity cannot erase them.
+            if set(minimum_by_entity.get(eid, [])) - allowed:
+                problems.append(f"self-reissue owes another mandatory verifier: {eid}")
+                continue
+            # A kind present only at BASE must not disappear through reclassification.
+            kind_required = set()
+            for idx in (before, after):
+                actual_node = idx.nodes.get(eid, {})
+                kind_required.update(matrix.get("node_kinds", {}).get(
+                    actual_node.get("kind"), {}).get("mandatory", []))
+            if any("receipt" in matrix["verifiers"][v]["applies_to_nodes"]
+                   for v in kind_required - allowed):
+                problems.append(f"self-reissue owes a base/head node-kind verifier: {eid}")
                 continue
             ok, why = _superseded_self_rederived(repo, doc, claim, path, base, head)
             if ok:
@@ -1114,7 +1171,7 @@ def mandatory_by_entity(before: impact.GraphIndex, after: impact.GraphIndex, q: 
                        not_owed: dict | None = None,
                        head_tree: build_graph.Tree | None = None) -> dict[str, list[str]]:
     """The matrix minimum, independent of a producer's supplied requirement arrays."""
-    matrix = json.loads((Path(__file__).resolve().parents[2] / "contracts/graph-verified-change/verifier-matrix.v1.json").read_text())
+    matrix = _matrix()
     affected = selected(q)
     # Independent admission-side floor; intentionally not imported from verify.py or derived from the matrix.
     present_types = {(after.nodes.get(eid) or before.nodes.get(eid) or {}).get("type") for eid in affected}

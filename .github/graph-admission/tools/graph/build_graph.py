@@ -37,6 +37,11 @@ Extractors (each one separately disable-able for the mutation battery; `manifest
                every discovered src root, relative imports (`from .x import y`) resolved from the importing file's
                directory; `os.environ`/`os.getenv`; `@app.get(...)`-style decorators                → imports / reads_config /
                provides_route (deterministic)
+  go           AUP-GRAPH-009: go.mod (when present) → deployable_unit + containment; package clause required for a
+               hash-bound code_unit (no bare .go node); project import paths resolved only under a declared module;
+               same-package `*_test.go` → verifies; `os.Getenv`/`LookupEnv`; build tags recorded; unresolved external
+               imports stay external (no fabricated module)                                         → imports / verifies /
+               reads_config (deterministic)
 
 Nothing here calls an LLM; every `inferred` edge names its method in `inferred_by` (LLM_EDGE_NOT_INFERRED is a schema
 violation). stdlib only (Python 3.12); the TypeScript compiler is NOT used — the extractor is a comment/string-aware
@@ -64,15 +69,16 @@ import nest_bootstrap
 import python_search_path
 import schema_check  # noqa: E402  (tools/graph/schema_check.py — the validator of GRAPH-001)
 import shell_source
+import go_source
 import nest_fixture_scope
 import fixture_contracts
 import native_projection  # noqa: E402
 import source_input_contract  # noqa: E402
 
-VERSION = "1.0.6"  # Bounded Python caller contexts remain explicitly inferred.
+VERSION = "1.0.7"  # Operational config hash-bound (semantics unmeasured); bounded Go package/import/test extractor.
 BUILDER = "tools/graph/build_graph.py"
 EXTRACTORS = ["imports", "routes", "contracts", "prisma", "config", "reuse", "di", "queue", "tests",
-              "http_client", "deployables", "docs", "work_items", "receipts", "rust", "python"]
+              "http_client", "deployables", "docs", "work_items", "receipts", "rust", "python", "go"]
 EXTRACTORS.append("systemd")
 EXTRACTORS.append("trust_anchor")
 # `.mts` / `.cts` are TypeScript's ESM / CommonJS module flavours. impact.py and verify.py have always
@@ -98,7 +104,22 @@ DECL_EXT = (".d.ts", ".d.mts", ".d.cts")
 TS_SPEC_EXT = {".js": (".ts", ".tsx", ".d.ts"), ".mjs": (".mts", ".d.mts"), ".cjs": (".cts", ".d.cts")}
 RUST_EXT = (".rs",)
 PY_EXT = (".py",)
+GO_EXT = go_source.GO_EXT
+
+
+def operational_config_kind(path: str) -> str | None:
+    """Recognize the bounded deployment and service-registry sources we cannot parse semantically."""
+    name = path.rsplit("/", 1)[-1]
+    if path.startswith("ops/nginx/") and (name.endswith(".conf") or name == "sudoers" or name.endswith("-sudoers")):
+        return "operational_configuration"
+    if path == "scripts/services.yml":
+        return "operational_configuration"
+    return None
 ADAPTER_CLASS_RE = re.compile(r"\bclass\s+\w+\s+extends\s+(\w*Adapter)\b")
+
+
+def strip_comments_go(src: str) -> str:
+    return go_source.strip_comments_go(src)
 
 RUST_MOD_RE = re.compile(r"(?m)^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
 RUST_USE_RE = re.compile(r"\buse\s+((?:crate|self|super)(?:::[A-Za-z_][A-Za-z0-9_]*)*"
@@ -1083,6 +1104,9 @@ class Builder:
                     self.g.edge(f"code_unit:{path}", "imports", f"code_unit:{payload}",
                                 "deterministic", via="BenchNativePatchset/v1-physical-sibling")
         for p in t.paths:
+            config_kind = operational_config_kind(p)
+            if config_kind:
+                self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p, kind=config_kind)
             shell_kind = shell_source.kind(p, t.files[p], t.meta.get("file_modes", {}).get(p))
             if shell_kind:
                 analysis = shell_source.analyse(p, t.files[p], t.paths)
@@ -1095,6 +1119,15 @@ class Builder:
                 self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p, kind="type_declaration")
             elif p.endswith(CODE_EXT) or p.endswith(".prisma") or p.endswith(RUST_EXT) or p.endswith(PY_EXT):
                 self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p)
+            elif p.endswith(GO_EXT):
+                # No fake bare .go node: a package clause is required before a hash-bound code_unit exists.
+                parsed = go_source.parse_go_file(t.text(p))
+                if parsed is not None:
+                    kind = "go_test" if go_source.is_go_test(p) else "go_source"
+                    self.g.node(f"code_unit:{p}", "code_unit", sha_bytes(t.files[p]), path=p, kind=kind,
+                                symbol=parsed["package"],
+                                attrs={"go_package": parsed["package"], "go_imports": parsed["imports"],
+                                       "go_build_tags": parsed["build_tags"]})
             if p.endswith(CODE_EXT):
                 self.ts[p] = TsFile(p, t.text(p))
         self._source_input_bindings()
@@ -1462,6 +1495,7 @@ class Builder:
 
     def x_routes(self):
         t = self.tree
+        testing_bootstraps = {}
         projections = {}
         if self.source_repo and t.meta.get('source_tree') == 'git-objects':
             for dep, bootstrap in self.bootstraps.items():
@@ -1487,7 +1521,11 @@ class Builder:
                         continue
                     method = HTTP_METHODS[m.group(1).lower()]
                     route_path = self._route_path(prefix, sub or '')
-                    bootstrap = self.bootstraps.get(nest_bootstrap.deployable_of(f.path, self.package_dirs))
+                    if f.path not in testing_bootstraps:
+                        testing_bootstraps[f.path] = nest_bootstrap.resolve_test(t, f.path)
+                    bootstrap = testing_bootstraps[f.path]
+                    if bootstrap is None:
+                        bootstrap = self.bootstraps.get(nest_bootstrap.deployable_of(f.path, self.package_dirs))
                     route_complete = bool(bootstrap and bootstrap.complete)
                     try:
                         effective = bootstrap.effective_prefix(method, route_path) if route_complete else None
@@ -1842,6 +1880,90 @@ class Builder:
                                      "star imports, importlib-dynamic imports and bare `from . import x` "
                                      "are not resolved")
 
+    def x_go(self):
+        """AUP-GRAPH-009: go.mod (when present) → deployable_unit + containment; package-bound .go code_units;
+        project import paths resolved only under a declared module path; same-package `*_test.go` → verifies;
+        os.Getenv/LookupEnv → config_key. A missing go.mod is NOT fabricated. External imports stay external.
+        Build tags are recorded on the node attrs (from base()); nested modules use nearest go.mod."""
+        t = self.tree
+        modules: list[tuple[str, str]] = []  # (dir, module_path)
+        for p in t.paths:
+            if os.path.basename(p) != "go.mod":
+                continue
+            mp = go_source.module_path(t.text(p))
+            if not mp:
+                self.limitations.append(f"go.mod unreadable module line: {p}")
+                continue
+            modules.append((os.path.dirname(p), mp))
+        modules.sort(key=lambda x: len(x[0]), reverse=True)
+
+        go_files = [p for p in t.paths if p.endswith(GO_EXT) and f"code_unit:{p}" in self.g.nodes]
+        parsed_of: dict[str, dict] = {}
+        for p in go_files:
+            parsed = go_source.parse_go_file(t.text(p))
+            if parsed is None:
+                continue
+            parsed_of[p] = parsed
+
+        for d, name in modules:
+            go_mod_path = (d + "/" if d else "") + "go.mod"
+            kind = "library"
+            # A module that imports a known HTTP/service stack is a service; main packages lean cli.
+            text_blob = " ".join(imp for meta in parsed_of.values() for imp in meta["imports"])
+            if any(h in text_blob for h in go_source.GO_SERVICE_IMPORT_HINTS):
+                kind = "service"
+            elif any(meta["package"] == "main" for p, meta in parsed_of.items()
+                     if go_source.owning_module(p, modules) == (d, name)):
+                kind = "cli"
+            did = self.g.node(f"deployable_unit:{d or '.'}", "deployable_unit", sha_bytes(t.files[go_mod_path]),
+                              path=d or ".", kind=kind, symbol=name)
+            prefix = (d + "/") if d else ""
+            for fp in go_files:
+                if not (fp.startswith(prefix) if d else True):
+                    continue
+                own = go_source.owning_module(fp, modules)
+                if own != (d, name):
+                    continue
+                self.g.edge(f"code_unit:{fp}", "deploys_to", did, "deterministic", via="containment")
+
+        for p, meta in parsed_of.items():
+            for imp in meta["imports"]:
+                pkg_dir = go_source.import_package_dir(modules, imp)
+                if pkg_dir is None:
+                    self.external_packages.add(imp)
+                    continue
+                for target in go_source.package_dir_files(t.paths, pkg_dir):
+                    if target == p or f"code_unit:{target}" not in self.g.nodes:
+                        continue
+                    # Do not edge a file to another file in the same package via its own module import of itself
+                    # unless packages differ by path; same-package mates are not Go imports.
+                    if os.path.dirname(target) == os.path.dirname(p):
+                        continue
+                    self.g.edge(f"code_unit:{p}", "imports", f"code_unit:{target}", "deterministic",
+                                via="go-module-import")
+            for key in meta["env_keys"]:
+                self.g.node(f"config_key:{key}", "config_key", sha_text(key), symbol=key)
+                self.g.edge(f"code_unit:{p}", "reads_config", f"config_key:{key}", "deterministic", via="os-getenv")
+
+        # Same-package test → non-test verifies (Go tests need no import of same-package symbols).
+        by_dir_pkg: dict[tuple[str, str], list[str]] = {}
+        for p, meta in parsed_of.items():
+            by_dir_pkg.setdefault((os.path.dirname(p), meta["package"]), []).append(p)
+        for (_d, _pkg), files in by_dir_pkg.items():
+            tests = [f for f in files if go_source.is_go_test(f)]
+            sources = [f for f in files if not go_source.is_go_test(f)]
+            for tf in tests:
+                for sf in sources:
+                    self.g.edge(f"code_unit:{tf}", "verifies", f"code_unit:{sf}", "deterministic",
+                                via="go-same-package-test")
+
+        if modules or go_files or any(p.endswith(GO_EXT) for p in t.paths):
+            self.limitations.append(
+                "go: package clause required for a code_unit (bare .go files stay unmeasured); import paths resolve "
+                "only under a declared go.mod module path (absent go.mod ⇒ no fabricated module, external imports "
+                "recorded as external_packages); build tags are attrs only (no conditional file set); cgo and "
+                "embed directives are not modelled")
+
     def x_config(self):
         pat = re.compile(r"process\.env\.([A-Za-z_][A-Za-z0-9_]*)|process\.env\[\s*['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]\s*\]"
                          r"|(?:configService|config|this\.config|this\.configService)\.get(?:OrThrow)?(?:<[^>]*>)?\(\s*['\"]([A-Za-z0-9_.]+)['\"]")
@@ -2111,7 +2233,7 @@ class Builder:
         order = [("contracts", self.x_contracts), ("routes", self.x_routes), ("prisma", self.x_prisma), ("imports", self.x_imports),
                  ("config", self.x_config), ("reuse", self.x_reuse), ("di", self.x_di), ("queue", self.x_queue), ("tests", self.x_tests),
                  ("http_client", self.x_http_client), ("deployables", self.x_deployables), ("rust", self.x_rust),
-                 ("python", self.x_python), ("docs", self.x_docs), ("work_items", self.x_work_items),
+                 ("python", self.x_python), ("go", self.x_go), ("docs", self.x_docs), ("work_items", self.x_work_items),
                  ("receipts", self.x_receipts), ("systemd", self.x_systemd),
                  ("trust_anchor", self.x_trust_anchor)]
         for name, fn in order:
@@ -2141,10 +2263,16 @@ class Builder:
         for e in edges:
             by_edge.setdefault(e["type"], {})
             by_edge[e["type"]][e["provenance"]] = by_edge[e["type"]].get(e["provenance"], 0) + 1
+        # AUP-E29 remasure (task 76bc): the uncovered-language census must match extractors that
+        # actually emit nodes. Counting `.service`/`.timer` here while `x_systemd` creates
+        # `systemd_unit:` nodes published a false "yield no nodes" limitation (A2-407 honesty gap).
         uncovered: dict[str, int] = {}
         for p in self.tree.paths:
             ext = os.path.splitext(p)[1] or "(none)"
-            if not (p.endswith(CODE_EXT) or p.endswith(RUST_EXT) or p.endswith(PY_EXT)
+            if self.on("systemd") and Path(p).suffix in SYSTEMD_SUFFIX_KIND:
+                continue
+            if not (p.endswith(CODE_EXT) or p.endswith(RUST_EXT) or p.endswith(PY_EXT) or p.endswith(GO_EXT)
+                    or operational_config_kind(p)
                     or shell_source.kind(p, self.tree.files[p], self.tree.meta.get("file_modes", {}).get(p))
                     or p.endswith((".prisma", ".md", ".markdown", ".json", ".yaml", ".yml", ".toml"))):
                 uncovered[ext] = uncovered.get(ext, 0) + 1
@@ -2162,6 +2290,9 @@ class Builder:
             limitations.append(f"http client call sites matched to no served route: {len(self.unmatched_http)}")
         if uncovered:
             limitations.append("files of uncovered languages yield no nodes: " + ", ".join(f"{k}×{v}" for k, v in sorted(uncovered.items())))
+        language_coverage = ["typescript", "javascript", "prisma", "markdown", "json-receipts", "rust", "python", "go", "bash", "bats"]
+        if self.on("systemd"):
+            language_coverage = language_coverage + ["systemd"]
         manifest = {
             "schema": "RelationshipGraph/v1",
             "builder": BUILDER,
@@ -2179,7 +2310,7 @@ class Builder:
                            "work_item_pattern": self.work_item_pattern, "parser": "regex-ast-lite", "typescript_compiler": False},
             "node_count": len(nodes),
             "edge_count": len(edges),
-            "language_coverage": ["typescript", "javascript", "prisma", "markdown", "json-receipts", "rust", "python", "bash", "bats"],
+            "language_coverage": language_coverage,
             "limitations": limitations,
             "stats": {"files": len(self.tree.paths), "ts_files": len(self.ts), "nodes_by_type": by_node, "edges_by_type_provenance": by_edge,
                       "dropped_dangling_edges": len(self.g.dropped_dangling), "unresolved_relative_imports": self.unresolved_imports,
