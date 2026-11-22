@@ -124,42 +124,42 @@
    "entity": "code_unit:.github/workflows/benchmark-scrutator.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-2b43e97319f91478: workflow shell caller closure not measured: job benchmark step 2: heredoc/group/function/brace expansion closure is unresolved; job benchmark step 3: heredoc/group/function/brace expansion closure is unresolved; job unit-tests step 4: line 1: unsupported interpreter script/module/stdin dispatch closure; 3 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/ci.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-b803fcb7f17ed923: workflow shell caller closure not measured: job network-exposure: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/dependabot-auto-merge.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-2fe48d1021006468: workflow shell caller closure not measured: job auto-merge step 0: command/process substitution closure is unresolved; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/deploy-kc-corpus.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-eea5ff169848609b: workflow shell caller closure not measured: job deploy step 2: line 1: wrapper execution scope/options unresolved; job deploy step 3: line 1: wrapper execution scope/options unresolved; job deploy step 4: line 1: wrapper execution scope/options unresolved; job deploy step 5: line 1: wrapper execution scope/options unresolved; job deploy step 6: command/process substitution closure is unresolved; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violati"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/deploy.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-28802fbf11c83a2e: workflow shell caller closure not measured: job deploy step 3: line 17: wrapper execution scope/options unresolved; job deploy step 4: heredoc/group/function/brace expansion closure is unresolved; job deploy step 6: heredoc/group/function/brace expansion closure is unresolved; job deploy step 7: heredoc/group/function/brace expansion closure is unresolved; job network-exposure: reusable/opaque shell context; 5 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fi"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
    "entity": "code_unit:.github/workflows/graph-admission-call.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-60a4bd100e640545: workflow shell caller closure not measured: job graph-admission: reusable/opaque shell context; 1 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable"
   },
   {
    "code": "WORKFLOW_SHELL_CALLER_CLOSURE_NOT_MEASURED",
@@ -173,7 +173,7 @@
    "entity": "code_unit:.github/workflows/recall-regression.yml",
    "expires_at_utc": "2026-11-29T00:00:00Z",
    "owner": "Arcanada (Root admitting agent, DEC-AUP-0199, scrutator#202)",
-   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence"
+   "reason": "v-workflow-config-251cde5034c907f0: workflow shell caller closure not measured: job recall-gate step 2: heredoc/group/function/brace expansion closure is unresolved; job recall-gate step 3: line 6: unsupported interpreter script/module/stdin dispatch closure; 2 workflow shell-caller uncertainty item(s) remain separate from YAML schema validation and are retained in graph closure evidence; v-fitness: no new fitness violation; workflow actionlint NOT_MEASURED: pinned actionlint binary unavailable"
   },
   {
    "code": "SHELL_DYNAMIC_CLOSURE_NOT_MEASURED",
