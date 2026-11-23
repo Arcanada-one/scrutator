@@ -40,7 +40,7 @@ Scrutator provides unified search, retrieval, and meaning extraction across all 
 
 ## Tech Stack
 
-- **Language:** Python 3.12
+- **Language:** Python 3.15 runtime; the package supports Python >=3.12
 - **API:** FastAPI + uvicorn
 - **Embedding model:** BAAI/bge-m3 (dense + sparse + ColBERT)
 - **Vector store:** PostgreSQL + pgvector (HNSW indexes)
