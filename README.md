@@ -69,7 +69,7 @@ The name comes from the Latin *scrutator* — "one who thoroughly investigates."
 
 ## Tech Stack
 
-- **Python 3.12** + FastAPI + uvicorn
+- **Python 3.15 runtime** (package support: Python >=3.12) + FastAPI + uvicorn
 - **BAAI/bge-m3** — multilingual embeddings (100+ languages, RU↔EN: 0.887 similarity)
 - **PostgreSQL** + pgvector (HNSW) + FTS (tsvector)
 - **RRF** — Reciprocal Rank Fusion (k=60) for hybrid ranking
