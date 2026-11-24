@@ -22,9 +22,9 @@ RUNTIME_FLOORS = {
     "tenacity": "9.2.1",
 }
 DEV_FLOORS = {
-    "ruff": "0.17.4",
+    "ruff": "0.17.5",
     "pytest": "9.2.0",
-    "pytest-asyncio": "1.4.1.post1",
+    "pytest-asyncio": "1.5.0",
 }
 SYNC_EXACT = {
     "asyncpg": "0.32.0",
