@@ -141,7 +141,7 @@ def test_the_outcome_step_always_runs_and_reads_the_real_step_ids():
         ("success", "passed", "::notice title=deploy: DEPLOYED, canary green::"),
         ("success", "not_measured", "::warning title=deploy: DEPLOYED, canary partly not_measured::"),
         ("success", "", "::error title=deploy: DEPLOYED, canary produced no verdict::"),
-        ("failure", "", "::error title=deploy: target NOT live"),
+        ("failure", "", "::error title=transaction failed; resident target not inferred::"),
         ("cancelled", "", "::error title=deploy: INTERRUPTED"),
         ("skipped", "", "::error title=deploy: NOT DEPLOYED (transaction did not run; preflight=fail)"),
     ],
