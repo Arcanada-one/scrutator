@@ -719,9 +719,18 @@ async def delete_ltm_source(namespace_id: int, source_path: str) -> dict[str, in
 
 
 async def delete_by_source(source_path: str, namespace_id: int) -> int:
-    """Delete all chunks for a given source path. Returns deleted count."""
+    """Delete one source under the replacement lock; return the deleted count.
+
+    This serializes deletion with source replacement. It does not identify an
+    earlier generation or restore the source state that preceded a replacement.
+    """
     pool = await get_pool()
     async with pool.acquire() as conn, conn.transaction():
+        await conn.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended($1::int::text || ':' || $2, 0))",
+            namespace_id,
+            source_path,
+        )
         result = await conn.execute(
             "DELETE FROM chunks WHERE namespace_id=$1 AND source_path=$2",
             namespace_id,
