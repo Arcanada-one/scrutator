@@ -284,7 +284,7 @@ jobs:
             success:not_measured) level=warning title="deploy: DEPLOYED, canary partly not_measured" ;;
             success:failed)       level=error   title="deploy: DEPLOYED, canary RED" ;;
             success:*)            level=error   title="deploy: DEPLOYED, canary produced no verdict" ;;
-            failure:*)            level=error   title="deploy: target NOT live (transaction failed: refused, rolled back, or exit 90 = rollback failed; see Deploy log)" ;;
+            failure:*)            level=error   title="transaction failed; resident target not inferred" ;;
             cancelled:*)          level=error   title="deploy: INTERRUPTED (production state unknown; read the transaction outcome file)" ;;
             *)                    level=error   title="deploy: NOT DEPLOYED (transaction did not run; preflight=${PREFLIGHT:-unknown})" ;;
           esac
