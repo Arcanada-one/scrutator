@@ -124,7 +124,7 @@ def program_source_binding(repo: Path, repo_name: str, head: str, tools_root: Pa
 
 def candidate_cli_outcome(repo: Path, repo_name: str, base: str, head: str,
                           candidate_root: Path, evidence_root: Path,
-                          program_source: dict, tools_root: Path) -> dict:
+                          program_source: dict, tools_root: Path, candidate_canary: str | None = None) -> dict:
     """Publish the same-run current-source CLI captures; this is provenance, not admission."""
     if candidate_root.is_symlink() or not candidate_root.is_dir():
         raise ValueError("current-source CLI capture root is missing or unsafe")
@@ -164,6 +164,8 @@ def candidate_cli_outcome(repo: Path, repo_name: str, base: str, head: str,
         expected_scripts["verify"].extend(["--empty-impact-explanation", str(explanation_path)])
     if repo_name == "Arcanada-one/auth-arcana":
         expected_scripts["verify"].extend(["--root-typecheck-ci-root", str(candidate_root / "ci-typecheck")])
+    if candidate_canary:
+        expected_scripts["verify"].extend([f"--canary={candidate_canary}", "--require-committed-canary-v2"])
     commands = []
     for name in ("build", "verify"):
         argv_path = candidate_root / f"{name}.argv.nul"
@@ -360,6 +362,7 @@ def main() -> int:
                         help="Program source root (self-repository) or the caller's vendored signed bundle")
     parser.add_argument("--candidate-root", type=Path,
                         help="same-run raw current-source build/verify capture directory")
+    parser.add_argument("--candidate-canary", help="expected repository-relative canary in the candidate verifier argv")
     args = parser.parse_args()
 
     repo = args.repo.resolve(strict=True)
@@ -422,7 +425,7 @@ def main() -> int:
         if args.candidate_root is not None:
             result["candidate_cli_outcome"] = candidate_cli_outcome(
                 repo, args.repo_name, args.base, args.head, args.candidate_root, evidence_root,
-                program_source, tools_root)
+                program_source, tools_root, candidate_canary=args.candidate_canary)
 
         output_root = workdir / "steps"
         output_root.mkdir(parents=True, exist_ok=True)

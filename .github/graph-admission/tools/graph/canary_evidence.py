@@ -90,6 +90,27 @@ def read_at_commit(repo, commit, rel):
     return out.stdout
 
 
+def validate_candidate_canary(repo: Path, head: str, ref: str) -> None:
+    """Validate the optional hosted verifier input before it can name a file."""
+    if (not re.fullmatch(r"[0-9a-f]{40}", head)
+            or ref.startswith("~") or re.search(r"[\\:\x00-\x1f\x7f]", ref)
+            or any(part in ("", ".", "..") for part in ref.split("/"))):
+        raise ValueError("candidate canary requires an exact head and a repository-relative file path")
+    repo = repo.resolve()
+    path = repo / ref
+    mode, oid = tree_entries(repo, head).get(ref, (None, None))
+    if mode not in ("100644", "100755") or path.resolve() != path:
+        raise ValueError("candidate canary is not a regular, non-symlink file at head")
+    raw = read_regular(path)
+    framed = f"blob {len(raw)}\0".encode("ascii") + raw
+    if hashlib.sha1(framed).hexdigest() != oid:
+        raise ValueError("candidate canary checkout bytes differ from its blob at head")
+    _, errors, doc = consume(path, repo, head, at_head=ref)
+    if doc.get("schema") != "CanaryResult/v2" or errors:
+        raise ValueError("candidate canary is not a valid source-bound CanaryResult/v2: "
+                         + "; ".join(errors[:3]))
+
+
 def reference_name(reference):
     """The bare file name a reference points at, refusing anything that is not one."""
     text = str(reference).replace("\\", "/")

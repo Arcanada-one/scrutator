@@ -140,7 +140,7 @@
    "code": "EXEMPTION_INADMISSIBLE",
    "verdict": "refuse",
    "order": 10,
-   "rule": "An exemption without an owner, without an expiry, expired at the gate's clock, or naming an entity that has no verdict is inadmissible; the entity it claims to cover falls back to its raw verdict."
+   "rule": "An exemption without an owner, without an expiry, expired at the gate's clock, or naming an entity that has no verdict is inadmissible; the entity it claims to cover falls back to its raw verdict. For code BASE_NATIVE_POLICY_MISSING, C10 also requires the exemption reason to equal the complete measured verdict reason byte-for-byte and re-derives eligibility from the admission contract at the receipt's base: only a receipt entity covered by the historical_receipt class (I14 marker and added by that receipt's range) can be exempted; unknown entity types, missing base policy, unsupported class, or any failed eligibility check is inadmissible."
   },
   {
    "id": "C11",

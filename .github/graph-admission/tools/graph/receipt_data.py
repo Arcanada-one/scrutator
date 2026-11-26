@@ -21,6 +21,10 @@ import schema_check
 SCOPE = "archived_evidence_data"
 ENDPOINT = "https://api.muneral.com/api/v1"
 POLICY_PATH = "contracts/graph-verified-change/admission-gate.v1.json"
+# Program uses the repository-root policy. Caller repositories use the same
+# contract bytes only inside the signed, vendored graph-admission bundle.
+BUNDLED_POLICY_PATH = ".github/graph-admission/" + POLICY_PATH
+PROGRAM_GATE_PATH = "tools/graph/admit_change.py"
 MAX_BLOB = 16 * 1024 * 1024
 MAX_NATIVE = 1024 * 1024
 UUID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\Z", re.I)
@@ -206,11 +210,34 @@ class NativeReader:
         return self.cache[task]
 
 
+def policy_blob_at(git, revision):
+    """Return the canonical policy path and blob at one immutable revision.
+
+    Program is identified from its committed gate tool and uses POLICY_PATH
+    at repository root. Consumers use the exact same contract bytes beneath
+    their signed bundle, even if an unrelated root path happens to exist.
+    """
+    # Match the gate's tree-based Program marker. A coincidental root contract
+    # in a consumer must not override the signed bundle copy.
+    if git.blob(revision, PROGRAM_GATE_PATH) is not None:
+        blob = git.blob(revision, POLICY_PATH)
+        return (POLICY_PATH, blob) if blob is not None else (None, None)
+    blob = git.blob(revision, BUNDLED_POLICY_PATH)
+    return (BUNDLED_POLICY_PATH, blob) if blob is not None else (None, None)
+
+
+def policy_document_at(git, revision):
+    path, blob = policy_blob_at(git, revision)
+    if blob is None:
+        raise Unmeasured("BASE_NATIVE_POLICY_MISSING")
+    return path, strict_json(blob[0]), blob[0]
+
+
 def base_policy(git, base, head):
-    before = git.blob(base, POLICY_PATH)
+    policy_path, before = policy_blob_at(git, base)
     if before is None:
         raise Unmeasured("BASE_NATIVE_POLICY_MISSING")
-    after = git.blob(head, POLICY_PATH)
+    after = git.blob(head, policy_path)
     if after is None or before != after:
         raise Unmeasured("NATIVE_POLICY_COEDIT_OR_REMOVAL")
     doc = strict_json(before[0])
