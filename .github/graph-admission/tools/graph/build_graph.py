@@ -527,14 +527,14 @@ def load_tree_worktree(root: Path) -> Tree:
 SYSTEMD_SUFFIX_KIND = {".service": "service", ".timer": "timer"}
 SYSTEMD_ALLOWED = {
     "Unit": {"Description", "Documentation", "After", "Before", "Requires", "Wants", "PartOf",
-             "ConditionPathExists", "ConditionPathIsDirectory"},
+             "ConditionPathExists", "ConditionPathIsDirectory", "StartLimitIntervalSec", "StartLimitBurst"},
     "Service": {"Type", "ExecStart", "ExecStartPre", "ExecStartPost", "ExecStop", "User", "Group",
                  "WorkingDirectory", "EnvironmentFile", "Restart", "RestartSec", "TimeoutStartSec", "Nice",
                  "CPUWeight", "IOWeight", "Environment", "StandardOutput", "StandardError", "ProtectSystem",
                  "NoNewPrivileges", "PrivateTmp", "ProtectHome", "ProtectKernelTunables",
                  "ProtectKernelModules", "ProtectControlGroups", "RestrictSUIDSGID", "LockPersonality",
                  "RestrictRealtime", "SystemCallArchitectures", "ReadOnlyPaths", "ReadWritePaths",
-                 "StateDirectory"},
+                 "StateDirectory", "UMask", "RestrictAddressFamilies", "MemoryDenyWriteExecute"},
     # Muneral 7fbbccbe: every key of systemd.timer(5) (systemd 255), not the three the first fixtures used. A valid
     # key was reported as SYSTEMD_KEY_UNKNOWN and failed the verdict of any change that touched the file
     # (scrutator deploy/muneral-kb-sync.timer, AccuracySec=15s). Keys stay single-valued: a duplicate is still
@@ -555,7 +555,7 @@ SYSTEMD_REPEATABLE = {
 SYSTEMD_BOOLEAN_VALUES = {"1", "yes", "true", "on", "0", "no", "false", "off"}
 SYSTEMD_BOOLEAN_DIRECTIVES = {
     "NoNewPrivileges", "ProtectKernelTunables", "ProtectKernelModules", "RestrictSUIDSGID",
-    "LockPersonality", "RestrictRealtime",
+    "LockPersonality", "RestrictRealtime", "MemoryDenyWriteExecute",
 }
 SYSTEMD_TIMER_BOOLEAN_DIRECTIVES = {
     "FixedRandomDelay", "OnClockChange", "OnTimezoneChange", "Persistent", "WakeSystem", "RemainAfterElapse",
@@ -565,6 +565,16 @@ SYSTEMD_ARCHITECTURES = {
     "s390", "s390x", "sparc", "sparc64", "mips", "mips-le", "mips64", "mips64-le",
     "alpha", "arm", "arm-be", "arm64", "arm64-be", "sh", "sh64", "m68k", "tilegx", "cris",
     "arc", "arc-be", "x32", "mips64-n32", "mips64-le-n32", "native",
+}
+# Linux address families and aliases recognized by systemd 255's generated af-list.
+# Keep the grammar independent of the Python build and the verifier host's headers.
+SYSTEMD_ADDRESS_FAMILIES = {
+    "AF_ALG", "AF_APPLETALK", "AF_ASH", "AF_ATMPVC", "AF_ATMSVC", "AF_AX25", "AF_BLUETOOTH",
+    "AF_BRIDGE", "AF_CAIF", "AF_CAN", "AF_DECNET", "AF_ECONET", "AF_FILE", "AF_IB", "AF_IEEE802154",
+    "AF_INET", "AF_INET6", "AF_IPX", "AF_IRDA", "AF_ISDN", "AF_IUCV", "AF_KCM", "AF_KEY", "AF_LLC",
+    "AF_LOCAL", "AF_MCTP", "AF_MPLS", "AF_NETBEUI", "AF_NETLINK", "AF_NETROM", "AF_NFC", "AF_PACKET",
+    "AF_PHONET", "AF_PPPOX", "AF_QIPCRTR", "AF_RDS", "AF_ROSE", "AF_ROUTE", "AF_RXRPC",
+    "AF_SECURITY", "AF_SMC", "AF_SNA", "AF_TIPC", "AF_UNIX", "AF_VSOCK", "AF_WANPIPE", "AF_X25", "AF_XDP",
 }
 
 
@@ -669,11 +679,103 @@ def _systemd_path_list_is_valid(value: str) -> bool:
     return True
 
 
+_SYSTEMD_USEC_PER_SECOND = 1_000_000
+_SYSTEMD_USEC_INFINITY = (1 << 64) - 1
+_SYSTEMD_TIME_UNITS = {
+    unit: microseconds
+    for names, microseconds in (
+        ("usec us μs µs", 1),
+        ("msec ms", 1_000),
+        ("seconds second sec s", _SYSTEMD_USEC_PER_SECOND),
+        ("minutes minute min m", 60 * _SYSTEMD_USEC_PER_SECOND),
+        ("hours hour hr h", 3_600 * _SYSTEMD_USEC_PER_SECOND),
+        ("days day d", 86_400 * _SYSTEMD_USEC_PER_SECOND),
+        ("weeks week w", 604_800 * _SYSTEMD_USEC_PER_SECOND),
+        ("months month M", 2_629_800 * _SYSTEMD_USEC_PER_SECOND),
+        ("years year y", 31_557_600 * _SYSTEMD_USEC_PER_SECOND),
+    )
+    for unit in names.split()
+}
+# Match the longest suffix first, so e.g. "msec" is not read as minutes followed by junk.
+_SYSTEMD_TIME_SUFFIX = "|".join(sorted(_SYSTEMD_TIME_UNITS, key=len, reverse=True))
+_SYSTEMD_TIME_COMPONENT = re.compile(
+    r"[ \t]*(?P<number>\+?[0-9]+(?:\.[0-9]+)?|\.[0-9]+)"
+    rf"(?:[ \t]*(?P<unit>{_SYSTEMD_TIME_SUFFIX}))?"
+)
+_SYSTEMD_INTEGER = re.compile(
+    r"[+-]?(?:0[xX](?P<hexadecimal>[0-9a-fA-F]+)|0[bB](?P<binary>[01]+)"
+    r"|0(?P<octal>[0-7]*)|(?P<decimal>[1-9][0-9]*))|0o(?P<explicit_octal>[0-7]+)"
+)
+
+
+def _systemd_timespan_is_valid(value: str) -> bool:
+    """Validate a seconds-based systemd 255 time span."""
+    value = value.strip(" \t")
+    if value == "infinity":
+        return True
+    offset = total = 0
+    while offset < len(value):
+        part = _SYSTEMD_TIME_COMPONENT.match(value, offset)
+        if part is None:
+            return False
+        offset = part.end()
+        unit = part["unit"]
+        if unit is None and offset < len(value) and value[offset] not in " \t":
+            return False
+        whole, _, fraction = part["number"].lstrip("+").partition(".")
+        whole = whole.lstrip("0")
+        if len(whole) > 19:
+            return False
+        count = int(whole or "0")
+        scale = _SYSTEMD_TIME_UNITS.get(unit, _SYSTEMD_USEC_PER_SECOND)
+        if count >= _SYSTEMD_USEC_INFINITY // scale or count >= 1 << 63:
+            return False
+        total += count * scale
+        for digit in fraction:
+            scale //= 10
+            if not scale:
+                break
+            total += int(digit) * scale
+        if total >= _SYSTEMD_USEC_INFINITY:
+            return False
+    return bool(value)
+
+
+def _systemd_integer_in_range(value: str, minimum: int, maximum: int) -> bool:
+    value = value.strip(" \t")
+    number = _SYSTEMD_INTEGER.fullmatch(value)
+    if number is None:
+        return False
+    digits = number[number.lastgroup].lstrip("0") or "0"
+    if len(digits) > 32:
+        return False
+    radix = {"hexadecimal": 16, "binary": 2, "octal": 8, "explicit_octal": 8, "decimal": 10}
+    count = int(digits, radix[number.lastgroup])
+    if value.startswith("-"):
+        count = -count
+    return minimum <= count <= maximum
+
+
 def _systemd_value_is_valid(section: str, key: str, value: str) -> bool:
+    if key.endswith("Sec"):
+        # Each allowlisted *Sec key in Unit, Service and Timer takes a time span.
+        return _systemd_timespan_is_valid(value)
+    if section == "Unit" and key == "StartLimitBurst":
+        return _systemd_integer_in_range(value, 0, (1 << 32) - 1)
     if section == "Timer" and key in SYSTEMD_TIMER_BOOLEAN_DIRECTIVES:
         return value.lower() in SYSTEMD_BOOLEAN_VALUES
     if section != "Service":
         return True
+    if key == "Nice":
+        return _systemd_integer_in_range(value, -20, 19)
+    if key == "UMask":
+        return bool(re.fullmatch(r"[0-7]{1,4}", value.strip(" \t")))
+    if key == "RestrictAddressFamilies":
+        value = value.strip(" \t")
+        if value == "none":
+            return True
+        families = re.split(r"[ \t]+", value.removeprefix("~").lstrip(" \t"))
+        return all(name.isascii() and name.upper() in SYSTEMD_ADDRESS_FAMILIES for name in families)
     if key == "StateDirectory":
         # This bounded grammar supports plain directory basenames only. systemd ownership
         # modifiers and specifiers remain outside this parser's verified source subset.
@@ -713,8 +815,9 @@ def parse_systemd_unit(path: str, raw: bytes) -> dict:
         raise SystemdParseError(f"SYSTEMD_UTF8_INVALID:{exc.start}") from exc
     sections: dict[str, dict[str, list[dict]]] = {}
     section = None
-    for line_no, line in enumerate(text.splitlines(), 1):
-        stripped = line.strip()
+    # Keep Unicode line separators in the key or value for validation.
+    for line_no, line in enumerate(re.split(r"\r\n|\r|\n", text), 1):
+        stripped = line.strip(" \t")
         if not stripped or stripped.startswith(("#", ";")):
             continue
         if stripped.endswith("\\"):
@@ -728,11 +831,11 @@ def parse_systemd_unit(path: str, raw: bytes) -> dict:
         if section is None or "=" not in line:
             raise SystemdParseError(f"SYSTEMD_LINE_INVALID:{line_no}")
         key, value = line.split("=", 1)
-        key = key.strip()
+        key = key.strip(" \t")
         if key not in SYSTEMD_ALLOWED[section]:
             raise SystemdParseError(f"SYSTEMD_KEY_UNKNOWN:{line_no}:{section}.{key}")
         if not value or value.startswith((" ", "\t")):
-            value = value.strip()
+            value = value.strip(" \t")
         if value == "" and (section, key) in {
                 ("Service", "ReadOnlyPaths"), ("Service", "ReadWritePaths")}:
             sections[section].setdefault(key, []).clear()
