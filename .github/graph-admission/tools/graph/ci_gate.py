@@ -36,6 +36,7 @@ stdlib only (Python 3.12), deterministic, no network.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fnmatch
 import hashlib
 import importlib.util
@@ -905,7 +906,8 @@ def _argv_uses_pinned_interpreter(argv: object, interpreter: object) -> bool:
 def validate_current_source_cli_outcome(outcome: object, root: Path, repo: Path, repo_name: str,
                                         base: str, head: str, candidate_tree: str,
                                         program_source: dict, tools_root: Path,
-                                        required: bool) -> tuple[dict | None, list[str]]:
+                                        required: bool, *, candidate_canary: str | None = None,
+                                        ) -> tuple[dict | None, list[str]]:
     """Validate fresh same-run candidate CLI captures; never interpret them as admission."""
     if outcome is None:
         return None, (["required current-source CLI outcome is missing"] if required else [])
@@ -967,6 +969,13 @@ def validate_current_source_cli_outcome(outcome: object, root: Path, repo: Path,
         expected_argv["verify"].extend(["--empty-impact-explanation", str(explanation_path)])
     if repo_name == "Arcanada-one/auth-arcana":
         expected_argv["verify"].extend(["--root-typecheck-ci-root", str(candidate_root / "ci-typecheck")])
+    if candidate_canary:
+        import canary_evidence
+        try:
+            canary_evidence.validate_candidate_canary(repo, head, candidate_canary)
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+            problems.append("current-source candidate canary refused: " + str(exc))
+        expected_argv["verify"].extend([f"--canary={candidate_canary}", "--require-committed-canary-v2"])
     resolved_outputs = {}
     for name, row in command_by_id.items():
         if (set(row) != {"id", "argv", "cwd", "pid", "start_utc", "end_utc", "exit_code",
@@ -1144,7 +1153,8 @@ def validate_stage_userpath_result(result_path: str | None, result_root: str | N
                                    outer_exit: int | None = None,
                                    candidate_outcome_required: bool = False,
                                    tools_root: Path | None = None,
-                                   trusted_bundle: dict | None = None) -> tuple[dict, list[str]]:
+                                   trusted_bundle: dict | None = None,
+                                   candidate_canary: str | None = None) -> tuple[dict, list[str]]:
     """Validate the actual Program-stage runner output without treating its fixture gate as candidate admission."""
     if not result_path:
         return {}, (["required ProgramStageUserpath/v1 result is missing"] if required else [])
@@ -1311,7 +1321,7 @@ def validate_stage_userpath_result(result_path: str | None, result_root: str | N
     candidate_outcome, candidate_outcome_problems = validate_current_source_cli_outcome(
         doc.get("candidate_cli_outcome"), root, repo, repo_name, base, head,
         actual_candidate_tree, program_source, effective_tools_root or repo,
-        candidate_outcome_required)
+        candidate_outcome_required, candidate_canary=candidate_canary)
     problems.extend(candidate_outcome_problems)
 
     fixture = doc.get("fixture")
@@ -1496,6 +1506,8 @@ def validate_stage_userpath_result(result_path: str | None, result_root: str | N
                             "--tools-root", str(effective_tools_root)]
     if candidate_outcome_required:
         expected_runner_argv.extend(["--candidate-root", str(root / "current-candidate")])
+    if candidate_canary:
+        expected_runner_argv.append(f"--candidate-canary={candidate_canary}")
     runner_argv = invocation.get("argv") if isinstance(invocation, dict) else None
     if (not isinstance(invocation, dict) or invocation.get("cwd") != str(repo.resolve())
             or not _argv_uses_pinned_interpreter(runner_argv, doc.get("interpreter"))
@@ -1591,11 +1603,11 @@ def validate_candidate_dependency_setup(manifest: dict, repo_path: str | Path,
 
     The manifest is caller-supplied data, never a command source. This function checks its exact
     policy, subject, range, package scope and seven Git/blob/content pins, then returns only the
-    fixed pnpm operations supported by this profile (frozen install with scripts disabled, the
-    @muneral/types build, then `pnpm exec prisma generate --schema apps/api/prisma/schema.prisma`.
-    This follows the Auth dependency-setup shape with Muneral's explicit schema because
-    ignore-scripts would otherwise leave @prisma/client ungenerated for apps/api
-    type_check). Its JSON shape is exactly
+    fixed pnpm operations supported by this profile: frozen install with scripts disabled,
+    the @muneral/types build, and root Prisma client generation. Generation explicitly selects
+    the qualified Muneral config and schema, with a fixed dummy DATABASE_URL scoped to that step.
+    Without generation, the frozen install leaves @prisma/client ungenerated for the API typecheck.
+    The manifest never supplies commands or environment values. Its JSON shape is exactly
     {schema, policy, repository, base, head, working_directory, scope, files}; each files value is
     {blob_oid, sha256, bytes}. The workflow is responsible for executing those literal operations
     after this function succeeds.
@@ -1633,13 +1645,20 @@ def validate_candidate_dependency_setup(manifest: dict, repo_path: str | Path,
         try:
             base_oid = _candidate_setup_git(repo, "rev-parse", "--verify", f"{base}:{relative}").decode().strip()
             head_oid = _candidate_setup_git(repo, "rev-parse", "--verify", f"{head}:{relative}").decode().strip()
-            path = repo / relative
-            mode = path.lstat().st_mode
+            path = repo
+            parts = Path(relative).parts
+            for component in parts[:-1]:
+                path /= component
+                if not stat.S_ISDIR(path.lstat().st_mode):
+                    raise ValueError("Prisma generation input has an unsafe parent path")
+            path /= parts[-1]
+            if not stat.S_ISREG(path.lstat().st_mode):
+                raise ValueError("Prisma generation input is not a regular file")
             working_oid = git_blob_oid_of_bytes(path.read_bytes())
             _candidate_setup_git(repo, "diff", "--quiet", head, "--", relative)
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             raise ValueError(f"Prisma generation input is unavailable or changed: {relative}") from exc
-        if (not stat.S_ISREG(mode) or base_oid != head_oid or working_oid != head_oid):
+        if base_oid != head_oid or working_oid != head_oid:
             raise ValueError(f"Prisma generation input is unavailable or changed: {relative}")
 
     file_pins = manifest.get("files")
@@ -1742,25 +1761,28 @@ def validate_candidate_dependency_setup(manifest: dict, repo_path: str | Path,
         "package_manager": root_package["packageManager"],
         "node_version": root_package["engines"]["node"],
         "files": checked_files,
-        # `--ignore-scripts` skips prisma postinstall. Auth's dependency setup therefore runs
-        # `pnpm exec prisma generate --schema apps/api/prisma/schema.prisma` after the frozen install;
-        # Muneral must do the same or apps/api type_check fails with missing `@prisma/client` exports
-        # (measured: muneral#444 CURRENT_CANDIDATE_PRODUCER_FAILED).
+        # `--ignore-scripts` skips Prisma postinstall. Match lint-and-test: build @muneral/types
+        # first, then generate the API client using the qualified config and schema.
+        # This placeholder is scoped to the generation step and is never persisted to GITHUB_ENV.
         "argv": [["pnpm", "install", "--frozen-lockfile", "--ignore-scripts",
                   "--ignore-pnpmfile"],
                  ["pnpm", "--filter", "@muneral/types", "build"],
-                 ["pnpm", "exec", "prisma", "generate", "--schema", "apps/api/prisma/schema.prisma"]],
+                 ["pnpm", "exec", "prisma", "generate", "--config", "prisma.config.ts",
+                  "--schema", "apps/api/prisma/schema.prisma"]],
+        "step_env": [{}, {}, {"CHECKPOINT_DISABLE": "1",
+                             "DATABASE_URL": "postgresql://dummy:dummy@localhost:5432/dummy"}],
     }
 
 
 def validate_candidate_api_dependency_setup(manifest: dict, repo_path: str | Path,
                                             repository: str, base: str, head: str) -> dict:
-    """Return the fixed API Prisma setup plan for the declared apps/api scope.
+    """Return the fixed dependency setup plan for apps/api.
 
     The manifest contains only the existing exact subject and source pins. Reuse the validated
-    MUN workspace/lockfile/Prisma-input contract, while returning this profile's fixed operations;
-    caller fields never supply commands or environment values. The API operation is the literal
-    root-directory argv `pnpm exec prisma generate`; Prisma config binds the schema path.
+    MUN workspace/lockfile/Prisma-input contract, changing only the scope label. API and web use
+    the same fixed operations: frozen install, the pure `tsc` shared-types build, and pinned
+    Prisma generation with a step-local dummy DATABASE_URL. Caller fields never supply commands
+    or environment values.
     """
     if not isinstance(manifest, dict):
         raise ValueError("dependency setup manifest must be an object")
@@ -1774,8 +1796,8 @@ def validate_candidate_api_dependency_setup(manifest: dict, repo_path: str | Pat
     if manifest.get("scope") != "apps/api":
         raise ValueError("dependency setup package scope is unsupported")
 
-    # The shared validator proves the exact repository, range, source pins and unchanged
-    # Prisma generator inputs. Translate only those two fixed labels for that validation.
+    # The shared validator proves the exact repository, range, source pins, pure tsc build script,
+    # workspace and unchanged Prisma generator inputs. Translate only the fixed scope labels.
     shared_manifest = {**manifest, "policy": CALLER_DEPENDENCY_SETUP_POLICY, "scope": "apps/web"}
     shared_plan = validate_candidate_dependency_setup(
         shared_manifest, repo_path, repository, base, head)
@@ -1783,8 +1805,6 @@ def validate_candidate_api_dependency_setup(manifest: dict, repo_path: str | Pat
         **shared_plan,
         "policy": CALLER_API_DEPENDENCY_SETUP_POLICY,
         "scope": "apps/api",
-        "argv": [shared_plan["argv"][0],
-                 ["pnpm", "exec", "prisma", "generate"]],
     }
 
 
@@ -2001,19 +2021,43 @@ AUTH_DEPENDENCY_SETUP_NETWORK_EXPOSURE_PINS = (
 AUTH_DEPENDENCY_SETUP_NETWORK_EXPOSURE_USES = (
     "Arcanada-one/datarim/.github/workflows/network-exposure-lint.yml@"
 )
-# DEC-AUP-0192 Clause B: root package.json keys that may move upward between exact allowlisted specifiers.
+# DEC-AUP-0192 Clause B and DEC-AUP-0200: root package.json keys that may move upward between exact
+# allowlisted specifiers. DEC-AUP-0200 appends one measured rung for Nodemailer and TypeScript ESLint.
 # Paths are (section, key). Never widen beyond this map.
 AUTH_DEPENDENCY_SETUP_NPM_PIN_LADDERS = {
-    ("dependencies", "nodemailer"): ("10.4.0", "10.5.0"),
-    ("devDependencies", "@typescript-eslint/eslint-plugin"): ("^8.72.1", "^8.72.2"),
-    ("devDependencies", "@typescript-eslint/parser"): ("^8.72.1", "^8.72.2"),
+    ("dependencies", "nodemailer"): ("10.4.0", "10.5.0", "10.6.0", "10.6.1"),
+    ("devDependencies", "@typescript-eslint/eslint-plugin"): ("^8.72.1", "^8.72.2", "^8.73.0"),
+    ("devDependencies", "@typescript-eslint/parser"): ("^8.72.1", "^8.72.2", "^8.73.0"),
     ("devDependencies", "prettier"): ("^3.9.10", "^3.10.1"),
 }
 AUTH_DEPENDENCY_SETUP_VITE_VERSIONS = ("6.4.4", "6.4.5")
+# Frozen Auth account-SPA lock closure. Keep each importer specifier paired with
+# its exact lock version; do not admit a cross-product of ranges and versions.
+AUTH_DEPENDENCY_SETUP_VITEST_LOCK_VARIANTS = (
+    ("^4.1.11", "4.1.11"),
+    (">=4.1.12 <5", "4.1.12"),
+)
 AUTH_DEPENDENCY_SETUP_PNPM = "10.30.3"
 AUTH_DEPENDENCY_SETUP_REGISTRY = "https://registry.npmjs.org/"
 # DEC-AUP-0194 Clause D: max number of pnpm-workspace.yaml overrides entries that may change or be added.
 AUTH_DEPENDENCY_SETUP_OVERRIDES_MAX_CHANGED = 32
+# The Auth setup policy may accept this one explicit lifecycle approval map transition.
+# The workspace file must otherwise remain byte-semantically identical; package, lock,
+# workflow, and frozen dependency closure checks still apply.
+AUTH_DEPENDENCY_SETUP_ALLOW_BUILDS_BASE = {
+    "@nestjs/core": "set this to true or false",
+    "@prisma/engines": "set this to true or false",
+    "@swc/core": "set this to true or false",
+    "esbuild": "set this to true or false",
+    "prisma": "set this to true or false",
+}
+AUTH_DEPENDENCY_SETUP_ALLOW_BUILDS_CANDIDATE = {
+    "@nestjs/core": "false",
+    "@prisma/engines": "true",
+    "@swc/core": "true",
+    "esbuild": "true",
+    "prisma": "true",
+}
 # Qualified action pins for the Auth CI closure (DEC-AUP-0187 follow-up). The older pins stay valid;
 # the newer ones are ADDITIONAL. Keep identical to AUTH_QUALIFIED_*_PINS in full_suite_ci.py
 # (a unit test asserts equality). Each entry is the full commit of the named release tag.
@@ -2027,7 +2071,8 @@ AUTH_QUALIFIED_NODE_SETUP_PINS = (
 )
 
 
-def _candidate_setup_blob(repo: Path, revision: str, relative: str) -> tuple[str, bytes]:
+def _candidate_setup_blob(repo: Path, revision: str, relative: str, *,
+                          regular_modes: tuple[str, ...] = ("100644",)) -> tuple[str, bytes]:
     row = _candidate_setup_git(repo, "ls-tree", "-z", "--full-tree", revision, "--", relative)
     rows = [item for item in row.split(b"\0") if item]
     if len(rows) != 1 or b"\t" not in rows[0]:
@@ -2038,13 +2083,14 @@ def _candidate_setup_blob(repo: Path, revision: str, relative: str) -> tuple[str
         path_text = recorded.decode("utf-8")
     except (UnicodeError, ValueError) as exc:
         raise ValueError(f"Auth dependency source tree row is malformed: {relative}") from exc
-    if path_text != relative or mode != "100644" or kind != "blob":
+    if path_text != relative or mode not in regular_modes or kind != "blob":
         raise ValueError(f"Auth dependency source is not a regular committed file: {relative}")
     raw = _candidate_setup_git(repo, "show", f"{revision}:{relative}")
     return oid, raw
 
 
-def _candidate_setup_blob_oid(repo: Path, revision: str, relative: str) -> str:
+def _candidate_setup_blob_oid(repo: Path, revision: str, relative: str, *,
+                              regular_modes: tuple[str, ...] = ("100644",)) -> str:
     """Read only tree metadata, suitable for config files whose contents must stay private."""
     row = _candidate_setup_git(repo, "ls-tree", "-z", "--full-tree", revision, "--", relative)
     rows = [item for item in row.split(b"\0") if item]
@@ -2056,7 +2102,7 @@ def _candidate_setup_blob_oid(repo: Path, revision: str, relative: str) -> str:
         path_text = recorded.decode("utf-8")
     except (UnicodeError, ValueError) as exc:
         raise ValueError(f"Auth dependency source tree row is malformed: {relative}") from exc
-    if path_text != relative or mode != "100644" or kind != "blob":
+    if path_text != relative or mode not in regular_modes or kind != "blob":
         raise ValueError(f"Auth dependency source is not a regular committed file: {relative}")
     return oid
 
@@ -2510,6 +2556,61 @@ def _auth_spa_push_step_admits(base_raw: bytes, head_raw: bytes, repo: Path, hea
     return True
 
 
+_AUTH_DEPLOY_TEST_COMMAND = (
+    "node --test scripts/deploy/resolve-observe-mode.test.mjs"
+    " scripts/deploy/pick-last-deploy-sha.test.mjs"
+)
+_AUTH_DEPLOY_TEST_PATH = re.compile(r"scripts/deploy/[A-Za-z0-9._-]+\.test\.mjs")
+
+
+def _auth_deploy_test_list_append_admits(base_raw: bytes, head_raw: bytes,
+                                        repo: Path, head: str) -> bool:
+    """DEC-AUP-0202: append regular tracked deploy tests to the one Auth lint-test invocation."""
+    try:
+        base_doc = _auth_load_workflow_yaml(base_raw)
+        head_doc = _auth_load_workflow_yaml(head_raw)
+    except Exception:
+        return False
+    try:
+        base_steps = base_doc["jobs"]["lint-test"]["steps"]
+        head_steps = head_doc["jobs"]["lint-test"]["steps"]
+        if not isinstance(base_steps, list) or not isinstance(head_steps, list):
+            return False
+        matched = [(index, step["run"]) for index, step in enumerate(base_steps)
+                   if isinstance(step, dict) and set(step) == {"run"}
+                   and isinstance(step["run"], str)
+                   and (step["run"] == _AUTH_DEPLOY_TEST_COMMAND
+                        or step["run"].startswith(_AUTH_DEPLOY_TEST_COMMAND + " "))]
+        if len(matched) != 1:
+            return False
+        index, base_run = matched[0]
+        head_run = head_steps[index]["run"]
+        if not isinstance(head_run, str) or not head_run.startswith(base_run + " "):
+            return False
+        appended = head_run[len(base_run) + 1:].split(" ")
+        existing = base_run.split(" ")[2:]
+        paths = existing + appended
+        if len(paths) != len(set(paths)) or not all(_AUTH_DEPLOY_TEST_PATH.fullmatch(p) for p in paths):
+            return False
+
+        head_steps[index]["run"] = base_run
+        if head_doc != base_doc:
+            return False
+        base_line = b"      - run: " + base_run.encode("ascii")
+        matches = list(re.finditer(rb"(?m)^" + re.escape(base_line) + rb"(?=\r?$)", base_raw))
+        if len(matches) != 1:
+            return False
+        end = matches[0].end()
+        suffix = head_run[len(base_run):].encode("ascii")
+        if head_raw != base_raw[:end] + suffix + base_raw[end:]:
+            return False
+        for path in appended:
+            _candidate_setup_blob_oid(repo, head, path, regular_modes=("100644", "100755"))
+    except (IndexError, KeyError, TypeError, ValueError):
+        return False
+    return True
+
+
 def _auth_npm_section_key(pkg: dict, section: str, key: str):
     block = pkg.get(section)
     if not isinstance(block, dict):
@@ -2723,6 +2824,23 @@ def _auth_workspace_overrides_raise_admits(base_raw: bytes, head_raw: bytes) -> 
     return changed > 0
 
 
+def _auth_workspace_allow_builds_only_admits(base_raw: bytes, head_raw: bytes) -> bool:
+    """Admit only the fixed Auth allowBuilds placeholder-to-boolean transition."""
+    try:
+        base_doc = _auth_load_workspace_yaml(base_raw)
+        head_doc = _auth_load_workspace_yaml(head_raw)
+    except Exception:
+        return False
+    base_builds = base_doc.get("allowBuilds")
+    head_builds = head_doc.get("allowBuilds")
+    if base_builds != AUTH_DEPENDENCY_SETUP_ALLOW_BUILDS_BASE:
+        return False
+    if head_builds != AUTH_DEPENDENCY_SETUP_ALLOW_BUILDS_CANDIDATE:
+        return False
+    return ({key: value for key, value in base_doc.items() if key != "allowBuilds"}
+            == {key: value for key, value in head_doc.items() if key != "allowBuilds"})
+
+
 def validate_candidate_auth_dependency_setup(repo_path: str | Path, repository: str,
                                             base: str, head: str) -> dict:
     """Validate exact Auth dependency inputs and return fixed, non-executing setup argv."""
@@ -2783,6 +2901,10 @@ def validate_candidate_auth_dependency_setup(repo_path: str | Path, repository: 
                     and _auth_spa_push_step_admits(base_raw, source[relative], repo, head)):
                 # DEC-AUP-0195 Clause E (S2): account-spa upload step replaced by a main-push-only GHCR push step.
                 continue
+            if (relative == ".github/workflows/ci.yml"
+                    and _auth_deploy_test_list_append_admits(base_raw, source[relative], repo, head)):
+                # DEC-AUP-0202: append test paths to the exact lint-test deploy-test command only.
+                continue
             if (relative == "package.json"
                     and _auth_npm_pin_moves_up(base_raw, source[relative])):
                 # DEC-AUP-0192 Clause B: listed root package.json specifier ladders move upward only.
@@ -2790,6 +2912,10 @@ def validate_candidate_auth_dependency_setup(repo_path: str | Path, repository: 
             if (relative == "pnpm-workspace.yaml"
                     and _auth_workspace_overrides_raise_admits(base_raw, source[relative])):
                 # DEC-AUP-0194 Clause D: raise/add overrides with major ceilings only.
+                continue
+            if (relative == "pnpm-workspace.yaml"
+                    and _auth_workspace_allow_builds_only_admits(base_raw, source[relative])):
+                # Exact allowBuilds transition only; all dependency closure checks below remain.
                 continue
             raise ValueError(f"Auth dependency policy source changed in candidate range: {relative}")
 
@@ -2827,18 +2953,25 @@ def validate_candidate_auth_dependency_setup(repo_path: str | Path, repository: 
     lock_dependencies = {
         "@testing-library/jest-dom": ("^6.6.3", "6.9.1"),
         "vite": (">=6.4.3 <7", AUTH_DEPENDENCY_SETUP_VITE_VERSIONS),
-        "vitest": ("^4.1.11", "4.1.11"),
+        # Auth #362 moves only this importer to the explicitly paired 4.1.12
+        # frozen closure; the original 4.1.11 pair remains accepted.
+        "vitest": AUTH_DEPENDENCY_SETUP_VITEST_LOCK_VARIANTS,
     }
     lock_inputs_match = bool(importer_text)
-    for package, (specifier, locked_versions) in lock_dependencies.items():
-        if isinstance(locked_versions, str):
-            locked_versions = (locked_versions,)
+    for package, expected in lock_dependencies.items():
         pattern = (r"(?m)^      '?" + re.escape(package) + r"'?:\n"
                    r"        specifier: ([^\n]+)\n        version: ([^\n(]+)")
         match = re.search(pattern, importer_text)
         recorded_specifier = match.group(1).strip("'\"") if match else None
-        lock_inputs_match = lock_inputs_match and bool(
-            match and recorded_specifier == specifier and match.group(2) in locked_versions)
+        if package == "vitest":
+            pair_matches = (recorded_specifier, match.group(2)) in expected if match else False
+        else:
+            specifier, locked_versions = expected
+            if isinstance(locked_versions, str):
+                locked_versions = (locked_versions,)
+            pair_matches = bool(match and recorded_specifier == specifier
+                                and match.group(2) in locked_versions)
+        lock_inputs_match = lock_inputs_match and pair_matches
     if (not re.search(r"(?m)^lockfileVersion:\s*['\"]?9\.0['\"]?\s*$", lock)
             or not re.search(r"(?m)^\s+-\s+account-spa\s*$", workspace)
             or allowed_builds not in workspace
@@ -2883,6 +3016,429 @@ def cmd_candidate_auth_dependency_setup_plan(a) -> int:
         print(f"CANDIDATE_AUTH_DEPENDENCY_SETUP_REFUSED: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(plan, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
+# DEC-AUP-0203. Qualify the complete frozen closure rather than interpreting
+# user-provided version ranges. Changes must use the correlated blob sets
+# from #312 or #337. Ordinary source changes may keep the exact base closure.
+# The lock digest binds importers, resolutions and integrity
+# values, including transitive snapshot entries that did not change.
+MC_DEPENDENCY_SETUP_REPO = "Arcanada-one/model-connector"
+MC_DEPENDENCY_SETUP_POLICY = "mc-pnpm-frozen-root-watcher-sdk/v1"
+MC_DEPENDENCY_SETUP_BASE = {
+    ".arcana/verify.json": "df4023a824ffde8454c9b8c30c8d37bcb926ef214084af24bcf2c3e9d696dedd",
+    "packages/sdk-python/pyproject.toml": "53613bd90252e5fa2085ef5657cce5afbb21dc24232a5dc452efaa867cf88404",
+    "scripts/graph-full-suite-isolated.sh": "27acd459e88334ac0f6064c9c2ae6f5a675bfb3b0c80da9dc85f057b07115706",
+    "scripts/graph-parity-setup.sh": "b8e16dea1315e196dbfb9040ee1704009ccf06e04f91f8be81430a9268ef16c1",
+    "package.json": "7821a80c1ec4977034eae0370fce21b5bc29f091a62ce8f78b50586336a14bd9",
+    "watcher/package.json": "6f3a7310e57569a90ac0493456e7d22f00997b4df4df0157ddfc1e77f74090c8",
+    "packages/sdk-ts/package.json": "1bbba8df5e0a4b86cb747187736a62f45438c35fa38a45f9555fd87f8e276247",
+    "pnpm-workspace.yaml": "8cdd31ee7bdef698d730c22dc1486c744bace6dcee3e77765a3a02dafeded4f5",
+    "pnpm-lock.yaml": "241f510dca4cd25e6940466239d0f518e79355806f34ebb4e2c16075d1cb8d9a",
+    ".github/workflows/ci.yml": "915cfeec3ad3028db848b49444a1863f9de907a9927430b89fcf943273e2ec97",
+    "prisma.config.ts": "2de1571ecd48fe867030407de8261fffc2c5b668e981e2bf138b8aac5b0ee5a5",
+    "prisma/schema.prisma": "dcf2a0094645f1cd67fa32e831b12b182debb4bdeaec37077a3250ac2c6590a7",
+}
+MC_DEPENDENCY_SETUP_MANIFESTS = ("package.json", "watcher/package.json")
+MC_DEPENDENCY_SETUP_TARGETS = {
+    (
+        "7baafd090fa8a5fa9fae99aada2f7cfe03e746b2e4956e00c402473e17fe7a04",
+        "5b16b57c28a66ad4fa300996202f4572889002fb18793d75e64e274a95b1d874",
+    ): "0dc664051285f21c6d40f6e40bcd2f902a8dc6799707f272074a1ae9ed81700a",
+    (
+        "af98058dee17340f8d2250b87dbdfb7bb2a45e6314e5ea4d54ab9252cbddb8cd",
+        "6f3a7310e57569a90ac0493456e7d22f00997b4df4df0157ddfc1e77f74090c8",
+    ): "711d6b5e84ace35a7139afaafd11eedf1ab56093a363d913dcdf8e4a74ccff6d",
+}
+MC_DEPENDENCY_SETUP_LOCK = "pnpm-lock.yaml"
+# DEC-AUP-0208 stage 2. Scope MC #341 to the post-#312 closure and reviewed diff.
+# These pins do not qualify that base for the legacy transitions or identity route.
+MC_DEPENDENCY_SETUP_REVIEWED_RANGES = (
+    {
+        "base_closure": (
+            "7baafd090fa8a5fa9fae99aada2f7cfe03e746b2e4956e00c402473e17fe7a04",
+            "5b16b57c28a66ad4fa300996202f4572889002fb18793d75e64e274a95b1d874",
+            "0dc664051285f21c6d40f6e40bcd2f902a8dc6799707f272074a1ae9ed81700a",
+        ),
+        "head_projection": "c5814489a0fac75a727e407706b10a3995ee9270f6fa4f3560738aa98706d1b4",
+        "manifest_pair": (
+            "4eeddb8d5b8204341cb7f2b23984af3dc7c0243314a4fab66d8d5bcfd38d4ec5",
+            "5b16b57c28a66ad4fa300996202f4572889002fb18793d75e64e274a95b1d874",
+        ),
+        "lock": "bce3c01f0de7dbbdf49d2ca596b99a78df25a0bf66e67992aac02e7a17c8f046",
+    },
+)
+MC_DEPENDENCY_SETUP_EXECUTABLES = ("scripts/graph-full-suite-isolated.sh", "scripts/graph-parity-setup.sh")
+MC_DEPENDENCY_SETUP_BATCH_PATHS = (
+    "CHANGELOG.md", "watcher/test/ops-alert.integration.spec.ts", "watcher/test/windowed-error-rate.spec.ts",
+)
+MC_DEPENDENCY_SETUP_PRISMA_TREE = "a9e52464cb6fa4450ec2a7197e585fe158f84d64"
+MC_DEPENDENCY_SETUP_ABSENT = (".npmrc", ".pnpmfile.cjs", "pnpmfile.cjs", ".env", "node_modules")
+MC_DEPENDENCY_SETUP_OUTPUTS = ("node_modules", "watcher/node_modules", "packages/sdk-ts/node_modules")
+MC_DEPENDENCY_SETUP_ARGV = (
+    ("pnpm", "install", "--frozen-lockfile", "--ignore-scripts", "--ignore-pnpmfile",
+     "--registry=https://registry.npmjs.org/"),
+    ("./node_modules/.bin/prisma", "generate", "--config", "prisma.config.ts"),
+)
+
+
+def _mc_dependency_directory(root: Path, parts: tuple[str, ...]) -> int:
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(root, flags)
+    try:
+        for part in parts:
+            child = os.open(part, flags, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        return fd
+    except OSError:
+        os.close(fd)
+        raise
+
+
+def _mc_dependency_worktree_file(repo: Path, relative: str, raw: bytes) -> bytes:
+    parts = Path(relative).parts
+    try:
+        parent = _mc_dependency_directory(repo, parts[:-1])
+    except OSError as exc:
+        raise ValueError(f"MC dependency checkout has a non-directory ancestor: {relative}") from exc
+    try:
+        fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        try:
+            if relative == "prisma.config.ts":
+                return _mc_dependency_prisma_file(fd, b"100644", raw)
+            info = os.fstat(fd)
+            if stat.S_ISREG(info.st_mode) and info.st_size == len(raw):
+                with os.fdopen(fd, "rb", closefd=False) as stream:
+                    checked = stream.read(len(raw) + 1)
+                if checked == raw:
+                    return checked
+        finally:
+            os.close(fd)
+    except OSError as exc:
+        raise ValueError(f"MC dependency checkout differs from its committed file: {relative}") from exc
+    finally:
+        os.close(parent)
+    raise ValueError(f"MC dependency checkout differs from its committed file: {relative}")
+
+
+def _mc_dependency_prisma_file(fd: int, mode: bytes, raw: bytes) -> bytes:
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError("MC Prisma checkout entry is unsafe or unavailable")
+    if bool(info.st_mode & stat.S_IXUSR) != (mode == b"100755"):
+        raise ValueError("MC Prisma checkout executable mode differs from the pinned tree")
+    with os.fdopen(fd, "rb", closefd=False) as stream:
+        checked = stream.read(len(raw) + 1) if info.st_size == len(raw) else None
+    if checked != raw:
+        raise ValueError("MC Prisma checkout bytes differ from the pinned tree")
+    return checked
+
+
+def _mc_dependency_prisma_worktree(repo: Path, snapshot: Path | None = None, *,
+                                  root: Path | None = None) -> None:
+    """Compare the complete on-disk Prisma directory with the pinned Git objects."""
+    def compare(name, mode: bytes, oid: str, parent_fd=None, copy_to=None) -> None:
+        directory = mode == b"040000"
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        if directory:
+            flags |= os.O_DIRECTORY
+        try:
+            fd = os.open(name, flags, dir_fd=parent_fd)
+        except OSError as exc:
+            raise ValueError("MC Prisma checkout entry is unsafe or unavailable") from exc
+        try:
+            if directory:
+                rows = _candidate_setup_git(repo, "--no-replace-objects", "ls-tree", "-z", oid)
+                expected = {}
+                for row in rows.split(b"\0")[:-1]:
+                    metadata, raw_name = row.split(b"\t", 1)
+                    entry_mode, kind, entry_oid = metadata.split()
+                    if (entry_mode, kind) not in {(b"040000", b"tree"), (b"100644", b"blob"), (b"100755", b"blob")}:
+                        raise ValueError("MC pinned Prisma tree contains an unsupported entry type")
+                    expected[os.fsdecode(raw_name)] = (entry_mode, entry_oid.decode("ascii"))
+                if set(os.listdir(fd)) != set(expected):
+                    raise ValueError("MC Prisma checkout inventory differs from the pinned tree")
+                if copy_to is not None:
+                    copy_to.mkdir(mode=0o700)
+                for child, (entry_mode, entry_oid) in expected.items():
+                    compare(child, entry_mode, entry_oid, fd,
+                            copy_to / child if copy_to is not None else None)
+            else:
+                raw = _candidate_setup_git(repo, "--no-replace-objects", "cat-file", "blob", oid)
+                checked = _mc_dependency_prisma_file(fd, mode, raw)
+                if copy_to is not None:
+                    copy_to.write_bytes(checked)
+                    copy_to.chmod(0o500 if mode == b"100755" else 0o400)
+        finally:
+            os.close(fd)
+
+    compare((root or repo) / "prisma", b"040000", MC_DEPENDENCY_SETUP_PRISMA_TREE,
+            copy_to=snapshot / "prisma" if snapshot is not None else None)
+
+
+def _mc_dependency_prisma_tree(repo: Path, base: str, head: str, snapshot: Path | None = None) -> None:
+    if any(_candidate_setup_git(repo, "rev-parse", f"{revision}:prisma").decode().strip()
+           != MC_DEPENDENCY_SETUP_PRISMA_TREE for revision in (base, head)):
+        raise ValueError("MC dependency setup requires the qualified Prisma tree")
+    _mc_dependency_prisma_worktree(repo, snapshot)
+
+
+def _mc_dependency_workspace(repo: Path, *revisions: str, installed: bool = False) -> None:
+    # Workspace globs are fixed by the pinned pnpm-workspace.yaml. Reject
+    # newly discovered projects and local package-manager configuration.
+    directories = [repo, repo / "watcher"]
+    packages = repo / "packages"
+    if not stat.S_ISDIR(packages.lstat().st_mode):
+        raise ValueError("MC packages directory is not regular")
+    for child in packages.iterdir():
+        if child.is_symlink():
+            raise ValueError("MC workspace package directory is a symlink")
+        if not child.is_dir():
+            continue
+        directories.append(child)
+        if (child / "package.json").exists() or (child / "package.json").is_symlink():
+            if child.name != "sdk-ts":
+                raise ValueError("MC workspace has an unqualified package")
+    for directory in directories:
+        for name in MC_DEPENDENCY_SETUP_ABSENT:
+            path = directory / name
+            relative = str(path.relative_to(repo))
+            if installed and relative in MC_DEPENDENCY_SETUP_OUTPUTS:
+                if not stat.S_ISDIR(path.lstat().st_mode):
+                    raise ValueError(f"MC snapshot dependency directory is unsafe: {relative}")
+                continue
+            if (path.exists() or path.is_symlink()
+                    or any(_candidate_setup_git(repo, "ls-tree", "-z", revision, "--", relative)
+                           for revision in revisions)):
+                raise ValueError(f"MC dependency setup forbids local configuration: {relative}")
+
+
+def _mc_dependency_subject(repo_path: str | Path, repository: str, base: str, head: str) -> Path:
+    if repository != MC_DEPENDENCY_SETUP_REPO:
+        raise ValueError("MC dependency setup repository is unsupported")
+    if (not re.fullmatch(r"[0-9a-f]{40}", base)
+            or not re.fullmatch(r"[0-9a-f]{40}", head) or base == head):
+        raise ValueError("MC dependency setup range is malformed")
+    repo = Path(repo_path).resolve(strict=True)
+    actual_head = _candidate_setup_git(repo, "rev-parse", "--verify", "HEAD^{commit}").decode().strip()
+    if actual_head != head:
+        raise ValueError("MC dependency setup subject differs from checked-out head")
+    _candidate_setup_git(repo, "merge-base", "--is-ancestor", base, head)
+    return repo
+
+
+def _mc_dependency_projection_rows(repo: Path, base: str, head: str) -> list[tuple[bytes, bytes, bytes]]:
+    diff = _candidate_setup_git(repo, "--no-replace-objects", "diff", "--raw", "--no-abbrev",
+                                "--no-renames", "--no-ext-diff", "--ignore-submodules=none",
+                                "-z", base, head, "--")
+    fields = diff.split(b"\0")
+    if fields[-1] != b"" or len(fields) % 2 != 1:
+        raise ValueError("MC dependency range has invalid raw diff records")
+    rows = []
+    for metadata, path in zip(fields[:-1:2], fields[1:-1:2], strict=True):
+        if (path.startswith(b".github/graph-admission/")
+                or path == b".github/workflows/graph-admission-call.yml"):
+            continue
+        _, mode, _, oid, _ = metadata.split()
+        rows.append((path, mode, oid))
+    return sorted(rows)
+
+
+def _mc_dependency_head_projection(rows: list[tuple[bytes, bytes, bytes]]) -> str:
+    # NUL-terminated fields preserve arbitrary Git path bytes and delimit each triple.
+    return hashlib.sha256(b"".join(b"\0".join(row) + b"\0" for row in rows)).hexdigest()
+
+
+def validate_candidate_mc_dependency_setup(repo_path: str | Path, repository: str,
+                                          base: str, head: str, *, snapshot: Path | None = None) -> dict:
+    """Validate exact Model Connector dependency inputs and return fixed, non-executing setup argv."""
+    repo = _mc_dependency_subject(repo_path, repository, base, head)
+
+    checked = {}
+    closure_inputs = (*MC_DEPENDENCY_SETUP_MANIFESTS, MC_DEPENDENCY_SETUP_LOCK)
+    base_closure = {
+        path: _candidate_setup_blob(repo, base, path, regular_modes=("100644",))[1]
+        for path in closure_inputs
+    }
+    base_digests = tuple(hashlib.sha256(base_closure[path]).hexdigest() for path in closure_inputs)
+    reviewed_ranges = [entry for entry in MC_DEPENDENCY_SETUP_REVIEWED_RANGES
+                       if entry["base_closure"] == base_digests]
+    base_pins = MC_DEPENDENCY_SETUP_BASE
+    if reviewed_ranges:
+        base_pins = {**base_pins, **dict(zip(closure_inputs, base_digests, strict=True))}
+    same_closure = True
+    for relative, expected in base_pins.items():
+        modes = ("100755",) if relative in MC_DEPENDENCY_SETUP_EXECUTABLES else ("100644",)
+        if relative in base_closure:
+            before = base_closure[relative]
+        else:
+            _, before = _candidate_setup_blob(repo, base, relative, regular_modes=modes)
+        if hashlib.sha256(before).hexdigest() != expected:
+            raise ValueError(f"MC dependency base is unqualified: {relative}")
+        oid, raw = _candidate_setup_blob(repo, head, relative, regular_modes=modes)
+        checked_bytes = _mc_dependency_worktree_file(repo, relative, raw)
+        if snapshot is not None and relative != "prisma/schema.prisma":
+            path = snapshot / relative
+            path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            path.write_bytes(checked_bytes)
+            path.chmod(0o500 if modes == ("100755",) else 0o400)
+            checked_bytes = _mc_dependency_worktree_file(snapshot, relative, raw)
+        digest = hashlib.sha256(checked_bytes).hexdigest()
+        unchanged = checked_bytes == before
+        if relative in closure_inputs:
+            same_closure &= unchanged
+        elif not unchanged:
+            raise ValueError(f"MC dependency setup requires unchanged source: {relative}")
+        checked[relative] = {"blob_oid": oid, "sha256": digest, "bytes": len(raw)}
+
+    _mc_dependency_prisma_tree(repo, base, head, snapshot)
+    _mc_dependency_workspace(repo, base, head)
+    if snapshot is not None:
+        _mc_dependency_workspace(snapshot)
+        _mc_dependency_prisma_worktree(repo, root=snapshot)
+    # Only a byte-identical closure with all common checks satisfied may
+    # bypass the dependency-batch path filter.
+    if reviewed_ranges or not same_closure:
+        target = tuple(checked[path]["sha256"] for path in MC_DEPENDENCY_SETUP_MANIFESTS)
+        base_target = tuple(base_pins[path] for path in MC_DEPENDENCY_SETUP_MANIFESTS)
+        lock = checked[MC_DEPENDENCY_SETUP_LOCK]["sha256"]
+        if target == base_target:
+            raise ValueError("MC dependency lockfile does not match the qualified frozen closure")
+        if reviewed_ranges:
+            manifest_matches = [entry for entry in reviewed_ranges if entry["manifest_pair"] == target]
+            if not manifest_matches:
+                raise ValueError("MC dependency manifest transition is unqualified")
+            lock_matches = [entry for entry in manifest_matches if entry["lock"] == lock]
+            if not lock_matches:
+                raise ValueError("MC dependency lockfile does not match the qualified frozen closure")
+            rows = _mc_dependency_projection_rows(repo, base, head)
+            projection = _mc_dependency_head_projection(rows)
+            if not any(entry["head_projection"] == projection for entry in lock_matches):
+                raise ValueError("MC dependency range does not match the reviewed projected tree")
+            changed = {path for path, _, _ in rows}
+        else:
+            expected_lock = MC_DEPENDENCY_SETUP_TARGETS.get(target)
+            if expected_lock is None:
+                raise ValueError("MC dependency manifest transition is unqualified")
+            if lock != expected_lock:
+                raise ValueError("MC dependency lockfile does not match the qualified frozen closure")
+            diff = _candidate_setup_git(repo, "diff", "--no-ext-diff", "--no-renames", "--name-only", "-z",
+                                        base, head)
+            changed = set(diff.split(b"\0")[:-1])
+
+        allowed_paths = set(base_pins)
+        watcher = "watcher/package.json"
+        if checked[watcher]["sha256"] != base_pins[watcher]:
+            allowed_paths.update(MC_DEPENDENCY_SETUP_BATCH_PATHS)
+        allowed_path_bytes = {path.encode() for path in allowed_paths}
+        if any(path not in allowed_path_bytes and not path.startswith(b"prisma/") for path in changed):
+            raise ValueError("MC dependency range has unqualified changed paths")
+    return {
+        "schema": "ModelConnectorCallerDependencySetupPlan/v1",
+        "policy": MC_DEPENDENCY_SETUP_POLICY,
+        "repository": repository,
+        "base": base,
+        "head": head,
+        "working_directory": ".",
+        "node_version": "22.23.4",
+        "pnpm_version": "10.30.3",
+        "files": checked,
+        "setup_argv": [list(argv) for argv in MC_DEPENDENCY_SETUP_ARGV],
+        "execution": "not_performed",
+    }
+
+
+def _mc_dependency_snapshot_path(repo: Path, value: str) -> Path:
+    snapshot = Path(value)
+    if not snapshot.is_absolute() or snapshot.parent.resolve(strict=True) != snapshot.parent:
+        raise ValueError("MC dependency snapshot needs a canonical absolute parent")
+    if snapshot.is_relative_to(repo) or snapshot.name in {"", ".", ".."}:
+        raise ValueError("MC dependency snapshot must be outside the checkout")
+    return snapshot
+
+
+def _mc_dependency_publish(snapshot: Path, repo: Path) -> None:
+    # Downstream verification still runs in the checkout. Move the finished
+    # pnpm trees together, preserving their relative workspace links.
+    with contextlib.ExitStack() as stack:
+        moves = []
+        for relative in MC_DEPENDENCY_SETUP_OUTPUTS:
+            parts = Path(relative).parts
+            source = _mc_dependency_directory(snapshot, parts[:-1])
+            stack.callback(os.close, source)
+            target = _mc_dependency_directory(repo, parts[:-1])
+            stack.callback(os.close, target)
+            name = parts[-1]
+            if not stat.S_ISDIR(os.stat(name, dir_fd=source, follow_symlinks=False).st_mode):
+                raise ValueError(f"MC snapshot dependency directory is unsafe: {relative}")
+            try:
+                os.stat(name, dir_fd=target, follow_symlinks=False)
+            except FileNotFoundError:
+                moves.append((name, source, target))
+            else:
+                raise ValueError(f"MC output destination already exists: {relative}")
+        for name, source, target in moves:
+            os.rename(name, name, src_dir_fd=source, dst_dir_fd=target)
+
+
+def cmd_candidate_mc_dependency_setup_plan(a) -> int:
+    try:
+        snapshot = None
+        if getattr(a, "snapshot", None):
+            snapshot = _mc_dependency_snapshot_path(Path(a.repo).resolve(strict=True), a.snapshot)
+            snapshot.mkdir(mode=0o700)
+        try:
+            plan = validate_candidate_mc_dependency_setup(
+                a.repo, a.repository, a.base, a.head, snapshot=snapshot)
+        except (OSError, ValueError):
+            if snapshot is not None:
+                shutil.rmtree(snapshot)
+            raise
+    except (OSError, ValueError) as exc:
+        print(f"CANDIDATE_MC_DEPENDENCY_SETUP_REFUSED: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(plan, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
+def cmd_candidate_mc_dependency_snapshot_verify(a) -> int:
+    """Verify the job-owned snapshot before each consumer, or hand off its outputs after use."""
+    try:
+        repo = _mc_dependency_subject(a.repo, a.repository, a.base, a.head)
+        snapshot = _mc_dependency_snapshot_path(repo, a.snapshot)
+        info = snapshot.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or info.st_mode & 0o077:
+            raise ValueError("MC dependency snapshot directory is not private")
+        plan = _strict_json_object(Path(a.plan).read_text(encoding="utf-8"), "MC dependency plan")
+        if (plan.get("policy"), plan.get("repository"), plan.get("base"), plan.get("head")) != (
+                MC_DEPENDENCY_SETUP_POLICY, a.repository, a.base, a.head):
+            raise ValueError("MC dependency snapshot plan does not match the checked range")
+        files = plan.get("files")
+        if not isinstance(files, dict) or set(files) != set(MC_DEPENDENCY_SETUP_BASE):
+            raise ValueError("MC dependency snapshot plan is incomplete")
+        for relative, item in files.items():
+            modes = ("100755",) if relative in MC_DEPENDENCY_SETUP_EXECUTABLES else ("100644",)
+            oid, raw = _candidate_setup_blob(repo, a.head, relative, regular_modes=modes)
+            if item != {"blob_oid": oid, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}:
+                raise ValueError(f"MC dependency snapshot plan does not match the pinned blob: {relative}")
+            _mc_dependency_worktree_file(snapshot, relative, raw)
+        _mc_dependency_prisma_worktree(repo, root=snapshot)
+        _mc_dependency_workspace(snapshot, installed=a.phase in ("generate", "publish"))
+        if a.phase == "generate":
+            bin_dir = _mc_dependency_directory(snapshot, ("node_modules", ".bin"))
+            try:
+                launcher = os.stat("prisma", dir_fd=bin_dir, follow_symlinks=False)
+                if not stat.S_ISREG(launcher.st_mode) or not launcher.st_mode & stat.S_IXUSR:
+                    raise ValueError("MC snapshot Prisma launcher is unsafe")
+            finally:
+                os.close(bin_dir)
+        if a.phase == "publish":
+            _mc_dependency_publish(snapshot, repo)
+    except (OSError, ValueError) as exc:
+        print(f"CANDIDATE_MC_DEPENDENCY_SETUP_REFUSED: {exc}", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -3269,6 +3825,10 @@ def cmd_run(a) -> int:
     stage_userpath_required = bool(getattr(a, "stage_userpath_required", False))
     candidate_required = bool(getattr(a, "candidate_receipt_required", False))
     candidate_source_outcome_required = bool(getattr(a, "candidate_source_outcome_required", False))
+    candidate_canary = getattr(a, "candidate_canary", None)
+    if candidate_canary and not candidate_source_outcome_required:
+        return fail("CURRENT_SOURCE_OUTCOME_CONFIGURATION_INVALID",
+                    "a candidate canary requires the same-run current-source outcome")
     if candidate_source_outcome_required and not (candidate_required and stage_userpath_required):
         return fail("CURRENT_SOURCE_OUTCOME_CONFIGURATION_INVALID",
                     "a current-source outcome requires both the explicit candidate CAR and ProgramStageUserpath routes")
@@ -3308,7 +3868,7 @@ def cmd_run(a) -> int:
             getattr(a, "stage_userpath_exit", None),
             candidate_outcome_required=candidate_source_outcome_required,
             tools_root=(repo if result["repo"] == "Arcanada-one/arcanada-universal-program" else tools),
-            trusted_bundle=man)
+            trusted_bundle=man, candidate_canary=candidate_canary)
         result["stage_userpath"] = stage_userpath
         if stage_userpath_problems:
             result["checks"].append({"code": "STAGE_USERPATH_REFUSED", "verdict": "refuse",
@@ -3652,6 +4212,8 @@ def cmd_run(a) -> int:
                 "--current-source-userpath-root", str(Path(getattr(a, "stage_userpath_root")).resolve()),
                 "--current-source-userpath-exit", str(getattr(a, "stage_userpath_exit")),
                 "--current-source-producer-exit", str(candidate_exit)]
+        if candidate_canary:
+            cmd.append(f"--candidate-canary={candidate_canary}")
         if result["repo"] != "Arcanada-one/arcanada-universal-program":
             cmd += ["--current-source-program-tools-root", str(tools),
                     "--current-source-program-ref", str(a.program_ref),
@@ -6238,6 +6800,23 @@ def main(argv=None) -> int:
     auth_dependency_setup.add_argument("--head", required=True)
     auth_dependency_setup.set_defaults(fn=cmd_candidate_auth_dependency_setup_plan)
 
+    mc_dependency_setup = sub.add_parser(
+        "candidate-mc-dependency-setup-plan",
+        help="validate Model Connector inputs and return its fixed non-executing setup plan")
+    mc_dependency_setup.add_argument("--repo", required=True)
+    mc_dependency_setup.add_argument("--repository", required=True)
+    mc_dependency_setup.add_argument("--base", required=True)
+    mc_dependency_setup.add_argument("--head", required=True)
+    mc_dependency_setup.add_argument("--snapshot")
+    mc_dependency_setup.set_defaults(fn=cmd_candidate_mc_dependency_setup_plan)
+
+    mc_snapshot = sub.add_parser(
+        "candidate-mc-dependency-snapshot-verify", help="verify MC setup custody or publish finished dependencies")
+    for argument in ("repo", "repository", "base", "head", "snapshot", "plan"):
+        mc_snapshot.add_argument(f"--{argument}", required=True)
+    mc_snapshot.add_argument("--phase", choices=("bootstrap", "install", "generate", "publish"), required=True)
+    mc_snapshot.set_defaults(fn=cmd_candidate_mc_dependency_snapshot_verify)
+
     talo_dependency_setup = sub.add_parser(
         "candidate-talo-dependency-setup-plan",
         help="validate canonical Talomnia-backend inputs and return its fixed non-executing setup plan")
@@ -6280,6 +6859,7 @@ def main(argv=None) -> int:
     r.add_argument("--stage-userpath-exit", type=int,
                    help="outer process exit captured by the invoking hosted workflow")
     r.add_argument("--candidate-receipt", help="exact current-range CAR produced by the hosted candidate workflow")
+    r.add_argument("--candidate-canary", help="expected repository-relative committed CanaryResult/v2")
     r.add_argument("--candidate-receipt-exit", type=int,
                    help="captured exit from the hosted current-candidate CAR producer")
     r.add_argument("--candidate-receipt-required", action="store_true",

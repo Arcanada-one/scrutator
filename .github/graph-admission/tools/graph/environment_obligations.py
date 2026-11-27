@@ -131,7 +131,7 @@ def for_verifier(runner, entities: list[str], find_bin, deployable_of, is_test_p
             result[eid] = {'status': 'not_measured', 'reason': 'outside_bounded_parent_reader_scope'}
             continue
         compiler = find_bin('tsc', getattr(runner.a, 'tsc', None), runner.exec_root,
-                            runner.top, [head_dep] if head_dep else [])
+                            runner.top, [])
         result[eid] = evidence(runner.tree_head, path, compiler,
                                base_owner=kind(base_deps, base_dep), head_owner=kind(head_deps, head_dep),
                                native_test=is_test_path(path), inferred_boundary=entity.get('inferred_boundary', False))
