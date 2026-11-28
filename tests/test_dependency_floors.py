@@ -29,7 +29,7 @@ DEV_FLOORS = {
 SYNC_EXACT = {
     "asyncpg": "0.32.0",
     "anyio": "4.16.0",
-    "certifi": "2026.10.23",
+    "certifi": "2026.11.20",
     "idna": "3.20",
 }
 
